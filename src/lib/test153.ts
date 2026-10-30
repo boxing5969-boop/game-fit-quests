@@ -18,6 +18,8 @@ export const TEST153_CAP_MS = 25 * 60 * 1000;
 
 export interface Test153Station {
   name: string;
+  /** 코스 지도(153 PB 탭 맨 위)에 쓰는 짧은 이름 — 좁은 폰 한 칸(13px 글씨)에 들어가게 5글자 이하 (2026-10-30) */
+  mapName: string;
   /** 오픈 기준 개수 */
   open: number;
   unit: "회" | "세트" | "걸음";
@@ -39,6 +41,7 @@ export const TEST153_STATIONS: readonly Test153Station[] = [
   {
     // 2026-10-18 대표님: "버피할 때 가슴이 바닥에 완전히 닿고 일어나서 원투 동작 — 복서 버피로 명명" (점프·박수 대신 원투)
     name: "복서 버피",
+    mapName: "복서 버피",
     video: pbVideo(1),
     open: 30,
     unit: "회",
@@ -50,6 +53,7 @@ export const TEST153_STATIONS: readonly Test153Station[] = [
   },
   {
     name: "원·투·쓰리 스텝",
+    mapName: "원투쓰리",
     video: pbVideo(2),
     open: 10,
     unit: "세트",
@@ -61,6 +65,7 @@ export const TEST153_STATIONS: readonly Test153Station[] = [
   },
   {
     name: "스쿼트",
+    mapName: "스쿼트",
     video: pbVideo(3),
     open: 50,
     unit: "회",
@@ -70,6 +75,7 @@ export const TEST153_STATIONS: readonly Test153Station[] = [
   },
   {
     name: "푸시업",
+    mapName: "푸시업",
     video: pbVideo(4),
     open: 30,
     unit: "회",
@@ -80,6 +86,7 @@ export const TEST153_STATIONS: readonly Test153Station[] = [
   },
   {
     name: "복서 스텝 콤비",
+    mapName: "스텝 콤비",
     video: pbVideo(5),
     open: 10,
     unit: "세트",
@@ -91,6 +98,7 @@ export const TEST153_STATIONS: readonly Test153Station[] = [
   {
     // 2026-10-18 대표님: "싯업도 복서 싯업 — 등이 완전히 닿았다가 일어나서 원투가 한 동작으로, 복서 싯업으로 명명"
     name: "복서 싯업",
+    mapName: "복서 싯업",
     video: pbVideo(6),
     open: 40,
     unit: "회",
@@ -102,6 +110,7 @@ export const TEST153_STATIONS: readonly Test153Station[] = [
   },
   {
     name: "런지",
+    mapName: "런지",
     video: pbVideo(7),
     open: 40,
     unit: "걸음",
@@ -112,6 +121,7 @@ export const TEST153_STATIONS: readonly Test153Station[] = [
   },
   {
     name: "줄넘기",
+    mapName: "줄넘기",
     video: pbVideo(8),
     open: 200,
     unit: "회",

@@ -1,137 +1,43 @@
 /**
  * 🏃 153 PB (Personal Best · 내 최고 기록) — 랭킹 화면 '153 PB' 칸 (2026-10-15 대표님: "기록을 체크하고 본인의 기록이 얼마나 좋아졌는지")
  *   2026-10-18 이름 153 TEST → 153 PB · "복싱은 상대방을 이기기 위해 자신과의 싸움에서 승리해야 한다는 메시지도 함께"
- *   · 내 기록: 개인 최고(PB) · 순위(우리 지점 / 전체) · 첫 기록보다 얼마나 빨라졌는지 · 구간별 최고 vs 최근 · 지난 기록
- *   · 순위: 부문(스타터/오픈) · 우리 지점/전체 · 성별 · 연령대
- *   · 안내 (2026-10-18 대표님: "자신과의 싸움 — 마라토너가 자신의 기록 1초를 당기기 위해 노력하는 것처럼 …
- *     이 방향성을 회원님들이 알 수 있도록 그 탭에 설명 자세히, 어떤 동작을 어떻게 하고 어떻게 평가하는지도")
- *     맨 위 '상대는 지난번의 나' 카드 → 맨 아래 안내(왜 하나요 · 진행 · 동작별 하는 법·인정 기준 · 평가 · 1초 당기는 법)
- *     내 기록에는 '다음 목표'(PB보다 1초 빠르게)를 보인다.
- *   2026-10-29 대표님 "153 PB 영상 … 최근 업데이트한 UI 맞춰서" — 동작 카드마다 시범 영상(누르면 재생 · 무음 반복 · 안 누르면 안 받음).
- *   기록은 코치가 관리자 홈 '153 PB 측정'에서 잰 공식 기록만 (회원이 직접 넣는 길은 없다).
+ *   2026-10-18 대표님 "자신과의 싸움 — 마라토너가 자신의 기록 1초를 당기기 위해 … 어떤 동작을 어떻게 하고 어떻게 평가하는지도" → 안내 · 다음 목표
+ *   2026-10-29 대표님 "153 PB 영상 … 최근 업데이트한 UI 맞춰서" — 종목마다 시범 영상(누르면 재생 · 무음 반복).
+ *   2026-10-30 대표님 "153 PB 탭 들어가면 글만 보이는데 회원님들이 직관적으로 153 PB가 어떤 건지 알고 볼 수 있도록 탭 디자인 —
+ *     하이록스 · 크로스핏 · 당근 · 토스처럼" → 「153 PB 탭 디자인 보고서」(대표님 "니가 추천하는 대로"):
+ *     ① 코스 지도(Test153CourseMap) ② 종목 카드(Test153MoveRail · 누르면 시범 영상 창) ③ 내 기록(큰 숫자 하나 · 구간/지난 기록은 접기)
+ *     ④ 순위(오픈/스타터 · 우리 지점/전체 · 남녀·나이는 '거르기' 안) ⑤ 안내(왜 · 규칙과 평가 · 1초 당기는 법).
+ *     기록이 있는 회원은 ③ 내 기록이 맨 위 — 처음 보는 회원에겐 '무엇을 하는지', 해 본 회원에겐 '내 숫자'가 먼저.
+ *   기록은 코치가 관리자 홈 '153 PB 측정'에서 잰 공식 기록만 (회원이 직접 넣는 길은 없다). DB · 점수 · 순위 계산은 그대로.
  */
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, Gauge, PenLine, Play, Timer, Trophy } from "lucide-react";
+import { ChevronDown, SlidersHorizontal, Timer } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import MedalMark from "@/components/MedalMark";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import Test153CourseMap from "@/components/test153/Test153CourseMap";
+import Test153MoveRail, { type Test153MovePick } from "@/components/test153/Test153MoveRail";
 import { cn } from "@/lib/utils";
 import {
   buildSegments,
   DIVISION_LABEL,
   fmtMs,
   fmtScore,
-  stationReps,
   TEST153_AGE_GROUPS,
   TEST153_NAME,
   TEST153_NAME_EN,
   TEST153_NAME_KO,
-  TEST153_RUN_GUIDE,
   TEST153_STATIONS,
   type Test153Division,
 } from "@/lib/test153";
 import { fetchTest153Ranking, fetchTest153Summary } from "@/services/test153Service";
-
-type GuideKey = "why" | "flow" | "moves" | "score" | "tips";
-
-const PILLARS = [
-  { icon: Gauge, title: "알기", desc: "내 체력을 숫자로 정확히" },
-  { icon: PenLine, title: "기록", desc: "코치님이 잰 공식 기록" },
-  { icon: Trophy, title: "이기기", desc: "1초라도 당기면 승리" },
-] as const;
 
 /** 안내 문단 — 굵은 제목 + 설명 */
 const Point = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <li>
     <b className="text-foreground">{title}</b>
     <span className="block">{children}</span>
-  </li>
-);
-
-/** 시범 영상 — 누르면 재생 · 다시 누르면 멈춤 (무음 반복). preload none: 누르기 전엔 영상을 받지 않는다.
- *  영상은 정사각(1080) — 위 56% 가 동작 화면(오른쪽 위 큰 횟수 카운터), 아래는 큰 글씨 안내 띠(이름·오픈/스타터·인정 기준).
- *  오픈 기준 횟수를 끝까지 채운 영상이라 1~2분 — 재생 표시는 동작 화면 위에만 얹어 아래 글씨를 가리지 않는다. */
-const MoveVideo = ({ src, poster, name }: { src: string; poster: string; name: string }) => {
-  const ref = useRef<HTMLVideoElement>(null);
-  const [playing, setPlaying] = useState(false);
-  const toggle = () => {
-    const v = ref.current;
-    if (!v) return;
-    if (v.paused) void v.play().catch(() => setPlaying(false));
-    else v.pause();
-  };
-  return (
-    <button
-      type="button"
-      onClick={toggle}
-      aria-label={`${name} 시범 영상 ${playing ? "멈추기" : "보기"}`}
-      className="relative mb-1.5 mt-2 block aspect-square w-full overflow-hidden rounded-lg bg-muted"
-    >
-      <video
-        ref={ref}
-        src={src}
-        poster={poster}
-        muted
-        loop
-        playsInline
-        preload="none"
-        onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
-        className="h-full w-full object-cover"
-      />
-      {!playing && (
-        <span className="absolute inset-x-0 top-0 flex h-[56.3%] items-center justify-center bg-black/15">
-          <span className="flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-label font-black text-[#191F28] shadow-md">
-            <Play className="h-4 w-4 fill-current text-primary" /> 시범 영상
-          </span>
-        </span>
-      )}
-    </button>
-  );
-};
-
-/** 동작 카드 — (시범 영상) · 하는 법 · 인정 기준 · 요령 */
-const MoveCard = ({
-  no,
-  name,
-  reps,
-  howTo,
-  standard,
-  tip,
-  boxing,
-  video,
-}: {
-  no: string;
-  name: string;
-  reps: React.ReactNode;
-  howTo: string;
-  standard: string;
-  tip: string;
-  boxing?: boolean;
-  video?: { src: string; poster: string };
-}) => (
-  <li className="rounded-xl border border-border bg-background/60 p-3">
-    <div className="flex items-baseline justify-between gap-2">
-      <p className="min-w-0 text-body font-black text-foreground">
-        {no && <span className="mr-1 text-primary">{no}</span>}
-        {name}
-        {boxing && " 🥊"}
-      </p>
-      <p className="shrink-0 text-right text-label font-bold tabular-nums text-foreground">{reps}</p>
-    </div>
-    {video && <MoveVideo src={video.src} poster={video.poster} name={name} />}
-    <p className="mt-1 text-label leading-relaxed text-foreground/90">{howTo}</p>
-    <p className="mt-1.5 text-label leading-relaxed text-muted-foreground">
-      <span className="mr-1.5 rounded-md bg-primary/10 px-1.5 py-0.5 text-micro font-black text-primary">인정</span>
-      {standard}
-    </p>
-    <p className="mt-1 text-label leading-relaxed text-muted-foreground">
-      <span className="mr-1.5 rounded-md bg-amber-400/15 px-1.5 py-0.5 text-micro font-black text-amber-700 dark:text-amber-300">
-        요령
-      </span>
-      {tip}
-    </p>
   </li>
 );
 
@@ -147,12 +53,47 @@ const Chip = ({ active, onClick, children }: { active: boolean; onClick: () => v
   <button
     type="button"
     onClick={onClick}
+    aria-pressed={active}
     className={cn(
       "shrink-0 rounded-full border px-3 py-1.5 text-label font-bold transition-colors active:scale-95",
       active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground",
     )}
   >
     {children}
+  </button>
+);
+
+/** 오픈 · 스타터 — 작은 두 칸 (내 기록 · 순위 머리에 같은 값으로) */
+const DivisionToggle = ({ value, onChange }: { value: Test153Division; onChange: (d: Test153Division) => void }) => (
+  <div role="radiogroup" aria-label="부문" className="flex shrink-0 rounded-full bg-muted p-0.5">
+    {(["open", "starter"] as const).map((d) => (
+      <button
+        key={d}
+        type="button"
+        role="radio"
+        aria-checked={value === d}
+        onClick={() => onChange(d)}
+        className={cn(
+          "rounded-full px-3 py-1 text-label font-bold transition-colors",
+          value === d ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground",
+        )}
+      >
+        {DIVISION_LABEL[d]}
+      </button>
+    ))}
+  </div>
+);
+
+/** 접는 칸 단추 — '구간 기록' · '지난 기록' */
+const FoldButton = ({ open, onClick, children }: { open: boolean; onClick: () => void; children: React.ReactNode }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    aria-expanded={open}
+    className="flex h-11 w-full items-center justify-between rounded-xl bg-muted/40 px-3 text-label font-bold text-foreground active:scale-[0.99]"
+  >
+    {children}
+    <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", open && "rotate-180")} />
   </button>
 );
 
@@ -168,21 +109,20 @@ const Test153Board = ({ onOpenMember }: Props) => {
 
   const hasOpen = !!summary?.best.open;
   const hasStarter = !!summary?.best.starter;
+  const hasAny = hasOpen || hasStarter;
   const [divPick, setDivPick] = useState<Test153Division | null>(null);
   const division: Test153Division = divPick ?? (hasOpen || !hasStarter ? "open" : "starter");
 
   const [scope, setScope] = useState<"branch" | "all">("branch");
   const [gender, setGender] = useState<string | null>(null);
   const [age, setAge] = useState<string | null>(null);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const filterLabel = [gender, age].filter(Boolean).join(" · ");
 
-  // 안내 — 위 카드·빈 기록 칸의 버튼이 해당 칸을 열고 그 자리로 내려간다
-  const [guideOpen, setGuideOpen] = useState<string[]>([]);
-  const guideRef = useRef<HTMLElement | null>(null);
-  const openGuide = (key: GuideKey) => {
-    setGuideOpen((v) => (v.includes(key) ? v : [...v, key]));
-    // 펼쳐지는 애니메이션(0.2초)이 끝나 페이지가 길어진 뒤에 내려가야 안내 제목이 맨 위에 온다
-    window.setTimeout(() => guideRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 230);
-  };
+  // 종목 시범 영상 창 — 코스 지도의 원 · 종목 카드가 같은 창을 연다
+  const [picked, setPicked] = useState<Test153MovePick>(null);
+  const [splitsOpen, setSplitsOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const { data: ranking = [], isLoading: rankLoading } = useQuery({
     queryKey: ["test153", "ranking", division, scope, myBranch, gender, age],
@@ -200,7 +140,10 @@ const Test153Board = ({ onOpenMember }: Props) => {
   );
   const first = divRecords.length ? divRecords[divRecords.length - 1] : null;
   const latest = divRecords[0] ?? null;
+  const compare = latest && best && latest.id !== best.id ? latest : null;
   const improvedMs = first && best && first.id !== best.id && first.finished && best.finished ? first.score_ms - best.score_ms : 0;
+  // 구간 막대 — 가장 오래 걸린 구간을 꽉 찬 막대로
+  const maxSplit = Math.max(1, ...(best?.splits_ms ?? []).filter((v): v is number => v != null));
 
   // 다음 목표 — 완주했으면 PB보다 1초, 타임캡이면 남은 개수 1개 줄이기
   const capLeft = best && !best.finished ? best.remaining_reps ?? 0 : 0;
@@ -212,194 +155,214 @@ const Test153Board = ({ onOpenMember }: Props) => {
         ? { value: `캡 + ${capLeft - 1}개`, hint: "남은 개수 1개 줄이기" }
         : { value: "25분 안에 완주", hint: "이제 완주가 목표" };
 
-  return (
-    <div className="space-y-4">
-      {/* 방향 — 153 PB (Personal Best)(내 최고 기록) · 상대는 지난번의 나 · 복싱은 먼저 나와의 싸움에서 이긴다 */}
-      {/* 2026-10-28 리디자인: 주인공은 '상대는 지난번의 나' 한 줄 + 대표 문장 하나. 마라토너 · 진행 · 평가는 맨 아래 안내에 */}
-      <section className="rounded-3xl border border-primary/25 bg-gradient-to-br from-primary/10 via-card to-card p-5 shadow-elev-1">
-        <p className="flex items-center gap-1.5 text-label font-bold text-primary">
-          <Timer className="h-4 w-4 shrink-0" />
-          {TEST153_NAME} · {TEST153_NAME_KO}
-        </p>
-        <h2 className="mt-2 text-title text-foreground [text-wrap:balance]">상대는 지난번의 나</h2>
-        <p className="mt-2 text-body text-foreground">
-          복싱은 상대를 이기기 위해, 먼저 나와의 싸움에서 이겨야 하는 운동이에요.
-        </p>
-        <button
-          type="button"
-          onClick={() => openGuide("flow")}
-          className="mt-4 flex h-11 w-full items-center justify-center gap-1 rounded-xl border border-border bg-card text-body font-bold text-foreground active:scale-[0.98]"
-        >
-          어떻게 하나요
-          <ChevronDown className="h-4 w-4" />
-        </button>
-      </section>
-
-      {/* 부문 */}
-      <div className="flex gap-2">
-        {(["open", "starter"] as const).map((d) => (
-          <Chip key={d} active={division === d} onClick={() => setDivPick(d)}>
-            {DIVISION_LABEL[d]}
-          </Chip>
-        ))}
+  /* ③ 내 기록 — 큰 숫자 하나 + 순위 한 줄 + 다음 목표. 구간 · 지난 기록은 접어 둔다 (토스처럼) */
+  const myRecord = (
+    <section aria-labelledby="test153-mine-h" className="rounded-3xl border border-border bg-card p-4 shadow-elev-1">
+      <div className="flex items-center justify-between gap-2">
+        <h3 id="test153-mine-h" className="flex items-center gap-1.5 text-heading text-foreground">
+          <Timer className="h-4 w-4 text-primary" />내 기록
+        </h3>
+        {hasAny && <DivisionToggle value={division} onChange={setDivPick} />}
       </div>
 
-      {/* 내 기록 */}
-      <section className="rounded-3xl border border-border bg-card p-4 shadow-elev-1">
-        <div className="flex items-center gap-2">
-          <Timer className="h-4 w-4 text-primary" />
-          <p className="text-body font-black text-foreground">
-            내 {TEST153_NAME} · {DIVISION_LABEL[division]}
+      {isLoading ? (
+        <div className="mt-3 h-24 animate-pulse rounded-2xl bg-muted/40" />
+      ) : !hasAny ? (
+        <div className="mt-2">
+          <p className="text-heading text-foreground">아직 기록이 없어요</p>
+          <p className="mt-0.5 text-label text-muted-foreground">
+            코치님께 “{TEST153_NAME} 도전할게요” 하면 재 드려요 · 처음이면 스타터부터
           </p>
         </div>
-
-        {isLoading ? (
-          <div className="mt-3 h-24 animate-pulse rounded-2xl bg-muted/40" />
-        ) : !best ? (
-          <div className="mt-3 rounded-2xl bg-muted/30 p-4 text-center">
-            <p className="text-body font-bold text-foreground">아직 {DIVISION_LABEL[division]} 기록이 없어요</p>
-            {/* 한 줄만 — 스타터 추천 · '지난번의 나' 설명은 맨 아래 안내에 있다 */}
-            <p className="mt-1 text-label text-muted-foreground">
-              코치님께 “{TEST153_NAME} 도전할게요” 하면 재 드려요
-            </p>
-            <button
-              type="button"
-              onClick={() => openGuide("moves")}
-              className="mt-3 h-10 rounded-xl border border-primary/40 bg-card px-4 text-label font-bold text-primary active:scale-[0.98]"
-            >
-              동작 먼저 보기
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="mt-3 flex items-end justify-between gap-3">
-              <div>
-                <p className="text-label text-muted-foreground">{TEST153_NAME_KO} (PB)</p>
-                <p className="text-display font-black tabular-nums text-foreground">{fmtScore(best)}</p>
-                <p className="text-label text-muted-foreground">{fmtDate(best.measured_at)}</p>
-              </div>
-              {rank && (
-                <div className="text-right">
-                  {rank.branch != null && (
-                    <p className="text-body font-black text-primary">
-                      우리 지점 {rank.branch}위 <span className="font-medium text-muted-foreground">/ {rank.branch_total}명</span>
-                    </p>
-                  )}
-                  {rank.all != null && (
-                    <p className="text-label font-bold text-foreground">
-                      전체 {rank.all}위 <span className="font-medium text-muted-foreground">/ {rank.all_total}명</span>
-                    </p>
-                  )}
-                </div>
-              )}
+      ) : !best ? (
+        <p className="mt-3 rounded-2xl bg-muted/30 p-4 text-center text-body font-bold text-foreground">
+          아직 {DIVISION_LABEL[division]} 기록이 없어요
+        </p>
+      ) : (
+        <>
+          <div className="mt-3 flex items-end justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-label text-muted-foreground">{TEST153_NAME_KO} (PB)</p>
+              <p className="text-display font-black tabular-nums text-foreground">{fmtScore(best)}</p>
+              <p className="text-label text-muted-foreground">{fmtDate(best.measured_at)}</p>
             </div>
-
-            {improvedMs > 0 && first && (
-              <p className="mt-3 rounded-xl bg-primary/10 px-3 py-2 text-body font-bold text-primary">
-                📈 첫 기록({fmtMs(first.score_ms)})보다 {(improvedMs / 1000).toFixed(1)}초 빨라졌어요 (
-                {((improvedMs / first.score_ms) * 100).toFixed(1)}%)
-              </p>
-            )}
-
-            {/* 다음 목표 — 지난번의 나보다 1초 */}
-            {nextGoal && (
-              <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-dashed border-primary/40 px-3 py-2">
-                <span className="min-w-0">
-                  <span className="block text-label font-bold text-foreground">다음 목표</span>
-                  <span className="block text-micro text-muted-foreground">{nextGoal.hint}</span>
-                </span>
-                <span className="shrink-0 text-heading font-black tabular-nums text-primary">{nextGoal.value}</span>
+            {rank && (
+              <div className="shrink-0 text-right">
+                {rank.branch != null && (
+                  <p className="text-body font-black text-primary">
+                    우리 지점 {rank.branch}위 <span className="font-medium text-muted-foreground">/ {rank.branch_total}명</span>
+                  </p>
+                )}
+                {rank.all != null && (
+                  <p className="text-label font-bold text-foreground">
+                    전체 {rank.all}위 <span className="font-medium text-muted-foreground">/ {rank.all_total}명</span>
+                  </p>
+                )}
               </div>
             )}
+          </div>
 
-            {/* 구간별 최고 vs 최근 */}
-            <div className="mt-4">
-              <p className="mb-1.5 text-label font-bold text-muted-foreground">
-                구간 기록 · 최고{latest && latest.id !== best.id ? " vs 최근" : ""}
-              </p>
-              <ul className="divide-y divide-border rounded-xl border border-border text-label">
+          {improvedMs > 0 && first && (
+            <p className="mt-3 rounded-xl bg-primary/10 px-3 py-2 text-label font-bold text-primary">
+              📈 첫 기록({fmtMs(first.score_ms)})보다 {(improvedMs / 1000).toFixed(1)}초 빨라졌어요 (
+              {((improvedMs / first.score_ms) * 100).toFixed(1)}%)
+            </p>
+          )}
+
+          {/* 다음 목표 — 지난번의 나보다 1초 */}
+          {nextGoal && (
+            <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-dashed border-primary/40 px-3 py-2">
+              <span className="min-w-0">
+                <span className="block text-label font-bold text-foreground">다음 목표</span>
+                <span className="block text-micro text-muted-foreground">{nextGoal.hint}</span>
+              </span>
+              <span className="shrink-0 text-heading font-black tabular-nums text-primary">{nextGoal.value}</span>
+            </div>
+          )}
+
+          {/* 구간 기록 16개 — 하이록스처럼 막대로 (가장 오래 걸린 구간 = 꽉 찬 막대) · 최근 기록과 차이 */}
+          <div className="mt-3 space-y-2">
+            <FoldButton open={splitsOpen} onClick={() => setSplitsOpen((v) => !v)}>
+              <span>
+                구간 기록 {segments.length}개
+                <span className="ml-1 font-medium text-muted-foreground">· 최고{compare ? " vs 최근" : ""}</span>
+              </span>
+            </FoldButton>
+            {splitsOpen && (
+              <ul className="space-y-1.5 px-1">
                 {segments.map((s, i) => {
                   const b = best.splits_ms[i];
-                  const l = latest && latest.id !== best.id ? latest.splits_ms[i] : undefined;
+                  const l = compare ? compare.splits_ms[i] : undefined;
                   if (b == null && l == null) return null;
                   const diff = b != null && l != null ? l - b : null;
                   return (
-                    <li key={s.index} className="flex items-center gap-2 px-3 py-1.5">
-                      <span className={cn("min-w-0 flex-1 truncate", s.kind === "run" ? "text-muted-foreground" : "text-foreground")}>
-                        {s.kind === "run" ? `셀트런 ${s.round}` : `${s.round}. ${s.short}`}
+                    <li key={s.index} className="flex items-center gap-2 text-label">
+                      <span
+                        className={cn(
+                          "w-[5.5rem] shrink-0 truncate",
+                          s.kind === "run" ? "text-muted-foreground" : "font-bold text-foreground",
+                        )}
+                      >
+                        {s.kind === "run" ? `셀트런 ${s.round}` : `${s.round}. ${TEST153_STATIONS[s.round - 1].mapName}`}
                       </span>
-                      <span className="tabular-nums font-semibold text-foreground">{b != null ? fmtMs(b) : "—"}</span>
-                      {l != null && (
+                      <span className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-muted/60">
+                        <span
+                          className={cn("block h-full rounded-full", s.kind === "run" ? "bg-muted-foreground/40" : "bg-primary/70")}
+                          style={{ width: `${b != null ? Math.max(4, (b / maxSplit) * 100) : 0}%` }}
+                        />
+                      </span>
+                      <span className="w-14 shrink-0 text-right font-semibold tabular-nums text-foreground">
+                        {b != null ? fmtMs(b) : "—"}
+                      </span>
+                      {compare && (
                         <span
                           className={cn(
-                            "w-16 text-right tabular-nums text-label",
+                            "w-12 shrink-0 text-right text-micro tabular-nums",
                             diff != null && diff > 0 ? "text-destructive" : "text-primary",
                           )}
                         >
-                          {diff != null ? `${diff > 0 ? "+" : ""}${(diff / 1000).toFixed(1)}s` : fmtMs(l)}
+                          {diff != null ? `${diff > 0 ? "+" : ""}${(diff / 1000).toFixed(1)}s` : l != null ? fmtMs(l) : ""}
                         </span>
                       )}
                     </li>
                   );
                 })}
               </ul>
-            </div>
-
-            {/* 지난 기록 */}
-            {divRecords.length > 1 && (
-              <div className="mt-4">
-                <p className="mb-1.5 text-label font-bold text-muted-foreground">지난 기록 {divRecords.length}번</p>
-                <ul className="space-y-1 text-label">
-                  {divRecords.slice(0, 8).map((r) => (
-                    <li key={r.id} className="flex items-center justify-between">
-                      <span className="text-muted-foreground">
-                        {fmtDate(r.measured_at)} · {r.coach_name}
-                      </span>
-                      <span className={cn("tabular-nums font-bold", r.id === best.id ? "text-primary" : "text-foreground")}>
-                        {fmtScore(r)} {r.id === best.id && "🏆"}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
             )}
-          </>
-        )}
-      </section>
 
-      {/* 순위 */}
-      <section className="space-y-2">
-        <div className="flex items-center justify-between">
-          <h3 className="text-body font-black text-foreground">{DIVISION_LABEL[division]} 순위</h3>
-          <div className="flex gap-1.5">
-            <Chip active={scope === "branch"} onClick={() => setScope("branch")}>
-              우리 지점
-            </Chip>
-            <Chip active={scope === "all"} onClick={() => setScope("all")}>
-              전체
-            </Chip>
+            {divRecords.length > 1 && (
+              <>
+                <FoldButton open={historyOpen} onClick={() => setHistoryOpen((v) => !v)}>
+                  <span>지난 기록 {divRecords.length}번</span>
+                </FoldButton>
+                {historyOpen && (
+                  <ul className="space-y-1 px-1 text-label">
+                    {divRecords.slice(0, 8).map((r) => (
+                      <li key={r.id} className="flex items-center justify-between">
+                        <span className="text-muted-foreground">
+                          {fmtDate(r.measured_at)} · {r.coach_name}
+                        </span>
+                        <span className={cn("font-bold tabular-nums", r.id === best.id ? "text-primary" : "text-foreground")}>
+                          {fmtScore(r)} {r.id === best.id && "🏆"}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
           </div>
+        </>
+      )}
+    </section>
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* 기록이 있는 회원은 내 숫자가 먼저 */}
+      {hasAny && myRecord}
+
+      {/* ① 코스 지도 — 153 PB가 무엇인지 한 장으로 */}
+      <Test153CourseMap onPick={setPicked} />
+
+      {/* ② 종목 카드 — 옆으로 넘기고, 누르면 시범 영상 */}
+      <Test153MoveRail picked={picked} onPick={setPicked} />
+
+      {!hasAny && myRecord}
+
+      {/* ④ 순위 — 크로스핏 오픈처럼 같은 부문끼리, 우리 지점이 먼저 */}
+      <section aria-labelledby="test153-rank-h" className="space-y-2">
+        <div className="flex items-center justify-between gap-2 px-1">
+          <h3 id="test153-rank-h" className="text-heading text-foreground">
+            순위
+          </h3>
+          <DivisionToggle value={division} onChange={setDivPick} />
         </div>
-        <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
-          <Chip active={gender === null} onClick={() => setGender(null)}>
-            남녀 전체
+        <div className="flex items-center gap-1.5">
+          <Chip active={scope === "branch"} onClick={() => setScope("branch")}>
+            우리 지점
           </Chip>
-          <Chip active={gender === "남"} onClick={() => setGender("남")}>
-            남
+          <Chip active={scope === "all"} onClick={() => setScope("all")}>
+            전체
           </Chip>
-          <Chip active={gender === "여"} onClick={() => setGender("여")}>
-            여
-          </Chip>
-          <span className="mx-1 w-px shrink-0 bg-border" />
-          <Chip active={age === null} onClick={() => setAge(null)}>
-            전 연령
-          </Chip>
-          {TEST153_AGE_GROUPS.map((a) => (
-            <Chip key={a} active={age === a} onClick={() => setAge(a)}>
-              {a}
-            </Chip>
-          ))}
+          <button
+            type="button"
+            onClick={() => setFilterOpen((v) => !v)}
+            aria-expanded={filterOpen}
+            className={cn(
+              "ml-auto flex shrink-0 items-center gap-1 rounded-full border px-3 py-1.5 text-label font-bold active:scale-95",
+              filterLabel ? "border-primary/50 bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground",
+            )}
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+            {filterLabel || "거르기"}
+          </button>
         </div>
+        {filterOpen && (
+          <div className="space-y-2 rounded-2xl border border-border bg-card p-3">
+            <div className="flex flex-wrap gap-1.5">
+              <Chip active={gender === null} onClick={() => setGender(null)}>
+                남녀 전체
+              </Chip>
+              <Chip active={gender === "남"} onClick={() => setGender("남")}>
+                남
+              </Chip>
+              <Chip active={gender === "여"} onClick={() => setGender("여")}>
+                여
+              </Chip>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              <Chip active={age === null} onClick={() => setAge(null)}>
+                전 연령
+              </Chip>
+              {TEST153_AGE_GROUPS.map((a) => (
+                <Chip key={a} active={age === a} onClick={() => setAge(a)}>
+                  {a}
+                </Chip>
+              ))}
+            </div>
+          </div>
+        )}
 
         {rankLoading ? (
           <div className="space-y-2">
@@ -408,8 +371,12 @@ const Test153Board = ({ onOpenMember }: Props) => {
             ))}
           </div>
         ) : ranking.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border p-6 text-center text-body text-muted-foreground">
-            아직 기록이 없어요. 첫 기록의 주인공이 되어 보세요!
+          <div className="rounded-2xl border border-dashed border-border bg-card/60 p-4">
+            <div aria-hidden className="space-y-2">
+              <div className="h-2.5 w-full rounded-full bg-muted/70" />
+              <div className="h-2.5 w-4/5 rounded-full bg-muted/70" />
+            </div>
+            <p className="mt-3 text-center text-label font-bold text-muted-foreground">첫 기록의 주인공이 되어 보세요</p>
           </div>
         ) : (
           <ul className="overflow-hidden rounded-2xl border border-border bg-card">
@@ -453,15 +420,12 @@ const Test153Board = ({ onOpenMember }: Props) => {
         )}
       </section>
 
-      {/* 안내 — 왜 하나요 · 진행 · 동작별 하는 법 · 평가 · 1초 당기는 법 */}
-      <section ref={guideRef} className="scroll-mt-20 space-y-2">
-        <h3 className="text-body font-black text-foreground">{TEST153_NAME} 안내</h3>
-        <Accordion
-          type="multiple"
-          value={guideOpen}
-          onValueChange={setGuideOpen}
-          className="overflow-hidden rounded-2xl border border-border bg-card"
-        >
+      {/* ⑤ 안내 — 흐름 · 동작은 ①②가 대신하고, 왜 · 규칙과 평가 · 1초 당기는 법만 접어 둔다 */}
+      <section aria-labelledby="test153-guide-h" className="space-y-2">
+        <h3 id="test153-guide-h" className="px-1 text-heading text-foreground">
+          안내
+        </h3>
+        <Accordion type="multiple" className="overflow-hidden rounded-2xl border border-border bg-card">
           <AccordionItem value="why" className="border-border px-4 last:border-b-0">
             <AccordionTrigger className="py-3 text-left text-body font-bold text-foreground hover:no-underline">
               왜 하나요? — 나와의 싸움
@@ -492,111 +456,30 @@ const Test153Board = ({ onOpenMember }: Props) => {
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem value="flow" className="border-border px-4 last:border-b-0">
+          <AccordionItem value="rules" className="border-border px-4 last:border-b-0">
             <AccordionTrigger className="py-3 text-left text-body font-bold text-foreground hover:no-underline">
-              어떻게 진행되나요?
+              규칙과 평가
             </AccordionTrigger>
             <AccordionContent className="space-y-3 text-label leading-relaxed text-muted-foreground">
-              <p>
-                모두 같은 운동을 같은 순서로 해요. <b className="text-foreground">8라운드</b> — 매 라운드{" "}
-                <b className="text-foreground">셀트런 100m</b>를 달리고 바로 <b className="text-foreground">종목 하나</b>를 해요.
-              </p>
-              <ol className="grid grid-cols-2 gap-1.5">
-                {TEST153_STATIONS.map((s, i) => (
-                  <li key={s.name} className="flex min-w-0 items-center gap-1.5 rounded-lg bg-muted/40 px-2 py-1.5 text-label">
-                    <span className="shrink-0 font-black tabular-nums text-primary">{i + 1}R</span>
-                    <span className="truncate font-bold text-foreground">{s.name}</span>
-                  </li>
-                ))}
-              </ol>
-              <p className="text-label">각 라운드 = 셀트런 100m → 위 종목. 8라운드 줄넘기까지 끝내면 완주예요.</p>
               <ul className="space-y-2">
-                <Point title="시계는 멈추지 않아요">
-                  첫 셀트런 출발부터 마지막 줄넘기까지 한 번에 재요. 숨 고르는 시간도 기록에 들어가요.
-                </Point>
-                <Point title="타임캡 25분">
-                  25분이 되면 멈춰요. 다 못 끝내도 괜찮아요 — 거기까지가 오늘의 기록이고, 다음에 이길 ‘지난번의 나’예요.
-                </Point>
-                <Point title="오픈 · 스타터">
-                  오픈은 기본 개수, 스타터는 모든 개수가 절반이에요(셀트런 거리는 같고, 푸시업은 무릎을 대도 돼요). 처음이면
-                  스타터부터 추천해요.
-                </Point>
                 <Point title="재는 법">
                   체육관에서 코치님께 “{TEST153_NAME} 도전할게요” 하면 코치님이 옆에서 시간을 재고 개수를 세요. 회원이 직접 기록을
                   넣는 방법은 없어서 모든 기록이 공평해요.
                 </Point>
-                <Point title="안전이 먼저">어지럽거나 가슴이 아프면 바로 멈추고 코치님께 말해요. 기록보다 몸이 먼저예요.</Point>
-              </ul>
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem value="moves" className="border-border px-4 last:border-b-0">
-            <AccordionTrigger className="py-3 text-left text-body font-bold text-foreground hover:no-underline">
-              동작별 하는 법 · 인정 기준
-            </AccordionTrigger>
-            <AccordionContent className="space-y-3 text-label leading-relaxed text-muted-foreground">
-              <p>
-                기준을 안 지키면 코치님이 <b className="text-foreground">“노렙(No rep)”</b> — 그 한 번은 개수에 안 들어가요. 오른쪽
-                숫자는 오픈 개수, 아래는 스타터 개수예요.
-              </p>
-              <p>
-                🥊 표시 종목은 원투나 복싱 스텝이 들어간 종목이에요. 원투는 세게 치는 게 아니라{" "}
-                <b className="text-foreground">팔을 끝까지 뻗고 가드로 돌아와야</b> 1번으로 세요.
-              </p>
-              <ul className="space-y-2">
-                <MoveCard
-                  no=""
-                  name={TEST153_RUN_GUIDE.name}
-                  reps={
-                    <>
-                      매 라운드 1번
-                      <span className="block text-micro font-medium text-muted-foreground">모두 8번 · 스타터도 같아요</span>
-                    </>
-                  }
-                  howTo={TEST153_RUN_GUIDE.howTo}
-                  standard={TEST153_RUN_GUIDE.standard}
-                  tip={TEST153_RUN_GUIDE.tip}
-                />
-                {TEST153_STATIONS.map((s, i) => (
-                  <MoveCard
-                    key={s.name}
-                    no={`${i + 1}`}
-                    name={s.name}
-                    reps={
-                      <>
-                        {s.open}
-                        {s.unit}
-                        <span className="block text-micro font-medium text-muted-foreground">
-                          스타터 {stationReps(s, "starter")}
-                          {s.unit}
-                        </span>
-                      </>
-                    }
-                    howTo={s.howTo}
-                    standard={s.standard}
-                    tip={s.tip}
-                    boxing={s.boxing}
-                    video={s.video}
-                  />
-                ))}
-              </ul>
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem value="score" className="border-border px-4 last:border-b-0">
-            <AccordionTrigger className="py-3 text-left text-body font-bold text-foreground hover:no-underline">
-              어떻게 평가하나요?
-            </AccordionTrigger>
-            <AccordionContent className="space-y-3 text-label leading-relaxed text-muted-foreground">
-              <ul className="space-y-2">
-                <Point title="기록 = 걸린 시간">첫 셀트런 출발부터 마지막 줄넘기까지 걸린 시간이에요. 짧을수록 좋은 기록이에요.</Point>
+                <Point title="시계는 멈추지 않아요">
+                  첫 셀트런 출발부터 마지막 줄넘기까지 한 번에 재요. 숨 고르는 시간도 기록에 들어가요. 짧을수록 좋은 기록이에요.
+                </Point>
+                <Point title="오픈 · 스타터">
+                  오픈은 기본 개수, 스타터는 모든 개수가 절반이에요(셀트런 거리는 같고, 푸시업은 무릎을 대도 돼요). 기록도 순위도
+                  따로 매겨요. 처음이면 스타터부터, 편해지면 오픈에 도전해요.
+                </Point>
                 <Point title="구간 기록 16개">
                   구간이 끝날 때마다 코치님이 눌러서 셀트런 8번과 종목 8개의 시간이 따로 남아요. 다시 재면 구간마다 몇 초
                   줄었는지 · 늘었는지 보여 줘요.
                 </Point>
-                <Point title="타임캡 기록 ‘캡 + 남은 개수’">
-                  25:00까지 못 끝내면 남은 개수로 기록해요. 남은 개수 = 하던 구간에서 남은 개수 + 그 뒤 구간 전부(셀트런 1번은
-                  10개로 세요).
+                <Point title="타임캡 25분 · ‘캡 + 남은 개수’">
+                  25분이 되면 멈추고 남은 개수로 기록해요. 남은 개수 = 하던 구간에서 남은 개수 + 그 뒤 구간 전부(셀트런 1번은
+                  10개로 세요). 다 못 끝내도 괜찮아요 — 그게 다음에 이길 ‘지난번의 나’예요.
                 </Point>
                 <li className="rounded-xl bg-muted/40 px-3 py-2 text-label">
                   예) 오픈에서 25:00에 7라운드 런지가 10걸음 남았다면 → 10 + 셀트런 10 + 줄넘기 200 ={" "}
@@ -607,17 +490,14 @@ const Test153Board = ({ onOpenMember }: Props) => {
                 </Point>
                 <Point title={`PB (${TEST153_NAME_EN} · ${TEST153_NAME_KO})`}>
                   부문마다 가장 좋은 기록이 내 PB예요. 새 기록이 PB보다 좋으면 PB가 바뀌어요 — 그 순간이 지난번의 나를 이긴
-                  거예요.
+                  거예요. 첫 기록과 PB를 비교해 몇 초(몇 %) 빨라졌는지도 보여 줘요.
                 </Point>
-                <Point title="얼마나 좋아졌나">
-                  첫 기록과 PB를 비교해서 몇 초(몇 %) 빨라졌는지 보여 줘요. 다음 목표는 언제나 PB보다 1초 빠르게.
-                </Point>
-                <Point title="오픈 · 스타터는 따로">기록도 순위도 따로 매겨요. 스타터가 편해지면 오픈에 도전해 보세요.</Point>
                 <Point title="순위는 참고">
                   회원마다 부문별 PB 하나로 줄을 세워요. 우리 지점 · 전체, 성별, 연령대로 볼 수 있어요. 코치님 등 운영진 계정은
                   순위에 들어가지 않아요.
                 </Point>
                 <Point title="잘못 잰 기록">코치님이 7일 안에 취소할 수 있어요.</Point>
+                <Point title="안전이 먼저">어지럽거나 가슴이 아프면 바로 멈추고 코치님께 말해요. 기록보다 몸이 먼저예요.</Point>
               </ul>
             </AccordionContent>
           </AccordionItem>
