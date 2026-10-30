@@ -991,18 +991,6 @@ img.emo3d {
 /* 아이콘+글자 한 덩어리 — 부모 flex 에서도 예전 글자처럼 한 칸 (스타일 없음, 자리만) */
 .emo3d-run { display: inline; }
 
-/* 🥊 붕대 감기 방향 표시 (components/handwrap/HandWrapGuideDraw, 2026-10-27 대표님: "사진에 방향과 어디에서 시작해서 어디로 오는지")
-   길이 시작에서 끝으로 그려지고(hw-draw — pathLength 1 기준), 점 · 글 · 화살촉이 톡 나온다(hw-pop). 시작 점은 숨 쉬듯(hw-pulse). */
-@keyframes hw-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-@keyframes hw-pop { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: scale(1); } }
-@keyframes hw-fade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes hw-pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 12px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
-.hw-pulse { position: relative; }
-.hw-pulse::after { content: ""; position: absolute; inset: 0; border-radius: 9999px; animation: hw-pulse-ring 1.6s ease-out 0.4s infinite; }
-@media (prefers-reduced-motion: reduce) {
-  .hw-guide *, .hw-guide *::after { animation: none !important; }
-}
-
 /* ✨ 정확도 칩 — 홀로그램 (components/home/HealthGainsCard, 2026-10-28 대표님: "정확도 80% 이라고만 표기되어있어서
    사람들이 정보입력해야하는건지 모를것같아 버튼에 홀로그램 임펙트 효과"). 신체 정보를 덜 넣은 회원에게만.
    무지갯빛이 천천히 흐르고(holo-flow) · 프리즘 결(::before) · 빛줄기가 3초쯤마다 지나가고(::after holo-glint) · 처음 나올 때 한 번 톡(holo-pop).

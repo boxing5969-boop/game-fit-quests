@@ -3,15 +3,16 @@ import { existsSync, statSync } from "node:fs";
 import { join } from "node:path";
 import {
   HANDWRAP_DEFAULT_HAND,
+  HANDWRAP_DEFAULT_STEP_RATE,
   HANDWRAP_KEY_POINTS,
   HANDWRAP_MISTAKES,
   HANDWRAP_NUMBERED_STEPS,
   HANDWRAP_STEPS,
+  HANDWRAP_STEP_SPEEDS,
   HANDWRAP_VIEW_NOTE,
   handWrapStepLabel,
   handWrapStepParam,
   mirrorArrows,
-  type GuidePt,
 } from "./handWrapGuide";
 
 const BANNED = ["벨트", "계급", "자동 가산점", "무조건", "확정 혜택"];
@@ -22,7 +23,7 @@ const stepText = (i: number) => {
 };
 const file = (url: string) => join(PUBLIC, url.split("?")[0]);
 
-describe("붕대 감기 — 코팅 설명서와 같은 12단계 사진 설명서 (2026-10-30)", () => {
+describe("붕대 감기 — 코팅 설명서와 같은 12단계 그림 애니메이션 (2026-10-30)", () => {
   it("12단계 + 완성 — 마지막 칸만 완성, 번호는 1~12", () => {
     expect(HANDWRAP_STEPS).toHaveLength(13);
     expect(HANDWRAP_NUMBERED_STEPS).toBe(12);
@@ -63,57 +64,30 @@ describe("붕대 감기 — 코팅 설명서와 같은 12단계 사진 설명서
     }
   });
 
-  it("사진(4:3)이 public 에 있고 가볍다 · 완성은 사진 3장 · 예전 그림 애니메이션 파일은 없다", () => {
-    const urls = HANDWRAP_STEPS.flatMap((s) => [s.image, ...(s.extras ?? []).map((e) => e.image)]);
-    expect(urls).toHaveLength(15);
-    expect(new Set(urls).size).toBe(15);
-    for (const url of urls) {
-      // 주소 끝 ?v= 는 다시 만든 판 표시(폰 캐시 넘기기) — 파일은 같은 자리
-      expect(url.split("?")[0]).toMatch(/^\/handwrap\/photos\/p\d{2}\.webp$/);
-      expect(existsSync(file(url)), url).toBe(true);
-      expect(statSync(file(url)).size, url).toBeLessThan(200 * 1024);
-    }
-    expect(HANDWRAP_STEPS[12].extras?.map((e) => e.label)).toEqual(["주먹 쥔 모습", "손가락 편 모습"]);
-    expect(existsSync(join(PUBLIC, "handwrap/steps/step01.mp4"))).toBe(false);
-  });
-
-  it("방향 표시 — 좌표는 사진 안(0~100) · 길은 두 점 이상 · 12단계는 시작이 있고 · 완성은 확인할 곳만 · 글은 짧게", () => {
-    const inside = (p: GuidePt) => p[0] >= 0 && p[0] <= 100 && p[1] >= 0 && p[1] <= 100;
+  it("손마다 애니메이션 · 끝 장면 · 작은 그림이 public 에 있고 가볍다 (거울로 뒤집지 않고 따로 만든 왼손)", () => {
     HANDWRAP_STEPS.forEach((s, i) => {
-      const g = s.guide;
-      for (const seg of [...g.segs, ...(g.ghost ?? [])]) {
-        expect(seg.pts.length, `${i + 1}단계`).toBeGreaterThanOrEqual(2);
-        for (const p of seg.pts) expect(inside(p), `${i + 1}단계 ${p}`).toBe(true);
-      }
-      for (const pin of [g.start, g.end, ...(g.marks ?? [])]) {
-        if (!pin) continue;
-        expect(inside(pin.at), `${i + 1}단계 ${pin.label}`).toBe(true);
-        if (pin.lab) expect(inside(pin.lab)).toBe(true);
-        expect(pin.label.length, pin.label).toBeLessThanOrEqual(12);
-      }
-      if (!s.final) {
-        expect(g.segs.length, `${i + 1}단계 길`).toBeGreaterThan(0);
-        expect(g.start, `${i + 1}단계 시작`).toBeTruthy();
+      const id = `step${String(i + 1).padStart(2, "0")}`;
+      for (const [hand, suffix] of [["right", ""], ["left", "_l"]] as const) {
+        const m = s.media[hand];
+        // 주소 끝 ?v= 는 다시 만든 판 표시(폰 캐시 넘기기) — 파일은 같은 자리
+        expect(m.clip.split("?")[0]).toBe(`/handwrap/steps/${id}${suffix}.mp4`);
+        expect(m.image.split("?")[0]).toBe(`/handwrap/steps/${id}${suffix}.webp`);
+        expect(m.thumb.split("?")[0]).toBe(`/handwrap/steps/${id}${suffix}_s.webp`);
+        for (const url of [m.clip, m.image, m.thumb]) {
+          expect(existsSync(file(url)), url).toBe(true);
+          expect(statSync(file(url)).size, url).toBeLessThan(400 * 1024);
+        }
+        expect(statSync(file(m.thumb)).size).toBeLessThan(20 * 1024);
       }
     });
-    // 길 토막이 이어진다 — 앞 토막 끝 = 다음 토막 시작 (손등 ↔ 손바닥으로 넘어가는 곳은 조금 떨어져도 된다)
-    for (const s of HANDWRAP_STEPS) {
-      for (let k = 1; k < s.guide.segs.length; k++) {
-        const prev = s.guide.segs[k - 1].pts;
-        const a = prev[prev.length - 1];
-        const b = s.guide.segs[k].pts[0];
-        expect(Math.hypot(a[0] - b[0], a[1] - b[1]), s.title).toBeLessThan(8);
-      }
-    }
-    const fin = HANDWRAP_STEPS[12].guide;
-    expect(fin.segs).toHaveLength(0);
-    expect(fin.marks?.every((m) => m.kind === "check")).toBe(true);
+    // 예전 9단계 뒤에 붙을 파일이 없다
+    expect(existsSync(join(PUBLIC, "handwrap/steps/step14.mp4"))).toBe(false);
   });
 
   it("기본 손은 오른손 · 보는 방향 글 · 대각선 화살표는 오른손 기준(왼손이면 뒤집기)", () => {
     expect(HANDWRAP_DEFAULT_HAND).toBe("right");
     expect(HANDWRAP_VIEW_NOTE.right).toContain("엄지가 왼쪽");
-    expect(HANDWRAP_VIEW_NOTE.left).toContain("거울");
+    expect(HANDWRAP_VIEW_NOTE.left).toContain("엄지가 오른쪽");
     expect(mirrorArrows("올라가(↗) 내려와(↘) ↖ ↙ → ↑")).toBe("올라가(↖) 내려와(↙) ↗ ↘ → ↑");
   });
 
@@ -126,6 +100,11 @@ describe("붕대 감기 — 코팅 설명서와 같은 12단계 사진 설명서
     expect(handWrapStepParam("2.5")).toBeNull();
     expect(handWrapStepParam("abc")).toBeNull();
     expect(handWrapStepParam(null)).toBeNull();
+  });
+
+  it("속도 — 기본 보통 · 더 천천히 둘", () => {
+    expect(HANDWRAP_STEP_SPEEDS.map((s) => s.rate)).toEqual([0.5, 0.75, 1]);
+    expect(HANDWRAP_STEP_SPEEDS.some((s) => s.rate === HANDWRAP_DEFAULT_STEP_RATE)).toBe(true);
   });
 
   it("감는 방향이 글에도 있다 — 손등에서 엄지 → 새끼 · 올라가는 ↗ · 내려가는 ↘ · 손등 X자 · 손가락 사이 · 벨크로 손목 바깥쪽", () => {
@@ -143,7 +122,7 @@ describe("붕대 감기 — 코팅 설명서와 같은 12단계 사진 설명서
   });
 
   it("금지 문구가 없다", () => {
-    const all = JSON.stringify([HANDWRAP_STEPS, HANDWRAP_MISTAKES, HANDWRAP_KEY_POINTS, HANDWRAP_VIEW_NOTE]);
+    const all = JSON.stringify([HANDWRAP_STEPS, HANDWRAP_MISTAKES, HANDWRAP_KEY_POINTS, HANDWRAP_STEP_SPEEDS, HANDWRAP_VIEW_NOTE]);
     for (const w of BANNED) expect(all.includes(w), w).toBe(false);
   });
 });

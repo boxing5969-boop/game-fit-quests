@@ -14,16 +14,14 @@
  *   2026-10-27 10:01 대표님: "한눈에 9장 · 누르면 상세페이지처럼 · 사진에 방향과 어디서 시작해 어디로 · 움직이는 사진으로 · 한 단계씩"
  *     → '9단계 설명서' = 한눈에 9칸(사진 + 방향 + 짧은 글) → 누르면 상세(/handwrap?step=N): 움직이는 사진 → 끝 장면에 시작 → 끝 방향 → 반복
  *   2026-10-30 대표님: 코팅 설명서 사진 "이사진이랑 동일하게 붕대 감기 탭에 고화질 애니메이션으로 제작해서 넣어줘"
- *     → 맨 위가 '12단계 설명서' — 9단계와 대표님 10-20 영상 칸('영상으로 보기')은 내렸다.
- *     → 같은 날 "일러스트 애니메이션 그림이 좀 별로야 · 사진 고화질로 만들고 방향 알려주는 버전 · 밑에 설명까지" →
- *       사진마다 방향 표시 + 밑에 설명 전부 (사진은 대표님이 새로 찍어 주시기로, 그동안 설명서 사진 임시).
+ *     → 맨 위가 '12단계 설명서'(그림 애니메이션 · 오른손/왼손) — 9단계와 대표님 10-20 영상 칸('영상으로 보기')은 내렸다.
  *       훈련 라이브러리에 코치가 넣은 영상이 있으면 '코치 영상 보기' 단추만 남는다.
  *
  *   신규 회원 첫날: 코치님은 한 손만 빠르게 감아 주고, 다른 손은 회원이 영상을 보며 직접 감는다.
  *   그리고 집에서 혼자 감아 보는 미션(HandWrapPracticeCard) — 다음 수업 때 코치님이 회원 상세에서 기록을 본다.
  *
  *   · 코치 영상: 훈련 라이브러리 '복싱 붕대 감기'에 코치가 넣은 영상 (있을 때만).
- *   · 글 · 사진: data/handWrapGuide.ts — 12단계 + 완성(글 · 사진 · 방향 좌표) · 흔한 실수 · 핵심 포인트.
+ *   · 글 · 그림: data/handWrapGuide.ts — 12단계 + 완성(글 · 손마다 애니메이션) · 흔한 실수 · 핵심 포인트.
  */
 import { useCallback, useState } from "react";
 import { createPortal } from "react-dom";
@@ -82,12 +80,12 @@ const HandWrapGuidePage = () => {
         첫날엔 코치님이 한 손을 감아 드려요 · 다른 손은 보면서 직접 감아 봐요
       </p>
 
-      {/* ── 12단계 설명서 — 코팅 설명서와 같은 순서 · 사진마다 방향 + 밑에 설명 (2026-10-30 대표님) ── */}
+      {/* ── 12단계 설명서 — 코팅 설명서와 같은 순서의 그림 애니메이션 (2026-10-30 대표님) ── */}
       <section aria-labelledby="handwrap-steps-h" className="mt-4">
         <h2 id="handwrap-steps-h" className="px-1 text-heading text-foreground">
           {HANDWRAP_NUMBERED_STEPS}단계 설명서
         </h2>
-        <p className="mt-0.5 px-1 text-label text-muted-foreground">사진마다 감는 방향이 그려지고, 밑에 설명이 있어요</p>
+        <p className="mt-0.5 px-1 text-label text-muted-foreground">그림을 누르면 붕대가 감기는 모습이 움직여요</p>
         <HandWrapStepViewer className="mt-2" />
         {coachUrl && (
           <button
