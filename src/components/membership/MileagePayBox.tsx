@@ -15,6 +15,7 @@ import {
   parseMileageInput,
 } from "@/lib/mileagePay";
 import { cn } from "@/lib/utils";
+import MileageSavedBanner from "@/components/membership/MileageSavedBanner";
 
 interface Props {
   /** 마일리지 10% 기준 금액(원) — 상품 하나면 그 상품 금액, 장바구니면 수강권 금액 (2026-10-27) */
@@ -122,6 +123,8 @@ const MileagePayBox = ({ price, payTotal, baseLabel = "결제 금액", balance, 
           </p>
         </>
       )}
+      {/* 지금까지 아낀 금액 (2026-10-30 대표님 "배민처럼") — 할인받은 적이 있을 때만 */}
+      {!isStaff && <MileageSavedBanner variant="line" className="mt-2.5" />}
     </section>
   );
 };

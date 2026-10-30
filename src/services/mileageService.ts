@@ -83,6 +83,39 @@ export async function getMyMileage(limit = 20): Promise<MyMileage> {
   };
 }
 
+/** 마일리지로 아낀 금액 (2026-10-30 대표님 "배민처럼 지금까지 총 얼마를 할인받았는지") — 앱 결제(취소 뺌) + 데스크 결제 할인 */
+export interface MileageSavings {
+  total: number;
+  count: number;
+  app: number;
+  desk: number;
+  firstAt: string | null;
+  lastAt: string | null;
+}
+
+export async function getMyMileageSavings(): Promise<MileageSavings> {
+  const { data, error } = await sbRpc<Record<string, unknown>>("get_my_mileage_savings");
+  if (error) throw new Error(translateError(error));
+  return {
+    total: Math.max(0, toInt(data?.total, 0)),
+    count: Math.max(0, toInt(data?.count, 0)),
+    app: Math.max(0, toInt(data?.app, 0)),
+    desk: Math.max(0, toInt(data?.desk, 0)),
+    firstAt: typeof data?.first_at === "string" ? data.first_at : null,
+    lastAt: typeof data?.last_at === "string" ? data.last_at : null,
+  };
+}
+
+/** "결제 할인 3번 · 앱 19,000원 · 데스크 3,000원" — 한쪽만 있으면 '앱 결제' / '데스크 결제' */
+export function savingsDetail(s: Pick<MileageSavings, "count" | "app" | "desk">): string {
+  const won = (n: number) => `${Math.trunc(n).toLocaleString("ko-KR")}원`;
+  const parts = [`결제 할인 ${s.count}번`];
+  if (s.app > 0 && s.desk > 0) parts.push(`앱 ${won(s.app)}`, `데스크 ${won(s.desk)}`);
+  else if (s.desk > 0) parts.push("데스크 결제");
+  else if (s.app > 0) parts.push("앱 결제");
+  return parts.join(" · ");
+}
+
 /** 관리자 설정 화면 — 적립 시작 시각까지 포함한 규칙 (app_settings 는 로그인 회원 누구나 읽을 수 있다) */
 export async function getMileageRules(): Promise<MileageRules> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -99,3 +99,13 @@ describe("마일리지 내역 — 이름 · 월별", () => {
     expect(g[0].label).toBe("2026년 10월");
   });
 });
+
+import { savingsDetail } from "./mileageService";
+
+describe("마일리지로 아낀 금액 한 줄 (2026-10-30 대표님 '배민처럼')", () => {
+  it("앱 · 데스크 둘 다면 금액까지, 한쪽만이면 어디서인지만", () => {
+    expect(savingsDetail({ count: 3, app: 19000, desk: 3000 })).toBe("결제 할인 3번 · 앱 19,000원 · 데스크 3,000원");
+    expect(savingsDetail({ count: 1, app: 22000, desk: 0 })).toBe("결제 할인 1번 · 앱 결제");
+    expect(savingsDetail({ count: 2, app: 0, desk: 5000 })).toBe("결제 할인 2번 · 데스크 결제");
+  });
+});

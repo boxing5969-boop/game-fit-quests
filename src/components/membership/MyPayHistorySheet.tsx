@@ -10,7 +10,8 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Coins, ExternalLink, Loader2, Receipt } from "lucide-react";
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useAuth } from "@/contexts/AuthContext";
-import { useMyMileage } from "@/hooks/useMileage";
+import { useMyMileage, useMyMileageSavings } from "@/hooks/useMileage";
+import MileageSavedBanner from "@/components/membership/MileageSavedBanner";
 import { isIosApp, loadIosAppNative } from "@/lib/iosApp";
 import {
   MILEAGE_PAGE,
@@ -120,6 +121,7 @@ const OrderCard = ({ o }: { o: PayOrder }) => {
 };
 
 const PayTab = ({ userId }: { userId: string }) => {
+  const savings = useMyMileageSavings();
   const q = useQuery({
     queryKey: ["myPayHistory", "orders", userId],
     staleTime: 30_000,
@@ -138,6 +140,8 @@ const PayTab = ({ userId }: { userId: string }) => {
   }
   const orders = q.data ?? [];
   const t = payTotals(orders);
+  // 아낀 금액은 데스크 결제 할인까지 (2026-10-30) — 서버 값을 못 읽으면 앱 결제 것만
+  const saved = savings.data ? savings.data.total : t.saved;
   return (
     <div className="space-y-3">
       {/* 결제가 하나도 없으면 0원 칸 두 개를 그리지 않는다 (2026-10-28 리디자인 — 빈 것은 그리지 않기) */}
@@ -150,7 +154,8 @@ const PayTab = ({ userId }: { userId: string }) => {
           </div>
           <div className="rounded-2xl bg-amber-500/10 px-3.5 py-3">
             <p className="text-label font-bold text-muted-foreground">마일리지로 아낌</p>
-            <p className="mt-0.5 text-heading tabular-nums text-foreground">{won(t.saved)}</p>
+            <p className="mt-0.5 text-heading tabular-nums text-foreground">{won(saved)}</p>
+            {(savings.data?.desk ?? 0) > 0 && <p className="text-label text-muted-foreground">데스크 할인 포함</p>}
           </div>
         </div>
       )}
@@ -197,6 +202,8 @@ const MileageTab = ({ userId }: { userId: string }) => {
           </p>
         )}
       </div>
+      {/* 지금까지 아낀 금액 (2026-10-30 대표님 "배민처럼") — 할인받은 적이 있을 때만 */}
+      <MileageSavedBanner variant="tile" />
 
       {q.isLoading ? (
         <div className="h-40 animate-pulse rounded-2xl bg-muted/60" aria-label="마일리지 내역을 불러오는 중" />
