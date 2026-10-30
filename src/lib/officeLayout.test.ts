@@ -62,3 +62,15 @@ describe("전체 메뉴 — 지점 회의실 칸", () => {
     expect(flatAppMenu({ diet: true, staff: false, office: false }).map((m) => m.path)).not.toContain("/office");
   });
 });
+
+describe("전체 메뉴 — 로드맵 칸 (2026-10-30 대표님 \"로드맵 메뉴가 안 보여\")", () => {
+  it("회원 메뉴 2번째 칸 — MY복서 바로 다음", () => {
+    const entries = buildAppMenu({ diet: false, staff: false, office: false });
+    const second = entries[1];
+    expect(second && "path" in second ? [second.path, second.label] : null).toEqual(["/rank-up", "로드맵"]);
+  });
+  it("코치진에게도 보인다 — 153운영본부 다음", () => {
+    const paths = flatAppMenu({ diet: false, staff: true, office: true }).map((m) => m.path);
+    expect(paths.indexOf("/rank-up")).toBe(paths.indexOf("/office") + 1);
+  });
+});

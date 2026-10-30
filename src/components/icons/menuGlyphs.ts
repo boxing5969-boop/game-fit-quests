@@ -31,7 +31,8 @@ export type MenuGlyphName =
   | "fish"
   | "idcard"
   | "gear"
-  | "survey";
+  | "survey"
+  | "roadmap";
 
 type GradientKey = "mint" | "mintD" | "gold" | "goldD" | "ink" | "paper" | "skin";
 
@@ -131,6 +132,16 @@ export const MENU_GLYPHS: Record<SvgGlyphName, (p: string) => string> = {
 <path d="M24.0 16.9L25.1 19.5L27.9 19.7L25.7 21.6L26.4 24.3L24.0 22.8L21.6 24.3L22.3 21.6L20.1 19.7L22.9 19.5Z" fill="url(#${p}gold)" stroke="url(#${p}gold)" stroke-width="1" stroke-linejoin="round"/>
 <path d="M31.4 16.9L32.5 19.5L35.3 19.7L33.1 21.6L33.8 24.3L31.4 22.8L29.0 24.3L29.7 21.6L27.5 19.7L30.3 19.5Z" ${EDGE_FILL} stroke-width="1" stroke-linejoin="round"/>
 <g ${INK_FILL}><rect x="16" y="28.5" width="16" height="2.6" rx="1.3" opacity=".55"/><rect x="16" y="33.6" width="10.5" height="2.6" rx="1.3" opacity=".3"/></g>`,
+
+  /** 로드맵(랭크업 /rank-up) — 접힌 지도 + 민트 점선 길 + 끝의 금 깃발 (2026-10-30 대표님 "로드맵 메뉴가 안 보여") */
+  roadmap: (p) => `${defs(p, ["paper", "ink", "mint", "gold", "goldD"])}
+<path d="M5 17.5 17 13l14 4.5L43 13v26l-12 4.5-14-4.5-12 4.5Z" fill="url(#${p}paper)"/>
+<path d="M17 13l14 4.5v26L17 39Z" ${EDGE_FILL} opacity=".6"/>
+<path d="M5 17.5 17 13l14 4.5L43 13v26l-12 4.5-14-4.5-12 4.5Z" fill="none" stroke="url(#${p}ink)" stroke-width="3" stroke-linejoin="round"/>
+<path d="M10 37.5c3.5-1.2 4.5-6 8.5-7s6.5 2.5 10.5.5 4.5-6.5 7.5-8.5" fill="none" stroke="url(#${p}mint)" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="3.6 3.2"/>
+<circle cx="10" cy="37.5" r="3.2" fill="url(#${p}mint)"/><circle cx="10" cy="37.5" r="1.2" fill="#fff"/>
+<path d="M36.5 22.5V4.5" stroke="url(#${p}goldD)" stroke-width="2.6" stroke-linecap="round"/>
+<path d="M36.5 4.6h8.6l-2.5 3.6 2.5 3.6h-8.6Z" fill="url(#${p}gold)" stroke="url(#${p}gold)" stroke-width="1" stroke-linejoin="round"/>`,
 
   /** 153 챌린지 — 왕좌(킹 보드) 금관 + 민트 보석 */
   crown: (p) => `${defs(p, ["gold", "goldD", "mint"])}

@@ -103,6 +103,16 @@ describe("자주 찾는 말", () => {
     expect(ids("알림")[0]).toBe("f:notifications");
     expect(ids("공지")[0]).toBe("f:notifications");
   });
+  it("로드맵 → 랭크업 로드맵 (2026-10-30 대표님 \"검색해도 안 나와\")", () => {
+    expect(ids("로드맵")[0]).toBe("f:rankup");
+    expect(ids("랭크업")[0]).toBe("f:rankup");
+    expect(ids("ㄹㄷㅁ")[0]).toBe("f:rankup");
+    const hit = FEATURES.find((e) => e.id === "f:rankup");
+    expect(hit?.action).toEqual({ kind: "route", to: "/rank-up" });
+  });
+  it("단증 → 단증혜택이 1등 (로드맵의 '단증 도전' 이 앞지르지 않는다)", () => {
+    expect(ids("단증")[0]).toBe("f:cert");
+  });
   it("출석왕 → 153 챌린지", () => {
     expect(ids("출석왕")[0]).toBe("f:challenge");
   });
