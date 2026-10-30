@@ -43,3 +43,7 @@ verify_jwt = false
 # 네이버 톡톡 웹훅 · 카카오 스킬 앞단 — 봇 서버 답 그대로 + 메뉴 자리에만 Claude 답 (별도 시스템 talktalk) — 2026-10-27
 [functions.talktalk-ai]
 verify_jwt = false
+
+# 만족도 조사 자동 답변 · 의견 알림 — 크론이 15분마다 x-auto-key 로 호출 (2026-10-30).
+[functions.survey-auto-reply]
+verify_jwt = false

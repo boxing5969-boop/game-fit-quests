@@ -4,7 +4,7 @@
 // 앱 화면(설문·소리함 → 받은 응답)이 이 함수를 부르면:
 //   1) 부른 사람이 앱의 본사(super_admin · admin)인지 확인하고
 //   2) 153OS 를 서버 키(OS_SERVICE_KEY — 서버에만 있다)로 읽어 최근 6개월 것만 돌려준다.
-// 읽기 전용이다. 처리 상태 바꾸기·답장은 경영리포트에서 한다. 연락처는 가운데를 가려서 보낸다.
+// 읽기 전용이다. 처리 상태 바꾸기는 경영리포트에서 한다(만족도 조사 답변은 앱 survey_replies). 연락처는 가운데를 가려서 보낸다.
 // verify_jwt = true (로그인한 앱 사용자만).
 // deno-lint-ignore-file no-explicit-any
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -80,11 +80,15 @@ Deno.serve(async (req) => {
       .map((a: any) => {
         const q = one(a.survey_questions);
         const max = Number(q?.options?.max);
+        // 보기 답은 QR · 예전 응답에 글 없이 번호(answer_score)만 남아 있다 — 보기 글로 채운다 (2026-10-30, 받은 설문함에 '답 없음'으로 보이던 것)
+        const choices = Array.isArray(q?.options?.choices) ? q.options.choices : null;
+        const sc = typeof a.answer_score === "number" ? a.answer_score : null;
+        const picked = q?.question_type === "multiple_choice" && choices && sc != null && sc >= 1 && sc <= choices.length ? String(choices[sc - 1]) : null;
         return {
           q: String(q?.question_text ?? ""),
           type: String(q?.question_type ?? "text"),
           order: Number(q?.order_index ?? 0),
-          text: a.answer_text ?? null,
+          text: a.answer_text || picked || null,
           score: a.answer_score ?? null,
           max: Number.isFinite(max) && max > 0 ? max : null,
         };

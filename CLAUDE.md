@@ -443,6 +443,11 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 응답은 예전처럼 153OS 에 익명 저장(본사 받은 설문함도 계속 익명). `submit_survey_response` 가 돌려주는 `response_id` 를 앱이 `record_my_survey_receipt` 로 남긴다(`survey_receipts` = 응답 번호 + 보낸 회원 · 답한 내용은 안 남김).
 - 본사(전체관리자 · 관리자): 받은 설문함(`/survey?inbox=1`) 만족도 조사 카드마다 '답변 달기 · 고치기 · 지우기(빈 칸)' → `reply_survey_response`(`survey_replies`). 앱에서 낸 설문이면 보낸 회원에게만 알림(`/survey?mine=1`) · '회원이 읽었어요' 표시. QR · 예전 설문은 보낸 사람을 몰라 저장만.
 - 회원: 설문 첫 화면 맨 아래 '내가 보낸 만족도 조사'(`get_my_survey_receipts` · 최근 20개) — 답변 · '새 답변' · 보면 읽음(`mark_my_survey_replies_read`). 두 표는 직접 읽기·쓰기 막음, 함수로만 — [20261030100752_survey_replies.sql](supabase/migrations/20261030100752_survey_replies.sql). 고객의 소리 답변은 아직 없다.
+- 자동 답변 · 의견 알림 (2026-10-30 대표님 "의견 없고 긍정적인 답변만 하신 분들에게는 하루 지나고 내가 남긴 것처럼 … 의견이나 개선은 나한테 알림"): Edge Function `survey-auto-reply`(크론 15분 · x-auto-key · verify_jwt false) — 판정·문장은 [logic.ts](supabase/functions/survey-auto-reply/logic.ts)(테스트 src/lib/surveyAutoReply.test.ts).
+  - 긍정만 = 별점 모두 4점 이상 · 보기 '특별히 없습니다'(만료 회원 '개인 사정'도) · 적은 글 없음 · '아니오' 없음 → 낸 지 24시간 지나도 답이 없으면 한국 시각 9~21시에 대표님 계정(마지막으로 직접 단 답변의 주인)으로 답변(`survey_replies.auto` true · 회원에겐 구분 안 보임). 감사 + (추천·코치 5점·다시 이용 한마디) + 건강·행복 + 노력하는 체육관 — 응답 번호로 정해져 같은 응답은 같은 문장, 최근 10개와 겹치면 바꾼다.
+  - 그 밖(개선 보기 · 3점 이하 · 적은 글 — 칭찬 글도 대표님이 직접) → 답이 없으면 대표님께 알림 한 번(8~22시, '📋 만족도 조사에 의견이 왔어요' → /survey?inbox=1). 처리 기록 `survey_auto_watch`. 대표님이 먼저 답하면 손대지 않고, 대표님 답변은 덮어쓰지 않는다.
+  - QR · 예전 응답의 보기 답은 글 없이 번호(answer_score)만 있다 → `member-voice-inbox` · `survey-auto-reply` 둘 다 보기 글로 채운다(받은 설문함에 '답 없음'으로 보이던 것, 2026-10-30).
+  - 시험: body `{dry_run: true}` → 할 일만 돌려준다. 끄기 = `select cron.unschedule('survey-auto-reply')`. 마이그레이션 20261030114131 · 20261030114756.
 
 ### 창(모달·시트) 뒤 페이지 스크롤 잠금 (2026-10-19)
 
