@@ -1,33 +1,30 @@
 /**
- * 🎞️ 붕대 감기 12단계 설명서 — 한눈에 12칸 + 완성 → 누르면 상세(그림 애니메이션 + 자세한 설명) → 한 단계씩 따라 하기.
+ * 📷 붕대 감기 12단계 사진 설명서 — 사진마다 방향(시작 → 끝)이 그려지고, 밑에 설명이 모두 보인다.
  *
- *   2026-10-27 대표님: "한눈에 처음부터 끝까지 설명서처럼 · 누르면 상세페이지처럼 · 움직이는 사진으로 · 한 단계씩" (9단계 · 실제 영상 장면)
- *   2026-10-30 대표님: 코팅 설명서 사진 "이사진이랑 동일하게 붕대 감기 탭에 고화질 애니메이션으로 제작해서 넣어줘"
- *     → 설명서와 같은 12단계 + 완성. 단계마다 깨끗한 그림 손에 붕대가 차례로 감기는 애니메이션.
- *       시작(초록 점) · 끝(주황 점) · 바퀴 수 · 손바닥 쪽 길(남색 점선) · '손가락 사이로 넣어요' 같은 표시는 그림 안에 들어 있다.
- *     → 손마다 따로 만든 그림(오른손 기본 · 왼손) — 거울로 뒤집지 않는다(글자가 바르게).
+ *   2026-10-27 대표님: "한눈에 처음부터 끝까지 설명서처럼 · 누르면 상세페이지처럼 · 한 단계씩" (9단계 · 실제 영상 장면)
+ *   2026-10-30 대표님: 코팅 설명서 사진 "이사진이랑 동일하게" → 12단계 그림 애니메이션 →
+ *     "일러스트 애니메이션 그림이 좀 별로야 · 사진 고화질로 만들고 방향 알려주는 버전 · 밑에 설명까지 같이 · 각 그림마다 설명"
  *
- *   한눈에: 3칸 × 4줄 + 완성(넓게) — 끝 장면 작은 그림(손 쪽으로 정사각형) + 번호 · 제목 · 짧은 설명.
- *   상세(주소 ?step=N — 뒤로 가기로 닫힌다): 애니메이션이 반복된다(처음 · 끝에 잠깐 멈춤이 그림 안에 있다). 누르면 멈춤 / 다시.
- *     감는 손(오른손 · 왼손) · 속도(아주 천천히 · 천천히 · 보통) · 이전 / 다음 (옆으로 밀어도 넘어간다).
- *     움직임 줄이기 설정이면 끝 장면만 — 누르면 움직인다.
- *   글 · 그림 주소는 data/handWrapGuide.ts HANDWRAP_STEPS 한 곳.
+ *   설명서: 위에서 아래로 12단계 + 완성. 단계마다 사진(4:3) 위에 방향 표시(HandWrapGuideDraw — 화면에 들어오면 한 번 그려짐)
+ *     + 사진 밑에 설명서 글 · 짧은 설명 · 시작 → 끝 · 자세한 설명 · 팁(줄이지 않음). 사진을 누르면 크게(한 단계씩 따라 하기).
+ *   한 단계씩(주소 ?step=N — 뒤로 가기로 닫힌다): 큰 사진 + 방향 그리기(누르면 다시) · 같은 글 · 이전 / 다음(옆으로 밀어도).
+ *   왼손은 사진을 거울로 뒤집고 방향 표시도 뒤집는다(글자는 그대로). 글 · 사진 · 좌표는 data/handWrapGuide.ts HANDWRAP_STEPS 한 곳.
  */
 import { useCallback, useEffect, useRef, useState, type ReactNode, type TouchEvent } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowRight, ChevronLeft, ChevronRight, Eye, Hand, Pause, Play, RotateCcw, X } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Eye, Hand, Maximize2, Play, RotateCcw, X } from "lucide-react";
+import HandWrapGuideDraw from "@/components/handwrap/HandWrapGuideDraw";
 import {
   HANDWRAP_DEFAULT_HAND,
-  HANDWRAP_DEFAULT_STEP_RATE,
   HANDWRAP_NUMBERED_STEPS,
   HANDWRAP_STEPS,
-  HANDWRAP_STEP_SPEEDS,
   HANDWRAP_VIEW_NOTE,
   handWrapStepLabel,
   handWrapStepParam,
   mirrorArrows,
   type HandSide,
+  type HandWrapStep,
 } from "@/data/handWrapGuide";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { cn } from "@/lib/utils";
@@ -38,9 +35,8 @@ interface Props {
 
 const SWIPE_PX = 40;
 
-/** 이 기기에서 고른 손 · 속도 기억 (못 쓰는 브라우저면 그냥 기본값) */
+/** 이 기기에서 고른 손 기억 (못 쓰는 브라우저면 그냥 기본값) */
 const PREF_HAND = "mb153.handwrap.hand";
-const PREF_RATE = "mb153.handwrap.rate2";
 const readPref = (k: string): string | null => {
   try {
     return window.localStorage.getItem(k);
@@ -87,26 +83,190 @@ const HandChips = ({ hand, setHand }: { hand: HandSide; setHand: (h: HandSide) =
     <Chip on={hand === "right"} onClick={() => setHand("right")}>
       오른손
     </Chip>
-    <Chip on={hand === "left"} onClick={() => setHand("left")}>
-      왼손
+    <Chip on={hand === "left"} onClick={() => setHand("left")} label="왼손 — 사진을 거울로 뒤집어 보기">
+      왼손 (거울)
     </Chip>
   </div>
 );
 
-/** 그림 속 표시 읽는 법 — 한눈에 보기 아래 · 상세 글 아래 */
+/** 사진 위 표시 읽는 법 */
 const Legend = ({ className }: { className?: string }) => (
   <p className={cn("flex flex-wrap items-center gap-x-2.5 gap-y-1 text-label font-semibold text-muted-foreground", className)}>
     <span className="inline-flex items-center gap-1">
       <span aria-hidden className="h-2.5 w-2.5 rounded-full bg-[#10B981] ring-2 ring-white" /> 시작
     </span>
     <span className="inline-flex items-center gap-1">
-      <span aria-hidden className="h-2.5 w-2.5 rounded-full bg-[#F97316] ring-2 ring-white" /> 끝
+      <span aria-hidden className="h-1 w-4 rounded-full bg-[#FACC15]" /> 붕대 길
     </span>
     <span className="inline-flex items-center gap-1">
-      <span aria-hidden className="w-4 border-t-[3px] border-dashed border-[#1E3A5F]" /> 손바닥 쪽으로 지나가는 길
+      <span aria-hidden className="w-4 border-t-2 border-dashed border-muted-foreground" /> 손바닥 쪽
+    </span>
+    <span className="inline-flex items-center gap-1">
+      <span aria-hidden className="h-2.5 w-2.5 rounded-full bg-[#F97316] ring-2 ring-white" /> 끝
     </span>
   </p>
 );
+
+/** 사진 + 방향 표시 (4:3). drawKey 가 바뀌면 방향을 처음부터 다시 그린다. 왼손은 사진 · 표시를 거울로 */
+const StepPhoto = ({
+  step,
+  hand,
+  draw,
+  drawKey,
+  still,
+  eager,
+  className,
+}: {
+  step: HandWrapStep;
+  hand: HandSide;
+  /** 방향을 보여 줄지 (화면에 들어오기 전엔 숨겨 두었다가 들어오면 그린다) */
+  draw: boolean;
+  drawKey: string | number;
+  still: boolean;
+  eager?: boolean;
+  className?: string;
+}) => {
+  const mirrored = hand === "left";
+  return (
+    <div className={cn("relative aspect-[4/3] w-full overflow-hidden bg-[#E5ECEF]", className)}>
+      <img
+        src={step.image}
+        alt={`${handWrapStepLabel(HANDWRAP_STEPS.indexOf(step))} ${step.title} — 사진`}
+        loading={eager ? "eager" : "lazy"}
+        decoding="async"
+        className={cn("absolute inset-0 h-full w-full object-cover", mirrored && "-scale-x-100")}
+      />
+      {draw && <HandWrapGuideDraw key={`${drawKey}-${hand}`} guide={step.guide} mirrored={mirrored} mode={still ? "still" : "anim"} />}
+    </div>
+  );
+};
+
+/** 사진 밑 글 — 설명서 글 · 시작 → 끝 · 자세한 설명 · 팁 (줄이지 않고 다 보인다) */
+const StepText = ({ step, idx, hand, big }: { step: HandWrapStep; idx: number; hand: HandSide; big?: boolean }) => {
+  const txt = (t: string) => (hand === "left" ? mirrorArrows(t) : t);
+  const label = handWrapStepLabel(idx);
+  return (
+    <div>
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <span className={cn("text-label font-black", step.final ? "text-[#EA580C]" : "text-primary")}>{label}</span>
+        <span className="rounded-md bg-secondary px-1.5 py-0.5 text-micro font-bold text-muted-foreground">설명서 · {step.sheet}</span>
+      </div>
+      <h3 className={cn("mt-0.5 font-black leading-snug text-foreground", big ? "text-heading" : "text-body")}>{step.title}</h3>
+      <p className="mt-1 text-label font-semibold leading-relaxed text-foreground/80">{txt(step.short)}</p>
+
+      <div className="mt-2.5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-stretch gap-1.5">
+        <div className="rounded-xl bg-[#10B981]/10 px-3 py-2 ring-1 ring-[#10B981]/35">
+          <p className="text-micro font-black text-[#059669]">시작</p>
+          <p className="mt-0.5 text-label font-bold leading-snug text-foreground">{step.from}</p>
+        </div>
+        <div className="flex items-center">
+          <ArrowRight className="h-4 w-4 text-muted-foreground" aria-hidden />
+        </div>
+        <div className="rounded-xl bg-[#F97316]/10 px-3 py-2 ring-1 ring-[#F97316]/35">
+          <p className="text-micro font-black text-[#EA580C]">끝</p>
+          <p className="mt-0.5 text-label font-bold leading-snug text-foreground">{step.to}</p>
+        </div>
+      </div>
+
+      <ol className="mt-3 space-y-2">
+        {step.how.map((h, i) => (
+          <li key={h} className="flex gap-2.5">
+            <span className="mt-[3px] flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-foreground text-micro font-black text-background">
+              {i + 1}
+            </span>
+            <span className="min-w-0 text-label leading-relaxed text-foreground">{txt(h)}</span>
+          </li>
+        ))}
+      </ol>
+
+      {step.tip && (
+        <p className="mt-3 flex items-start gap-2 rounded-xl bg-secondary/70 px-3 py-2.5 text-label font-semibold leading-relaxed text-foreground">
+          <span aria-hidden className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+          <span className="min-w-0">{txt(step.tip)}</span>
+        </p>
+      )}
+    </div>
+  );
+};
+
+/** 완성 — 더 보여 줄 사진 (주먹 · 손가락 편 모습) */
+const ExtraPhotos = ({ step, hand }: { step: HandWrapStep; hand: HandSide }) =>
+  step.extras?.length ? (
+    <div className="mt-2 grid grid-cols-2 gap-2">
+      {step.extras.map((e) => (
+        <figure key={e.image} className="min-w-0">
+          <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-[#E5ECEF] ring-1 ring-border/60">
+            <img
+              src={e.image}
+              alt={`완성된 모습 — ${e.label}`}
+              loading="lazy"
+              decoding="async"
+              className={cn("absolute inset-0 h-full w-full object-cover", hand === "left" && "-scale-x-100")}
+            />
+          </div>
+          <figcaption className="mt-1 text-center text-label font-bold text-muted-foreground">{e.label}</figcaption>
+        </figure>
+      ))}
+    </div>
+  ) : null;
+
+/** 설명서 한 칸 — 화면에 들어오면 방향을 한 번 그린다 */
+const StepCard = ({ step, idx, hand, still, onOpen }: { step: HandWrapStep; idx: number; hand: HandSide; still: boolean; onOpen: () => void }) => {
+  /** 사진이 화면에 반 넘게 들어오면 방향을 그린다 (칸 전체를 보면 글이 길어 안 걸리는 칸이 있다) */
+  const ref = useRef<HTMLButtonElement>(null);
+  const [seen, setSeen] = useState(still);
+  useEffect(() => {
+    if (seen) return;
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setSeen(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setSeen(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.6 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [seen]);
+
+  return (
+    <li id={`handwrap-step-${idx + 1}`} className="scroll-mt-20 overflow-hidden rounded-2xl bg-card shadow-elev-1 ring-1 ring-border/60">
+      <button
+        ref={ref}
+        type="button"
+        onClick={onOpen}
+        aria-label={`${handWrapStepLabel(idx)} ${step.title} — 크게 보기`}
+        className="group relative block w-full"
+      >
+        <StepPhoto step={step} hand={hand} draw={seen} drawKey={idx} still={still} />
+        <span
+          className={cn(
+            "pointer-events-none absolute left-2 top-2 flex h-7 min-w-7 items-center justify-center rounded-full px-2 text-label font-black tabular-nums shadow",
+            step.final ? "bg-[#F97316] text-white" : "bg-primary text-primary-foreground",
+          )}
+        >
+          {step.final ? "완성" : idx + 1}
+        </span>
+        {/* 번호는 왼쪽 위 · 크게는 오른쪽 위 — 방향 글은 손목(아래)에 많고, 위쪽 글은 가운데에 둔다(왼손 거울에서도 안 겹치게) */}
+        <span className="pointer-events-none absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-micro font-bold text-white">
+          <Maximize2 className="h-3 w-3" aria-hidden /> 크게
+        </span>
+      </button>
+      <div className="px-4 pb-4 pt-3">
+        {step.extras && <ExtraPhotos step={step} hand={hand} />}
+        <div className={step.extras ? "mt-3" : undefined}>
+          <StepText step={step} idx={idx} hand={hand} />
+        </div>
+      </div>
+    </li>
+  );
+};
 
 const HandWrapStepViewer = ({ className }: Props) => {
   const steps = HANDWRAP_STEPS;
@@ -115,23 +275,15 @@ const HandWrapStepViewer = ({ className }: Props) => {
   const openIdx = handWrapStepParam(params.get("step"));
   /** 이 화면에서 눌러 연 상세면 닫을 때 뒤로 가기 (주소로 바로 들어온 상세면 주소만 지운다) */
   const pushedRef = useRef(false);
+  const [still] = useState(prefersReducedMotion);
   const [hand, setHandState] = useState<HandSide>(() => {
     const h = readPref(PREF_HAND);
     return h === "left" || h === "right" ? h : HANDWRAP_DEFAULT_HAND;
   });
-  const [rate, setRateState] = useState<number>(() => {
-    const r = Number(readPref(PREF_RATE));
-    return HANDWRAP_STEP_SPEEDS.some((s) => s.rate === r) ? r : HANDWRAP_DEFAULT_STEP_RATE;
-  });
-  const txt = (t: string) => (hand === "left" ? mirrorArrows(t) : t);
 
   const setHand = (h: HandSide) => {
     setHandState(h);
     writePref(PREF_HAND, h);
-  };
-  const setRate = (r: number) => {
-    setRateState(r);
-    writePref(PREF_RATE, String(r));
   };
 
   const withStep = (i: number | null) => (prev: URLSearchParams) => {
@@ -162,125 +314,72 @@ const HandWrapStepViewer = ({ className }: Props) => {
     if (openIdx == null) pushedRef.current = false;
   }, [openIdx]);
 
-  // 상세에서 다음 단계 끝 장면을 미리 받아 둔다 — 넘길 때 바로 뜨게 (한 장 약 20KB)
+  // 상세에서 다음 사진을 미리 받아 둔다 — 넘길 때 바로 뜨게
   useEffect(() => {
     if (openIdx == null) return;
     const next = steps[openIdx + 1];
     if (next) {
       const img = new Image();
-      img.src = next.media[hand].image;
+      img.src = next.image;
     }
-  }, [openIdx, steps, hand]);
+  }, [openIdx, steps]);
 
   return (
-    <div className={cn("overflow-hidden rounded-2xl bg-card shadow-elev-1 ring-1 ring-border/60", className)}>
-      <div className="border-b border-border/60 px-3 py-2.5">
+    <div className={className}>
+      <div className="rounded-2xl bg-card px-3 py-3 shadow-elev-1 ring-1 ring-border/60">
         <HandChips hand={hand} setHand={setHand} />
-      </div>
-
-      {/* 한눈에 12칸 + 완성 */}
-      <ol className="grid grid-cols-3 gap-x-2 gap-y-3.5 px-3 pb-2 pt-3" aria-label={`붕대 감기 ${HANDWRAP_NUMBERED_STEPS}단계 — 누르면 자세히`}>
-        {steps.map((s, i) => (
-          <li key={s.media.right.clip} className={cn("min-w-0", s.final && "col-span-3")}>
-            <button
-              type="button"
-              onClick={() => openStep(i)}
-              aria-label={`${handWrapStepLabel(i)} ${s.title} — 자세히 보기`}
-              className={cn("group block w-full text-left", s.final && "flex items-center gap-3 rounded-2xl bg-secondary/60 p-2")}
-            >
-              <span
-                className={cn(
-                  "relative block aspect-square overflow-hidden rounded-xl bg-[#EAF0F3] ring-1 ring-border/70 transition-transform group-active:scale-[0.97]",
-                  s.final && "w-[38%] shrink-0",
-                )}
-              >
-                <img src={s.media[hand].thumb} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
-                <span
-                  className={cn(
-                    "absolute left-1 top-1 flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-label font-black tabular-nums shadow",
-                    s.final ? "bg-[#F97316] text-white" : "bg-primary text-primary-foreground",
-                  )}
-                >
-                  {s.final ? "완성" : i + 1}
-                </span>
-                <span className="absolute bottom-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/55">
-                  <Play className="ml-px h-2.5 w-2.5 fill-white text-white" aria-hidden />
-                </span>
-              </span>
-              <span className={cn("block min-w-0", s.final ? "flex-1" : "mt-1.5")}>
-                <span className="block text-label font-black leading-snug text-foreground">{s.title}</span>
-                {/* 짧은 글은 두 줄까지 — 나머지는 누르면 상세에 */}
-                <span className="mt-0.5 line-clamp-2 text-label leading-snug text-muted-foreground">{txt(s.short)}</span>
-              </span>
-            </button>
-          </li>
-        ))}
-      </ol>
-
-      <div className="px-3 pb-3 pt-1">
+        <Legend className="mt-2" />
         <button
           type="button"
           onClick={() => openStep(0)}
-          className="flex h-12 w-full items-center justify-center gap-1.5 rounded-full bg-foreground text-label font-black text-background transition-transform active:scale-[0.98]"
+          className="mt-3 flex h-12 w-full items-center justify-center gap-1.5 rounded-full bg-foreground text-label font-black text-background transition-transform active:scale-[0.98]"
         >
           <Play className="h-4 w-4 fill-current" aria-hidden /> 1단계부터 한 단계씩 따라 하기
         </button>
-        <Legend className="mt-2 justify-center" />
       </div>
+
+      {/* 설명서 — 사진마다 방향 + 밑에 설명 */}
+      <ol className="mt-3 space-y-3" aria-label={`붕대 감기 ${HANDWRAP_NUMBERED_STEPS}단계 설명서`}>
+        {steps.map((s, i) => (
+          <StepCard key={s.image} step={s} idx={i} hand={hand} still={still} onOpen={() => openStep(i)} />
+        ))}
+      </ol>
 
       {openIdx != null &&
         createPortal(
-          <StepDetail idx={openIdx} hand={hand} setHand={setHand} rate={rate} setRate={setRate} onGo={goStep} onClose={closeDetail} />,
+          <StepDetail idx={openIdx} hand={hand} setHand={setHand} still={still} onGo={goStep} onClose={closeDetail} />,
           document.body,
         )}
     </div>
   );
 };
 
-// ── 상세 — 한 단계씩 따라 하기 ─────────────────────────────
+// ── 한 단계씩 따라 하기 ─────────────────────────────
 
 interface DetailProps {
   idx: number;
   hand: HandSide;
   setHand: (h: HandSide) => void;
-  rate: number;
-  setRate: (r: number) => void;
+  still: boolean;
   onGo: (i: number) => void;
   onClose: () => void;
 }
 
-const StepDetail = ({ idx, hand, setHand, rate, setRate, onGo, onClose }: DetailProps) => {
+const StepDetail = ({ idx, hand, setHand, still, onGo, onClose }: DetailProps) => {
   const steps = HANDWRAP_STEPS;
   const total = steps.length;
   const step = steps[idx];
-  const media = step.media[hand];
   const label = handWrapStepLabel(idx);
-  const txt = (t: string) => (hand === "left" ? mirrorArrows(t) : t);
   useModalDismiss(true, onClose);
 
-  const [still] = useState(prefersReducedMotion);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const rateRef = useRef(rate);
-  /** 움직이는 중(첫 장면이 나왔다) — 그 전엔 끝 장면 그림을 덮어 둔다 */
-  const [playing, setPlaying] = useState(false);
-  const [paused, setPaused] = useState(still);
-  /** 폰이 저절로 트는 걸 막았다 — 누르면 튼다 */
-  const [blocked, setBlocked] = useState(false);
+  const [run, setRun] = useState(0);
   const touchX = useRef<number | null>(null);
 
-  // 단계 · 손이 바뀌면 처음부터 + 글은 맨 위로
+  // 단계가 바뀌면 글은 맨 위로
   useEffect(() => {
-    setPlaying(false);
-    setBlocked(false);
-    setPaused(still);
     scrollRef.current?.scrollTo({ top: 0 });
-  }, [idx, hand, still]);
-
-  useEffect(() => {
-    rateRef.current = rate;
-    if (videoRef.current) videoRef.current.playbackRate = rate;
-  }, [rate]);
+  }, [idx]);
 
   // 키보드(컴퓨터): ← → 로 넘기기
   useEffect(() => {
@@ -291,30 +390,6 @@ const StepDetail = ({ idx, hand, setHand, rate, setRate, onGo, onClose }: Detail
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [idx, onGo]);
-
-  const tryPlay = (v: HTMLVideoElement) => {
-    v.playbackRate = rateRef.current;
-    const p = v.play();
-    if (p && typeof p.catch === "function") {
-      p.catch(() => {
-        setBlocked(true);
-        setPaused(true);
-      });
-    }
-  };
-
-  const onTapPicture = () => {
-    const v = videoRef.current;
-    if (!v) return;
-    if (v.paused) {
-      setPaused(false);
-      setBlocked(false);
-      tryPlay(v);
-    } else {
-      v.pause();
-      setPaused(true);
-    }
-  };
 
   const onTouchStart = (e: TouchEvent) => {
     touchX.current = e.touches[0]?.clientX ?? null;
@@ -366,7 +441,7 @@ const StepDetail = ({ idx, hand, setHand, rate, setRate, onGo, onClose }: Detail
         <div className="mt-2.5 flex gap-1" role="tablist" aria-label="단계 바로 가기">
           {steps.map((s, i) => (
             <button
-              key={s.media.right.clip}
+              key={s.image}
               type="button"
               role="tab"
               aria-selected={i === idx}
@@ -386,134 +461,29 @@ const StepDetail = ({ idx, hand, setHand, rate, setRate, onGo, onClose }: Detail
       </div>
 
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        {/* 그림 애니메이션 — 표시(시작 · 끝 · 바퀴 수 · 손바닥 쪽 길)는 그림 안에 들어 있다 */}
-        <div
-          className="relative mx-auto aspect-[4/3] w-full max-w-xl overflow-hidden bg-[#EAF0F3]"
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
-          aria-roledescription="단계 넘기기"
-        >
-          <video
-            key={media.clip}
-            ref={videoRef}
-            src={media.clip}
-            poster={media.image}
-            muted
-            playsInline
-            loop
-            autoPlay={!still}
-            preload="auto"
-            onPlaying={() => {
-              setPlaying(true);
-              setPaused(false);
-              setBlocked(false);
-            }}
-            onLoadedMetadata={(e) => {
-              e.currentTarget.playbackRate = rateRef.current;
-              if (!still && e.currentTarget.paused) tryPlay(e.currentTarget);
-            }}
-            onPlay={(e) => {
-              // 일부 폰은 처음 재생할 때 속도를 1로 되돌린다 — 다시 건다
-              if (e.currentTarget.playbackRate !== rateRef.current) e.currentTarget.playbackRate = rateRef.current;
-            }}
-            aria-label={`${label} ${step.title} — 붕대가 감기는 그림`}
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-          {/* 끝 장면 — 움직이기 전 · 움직임 줄이기 */}
-          <img
-            key={media.image}
-            src={media.image}
-            alt={`${label} ${step.title} — 다 감은 모습`}
-            decoding="async"
-            className={cn(
-              "pointer-events-none absolute inset-0 h-full w-full object-cover transition-opacity duration-300",
-              playing ? "opacity-0" : "opacity-100",
-            )}
-          />
-
-          {/* 누르면 멈춤 / 다시 */}
-          <button
-            type="button"
-            onClick={onTapPicture}
-            aria-label={paused ? "움직이는 모습 보기" : "멈추기"}
-            className="absolute inset-0"
-          />
-
-          {/* 몇 단계 — 그림 위 글 띠(위쪽)와 겹치지 않게 왼쪽 아래 (완성은 그림 안에 '완성!'이 있다) */}
-          {!step.final && (
-            <span className="pointer-events-none absolute bottom-2.5 left-2.5 rounded-full bg-black/60 px-2.5 py-1 text-label font-black text-white shadow backdrop-blur-sm">
-              {label}
-            </span>
-          )}
-          {paused || blocked ? (
-            <span className="pointer-events-none absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-full bg-white/95 px-3 py-1.5 text-label font-black text-black shadow">
-              <Play className="h-3.5 w-3.5 fill-current" aria-hidden /> 눌러서 움직이기
-            </span>
-          ) : (
-            <span className="pointer-events-none absolute bottom-2.5 right-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/45">
-              <Pause className="h-3.5 w-3.5 fill-white text-white" aria-hidden />
+        {/* 사진 + 방향 — 누르면 방향을 다시 그린다 */}
+        <div className="relative mx-auto w-full max-w-xl" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} aria-roledescription="단계 넘기기">
+          <StepPhoto step={step} hand={hand} draw drawKey={`${idx}-${run}`} still={still} eager />
+          <button type="button" onClick={() => setRun((r) => r + 1)} aria-label="방향 다시 보기" className="absolute inset-0" />
+          {!still && (
+            <span className="pointer-events-none absolute right-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-micro font-bold text-white">
+              <RotateCcw className="h-3 w-3" aria-hidden /> 누르면 다시
             </span>
           )}
         </div>
 
-        {/* 손 · 속도 */}
-        <div className="space-y-2 border-b border-border/60 px-4 py-2.5">
-          <HandChips hand={hand} setHand={setHand} />
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-            <span className="text-label font-bold text-muted-foreground">속도</span>
-            {HANDWRAP_STEP_SPEEDS.map((s) => (
-              <Chip key={s.rate} on={rate === s.rate} onClick={() => setRate(s.rate)}>
-                {s.label}
-              </Chip>
-            ))}
-          </div>
-          <p className="flex items-center gap-1.5 text-label font-semibold text-muted-foreground">
-            <Eye aria-hidden className="h-3.5 w-3.5 shrink-0" />
-            {HANDWRAP_VIEW_NOTE[hand]}
-          </p>
-        </div>
-
-        {/* 글 — 설명서 글 · 시작 → 끝 · 자세한 설명 · 팁 */}
-        <div className="px-4 pb-6 pt-3.5" aria-live="polite">
-          <p className={cn("text-label font-black", step.final ? "text-[#EA580C]" : "text-primary")}>{label}</p>
-          <h3 className="mt-0.5 text-heading font-black leading-snug text-foreground">{step.title}</h3>
-          <p className="mt-1 inline-flex max-w-full items-center gap-1.5 rounded-lg bg-secondary px-2 py-1 text-label font-semibold text-muted-foreground">
-            <span className="shrink-0 text-micro font-black text-foreground/70">설명서</span>
-            <span className="min-w-0 truncate">{step.sheet}</span>
-          </p>
-
-          <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-stretch gap-1.5">
-            <div className="rounded-xl bg-[#10B981]/10 px-3 py-2 ring-1 ring-[#10B981]/35">
-              <p className="text-micro font-black text-[#059669]">시작</p>
-              <p className="mt-0.5 text-label font-bold leading-snug text-foreground">{step.from}</p>
-            </div>
-            <div className="flex items-center">
-              <ArrowRight className="h-4 w-4 text-muted-foreground" aria-hidden />
-            </div>
-            <div className="rounded-xl bg-[#F97316]/10 px-3 py-2 ring-1 ring-[#F97316]/35">
-              <p className="text-micro font-black text-[#EA580C]">끝</p>
-              <p className="mt-0.5 text-label font-bold leading-snug text-foreground">{step.to}</p>
-            </div>
-          </div>
-
-          <ol className="mt-3.5 space-y-2.5">
-            {step.how.map((h, i) => (
-              <li key={h} className="flex gap-2.5">
-                <span className="mt-[3px] flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-foreground text-micro font-black text-background">
-                  {i + 1}
-                </span>
-                <span className="min-w-0 text-label leading-relaxed text-foreground">{txt(h)}</span>
-              </li>
-            ))}
-          </ol>
-
-          {step.tip && (
-            <p className="mt-3.5 flex items-start gap-2 rounded-xl bg-secondary/70 px-3 py-2.5 text-label font-semibold leading-relaxed text-foreground">
-              <span aria-hidden className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-              <span className="min-w-0">{txt(step.tip)}</span>
+        <div className="mx-auto max-w-xl px-4 pb-6 pt-3">
+          <div className="space-y-2">
+            <HandChips hand={hand} setHand={setHand} />
+            <p className="flex items-center gap-1.5 text-label font-semibold text-muted-foreground">
+              <Eye aria-hidden className="h-3.5 w-3.5 shrink-0" />
+              {HANDWRAP_VIEW_NOTE[hand]}
             </p>
-          )}
-
+          </div>
+          {step.extras && <ExtraPhotos step={step} hand={hand} />}
+          <div className="mt-3.5 border-t border-border/60 pt-3.5" aria-live="polite">
+            <StepText step={step} idx={idx} hand={hand} big />
+          </div>
           <Legend className="mt-3" />
         </div>
       </div>

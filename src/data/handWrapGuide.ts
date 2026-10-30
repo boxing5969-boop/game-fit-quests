@@ -1,17 +1,18 @@
 /**
- * 🥊 붕대 감기 가이드 — 12단계 그림 애니메이션 설명서 · 흔한 실수 · 핵심 포인트.
+ * 🥊 붕대 감기 가이드 — 12단계 사진 설명서(사진 위 방향 표시 + 사진마다 밑에 설명) · 흔한 실수 · 핵심 포인트.
  *
  *   지난 길: 2026-10-13 그림 8단계 → 10-15~16 사진 · 그림 13단계 → 10-17 대표님 "2가지 방식 모두 지워줘" →
  *     10-20 대표님 영상(옆에서 · 앞에서) + 단계 사진 → 10-27 실제로 감는 장면 9단계 설명서(끝 장면 위에 방향 좌표를 그림).
  *
  *   2026-10-30 대표님: 체육관에 붙어 있는 코팅 설명서(12단계 + 완성된 모습) 사진을 보내며
- *     "이사진이랑 동일하게 붕대 감기 탭에 고화질 애니메이션으로 제작해서 넣어줘" → 고른 것: 12단계로 바꾸기 · 일러스트 애니메이션.
- *     → 9단계(실제 영상 장면)를 지우고, 설명서와 같은 순서의 12단계 + 완성을 깨끗한 그림 손으로 다시 만들었다.
- *       붕대가 차례로 감기는 960x720 애니메이션(H.264) — 시작(초록 점) · 끝(주황 점) · 바퀴 수 · 손바닥 쪽으로 지나가는 길(남색 점선)
- *       · '손가락 사이로 넣어요' · '손바닥 쪽' 같은 표시가 그림 안에 들어 있다 (앱이 위에 따로 그리지 않는다).
- *     → 오른손(기본) · 왼손 영상을 따로 만들었다 (stepNN.mp4 · stepNN_l.mp4) — 거울로 뒤집지 않아 글자가 바르게 보인다.
+ *     "이사진이랑 동일하게 붕대 감기 탭에 고화질 애니메이션으로 제작해서 넣어줘" → 12단계 그림 애니메이션을 만들었더니
+ *     "일러스트 애니메이션 그림이 좀 별로야 · 사진 고화질로 만들고 방향 알려주는 버전 · 밑에 설명까지 · 각 그림마다 설명"
+ *     → 사진 설명서로: 사진마다 시작(초록) → 붕대 길(노랑 · 흰 점선 = 손바닥 쪽) → 끝(주황)이 그려지고(HandWrapGuideDraw),
+ *       사진 밑에 설명서 글 · 시작 → 끝 · 자세한 설명 · 팁이 모두 보인다(줄이지 않음). 그림 애니메이션 파일은 지웠다.
+ *     → 사진: 대표님이 체육관에서 12단계를 새로 찍어 주시기로(10-30). 그동안은 코팅 설명서 사진을 가볍게 정리해
+ *       임시로 쓴다(8번은 AI 복원 시험본). 새 사진이 오면 public/handwrap/photos/pNN.webp 를 바꾸고
+ *       guide 좌표를 새 사진을 보고 다시 잡고 STEP_MEDIA_VERSION 을 올린다.
  *     → 위 큰 영상(대표님 10-20 영상 '영상으로 보기')은 화면에서 내렸다. 파일(public/handwrap/front · side)은 되살리기 쉽게 남겨 둠.
- *     만든 도구: 손 그림 SVG + 단계별 붕대 길(Playwright로 한 장씩 찍어 ffmpeg) — 다시 만들면 STEP_MEDIA_VERSION 을 올린다.
  *
  *   설명서 속 방법(오른손 손등을 내려다보면 엄지가 왼쪽): 엄지에 걸기 → 손목 감기 → 손등을 ↗ 대각선으로 지나 정권(주먹 마디) →
  *     정권 감기 → ↘ 대각선으로 다시 손목(손등 X자) → 손목 한 바퀴 → 새끼 쪽 손가락 사이로 넣어 손바닥을 건너 엄지·검지 사이로 →
@@ -27,11 +28,46 @@
 /** 훈련 라이브러리에서 영상을 찾는 이름 — DB 마이그레이션(handwrap_home_practice)이 이 이름으로 넣는다. 바꾸면 둘 다 */
 export const HANDWRAP_EXERCISE_NAME = "복싱 붕대 감기";
 
-/** 어느 손을 감을 때 보나 — 손마다 따로 만든 애니메이션 */
+/** 어느 손을 감을 때 보나 — 왼손은 사진을 거울로 뒤집어 보여 준다 (사진 속에 글자가 없어서 괜찮다) */
 export type HandSide = "left" | "right";
 
-/** 처음 보는 사람은 오른손부터 (코팅 설명서 사진이 오른손) */
+/** 처음 보는 사람은 오른손부터 (설명서 사진이 오른손) */
 export const HANDWRAP_DEFAULT_HAND: HandSide = "right";
+
+// ── 사진 위 방향 표시 ─────────────────────────────
+
+/** 사진 위 자리 — [가로 %, 세로 %] (오른손 사진 기준 · 왼손은 가로를 뒤집는다) */
+export type GuidePt = readonly [number, number];
+
+/** 붕대가 지나가는 길 한 토막 — 점들을 매끈한 곡선으로 잇는다 */
+export interface GuideSeg {
+  pts: readonly GuidePt[];
+  /** 손바닥 쪽(안 보이는 쪽)으로 지나가는 길 — 점선 */
+  back?: boolean;
+}
+
+/** 점 + 글 — side: 글을 점의 오른쪽(r) · 왼쪽(l) · 위(t) · 아래(b)에. lab 이 있으면 글을 그 자리에 두고 선으로 잇는다 */
+export interface GuidePin {
+  at: GuidePt;
+  label: string;
+  side?: "r" | "l" | "t" | "b";
+  lab?: GuidePt;
+}
+
+export interface GuideMark extends GuidePin {
+  /** count: 바퀴 수 · note: 짧은 말 · x: 손등 X 자리 · check: 확인할 곳 (초록 점) */
+  kind: "count" | "note" | "x" | "check";
+}
+
+/** 방향 표시 — 사진 위에 시작(초록) → 길(노랑 · 점선은 손바닥 쪽) → 끝(주황) */
+export interface HandWrapGuideDraw {
+  segs: readonly GuideSeg[];
+  /** 앞 단계에서 이미 지나간 길 — 흐리게 (예: 손등 X 의 다른 한 줄) */
+  ghost?: readonly GuideSeg[];
+  start?: GuidePin;
+  end?: GuidePin;
+  marks?: readonly GuideMark[];
+}
 
 export interface HandWrapStep {
   /** 번호 대신 '완성'으로 보이는 마지막 칸 (코팅 설명서의 '완성된 모습') */
@@ -39,9 +75,9 @@ export interface HandWrapStep {
   title: string;
   /** 코팅 설명서 사진 밑 글 그대로 */
   sheet: string;
-  /** 한눈에 보기 — 그림 밑 짧은 설명 (두 줄까지) */
+  /** 짧은 설명 한 줄 (사진 아래 맨 위) */
   short: string;
-  /** 어디서 시작해서 → 어디로 (그림의 초록 점 → 주황 점과 같은 말) */
+  /** 어디서 시작해서 → 어디로 (사진의 초록 점 → 주황 점과 같은 말) */
   from: string;
   to: string;
   /** 자세한 설명 — 차례대로 한 줄씩 */
@@ -50,40 +86,127 @@ export interface HandWrapStep {
   tip?: string;
   /** 감는 방향 한 줄 */
   dir: string;
-  /** 손마다 애니메이션 · 끝 장면(포스터 — 움직임 줄이기면 이것만) · 작은 그림(360px, 위 글 띠 없이) */
-  media: Record<HandSide, { clip: string; image: string; thumb: string }>;
+  /** 사진(4:3, 오른손) — public/handwrap/photos/pNN.webp */
+  image: string;
+  /** 사진 위 방향 표시 */
+  guide: HandWrapGuideDraw;
+  /** 더 보여 줄 사진 (완성 — 주먹 · 손가락 편 모습) */
+  extras?: ReadonlyArray<{ image: string; label: string }>;
 }
 
-/** 단계 그림 고친 판 — 다시 만들면 올린다. 폰이 예전 파일을 그대로 쓰지 않게 (2026-10-30 12단계 그림으로 다시) */
-export const STEP_MEDIA_VERSION = "20261030-12";
+/** 사진 고친 판 — 사진을 바꾸면 올린다. 폰이 예전 파일을 그대로 쓰지 않게 (2026-10-30 설명서 사진 임시판) */
+export const STEP_MEDIA_VERSION = "20261030-p1";
 
-/** 단계 그림 주소 — public/handwrap/steps/stepNN(.mp4 · .webp · _s.webp), 왼손은 stepNN_l… */
-const stepMedia = (n: number): HandWrapStep["media"] => {
-  const v = `?v=${STEP_MEDIA_VERSION}`;
-  const one = (suffix: string) => {
-    const id = `step${String(n).padStart(2, "0")}${suffix}`;
-    return { clip: `/handwrap/steps/${id}.mp4${v}`, image: `/handwrap/steps/${id}.webp${v}`, thumb: `/handwrap/steps/${id}_s.webp${v}` };
-  };
-  return { right: one(""), left: one("_l") };
-};
+/** 사진 주소 (public/handwrap/photos/pNN.webp) */
+const photo = (n: number): string => `/handwrap/photos/p${String(n).padStart(2, "0")}.webp?v=${STEP_MEDIA_VERSION}`;
 
-/** 그림을 보는 방향 — 내 손등을 내려다본 모습 */
+/** 사진을 보는 방향 */
 export const HANDWRAP_VIEW_NOTE: Record<HandSide, string> = {
-  right: "내 오른손 손등을 내려다본 모습 (엄지가 왼쪽)",
-  left: "내 왼손 손등을 내려다본 모습 (엄지가 오른쪽)",
+  right: "내 오른손을 내려다본 모습이에요 (엄지가 왼쪽)",
+  left: "왼손은 사진을 거울로 뒤집어 보여 줘요 (엄지가 오른쪽)",
 };
 
 /** 글 속 대각선 화살표는 오른손 기준 — 왼손이면 좌우를 바꾼다 (↗ ↔ ↖ · ↘ ↔ ↙) */
 export const mirrorArrows = (text: string): string =>
   text.replace(/[↗↖↘↙]/g, (c) => ({ "↗": "↖", "↖": "↗", "↘": "↙", "↙": "↘" })[c] ?? c);
 
-/** 애니메이션 속도 — 그림은 따라 하기 좋은 빠르기로 만들었고, 더 천천히도 볼 수 있다 */
-export const HANDWRAP_STEP_SPEEDS: ReadonlyArray<{ rate: number; label: string }> = [
-  { rate: 0.5, label: "아주 천천히" },
-  { rate: 0.75, label: "천천히" },
-  { rate: 1, label: "보통" },
-];
-export const HANDWRAP_DEFAULT_STEP_RATE = 1;
+// ── 사진마다 방향 좌표 (사진 위 %, 오른손) — 사진을 바꾸면 새 사진을 보고 다시 잡는다 ─────────────
+// 2026-10-30 임시판: 코팅 설명서 사진(가로 4:3 칸에 맞춰 양옆을 채움) 위에 잡았다.
+// 사진 위 왼쪽 위 = 번호 · 오른쪽 위 = '크게' 자리 — 위쪽 글(note · count)은 가로 30~65% 에 두어 왼손(거울)에서도 겹치지 않게.
+
+const G1: HandWrapGuideDraw = {
+  segs: [{ pts: [[31, 72], [50, 76], [70, 82], [90, 88]] }],
+  start: { at: [30, 71], label: "엄지 고리", side: "t" },
+  end: { at: [88, 87], label: "손목 새끼 쪽", side: "l" },
+};
+const G2: HandWrapGuideDraw = {
+  segs: [
+    { pts: [[67, 60], [79, 55], [92, 59]] },
+    { back: true, pts: [[92, 59], [88, 75], [76, 80], [66, 70]] },
+  ],
+  start: { at: [67, 60], label: "엄지 쪽에서", side: "l" },
+  marks: [{ at: [80, 93], label: "3바퀴", kind: "count" }],
+};
+const G3: HandWrapGuideDraw = {
+  segs: [{ pts: [[60, 88], [65, 64], [68, 40], [66, 16]] }],
+  start: { at: [60, 88], label: "손목 엄지 쪽", side: "l" },
+  end: { at: [66, 16], label: "새끼 쪽 정권", side: "l" },
+};
+const G4: HandWrapGuideDraw = {
+  segs: [
+    { back: true, pts: [[72, 33], [66, 50], [50, 62], [33, 62]] },
+    { pts: [[33, 57], [52, 46], [72, 34]] },
+  ],
+  start: { at: [72, 33], label: "새끼 쪽 정권", side: "b" },
+  marks: [
+    { at: [60, 20], label: "3바퀴", kind: "count" },
+    { at: [34, 8], label: "손가락 쫙", kind: "note" },
+  ],
+};
+const G5: HandWrapGuideDraw = {
+  ghost: [{ pts: [[42, 95], [52, 62], [60, 32]] }],
+  segs: [
+    { back: true, pts: [[50, 30], [38, 44], [27, 40]] },
+    { pts: [[27, 40], [45, 50], [63, 58], [80, 64]] },
+  ],
+  start: { at: [50, 30], label: "정권에서", side: "t" },
+  end: { at: [80, 64], label: "손목 새끼 쪽", side: "b" },
+  marks: [{ at: [52, 53], label: "X", kind: "x" }],
+};
+const G6: HandWrapGuideDraw = {
+  segs: [
+    { pts: [[57, 73], [72, 70], [88, 74]] },
+    { back: true, pts: [[88, 74], [84, 86], [70, 89], [57, 82]] },
+  ],
+  start: { at: [57, 73], label: "손목", side: "l" },
+  marks: [{ at: [40, 10], label: "손목 한 바퀴", kind: "count" }],
+};
+const G7: HandWrapGuideDraw = {
+  segs: [{ pts: [[50, 86], [56, 64], [63, 42]] }],
+  start: { at: [50, 86], label: "손목 엄지 쪽", side: "l" },
+  end: { at: [63, 42], label: "새끼·약지 사이", side: "r" },
+};
+const G8: HandWrapGuideDraw = {
+  segs: [{ pts: [[27, 57], [45, 55], [62, 49], [78, 43]] }],
+  start: { at: [27, 57], label: "새끼·약지 사이", side: "b" },
+  end: { at: [78, 43], label: "엄지·검지 사이", side: "t" },
+  marks: [{ at: [40, 8], label: "손바닥 쪽", kind: "note" }],
+};
+const G9: HandWrapGuideDraw = {
+  segs: [{ pts: [[28, 47], [42, 60], [60, 70], [82, 66]] }],
+  start: { at: [28, 47], label: "엄지·검지 사이", side: "t" },
+  end: { at: [82, 66], label: "손목 새끼 쪽", side: "t" },
+  marks: [{ at: [62, 92], label: "손목 한 바퀴", kind: "count" }],
+};
+const G10: HandWrapGuideDraw = {
+  segs: [
+    { pts: [[60, 88], [63, 62], [66, 38]] },
+    { back: true, pts: [[66, 38], [58, 44], [51, 50]] },
+  ],
+  start: { at: [60, 88], label: "손목 엄지 쪽", side: "r" },
+  end: { at: [51, 50], label: "엄지·검지 사이", side: "l" },
+  marks: [{ at: [42, 8], label: "약지·중지 사이로", kind: "note" }],
+};
+const G11: HandWrapGuideDraw = {
+  segs: [{ pts: [[24, 42], [42, 56], [62, 70], [84, 82]] }],
+  start: { at: [24, 42], label: "엄지·검지 사이", side: "t" },
+  end: { at: [84, 82], label: "손목 새끼 쪽", side: "t" },
+  marks: [{ at: [26, 90], label: "손목 한 바퀴", kind: "count" }],
+};
+const G12: HandWrapGuideDraw = {
+  segs: [{ pts: [[47, 33], [45, 56], [43, 80]] }],
+  start: { at: [47, 33], label: "중지·검지 사이", side: "r" },
+  end: { at: [43, 82], label: "남은 붕대 손목에", side: "r" },
+  marks: [{ at: [78, 92], label: "벨크로는 바깥쪽", kind: "note" }],
+};
+const G13: HandWrapGuideDraw = {
+  segs: [],
+  marks: [
+    { at: [38, 38], label: "정권 두툼", kind: "check", lab: [22, 18] },
+    { at: [48, 55], label: "손등 X자", kind: "check", lab: [80, 42] },
+    { at: [58, 76], label: "손목 단단", kind: "check", lab: [82, 70] },
+  ],
+};
 
 export const HANDWRAP_STEPS: readonly HandWrapStep[] = [
   {
@@ -99,7 +222,8 @@ export const HANDWRAP_STEPS: readonly HandWrapStep[] = [
     ],
     tip: "고리를 엄지에 걸어야 감는 동안 붕대가 빠지지 않아요.",
     dir: "엄지 고리 → 손등 쪽으로 손목을 가로질러 새끼 쪽",
-    media: stepMedia(1),
+    image: photo(1),
+    guide: G1,
   },
   {
     title: "손목 감기",
@@ -114,7 +238,8 @@ export const HANDWRAP_STEPS: readonly HandWrapStep[] = [
     ],
     tip: "처음부터 끝까지 같은 방향으로 감아요 — 손등에서 엄지 → 새끼 쪽.",
     dir: "손등에서 엄지 → 새끼 쪽으로 손목 3바퀴",
-    media: stepMedia(2),
+    image: photo(2),
+    guide: G2,
   },
   {
     title: "손등 지나 정권으로",
@@ -128,7 +253,8 @@ export const HANDWRAP_STEPS: readonly HandWrapStep[] = [
     ],
     tip: "이 대각선이 5단계에서 손등 X자의 한 줄이 돼요.",
     dir: "손목 엄지 쪽에서 ↗ 대각선으로 새끼 쪽 정권까지",
-    media: stepMedia(3),
+    image: photo(3),
+    guide: G3,
   },
   {
     title: "정권 감기",
@@ -143,7 +269,8 @@ export const HANDWRAP_STEPS: readonly HandWrapStep[] = [
     ],
     tip: "손가락을 오므리고 감으면 주먹을 쥘 때 너무 조여요.",
     dir: "손가락 쫙 — 정권을 엄지 → 새끼 쪽으로 3바퀴",
-    media: stepMedia(4),
+    image: photo(4),
+    guide: G4,
   },
   {
     title: "다시 손목으로",
@@ -158,7 +285,8 @@ export const HANDWRAP_STEPS: readonly HandWrapStep[] = [
     ],
     tip: "주먹을 한 번 쥐어 마디가 두툼하게 다 덮였는지 봐요.",
     dir: "검지 쪽 정권에서 ↘ 대각선으로 손목 새끼 쪽 (손등에 X자)",
-    media: stepMedia(5),
+    image: photo(5),
+    guide: G5,
   },
   {
     title: "손목 한 바퀴",
@@ -168,7 +296,8 @@ export const HANDWRAP_STEPS: readonly HandWrapStep[] = [
     to: "손목 한 바퀴",
     how: ["손목을 한 바퀴 더 감아 손등 X자를 고정해요.", "손등에서는 그대로 엄지 쪽 → 새끼 쪽이에요."],
     dir: "손목 한 바퀴 (손등에서 엄지 → 새끼 쪽)",
-    media: stepMedia(6),
+    image: photo(6),
+    guide: G6,
   },
   {
     title: "새끼 쪽 손가락 사이로",
@@ -183,7 +312,8 @@ export const HANDWRAP_STEPS: readonly HandWrapStep[] = [
     ],
     tip: "붕대가 꼬이지 않게 평평하게 펴서 넣어요.",
     dir: "손목 엄지 쪽 → 손등을 따라 새끼·약지 사이로",
-    media: stepMedia(7),
+    image: photo(7),
+    guide: G7,
   },
   {
     title: "손바닥 건너 엄지 사이로",
@@ -192,13 +322,14 @@ export const HANDWRAP_STEPS: readonly HandWrapStep[] = [
     from: "새끼·약지 사이",
     to: "엄지·검지 사이",
     how: [
-      "손을 뒤집어 보면 — 새끼·약지 사이로 넘어온 붕대가 손바닥을 건너요.",
+      "손을 뒤집어 보면 새끼·약지 사이로 넘어온 붕대가 손바닥을 건너요.",
       "엄지와 검지 사이로 붕대를 빼서 손등 쪽으로 나와요.",
-      "그림의 '손바닥 쪽' 표시는 손을 뒤집어 본 모습이에요.",
+      "이 사진은 손을 뒤집어 손바닥 쪽에서 본 모습이에요.",
     ],
     tip: "손바닥을 건널 때 붕대를 펴서 지나가면 주먹 쥘 때 걸리지 않아요.",
     dir: "새끼·약지 사이 → 손바닥을 건너 → 엄지·검지 사이",
-    media: stepMedia(8),
+    image: photo(8),
+    guide: G8,
   },
   {
     title: "넘어와 손목 감기",
@@ -213,7 +344,8 @@ export const HANDWRAP_STEPS: readonly HandWrapStep[] = [
     ],
     tip: "손가락 사이를 하나 지날 때마다 손목을 한 바퀴 감아야 붕대가 밀리지 않아요.",
     dir: "엄지·검지 사이 → ↘ 대각선으로 손목 → 한 바퀴",
-    media: stepMedia(9),
+    image: photo(9),
+    guide: G9,
   },
   {
     title: "다음 손가락 사이로",
@@ -224,10 +356,11 @@ export const HANDWRAP_STEPS: readonly HandWrapStep[] = [
     how: [
       "손목 아래로 돌아 엄지 쪽으로 나와 손등을 따라 올라가요.",
       "이번에는 약지와 중지 사이로 붕대를 넣어요.",
-      "손바닥을 건너 엄지·검지 사이로 빼요 (그림의 점선 = 손바닥 쪽으로 지나가는 길).",
+      "손바닥을 건너 엄지·검지 사이로 빼요 (사진의 흰 점선 = 손바닥 쪽으로 지나가는 길).",
     ],
     dir: "손등을 따라 약지·중지 사이로 → 손바닥을 건너 엄지·검지 사이",
-    media: stepMedia(10),
+    image: photo(10),
+    guide: G10,
   },
   {
     title: "한 번 더 — 손목",
@@ -237,7 +370,8 @@ export const HANDWRAP_STEPS: readonly HandWrapStep[] = [
     to: "손목 한 바퀴",
     how: ["엄지·검지 사이로 나온 붕대를 손등으로 넘겨요.", "손등을 대각선으로 내려와(↘) 손목을 한 바퀴 감아요."],
     dir: "엄지·검지 사이 → ↘ 대각선으로 손목 → 한 바퀴",
-    media: stepMedia(11),
+    image: photo(11),
+    guide: G11,
   },
   {
     title: "마지막 사이 · 남은 붕대는 손목에",
@@ -252,7 +386,8 @@ export const HANDWRAP_STEPS: readonly HandWrapStep[] = [
     ],
     tip: "벨크로가 손바닥 쪽에 있으면 장갑 안에서 쓸려요.",
     dir: "중지·검지 사이 → 손바닥을 건너 엄지 사이 → ↘ 손목에 남은 붕대 다",
-    media: stepMedia(12),
+    image: photo(12),
+    guide: G12,
   },
   {
     final: true,
@@ -268,7 +403,12 @@ export const HANDWRAP_STEPS: readonly HandWrapStep[] = [
     ],
     tip: "너무 느슨하지도, 너무 꽉 조이지도 않게 — 여러 번 감아 보면 금방 늘어요.",
     dir: "손등 X자 · 손가락 사이 세 줄 · 정권 두툼 · 손목 단단",
-    media: stepMedia(13),
+    image: photo(13),
+    guide: G13,
+    extras: [
+      { image: photo(14), label: "주먹 쥔 모습" },
+      { image: photo(15), label: "손가락 편 모습" },
+    ],
   },
 ];
 
