@@ -8,10 +8,9 @@ export const RANK_ICONS: Record<string, string> = { white: "⚪", blue: "🔵", 
 /** 한국복싱협회(KBA) 단증 앱 — 2026-10-30 대표님 "최근에 업데이트한 그쪽으로 연결해 줘야 해, 지금은 예전 버전으로 들어가" →
  *  예전 러버블(lovable)로 만든 옛 승단 신청서 대신 새 앱. 주소가 바뀌면 여기 한 곳만 고친다. */
 export const KBA_CERT_URL = "https://korea-boxing-cert.pages.dev";
-/** 단증 신청하기(4단계 · 작성 중이면 이어서) — 로그인 뒤 바로 신청 화면 */
-export const KBA_DAN_APPLY_URL = `${KBA_CERT_URL}/apply`;
-/** 심사관 신청 · 현황 */
-export const KBA_EXAMINER_URL = `${KBA_CERT_URL}/examiner`;
+/** 2026-10-31 대표님 "단증 앱으로 이동했을 때 로그인 화면이 아닌 홈 화면으로" — /apply · /examiner 는 로그인을 안 했으면
+ *  로그인 화면으로 넘어간다. 그래서 단증 앱 단추는 모두 첫 화면(홈: 회원이에요 · 관장·코치예요 · 둘러보기)으로 보낸다. */
+export const KBA_HOME_URL = `${KBA_CERT_URL}/`;
 
 export const SECRET_MISSIONS = [
   {
@@ -22,7 +21,7 @@ export const SECRET_MISSIONS = [
     subtitle: "심사관이 되어 후배를 이끄세요",
     description: "한국복싱협회 공인 단증 심사관 자격을 취득하세요. 승단 신청서를 작성하고 도전하세요!",
     cta: "🥊 도전하기!",
-    linkTo: KBA_EXAMINER_URL,
+    linkTo: KBA_HOME_URL,
     isExternal: true,
   },
   {
@@ -33,7 +32,7 @@ export const SECRET_MISSIONS = [
     subtitle: "공식 코치로 인정받으세요",
     description: "한국 코치협회 인증 복싱코치 자격증을 획득하세요. 승단 신청서를 작성하고 도전하세요!",
     cta: "🥊 도전하기!",
-    linkTo: KBA_CERT_URL,
+    linkTo: KBA_HOME_URL,
     isExternal: true,
   },
 ];

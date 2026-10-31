@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { isManagerRole, toGlobalLevel } from "@/lib/rankLabels";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 import LevelUpRequestCard from "@/components/LevelUpRequestCard";
-import { RANK_ORDER, RANK_LABELS, RANK_ICONS, SECRET_MISSIONS, DAN_CHALLENGES, FINAL_REWARDS, KBA_DAN_APPLY_URL } from "@/data/sharedConstants";
+import { RANK_ORDER, RANK_LABELS, RANK_ICONS, SECRET_MISSIONS, DAN_CHALLENGES, FINAL_REWARDS, KBA_HOME_URL } from "@/data/sharedConstants";
 const RANK_BG: Record<string, string> = {
   white: "from-muted/50 to-muted/20",
   blue: "from-rank-blue/10 to-rank-blue/5",
@@ -439,7 +439,7 @@ const RankUpPage = () => {
           </div>
           <div className="flex gap-3 p-5">
             <button onClick={() => setDanChallengeOpen(null)} className="flex-1 rounded-xl border border-border bg-secondary py-3 text-body font-bold text-secondary-foreground transition-all active:scale-95">다음에 할게요</button>
-            <button onClick={() => { window.open(KBA_DAN_APPLY_URL, "_blank"); setDanChallengeOpen(null); }} className="flex-1 rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-95">🥊 도전하기!</button>
+            <button onClick={() => { window.open(KBA_HOME_URL, "_blank"); setDanChallengeOpen(null); }} className="flex-1 rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground shadow-glow-soft hover:shadow-glow-primary transition-all active:scale-95">🥊 도전하기!</button>
           </div>
         </DialogContent>
       </Dialog>
