@@ -403,6 +403,26 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - Edge Function [registration-report](supabase/functions/registration-report/index.ts)(super_admin 만, verify_jwt) → 153OS `registration_report(p_from, p_to)`(anon·authenticated 막음): 브로제이 지점은 `sales_entries` '수강권'(신규/재등록은 같은 지점·같은 이름의 앞선 결제로 추정, 하루 한 지점씩 돌아가며 들어옴) · 칠금점은 다짐 매출 `dagym_sales`(다짐 '재등록 여부', 분할 결제는 한 건, 환불은 따로).
 - 칠금 다짐 매출은 매일 예약 작업이 회원 목록과 함께 `/sales/list` 를 읽어 `dagym_sales_put` → `dagym_apply_batch`(kind sales → `dagym_import_sales`)로 넣는다. 2025-01 ~ 2026-10 은 처음에 한 번에 받았다(1,755줄).
 
+### 153OS 앱 통로 — 공지사항 · 우리 지점(소개 · 코치 · 후기) · 1:1 문의 · 153OS 알림 (2026-11-02 대표님 「둘 다 차례로」)
+
+일일경영리포트(153OS) 33단계에서 직원이 쓰는 화면(공지사항 · 푸시메시지 · 지점 소개 정보 · 코치 소개 · 후기관리 · 문의함)을 만들고, 회원 쪽은 153OS 워커 `/api/external/me/*` · `/push/outbox` 통로로 열어 두었다(153-boxing-os `docs/partner-api-app-content.md`). 이 앱이 그 통로를 붙인다. 글 · 사진 · 후기 · 문의는 153OS 에만 있고 앱 DB 에는 없다.
+
+| 파일 | 역할 |
+|---|---|
+| [supabase/functions/os-app-content/index.ts](supabase/functions/os-app-content/index.ts) | 회원 화면 → 153OS. verify_jwt · 부른 사람 토큰의 계정 id 를 `X-Ranking-User-Id` 로, 키는 시크릿 `OS_PARTNER_KEY`(payssam-callback 과 같은 키) · op 로 정한 길만(notices · notice · branch · coaches · reviews · review_save · review_delete · inquiries · inquiry · inquiry_new · inquiry_reply) · 답은 늘 200 `{ok, data, message}` / `{ok:false, code, message}` |
+| [supabase/functions/os-push-pull/](supabase/functions/os-push-pull/index.ts) | 153OS 앱 알림 → 알림함 · 휴대폰. 크론 매분 · x-auto-key · outbox 200줄씩 최대 3번 → `os_push_receive` → ack. 링크 바꾸기는 [logic.ts](supabase/functions/os-push-pull/logic.ts) `mapOsLink`(home · notices · notice:<id> · branch · coaches · reviews · inquiries → 앱 경로, classes 등 앱에 없는 화면은 링크 없음) — 테스트 src/lib/osPushPull.test.ts. 시험 body `{dry_run:true}`(받기만, ack 안 함) · `{probe_user:"<계정 id>"}`(그 계정으로 /me/branch 상태 코드만) |
+| [supabase/migrations/20261102004148_os_push_inbox.sql](supabase/migrations/20261102004148_os_push_inbox.sql) | `os_push_inbox`(153OS 받는 사람 줄마다 한 번만 · 서버 키만) · `os_push_receive(p_rows)` — 처음 보는 줄만 `notifications` 에 문장 하나로 넣는다 → 기존 트리거가 push-send 한 번(휴대폰 알림 켠 회원 몫). 앱에 없는 계정 줄은 받기만 |
+| [supabase/migrations/20261102004149_os_push_pull_cron.sql](supabase/migrations/20261102004149_os_push_pull_cron.sql) | 크론 `os-push-pull`(매분) — 앱 화면이 main 에 올라간 뒤 켠다. 끄기 `select cron.unschedule('os-push-pull');` |
+| [src/services/osContentService.ts](src/services/osContentService.ts) · [src/lib/osContent.ts](src/lib/osContent.ts) | 훅(`["os", 계정, …]` 캐시) · 타입 · 운영시간 줄 · 문의 상태 · 후기 확인(별점 1~5 · 5~2000자, 153OS 와 같은 규칙) |
+| [src/pages/NoticesPage.tsx](src/pages/NoticesPage.tsx) | `/notices` 목록(고정 먼저 · 우리 지점 + 전 지점) · `/notices/:id` 한 글 — 알림함 머리글 오른쪽 '공지사항' 단추 |
+| [src/pages/BranchInfoPage.tsx](src/pages/BranchInfoPage.tsx) | `/branch` 소개(주소 · 전화 · 운영시간 + 153OS '앱에 보이기' 켠 소개 글 · 사진 · 링크) · `?tab=coaches` 코치 · `?tab=reviews` 후기(이름 첫 글자 + ○○ · 내 후기 쓰기/고치기/지우기 · `&write=1` 이면 쓰기 칸부터) |
+| [src/pages/InquiriesPage.tsx](src/pages/InquiriesPage.tsx) | `/inquiries` 내 문의 · `?new=1` 새 문의(분류 6 · 하루 5건, 153OS 가 막음) · `/inquiries/:id` 대화(탭바 숨김 · 30초마다 다시 읽기 · 끝난 문의도 이어 쓰면 다시 열림) |
+
+- 입구: 전체 메뉴 '153 안내' 묶음에 공지사항 · 우리 지점, '의견·신고' 묶음에 1:1 문의 · 검색 notices · branch · coaches · reviews · inquiries(검색 '공지'는 이제 공지사항이 먼저).
+- 153OS 회원과 안 이어진 계정(153OS `members.ranking_app_user_id` 없음 — 코치 · 운영진 계정 포함)은 `NOT_REGISTERED` → 화면에 '지점 회원 정보와 아직 이어지지 않았어요' 안내만.
+- 153OS 화면의 '앱 연결 전' 안내는 153OS `app_link_heartbeats` 가 사라지게 한다 — partner_api(회원이 화면을 열 때) · push_outbox(크론).
+- 회원 1:1 메시지(`/messages`, 회원 · 코치님끼리)와 다르다 — 1:1 문의는 지점 운영진 창구(153OS 문의함에서 답장).
+
 ### 아이폰 앱 (App Store, 2026-10-19 대표님 "애플스토어에도 등록하자")
 
 - 아이폰 앱은 `ios-app/` (Capacitor 8 iOS, 번들 `kr.boxing153.myboxer`, 아이폰 전용, iOS 16+). **myboxer153.com 을 그대로 담는다** — 웹을 고치면 앱도 바로 바뀐다(재심사 없음). 안드로이드는 TWA(구글 플레이)라 별개, 루트 `capacitor.config.ts` 는 얼굴 출석 키오스크 APK.

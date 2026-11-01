@@ -82,21 +82,26 @@ export const APP_MENU: readonly AppMenuEntry[] = [
   { path: "/membership", label: "수강권", glyph: "membership" },
   // 153다이어트 — profiles.diet_program_enabled 가 켜진 회원만.
   { path: "/diet", label: "153다이어트", glyph: "bowl", requires: "diet" },
-  // 153 안내 — 가이드 · 153이란? · 단증혜택
+  // 153 안내 — 공지사항 · 우리 지점 · 가이드 · 153이란? · 단증혜택
+  //   2026-11-02: 공지사항(/notices) · 우리 지점(/branch — 소개 · 코치 · 후기)은 일일경영리포트(153OS)에서 쓴 것을 보여 준다.
   {
     folder: "about",
     label: "153 안내",
     items: [
+      { path: "/notices", label: "공지사항", glyph: "bell" },
+      { path: "/branch", label: "우리 지점", glyph: "glove" },
       { path: "/guide", label: "가이드", glyph: "compass" },
       { path: "/about/153", label: "153이란?", glyph: "fish" },
       { path: "/cert-benefits", label: "단증혜택", glyph: "medal" },
     ],
   },
-  // 의견·신고 — 설문·고객의 소리(경영리포트 만족도 조사·소리함, 참여 보상) + 앱 오류 신고(대표님에게 바로)
+  // 의견·신고 — 1:1 문의(지점 운영진 창구 · 153OS 문의함, 2026-11-02) + 설문·고객의 소리(경영리포트 만족도 조사·소리함, 참여 보상)
+  //   + 앱 오류 신고(대표님에게 바로)
   {
     folder: "voice",
     label: "의견·신고",
     items: [
+      { path: "/inquiries", label: "1:1 문의", glyph: "dm" },
       { path: "/survey", label: "설문·소리함", glyph: "survey" },
       { path: "/feedback", label: "오류 신고", glyph: "bell" },
     ],

@@ -99,9 +99,12 @@ describe("자주 찾는 말", () => {
   it("닉네임 → 닉네임 바꾸기가 1등", () => {
     expect(ids("닉네임")[0]).toBe("f:nickname");
   });
-  it("알림 · 공지 → 알림함", () => {
+  it("알림 → 알림함 · 공지 → 공지사항(2026-11-02 153OS 공지 게시판)", () => {
     expect(ids("알림")[0]).toBe("f:notifications");
-    expect(ids("공지")[0]).toBe("f:notifications");
+    expect(ids("공지")[0]).toBe("f:notices");
+    expect(ids("공지사항")[0]).toBe("f:notices");
+    expect(ids("문의")[0]).toBe("f:inquiries");
+    expect(ids("후기")[0]).toBe("f:reviews");
   });
   it("로드맵 → 랭크업 로드맵 (2026-10-30 대표님 \"검색해도 안 나와\")", () => {
     expect(ids("로드맵")[0]).toBe("f:rankup");

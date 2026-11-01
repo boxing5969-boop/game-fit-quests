@@ -47,3 +47,11 @@ verify_jwt = false
 # 만족도 조사 자동 답변 · 의견 알림 — 크론이 15분마다 x-auto-key 로 호출 (2026-10-30).
 [functions.survey-auto-reply]
 verify_jwt = false
+
+# 회원 화면 ↔ 153OS 공지 · 지점/코치 소개 · 후기 · 1:1 문의 (로그인한 앱 사용자만) — 2026-11-02
+[functions.os-app-content]
+verify_jwt = true
+
+# 153OS 앱 알림 → 알림함 · 휴대폰 — 크론이 매분 x-auto-key 로 호출 (2026-11-02)
+[functions.os-push-pull]
+verify_jwt = false

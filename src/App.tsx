@@ -55,6 +55,10 @@ const MissionsPage = lazyWithRetry(() => import("@/pages/MissionsPage"));
 // LevelMapPage — /rank-up 에 탭으로 통합, /levelmap 경로는 리다이렉트만 유지.
 const RewardsPage = lazyWithRetry(() => import("@/pages/RewardsPage"));
 const FeedbackPage = lazyWithRetry(() => import("@/pages/FeedbackPage"));
+// 153OS 앱 통로 — 공지사항 · 우리 지점(소개 · 코치 · 후기) · 1:1 문의 (2026-11-02)
+const NoticesPage = lazyWithRetry(() => import("@/pages/NoticesPage"));
+const BranchInfoPage = lazyWithRetry(() => import("@/pages/BranchInfoPage"));
+const InquiriesPage = lazyWithRetry(() => import("@/pages/InquiriesPage"));
 const SurveyPage = lazyWithRetry(() => import("@/pages/SurveyPage"));
 const HallOfFamePage = lazyWithRetry(() => import("@/pages/HallOfFamePage"));
 const MyPage = lazyWithRetry(() => import("@/pages/MyPage"));
@@ -360,6 +364,11 @@ const AppRoutes = () => {
         <Route path="/search" element={<ProtectedRoute><SearchPage /></ProtectedRoute>} />
         <Route path="/title-match" element={<ProtectedRoute><TitleMatchPage /></ProtectedRoute>} />
         <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+        <Route path="/notices" element={<ProtectedRoute><NoticesPage /></ProtectedRoute>} />
+        <Route path="/notices/:id" element={<ProtectedRoute><NoticesPage /></ProtectedRoute>} />
+        <Route path="/branch" element={<ProtectedRoute><BranchInfoPage /></ProtectedRoute>} />
+        <Route path="/inquiries" element={<ProtectedRoute><InquiriesPage /></ProtectedRoute>} />
+        <Route path="/inquiries/:id" element={<ProtectedRoute><InquiriesPage /></ProtectedRoute>} />
         <Route path="/handwrap" element={<ProtectedRoute><HandWrapGuidePage /></ProtectedRoute>} />
         <Route path="/office" element={<ProtectedRoute><OfficePage /></ProtectedRoute>} />
         <Route path="/office/room" element={<ProtectedRoute><OfficeRoomPage /></ProtectedRoute>} />

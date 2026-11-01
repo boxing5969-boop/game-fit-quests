@@ -125,6 +125,16 @@ const NotificationsPage = () => {
               <ChevronLeft className="h-5 w-5 text-secondary-foreground" />
             </button>
           }
+          // 공지사항(일일경영리포트에서 쓴 지점 공지 게시판)은 따로 — 2026-11-02
+          rightAction={
+            <button
+              type="button"
+              onClick={() => navigate("/notices")}
+              className="flex h-9 items-center rounded-full bg-secondary px-3.5 text-label font-bold text-secondary-foreground transition-transform active:scale-95"
+            >
+              공지사항
+            </button>
+          }
         />
       }
     >
