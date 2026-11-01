@@ -18,6 +18,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toSpokenKo } from "@/lib/spokenKo";
+import { KIOSK_DEFAULTS, KIOSK_SETTINGS_POLL_MS, kioskVoiceLine, normalizeKioskSettings, rematchMs, type KioskSettings, type KioskSettingsState } from "@/lib/kioskSettings";
+import { KioskNoticeBar, KioskPausedScreen } from "@/components/kiosk/FaceKioskOverlays";
 
 const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/face-kiosk`; // 앱측: 라이브보드 즉시 표시용
 const OS_URL = "https://153-boxing-os-api.boxing5969.workers.dev/api/face";     // 153OS: 판단·등록·장부(FC-2)
@@ -74,7 +76,7 @@ const diagnoseAssets = async (base: string): Promise<string> => {
   return bad.length ? bad.join(" · ") : "파일 크기는 모두 정상";
 };
 const MATCH_DIST = 0.5;          // face-api 권장 임계 (낮을수록 엄격)
-const REMATCH_MS = 5 * 60_000;   // 같은 회원 재인식 무시 간격
+// 같은 회원 재인식 무시 간격 = 153OS 출석 프로그램 설정 rematch_min (기본 5분) — rematchMs(kioskRef.current)
 const DETECT_INPUT = 224;        // 탐지 해상도 (320→224: 키오스크는 얼굴이 크게 잡혀 충분)
 const DETECT_SCORE = 0.45;
 const IDLE_MS = 120;             // 얼굴 없을 때 다음 탐지까지 휴식 (CPU 보호)
@@ -109,6 +111,9 @@ const timeGreeting = (): string => {
   return "늦은 시간까지 정말 대단해요";
 };
 
+// 이름 아래 인사 — 153OS 출석 프로그램 설정에 인사 문구가 있으면 그 글, 없으면 시간대별 인사
+const greetLineOf = (s: KioskSettings): string => s.welcome_text ?? timeGreeting();
+
 // 이용권 잔여일 (end_date = YYYY-MM-DD, 오늘 포함 잔여)
 const daysLeftOf = (endDate: string | null | undefined): number | null => {
   if (!endDate) return null;
@@ -136,6 +141,11 @@ const FaceKioskPage = () => {
   const [greet, setGreet] = useState<Greet | null>(null);
   const [enrollOpen, setEnrollOpen] = useState(false);
   const [soundOn, setSoundOn] = useState<boolean>(() => lsGet(SOUND_LS) !== "off");
+  // 153OS 출석 프로그램 설정 — 켤 때와 1분마다 읽는다(못 읽으면 기본값 = 지금처럼)
+  const [kiosk, setKiosk] = useState<KioskSettingsState>(() => ({ settings: { ...KIOSK_DEFAULTS }, saved: false }));
+  const kioskRef = useRef<KioskSettings>(kiosk.settings);
+  kioskRef.current = kiosk.settings;
+  const lastServerSoundRef = useRef<boolean | null>(null);
   // FC-6: 이 기기의 키가 어느 지점에 묶여 있는지(서버가 알려줌). 화면 URL 지점과 다르면 즉시 눈에 띈다.
   const [keyBranch, setKeyBranch] = useState<string | null>(null);
   // 고장 상태(회원용) / 기술 진단(직원용, 평소엔 숨김)
@@ -255,6 +265,29 @@ const FaceKioskPage = () => {
     });
     return { status: res.status, json: await res.json().catch(() => ({})) };
   }, [kioskKey]);
+
+  // 153OS 출석 프로그램 설정 읽기 — 켤 때와 1분마다. 401(키 틀림)·404(옛 워커)·실패는 조용히 넘긴다
+  // (키 문제는 명단·판정 쪽이 따로 알린다). 출입 판단과는 상관없다 — 얼굴 출석 쉬기는 인식만 멈춘다.
+  useEffect(() => {
+    if (!kioskKey) return;
+    let alive = true;
+    const load = async () => {
+      try {
+        const { status: st, json } = await osApi("settings", {});
+        if (!alive || st !== 200 || !json?.success) return;
+        const next = normalizeKioskSettings(json.data);
+        setKiosk((cur) => (JSON.stringify(cur) === JSON.stringify(next) ? cur : next));
+        // 소리: 153OS 에 저장된 값이 있고 바뀌었을 때만 맞춘다(기기 단추로 잠깐 바꾼 건 다음 변경 전까지 둔다)
+        if (next.saved && lastServerSoundRef.current !== next.settings.sound_on) {
+          lastServerSoundRef.current = next.settings.sound_on;
+          setSoundOn(next.settings.sound_on);
+        }
+      } catch { /* 네트워크 — 지난 값 그대로 */ }
+    };
+    void load();
+    const t = window.setInterval(load, KIOSK_SETTINGS_POLL_MS);
+    return () => { alive = false; window.clearInterval(t); };
+  }, [kioskKey, osApi]);
 
   // face-api 스크립트 + 모델 + (병렬) 명단·카메라 + 워밍업
   useEffect(() => {
@@ -378,7 +411,7 @@ const FaceKioskPage = () => {
         }
         if (deny) {
           // 거절: 60초 뒤 재시도 허용 — 데스크에서 결제 직후 다시 인식할 수 있게(검수 반영)
-          lastSeenRef.current.set(p.user_id, Date.now() - REMATCH_MS + 60_000);
+          lastSeenRef.current.set(p.user_id, Date.now() - rematchMs(kioskRef.current) + 60_000);
         }
         if (!alive || greetSeqRef.current !== seq) return;
         // 응답이 느려 오버레이가 이미 사라졌어도(g === null) 결과를 다시 세운다 —
@@ -386,7 +419,7 @@ const FaceKioskPage = () => {
         setGreet((g) => (g && g.seq !== seq ? g : {
           seq,
           name: vr?.data?.name || g?.name || p.name,
-          timeLine: g?.timeLine ?? timeGreeting(),
+          timeLine: g?.timeLine ?? greetLineOf(kioskRef.current),
           phase: "done",
           already,
           deny,
@@ -396,16 +429,16 @@ const FaceKioskPage = () => {
         if (deny) chime("deny");
         else {
           chime("ok");
-          speak(`${vr?.data?.name || p.name}님 환영합니다!`); // 호명은 통과 확정 후 — 거절자에게 환영 음성이 나가는 모순 방지
+          speak(kioskVoiceLine(kioskRef.current.voice_text, vr?.data?.name || p.name)); // 호명은 통과 확정 후 — 거절자에게 환영 음성이 나가는 모순 방지
         }
       } catch {
         // 기록 실패(네트워크 등): 30초 뒤 재시도 — 즉시 해제하면 차임·호명 무한 반복(검수 반영)
-        lastSeenRef.current.set(p.user_id, Date.now() - REMATCH_MS + 30_000);
+        lastSeenRef.current.set(p.user_id, Date.now() - rematchMs(kioskRef.current) + 30_000);
         if (!alive || greetSeqRef.current !== seq) return;
         setGreet((g) => (g && g.seq !== seq ? g : {
           seq,
           name: g?.name ?? p.name,
-          timeLine: g?.timeLine ?? timeGreeting(),
+          timeLine: g?.timeLine ?? greetLineOf(kioskRef.current),
           phase: "done",
           already: false,
           deny: "network",
@@ -418,7 +451,7 @@ const FaceKioskPage = () => {
 
     const showGreet = (p: FaceProfile) => {
       const seq = ++greetSeqRef.current;
-      setGreet({ seq, name: p.name, timeLine: timeGreeting(), phase: "checking", already: false, deny: null, daysLeft: null });
+      setGreet({ seq, name: p.name, timeLine: greetLineOf(kioskRef.current), phase: "checking", already: false, deny: null, daysLeft: null });
       chime("ping"); // 인식됨 신호(중립음) — 통과/거절음과 호명은 판정 확정 후
       // 안전 타이머는 넉넉히(15초). 실제 소멸 시간은 결과 도착 시 holdGreet 이 다시 정한다.
       holdGreet(seq, 15_000);
@@ -427,7 +460,8 @@ const FaceKioskPage = () => {
 
     const tick = async () => {
       if (!alive) return;
-      if (enrollOpen || !videoRef.current || videoRef.current.readyState < 2) {
+      // 153OS 에서 얼굴 출석을 쉬게 하면 인식하지 않는다(쉬는 화면 · 카메라는 얼굴 등록 때문에 켜 둔다)
+      if (enrollOpen || !kioskRef.current.face_enabled || !videoRef.current || videoRef.current.readyState < 2) {
         timer = window.setTimeout(tick, 250);
         return;
       }
@@ -447,7 +481,7 @@ const FaceKioskPage = () => {
           if (best && best.d < MATCH_DIST) {
             const now = Date.now();
             const last = lastSeenRef.current.get(best.p.user_id) || 0;
-            if (now - last > REMATCH_MS) {
+            if (now - last > rematchMs(kioskRef.current)) {
               lastSeenRef.current.set(best.p.user_id, now);
               showGreet(best.p);
             }
@@ -539,6 +573,10 @@ const FaceKioskPage = () => {
       {/* 진단 토글용 투명 영역 — 회원에게는 보이지 않는다 */}
       <button aria-hidden tabIndex={-1} onClick={onCornerTap}
         className="absolute right-0 top-0 z-[99] h-16 w-16 opacity-0" />
+
+      {/* 153OS 출석 프로그램 설정 — 쉬는 화면 · 기다리는 화면 안내 (아래 단추들보다 먼저 그려 단추는 그대로 눌린다) */}
+      {ready && !down && !kiosk.settings.face_enabled && <KioskPausedScreen settings={kiosk.settings} />}
+      {ready && !down && kiosk.settings.face_enabled && !greet && <KioskNoticeBar settings={kiosk.settings} />}
 
       {/* 인사 오버레이 — 매칭 즉시 표시, 기록 확정 시 문구 갱신 */}
       {greet && (
