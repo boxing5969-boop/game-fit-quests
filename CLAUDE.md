@@ -422,6 +422,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 153OS 회원과 안 이어진 계정(153OS `members.ranking_app_user_id` 없음 — 코치 · 운영진 계정 포함)은 `NOT_REGISTERED` → 화면에 '지점 회원 정보와 아직 이어지지 않았어요' 안내만.
 - 153OS 화면의 '앱 연결 전' 안내는 153OS `app_link_heartbeats` 가 사라지게 한다 — partner_api(회원이 화면을 열 때) · push_outbox(크론).
 - 회원 1:1 메시지(`/messages`, 회원 · 코치님끼리)와 다르다 — 1:1 문의는 지점 운영진 창구(153OS 문의함에서 답장).
+- **얼굴 출석 키오스크 설정**(153OS 35단계 '설정 › 출석 프로그램 설정' · 2026-11-02): [src/pages/FaceKioskPage.tsx](src/pages/FaceKioskPage.tsx) 가 켤 때와 1분마다 153OS `POST /api/face/settings`(x-kiosk-key = 지점)를 읽는다 → 얼굴 출석 쉬기(인식 멈춤 · 쉬는 화면) · 기다리는 화면 안내 줄 · QR 안내 · 인사 문구 · 호명 음성 `{이름}` · 소리(153OS 에 저장한 값이 바뀔 때만 기기 값을 맞춤) · 다시 인식 간격(분). 받기 · 기본값은 [src/lib/kioskSettings.ts](src/lib/kioskSettings.ts)(153OS `workers/api/src/lib/kioskSettings.ts` 와 같은 글 · 규칙), 화면은 [src/components/kiosk/FaceKioskOverlays.tsx](src/components/kiosk/FaceKioskOverlays.tsx). 못 읽으면(옛 워커 404 · 네트워크) 지금 키오스크 그대로. 출입 판단(verify)은 이 설정과 상관없다.
 
 ### 아이폰 앱 (App Store, 2026-10-19 대표님 "애플스토어에도 등록하자")
 
