@@ -341,6 +341,9 @@ export const FEATURES: readonly SearchEntry[] = [
     ["tv", "티비", "사이니지", "라이브보드", "전광판"], { staffOnly: true }),
   f("routine-builder", "수업 루틴 만들기", "코치 루틴 빌더", "clipboard", go("/routine-builder"),
     ["루틴 만들기", "루틴 빌더", "수업 만들기"], { staffOnly: true }),
+  // 153운영본부 「일정」 탭 (2026-11-02 대표님 "팀원들 스스로 스케줄 관리 · 내가 팀원들의 스케줄을 한눈에")
+  f("team-plan", "팀 일정 · 내 일정", "153운영본부 — 코치님 스케줄", "clipboard", go("/office?tab=plan"),
+    ["일정", "스케줄", "팀 일정", "내 일정", "코치 일정", "코치 스케줄", "직원 일정", "153운영본부", "운영본부"], { staffOnly: true }),
 ];
 
 /** 처음 들어왔을 때 보여 줄 추천 검색어 */

@@ -189,7 +189,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 | [src/lib/opsWork.ts](src/lib/opsWork.ts) | 인정 시간 계산 한 곳(서버는 자료만) — `computeDay` · `computeStaffMonth` · `scheduleSummary` · `laborNotices`(주 15시간 · 월 60시간) · 최저시급 |
 | [src/services/opsService.ts](src/services/opsService.ts) · [src/components/ops/](src/components/ops/) | `OpsWorkTab`(관리: 합계 · 확인할 것 · 근무자 / 코치님: 내 근무 · 내 시간표 · 날짜별 · 내 요청) · `OpsStaffSheet`(이번 달 · 시간표 · 정보) · `OpsDaySheet`(인정 시간 · 쉰 날 · 수업 대타 · 연장 근무) · `OpsParts` |
 
-- 이름: 전체 메뉴 · 머리글 「지점 회의실」 → **「153운영본부」**. 탭 사무실 · 전략 회의 · **근무**(`/office?tab=work`, 알림 링크도 여기). 근무 탭은 `ops_me` 가 정한다 — 관리하는 지점(manage)이 있거나 내 근무자 카드(mine)가 있는 분. DB 가 없거나 둘 다 비면 탭이 안 보인다.
+- 이름: 전체 메뉴 · 머리글 「지점 회의실」 → **「153운영본부」**. 탭 사무실 · 전략 회의 · **근무**(`/office?tab=work`, 알림 링크도 여기) · **일정**(`/office?tab=plan`, 2026-11-02 — 아래 「일정」 탭). 근무 탭은 `ops_me` 가 정한다 — 관리하는 지점(manage)이 있거나 내 근무자 카드(mine)가 있는 분. DB 가 없거나 둘 다 비면 탭이 안 보인다.
 - 대표님 규칙(10-29): 출근 = 입구 얼굴 인식(`staff_duty_logs` — 앱 계정 또는 이름으로 맞춤), 안 찍은 날 0시간(누락) · 퇴근 = 시간표 끝 시각 자동 · 일찍 감 · 늦게 옴 = 지점장 · 대표님이 그날 인정 시간을 고침(지각은 표시만, 10분) · 연장 = 코치 신청 → 대표님만 승인 · 수업 대타 = 코치 요청 → 지점장 · 대표님 승인(PT 대타 없음) · 얼굴 출근 단말이 없는 지점은 근무자 카드 '시간표대로 자동'(`checkin_required=false`).
 - 보이는 범위 (2026-10-29 대표님 "코치님들이 다른 코치님들 일하는 시간이랑 버는 돈 못 보게, 본인 자료만" → 「지점장은 돈만 숨기기」 · 「본인 금액도 보여주기」, 20261029171500):
   - 일반 코치님: `ops_month` 가 **본인 카드만** 보낸다(다른 사람 근무 · 시간 · 돈 없음, 대타 고르기용 동료 이름만). 본인 시급 · 월급은 보낸다 → 코치 화면 '이번 달 예상(주휴 · 공제 전)' · PT 위탁 코치는 본인 PT 수당(`ops_pt_month` 가 본인에게만 수당표).
@@ -209,6 +209,20 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 
 - 원본: 브로제이 PT 수업권 → 153OS 워커(회원마다 하루~이틀에 한 번) → sync-pt-members(매시 40분) → `profiles.pt_remaining`. 차감 날짜 = 앱이 알아챈 날이라 하루 이틀 늦을 수 있다(관리자가 날짜를 고칠 수 있음). 적용 전 차감은 남아 있지 않다(그날부터 쌓임).
 - 담당 코치 = 그 지점 PT 위탁 코치(`ops_staff.pt_freelancer`)가 한 명이면 자동, 아니면 비워 둔다. PT 는 근로가 아니라 위탁(3.3%) — 계약서 개정판 양식 C(Claude Docs https://claude.ai/artifact/8PMewu4bGcPcQzsh8vTVph).
+
+#### 「일정」 탭 — 팀원이 스스로 넣는 일정 · 대표님 팀 일정판 (2026-11-02 대표님 "직원 회의 관리 탭에 팀원들 스스로 스케줄 관리 … 내가 팀원들의 스케줄을 한눈에")
+
+| 파일 | 역할 |
+|---|---|
+| [supabase/migrations/20261102135002_ops_team_plans.sql](supabase/migrations/20261102135002_ops_team_plans.sql) | `ops_plans`(종류 class · pt · work(화면 '업무') · out · off · personal · 한 번(여러 날 두 달까지) 또는 매주 `repeat_weekdays` · `until_on` · '이 날만 빼기' `skip_dates` · 하루 종일/시각 · `private` · 지우기 = `deleted_at`) · `_ops_plan_team`(지도진 + 앱 계정이 이어진 근무자 카드) · `_ops_plan_can_view_all`(대표님 · 그 지점 `ops_managers`) · `_ops_plan_branches` · RPC `ops_plans_week`(한 주: members · plans · 「근무」 시간표 shifts · 승인된 쉰 날 offs · 관리자에게 7일 recent) · `ops_plan_save`(`only_date` = 반복의 그날 하나만 바꾸기) · `ops_plan_skip` · `ops_plan_remove` |
+| [src/lib/opsPlans.ts](src/lib/opsPlans.ts) | 반복 펼치기(`occursOn`) · 하루 정리(`dayItems` — 시간표 + 일정, 승인된 쉰 날이면 그 지점 시간표 대신 '쉰 날') · 팀 한 줄(`daySummary`) · 넣기 검사(`draftError`, 서버와 같은 말) · 화면 글 |
+| [src/services/opsPlanService.ts](src/services/opsPlanService.ts) · [src/components/ops/OpsPlanTab.tsx](src/components/ops/OpsPlanTab.tsx) · [OpsPlanSheet.tsx](src/components/ops/OpsPlanSheet.tsx) | `/office?tab=plan` — 관리자: 「팀 일정」(사람 × 월~일 색 막대 일정판 · 고른 날 누가 무엇을 · 최근 바뀐 일정) / 「내 일정」 · 코치님: 내 일정만(날마다 + · 매주 반복 목록) · 넣기 · 고치기 시트(반복은 '이 날만 / 매주 전체') |
+
+- 보이는 범위: 코치님은 **본인 일정만**(서버가 본인 것만 보낸다 — 10/29 근무 시간 비공개와 같은 결). 팀 전체 = 대표님 + 그 지점에 지정된 관리자(`ops_managers` 지점장 · 회계매니저 — 앱 권한 branch_manager 만으로는 아님). 관리자에게는 앱 계정이 없는 근무자 카드도 'staff:<id>' 줄로(시간표만).
+- '개인' 일정만 '대표님 · 지점장님께는 시간만 보이기'(`private`) — 관리자에게 제목 · 메모가 안 가고 '개인 일정'으로만. 다른 종류는 서버가 `private=false` 로 저장한다.
+- 일정은 근무 시간 · 급여와 따로다(휴무 일정을 넣어도 시간표 · 인정 시간은 그대로) — 쉰 날 인정 · 대타 · 연장은 「근무」 탭. 일정은 본인만 고치고 지운다(관리자도 남의 일정은 못 고침). 알림은 없다(관리자는 '최근 바뀐 일정'으로 본다).
+- 탭은 코치진(전략 회의와 같은 기준) 또는 근무자 카드가 있는 분에게 보인다 — 탭이 넷이면 글씨 `text-label`. 앱 검색 '팀 일정 · 내 일정'(staffOnly · 일정 · 스케줄).
+- 적용(2026-11-02 MCP `apply_migration` — 새 표 1 · 새 함수 7): 되돌림 시험(DO 블록 예외)으로 코치 · 칠금 코치 · 선릉 지점장 · 대표님 네 계정을 확인 — 코치는 본인 1명 · 다른 지점 일정 0 · 남의 일정 고치기/지우기 막힘 · 지점장은 팀 10명(앱 계정 없는 근무자 1 포함) · 개인 일정 가림.
 
 ### 회원 화면 리디자인 — 글씨 6단계 · 화면 규칙 7가지 (2026-10-28 대표님 "위보고한 기준대로 전면 리 디자인하자 · 많이 바뀌어도 되니까 가장 이상적인 방향으로")
 
