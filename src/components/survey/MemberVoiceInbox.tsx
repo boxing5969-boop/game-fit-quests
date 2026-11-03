@@ -3,10 +3,12 @@
  *
  *   · 데이터: Edge Function member-voice-inbox — 일일경영리포트(153OS)의 만족도 조사 응답 · 고객의 소리를 서버에서 읽어 온다 (최근 6개월).
  *   · 읽기 전용. 처리 상태 바꾸기·경품 추첨은 경영리포트에서. 연락처는 가운데를 가려서 보여 준다.
- *   · 주소: /survey?inbox=1 (고객의 소리부터: &tab=voice)
+ *   · 주소: /survey?inbox=1 (고객의 소리만: &tab=voice)
  *   · 2026-10-30 대표님 "만족도 조사에도 답변을 달 수 있도록 · 쓴 사람이 확인할 수 있게" — 만족도 조사 카드마다 '답변 달기'.
- *     앱에서 낸 설문이면 보낸 회원에게만 알림 · 설문 화면 '내가 보낸 만족도 조사'에 보인다(여기서는 계속 익명).
+ *     앱에서 낸 설문이면 보낸 회원에게만 알림 · 설문 화면 '내가 보낸 의견'에 보인다(여기서는 계속 익명).
  *     QR · 예전 설문은 보낸 사람을 몰라 답변은 저장만 된다. (memberSurveyService — survey_replies)
+ *   · 2026-11-03 대표님 "고객의 소리에도 답변 · 두가지 모두 한탭으로 합쳐줘": 탭 두 개 → 한 목록(최근 것부터).
+ *     고객의 소리 카드에도 '답변 달기'. 거르기 전체 · 답변 대기(앱에서 보낸 것 중 답이 없는 것) · 만족도 조사 · 고객의 소리.
  */
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -15,6 +17,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { getSurveyReplies, replySurveyResponse, type SurveyReplyInfo } from "@/services/memberSurveyService";
+import { isWaiting, mergeInbox, type InboxFilter } from "@/lib/memberVoiceInbox";
 
 export interface SurveyInboxAnswer {
   q: string;
@@ -72,7 +75,15 @@ const VOICE_CATEGORY: Record<string, { label: string; cls: string }> = {
   complaint: { label: "불편·건의", cls: "bg-rose-500/15 text-rose-600 dark:text-rose-400" },
   free: { label: "자유 한마디", cls: "bg-sky-500/15 text-sky-600 dark:text-sky-400" },
 };
-const VOICE_STATUS: Record<string, string> = { new: "새 의견", in_progress: "처리 중", resolved: "처리 완료", closed: "닫힘" };
+// 153OS 처리 상태(워커 /api/feedback/item: new · reviewing · resolved · dismissed) — 옛 이름도 함께
+const VOICE_STATUS: Record<string, string> = {
+  new: "새 의견",
+  reviewing: "확인 중",
+  in_progress: "처리 중",
+  resolved: "처리 완료",
+  dismissed: "보류",
+  closed: "닫힘",
+};
 
 const shortBranch = (b: string | null) => (b ? b.replace(/^153복싱짐\s*/, "") : null);
 const whenText = (iso: string) =>
@@ -112,8 +123,8 @@ const AnswerValue = ({ a }: { a: SurveyInboxAnswer }) => {
   );
 };
 
-/** 만족도 조사 한 건의 답변 — 쓰기 · 고치기 · 지우기(빈 칸으로 저장) */
-const ReplyBox = ({ id, info }: { id: string; info: SurveyReplyInfo | undefined }) => {
+/** 만족도 조사 · 고객의 소리 한 건의 답변 — 쓰기 · 고치기 · 지우기(빈 칸으로 저장) */
+const ReplyBox = ({ id, kind, info }: { id: string; kind: "survey" | "voice"; info: SurveyReplyInfo | undefined }) => {
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(info?.reply ?? "");
@@ -134,7 +145,8 @@ const ReplyBox = ({ id, info }: { id: string; info: SurveyReplyInfo | undefined 
     }
   };
 
-  const who = fromApp ? "앱에서 보낸 설문 · 답변은 보낸 회원만 봐요" : "QR · 예전 설문 · 보낸 사람을 몰라 저장만 돼요";
+  const what = kind === "voice" ? "의견" : "설문";
+  const who = fromApp ? `앱에서 보낸 ${what} · 답변은 보낸 회원만 봐요` : `QR · 예전 ${what} · 보낸 사람을 몰라 저장만 돼요`;
 
   if (editing) {
     return (
@@ -201,7 +213,11 @@ const ReplyBox = ({ id, info }: { id: string; info: SurveyReplyInfo | undefined 
 
   return (
     <div className="mt-3 flex items-center justify-between gap-2 border-t border-border/60 pt-3">
-      <span className="min-w-0 text-micro text-muted-foreground">{who}</span>
+      {fromApp ? (
+        <span className="min-w-0 text-label font-bold text-primary">답변 대기 · 회원에게만 가요</span>
+      ) : (
+        <span className="min-w-0 text-micro text-muted-foreground">{who}</span>
+      )}
       <button
         type="button"
         onClick={() => setEditing(true)}
@@ -213,20 +229,37 @@ const ReplyBox = ({ id, info }: { id: string; info: SurveyReplyInfo | undefined 
   );
 };
 
-type Tab = "surveys" | "voices";
+/** 카드 머리 칩 하나 — 만족도 조사 / 고객의 소리 · 분류(분류 색) */
+const KindChip = ({ category }: { category?: string }) => {
+  if (category == null)
+    return (
+      <span className="min-w-0 truncate rounded-full bg-amber-400/15 px-2 py-0.5 text-micro font-bold text-amber-700 dark:text-amber-300">⭐ 만족도 조사</span>
+    );
+  const cat = VOICE_CATEGORY[category] ?? { label: category, cls: "bg-secondary text-foreground" };
+  return <span className={cn("min-w-0 truncate rounded-full px-2 py-0.5 text-micro font-bold", cat.cls)}>💬 고객의 소리 · {cat.label}</span>;
+};
 
-const MemberVoiceInbox = ({ initialTab = "surveys" }: { initialTab?: Tab }) => {
+const MemberVoiceInbox = ({ initialFilter = "all" }: { initialFilter?: InboxFilter }) => {
   const inbox = useMemberVoiceInbox(true);
-  const [tab, setTab] = useState<Tab>(initialTab);
+  const [filter, setFilter] = useState<InboxFilter>(initialFilter);
   const surveys = useMemo(() => inbox.data?.surveys ?? [], [inbox.data?.surveys]);
-  const voices = inbox.data?.voices ?? [];
-  const surveyIds = useMemo(() => surveys.map((x) => x.id), [surveys]);
+  const voices = useMemo(() => inbox.data?.voices ?? [], [inbox.data?.voices]);
+  const allIds = useMemo(() => [...surveys.map((x) => x.id), ...voices.map((x) => x.id)], [surveys, voices]);
   const replies = useQuery({
-    queryKey: ["survey-replies", surveyIds],
-    enabled: surveyIds.length > 0,
+    queryKey: ["survey-replies", allIds],
+    enabled: allIds.length > 0,
     staleTime: 30_000,
-    queryFn: () => getSurveyReplies(surveyIds),
+    queryFn: () => getSurveyReplies(allIds),
   });
+  const items = useMemo(() => mergeInbox(surveys, voices), [surveys, voices]);
+  const waitCount = useMemo(() => items.filter((it) => isWaiting(replies.data?.[it.id])).length, [items, replies.data]);
+  const shown = useMemo(
+    () =>
+      items.filter((it) =>
+        filter === "all" ? true : filter === "wait" ? isWaiting(replies.data?.[it.id]) : it.kind === filter,
+      ),
+    [items, filter, replies.data],
+  );
   const avgAll = useMemo(() => {
     const xs = surveys.map((s) => s.avg).filter((n): n is number => typeof n === "number");
     return xs.length ? Math.round((xs.reduce((a, b) => a + b, 0) / xs.length) * 10) / 10 : null;
@@ -253,59 +286,83 @@ const MemberVoiceInbox = ({ initialTab = "surveys" }: { initialTab?: Tab }) => {
       </div>
     );
 
+  const FILTERS: [InboxFilter, string, number][] = [
+    ["all", "전체", items.length],
+    ["wait", "답변 대기", waitCount],
+    ["survey", "만족도 조사", surveys.length],
+    ["voice", "고객의 소리", voices.length],
+  ];
+  const emptyText =
+    filter === "wait"
+      ? "답변을 기다리는 의견이 없어요"
+      : filter === "survey"
+        ? "최근 6개월 동안 들어온 만족도 조사가 없어요"
+        : filter === "voice"
+          ? "최근 6개월 동안 들어온 고객의 소리가 없어요"
+          : "최근 6개월 동안 들어온 응답이 없어요";
+
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-1 rounded-2xl bg-secondary p-1" role="tablist" aria-label="받은 응답 종류">
-        {(
-          [
-            ["surveys", "만족도 조사", surveys.length],
-            ["voices", "고객의 소리", voices.length],
-          ] as const
-        ).map(([key, label, n]) => (
+      <div className="grid grid-cols-4 gap-1 rounded-2xl bg-secondary p-1" role="tablist" aria-label="받은 응답 거르기">
+        {FILTERS.map(([key, label, n]) => (
           <button
             key={key}
             type="button"
             role="tab"
-            aria-selected={tab === key}
-            onClick={() => setTab(key)}
+            aria-selected={filter === key}
+            onClick={() => setFilter(key)}
             className={cn(
-              "flex h-10 items-center justify-center gap-1.5 rounded-xl text-label font-bold transition-colors",
-              tab === key ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground",
+              "flex h-14 flex-col items-center justify-center rounded-xl px-0.5 text-center transition-colors",
+              filter === key ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground",
             )}
           >
-            {label} <span className="tabular-nums opacity-70">{n}</span>
+            <span className="text-label font-bold leading-tight">{label}</span>
+            <span
+              className={cn(
+                "mt-0.5 text-micro font-bold tabular-nums",
+                key === "wait" && n > 0 ? "text-primary" : "opacity-70",
+              )}
+            >
+              {n}
+            </span>
           </button>
         ))}
       </div>
 
-      {tab === "surveys" ? (
-        surveys.length === 0 ? (
-          <Empty text="최근 6개월 동안 들어온 만족도 조사가 없어요" />
-        ) : (
-          <>
-            {avgAll != null && (
-              <p className="px-1 text-label text-muted-foreground">
-                최근 {surveys.length}건 평균 <span className="font-bold text-foreground tabular-nums">{avgAll}</span>점
-              </p>
-            )}
-            <ul className="space-y-2.5">
-              {surveys.map((s) => (
-                <li key={s.id} className="rounded-2xl bg-card p-4 shadow-elev-1 ring-1 ring-border/60">
-                  <div className="flex items-start justify-between gap-2">
+      {(filter === "all" || filter === "survey") && avgAll != null && (
+        <p className="px-1 text-label text-muted-foreground">
+          만족도 조사 최근 {surveys.length}건 평균 <span className="font-bold text-foreground tabular-nums">{avgAll}</span>점
+        </p>
+      )}
+
+      {shown.length === 0 ? (
+        <Empty text={emptyText} />
+      ) : (
+        <ul className="space-y-2.5">
+          {shown.map((it) => {
+            const info = replies.data?.[it.id];
+            const waiting = isWaiting(info);
+            const cardCls = cn("rounded-2xl bg-card p-4 shadow-elev-1 ring-1", waiting ? "ring-primary/50" : "ring-border/60");
+            if (it.kind === "survey") {
+              const s = it.s;
+              return (
+                <li key={s.id} className={cardCls}>
+                  <div className="flex items-center gap-2">
+                    <KindChip />
+                    <span className="ml-auto shrink-0 text-label tabular-nums text-muted-foreground">{whenText(s.at)}</span>
+                  </div>
+                  <div className="mt-2 flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="truncate text-label font-bold text-foreground">{s.title}</p>
                       <p className="mt-0.5 text-label text-muted-foreground">
                         {[shortBranch(s.branch), s.anonymous ? "익명" : s.who ?? "이름 없음"].filter(Boolean).join(" · ")}
                       </p>
                     </div>
-                    <div className="shrink-0 text-right">
-                      <p className="text-label tabular-nums text-muted-foreground">{whenText(s.at)}</p>
-                      {s.avg != null && (
-                        <p className="mt-0.5 inline-flex items-center gap-0.5 text-label font-bold tabular-nums text-foreground">
-                          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" strokeWidth={1.8} /> {s.avg}
-                        </p>
-                      )}
-                    </div>
+                    {s.avg != null && (
+                      <p className="mt-0.5 inline-flex shrink-0 items-center gap-0.5 text-label font-bold tabular-nums text-foreground">
+                        <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" strokeWidth={1.8} /> {s.avg}
+                      </p>
+                    )}
                   </div>
                   <ol className="mt-3 space-y-2.5 border-t border-border/60 pt-3">
                     {s.answers.map((a, i) => (
@@ -319,25 +376,16 @@ const MemberVoiceInbox = ({ initialTab = "surveys" }: { initialTab?: Tab }) => {
                       </li>
                     ))}
                   </ol>
-                  <ReplyBox key={`${s.id}:${replies.data?.[s.id]?.replied_at ?? ""}`} id={s.id} info={replies.data?.[s.id]} />
+                  <ReplyBox key={`${s.id}:${info?.replied_at ?? ""}`} id={s.id} kind="survey" info={info} />
                 </li>
-              ))}
-            </ul>
-          </>
-        )
-      ) : voices.length === 0 ? (
-        <Empty text="최근 6개월 동안 들어온 고객의 소리가 없어요" />
-      ) : (
-        <ul className="space-y-2.5">
-          {voices.map((v) => {
-            const cat = VOICE_CATEGORY[v.category] ?? { label: v.category, cls: "bg-secondary text-foreground" };
+              );
+            }
+            const v = it.v;
+            const status = v.status && v.status !== "new" ? VOICE_STATUS[v.status] ?? v.status : null;
             return (
-              <li key={v.id} className="rounded-2xl bg-card p-4 shadow-elev-1 ring-1 ring-border/60">
-                <div className="flex items-center gap-1.5">
-                  <span className={cn("rounded-full px-2 py-0.5 text-micro font-bold", cat.cls)}>{cat.label}</span>
-                  <span className="rounded-full bg-secondary px-2 py-0.5 text-micro font-bold text-muted-foreground">
-                    {VOICE_STATUS[v.status] ?? v.status}
-                  </span>
+              <li key={v.id} className={cardCls}>
+                <div className="flex items-center gap-2">
+                  <KindChip category={v.category} />
                   <span className="ml-auto shrink-0 text-label tabular-nums text-muted-foreground">{whenText(v.at)}</span>
                 </div>
                 {v.rating != null && (
@@ -348,13 +396,14 @@ const MemberVoiceInbox = ({ initialTab = "surveys" }: { initialTab?: Tab }) => {
                 <p className="mt-2 whitespace-pre-line break-words text-label leading-relaxed text-foreground">{v.content}</p>
                 {v.coach && <p className="mt-2 text-label font-semibold text-emerald-600 dark:text-emerald-400">칭찬한 코치 · {v.coach}</p>}
                 <p className="mt-2 text-label text-muted-foreground">
-                  {[shortBranch(v.branch), v.who, v.phone].filter(Boolean).join(" · ") || "익명"}
+                  {[shortBranch(v.branch), v.who, v.phone, status ? `경영리포트 ${status}` : null].filter(Boolean).join(" · ") || "익명"}
                   {v.draw && (
                     <span className="ml-1.5 inline-flex items-center gap-0.5 font-semibold text-reward">
                       <Gift className="h-3 w-3" /> 경품 응모
                     </span>
                   )}
                 </p>
+                <ReplyBox key={`${v.id}:${info?.replied_at ?? ""}`} id={v.id} kind="voice" info={info} />
               </li>
             );
           })}
@@ -362,7 +411,7 @@ const MemberVoiceInbox = ({ initialTab = "surveys" }: { initialTab?: Tab }) => {
       )}
 
       <p className="px-1 pt-1 text-center text-label leading-relaxed text-muted-foreground">
-        일일경영리포트에 저장된 최근 6개월 응답이에요 (전체관리자만 볼 수 있어요). 만족도 조사 답변은 앱에서 보낸 회원에게만 보여요. 처리 상태 바꾸기와 경품 추첨은 경영리포트에서 해요.
+        일일경영리포트에 저장된 최근 6개월 응답이에요 (전체관리자만 볼 수 있어요). 답변은 앱에서 보낸 회원에게만 보여요. 처리 상태 바꾸기와 경품 추첨은 경영리포트에서 해요.
       </p>
     </div>
   );

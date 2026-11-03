@@ -6,9 +6,12 @@
 //   · 대표님이 먼저 답을 달면 그 응답은 건드리지 않는다. 대표님 답변은 절대 덮어쓰지 않는다.
 //   · 응답은 일일경영리포트(153OS)에서 읽는다(OS_SERVICE_KEY). 최근 14일만.
 //   · x-auto-key(internal_sync_config.auto_sync_key) · verify_jwt = false (config.toml).
+//   · 2026-11-03 대표님 "고객의 소리에도 답변 달수있게해줘": 고객의 소리(153OS member_feedback · 서키트 설문 빼고)도 읽어
+//     답이 없고 아직 알리지 않은 것을 대표님께 알림 하나로 묶어 보낸다(8~22시 · 1건이면 그 글 앞부분, 여러 건이면 건수).
+//     자동 답변은 하지 않는다. 처리 기록 survey_auto_watch kind 'voice'.
 // deno-lint-ignore-file no-explicit-any
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { classify, composeReply, kstHour, type AnswerIn } from "./logic.ts";
+import { classify, composeReply, kstHour, voiceNotice, type AnswerIn } from "./logic.ts";
 
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { "Content-Type": "application/json" } });
 const DAY = 86400000;
@@ -36,18 +39,29 @@ Deno.serve(async (req) => {
   // 1) 153OS 최근 응답
   const os = createClient(OS_URL, OS_KEY, { auth: { persistSession: false } });
   const since = new Date(now.getTime() - LOOKBACK_DAYS * DAY).toISOString();
-  const { data: rows, error } = await os
-    .from("survey_responses")
-    .select(
-      "id, submitted_at, branches(name), survey_templates(title), survey_answers(answer_text, answer_score, survey_questions(question_text, question_type, order_index, options))",
-    )
-    .gte("submitted_at", since)
-    .order("submitted_at", { ascending: true })
-    .limit(200);
+  const [{ data: rows, error }, { data: vrows, error: verr }] = await Promise.all([
+    os
+      .from("survey_responses")
+      .select(
+        "id, submitted_at, branches(name), survey_templates(title), survey_answers(answer_text, answer_score, survey_questions(question_text, question_type, order_index, options))",
+      )
+      .gte("submitted_at", since)
+      .order("submitted_at", { ascending: true })
+      .limit(200),
+    os
+      .from("member_feedback")
+      .select("id, created_at, category, content, branches(name)")
+      .gte("created_at", since)
+      .neq("category", "circuit")
+      .order("created_at", { ascending: true })
+      .limit(50),
+  ]);
   if (error) return json({ error: "os_read_failed", detail: error.message }, 500);
+  if (verr) console.error("survey-auto-reply voices read", verr.message); // 고객의 소리를 못 읽어도 설문 일은 그대로
   const responses = (rows ?? []) as any[];
-  if (!responses.length) return json({ ok: true, seen: 0 });
-  const ids = responses.map((r) => r.id as string);
+  const voices = (verr ? [] : vrows ?? []) as any[];
+  if (!responses.length && !voices.length) return json({ ok: true, seen: 0 });
+  const ids = [...responses.map((r) => r.id as string), ...voices.map((v) => v.id as string)];
 
   // 2) 이미 단 답변 · 처리 기록 · 보낸 회원
   const [rep, watch, rec] = await Promise.all([
@@ -79,7 +93,14 @@ Deno.serve(async (req) => {
   const { data: recentAuto } = await app.from("survey_replies").select("reply").eq("auto", true).order("replied_at", { ascending: false }).limit(10);
   const recentTexts = new Set((recentAuto ?? []).map((r: any) => r.reply as string));
 
-  const out = { seen: responses.length, notified: [] as string[], auto: [] as { id: string; text: string; delivered: boolean }[], waiting: 0 };
+  const out = {
+    seen: responses.length,
+    notified: [] as string[],
+    auto: [] as { id: string; text: string; delivered: boolean }[],
+    waiting: 0,
+    voices_seen: voices.length,
+    voice_notified: [] as string[],
+  };
 
   for (const r of responses) {
     const id = r.id as string;
@@ -137,6 +158,29 @@ Deno.serve(async (req) => {
     await app.from("survey_auto_watch").upsert({ response_id: id, kind: "positive", auto_replied_at: new Date().toISOString() });
     if (ins?.length && to) {
       await app.from("notifications").insert({ user_id: to, title: "💬 만족도 조사에 답변이 왔어요", body: text.slice(0, 120), link: "/survey?mine=1" });
+    }
+  }
+
+  // 4) 고객의 소리 — 답이 없고 아직 알리지 않은 것 → 대표님께 알림 하나로 (8~22시)
+  const pendingVoices = voices.filter((v) => !replied.has(v.id) && !watched.get(v.id)?.notified_at);
+  if (pendingVoices.length) {
+    if (hour < 8 || hour > 22) {
+      out.waiting += pendingVoices.length;
+    } else {
+      out.voice_notified = pendingVoices.map((v) => v.id as string);
+      const notice = voiceNotice(
+        pendingVoices.map((v) => ({
+          category: String(v.category ?? "free"),
+          content: String(v.content ?? ""),
+          branch: shortBranch(one(v.branches)?.name ?? null),
+          fromApp: receipt.has(v.id),
+        })),
+      );
+      if (!dryRun && notice) {
+        await app.from("notifications").insert({ user_id: owner, title: notice.title, body: notice.body, link: "/survey?inbox=1&tab=voice" });
+        const at = new Date().toISOString();
+        await app.from("survey_auto_watch").upsert(pendingVoices.map((v) => ({ response_id: v.id, kind: "voice", notified_at: at })));
+      }
     }
   }
 

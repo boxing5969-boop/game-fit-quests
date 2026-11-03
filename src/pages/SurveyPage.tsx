@@ -9,11 +9,14 @@ import { AppPage, PageHeader } from "@/components/ui/rankingup";
 import MemberVoiceInbox from "@/components/survey/MemberVoiceInbox";
 import {
   SURVEY_REWARD,
+  VOICE_CATEGORY_LABEL,
+  claimMyFeedbackReceipt,
   claimSurveyReward,
   getBranchSurveyLinks,
   getFeedbackChannel,
-  getMySurveyReceipts,
+  getMyFeedbackTexts,
   getMySurveyRewards,
+  getMyVoiceReceipts,
   getPublicSurvey,
   markMySurveyRepliesRead,
   recordMySurveyReceipt,
@@ -32,6 +35,10 @@ import {
 // (components/survey/MemberVoiceInbox — 경영리포트에서 서버로 읽어 온다). 주소: /survey?inbox=1 (&tab=voice).
 // 2026-10-30 대표님 "만족도 조사에도 답변을 달 수 있도록 · 쓴 사람이 확인할 수 있게": 앱에서 낸 만족도 조사는 응답 번호를
 // 남겨 두고(recordMySurveyReceipt), 본사 답변은 첫 화면 '내가 보낸 만족도 조사'에 — 알림 주소 /survey?mine=1.
+// 2026-11-03 대표님 "고객의 소리에도 답변 · 두가지 모두 한탭으로 합쳐줘 … 고객 여정에 더 도움이 되게 니가 추천해줘":
+//   입구 두 개(만족도 조사 = 한 달에 한 번 정해진 질문 · 고객의 소리 = 언제든 하고 싶은 말)는 그대로 두고,
+//   보낸 뒤 답변을 보는 곳을 '내가 보낸 의견' 한 목록으로 합쳤다(고객의 소리는 내가 쓴 글도 함께). 고객의 소리 영수증은
+//   보낸 직후 claimMyFeedbackReceipt(Edge Function member-voice-receipt). 본사 받은 설문함도 탭 없이 한 목록(MemberVoiceInbox).
 
 type View = "hub" | "satisfaction" | "feedback" | "done" | "inbox";
 
@@ -162,7 +169,14 @@ const SurveyPage = () => {
   const branch = profile?.branch_name ?? null;
   const [view, setView] = useState<View>(() => (params.get("inbox") === "1" ? "inbox" : "hub"));
   const [busy, setBusy] = useState(false);
-  const [doneInfo, setDoneInfo] = useState<{ kind: SurveyRewardKind; reward: number; drawNote?: string | null; drawEntered?: boolean } | null>(null);
+  const [doneInfo, setDoneInfo] = useState<{
+    kind: SurveyRewardKind;
+    reward: number;
+    drawNote?: string | null;
+    drawEntered?: boolean;
+    /** 본사 답변이 나에게 온다(영수증을 남김) */
+    replyable?: boolean;
+  } | null>(null);
 
   const links = useQuery({ queryKey: ["survey-links", branch], queryFn: () => getBranchSurveyLinks(branch), enabled: !!branch });
   const rewards = useQuery({ queryKey: ["survey-rewards"], queryFn: getMySurveyRewards });
@@ -172,8 +186,17 @@ const SurveyPage = () => {
     enabled: !!links.data?.survey_slug,
     retry: 1,
   });
-  const mine = useQuery({ queryKey: ["my-survey-receipts"], queryFn: getMySurveyReceipts, retry: 1 });
+  const mine = useQuery({ queryKey: ["my-voice-receipts"], queryFn: getMyVoiceReceipts, retry: 1 });
   const unreadReplies = (mine.data ?? []).filter((r) => r.reply && !r.read_at).length;
+  // 내가 보낸 고객의 소리 원문 — 153OS 에만 있다(앱 DB 에 안 남김). 못 읽어도 목록은 그대로
+  const hasMyFeedback = (mine.data ?? []).some((r) => r.kind === "feedback");
+  const myTexts = useQuery({
+    queryKey: ["my-feedback-texts", (mine.data ?? []).filter((r) => r.kind === "feedback").length],
+    queryFn: getMyFeedbackTexts,
+    enabled: hasMyFeedback,
+    retry: 1,
+    staleTime: 5 * 60 * 1000,
+  });
   // 첫 화면에서 새 답변을 보여 준 뒤 읽음으로 — 이번 화면에서는 '새 답변' 표시를 그대로 둔다
   useEffect(() => {
     if (view === "hub" && unreadReplies > 0) void markMySurveyRepliesRead();
@@ -215,7 +238,7 @@ const SurveyPage = () => {
   const drawOk = !drawOptIn || (agreed && contactPhone.replace(/\D/g, "").length >= 10);
   const canSendFeedback = !!cat && content.trim().length >= 2 && drawOk && !busy;
 
-  async function afterSubmit(kind: SurveyRewardKind, extra?: { drawNote?: string | null; drawEntered?: boolean }) {
+  async function afterSubmit(kind: SurveyRewardKind, extra?: { drawNote?: string | null; drawEntered?: boolean; replyable?: boolean }) {
     const r = await claimSurveyReward(kind);
     if (r.granted) {
       toast.success(`챔피언 머니 +${(r.amount ?? SURVEY_REWARD[kind]).toLocaleString()} 💵`);
@@ -233,11 +256,14 @@ const SurveyPage = () => {
     try {
       const responseId = await submitSurvey(links.data.survey_slug, answers);
       // 보낸 사람 남기기 — 실패해도 제출은 끝난 것(답변 알림만 못 받는다)
+      let replyable = false;
       if (responseId) {
-        await recordMySurveyReceipt(responseId, survey.data?.template.title ?? null).catch(() => undefined);
-        void qc.invalidateQueries({ queryKey: ["my-survey-receipts"] });
+        replyable = await recordMySurveyReceipt(responseId, survey.data?.template.title ?? null)
+          .then(() => true)
+          .catch(() => false);
+        void qc.invalidateQueries({ queryKey: ["my-voice-receipts"] });
       }
-      await afterSubmit("satisfaction");
+      await afterSubmit("satisfaction", { replyable });
       setAnswers({});
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "제출에 실패했어요");
@@ -250,8 +276,9 @@ const SurveyPage = () => {
     if (!links.data?.feedback_slug || !cat || !canSendFeedback) return;
     setBusy(true);
     try {
+      const slug = links.data.feedback_slug;
       const r = await submitFeedback({
-        slug: links.data.feedback_slug,
+        slug,
         category: cat,
         rating,
         content,
@@ -261,7 +288,10 @@ const SurveyPage = () => {
         contact_phone: contactPhone,
         privacy_agreed: agreed,
       });
-      await afterSubmit("feedback", { drawNote: r.note, drawEntered: r.drawEntered });
+      // 내가 보냈다고 남기기 → 본사 답변이 나에게만 온다 (2026-11-03). 실패해도 제출은 끝난 것
+      const replyable = await claimMyFeedbackReceipt({ slug, category: cat, content, rating }).catch(() => false);
+      if (replyable) void qc.invalidateQueries({ queryKey: ["my-voice-receipts"] });
+      await afterSubmit("feedback", { drawNote: r.note, drawEntered: r.drawEntered, replyable });
       setCat(null); setRating(null); setContent(""); setCoachName(""); setDrawOptIn(false); setAgreed(false);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "전송에 실패했어요");
@@ -278,7 +308,7 @@ const SurveyPage = () => {
   if (view === "inbox" && isHq) {
     return (
       <AppPage header={header("받은 설문·고객의 소리", "회원님이 보낸 응답 · 전체관리자만 봐요", () => setView("hub"))}>
-        <MemberVoiceInbox initialTab={params.get("tab") === "voice" ? "voices" : "surveys"} />
+        <MemberVoiceInbox initialFilter={params.get("tab") === "voice" ? "voice" : "all"} />
       </AppPage>
     );
   }
@@ -302,8 +332,8 @@ const SurveyPage = () => {
               💵 챔피언 머니 +{doneInfo.reward.toLocaleString()} 지급
             </p>
           )}
-          {doneInfo.kind === "satisfaction" && (
-            <p className="text-label text-muted-foreground">운영진이 답변하면 알림으로 알려 드려요</p>
+          {doneInfo.replyable && (
+            <p className="text-label text-muted-foreground">운영진이 답변하면 알림으로 알려 드려요 · 이 화면 아래 '내가 보낸 의견'에서도 볼 수 있어요</p>
           )}
           {doneInfo.kind === "feedback" && (doneInfo.drawEntered || doneInfo.drawNote) && (
             <p className="text-label text-muted-foreground">
@@ -361,6 +391,7 @@ const SurveyPage = () => {
     return (
       <AppPage header={header("고객의 소리", channel.data?.branch_name ?? "칭찬·제안·건의 무엇이든", () => setView("hub"))}>
         <div className="space-y-4 pb-6">
+          <p className="px-1 text-label text-muted-foreground">🔒 익명으로 전달돼요 · 운영진 답변은 나만 볼 수 있어요</p>
           <div className="grid grid-cols-2 gap-2">
             {CATS.map((c) => (
               <button
@@ -565,20 +596,37 @@ const SurveyPage = () => {
         </div>
       )}
 
-      {/* 내가 보낸 만족도 조사 + 운영진 답변 (2026-10-30) — 앱에서 보낸 설문만, 나만 본다 */}
+      {/* 내가 보낸 의견 — 만족도 조사 + 고객의 소리 + 운영진 답변 (2026-10-30 · 2026-11-03 한 목록) — 앱에서 보낸 것만, 나만 본다 */}
       {(mine.data?.length ?? 0) > 0 && (
         <section id="my-surveys" aria-labelledby="my-surveys-h" className="mt-7 scroll-mt-20">
           <h2 id="my-surveys-h" className="px-1 text-heading text-foreground">
-            내가 보낸 만족도 조사
+            내가 보낸 의견
           </h2>
           <p className="mt-0.5 px-1 text-label text-muted-foreground">운영진 답변은 나만 볼 수 있어요</p>
           <ul className="mt-2 space-y-2">
-            {mine.data!.map((r) => (
+            {mine.data!.map((r) => {
+              const isVoice = r.kind === "feedback";
+              const myText = isVoice ? myTexts.data?.[r.response_id] : undefined;
+              // 고객의 소리 제목 = '고객의 소리 · 분류'(영수증에 남긴 것) · 만족도 조사는 설문 이름이 길어서 종류만
+              const label = isVoice ? r.title || `고객의 소리 · ${VOICE_CATEGORY_LABEL[myText?.category ?? ""] ?? "의견"}` : "만족도 조사";
+              return (
               <li key={r.response_id} className="rounded-2xl bg-card p-4 shadow-elev-1 ring-1 ring-border/60">
-                <div className="flex items-baseline justify-between gap-2">
-                  <p className="min-w-0 truncate text-label font-bold text-foreground">{r.survey_title}</p>
+                <div className="flex items-center justify-between gap-2">
+                  <span
+                    className={cn(
+                      "min-w-0 truncate rounded-pill px-2 py-0.5 text-micro font-bold",
+                      isVoice ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-amber-400/15 text-amber-700 dark:text-amber-300",
+                    )}
+                  >
+                    {isVoice ? "💬" : "⭐"} {label}
+                  </span>
                   <p className="shrink-0 text-label tabular-nums text-muted-foreground">{shortDate(r.submitted_at)}</p>
                 </div>
+                {myText?.content ? (
+                  <p className="mt-2 line-clamp-3 whitespace-pre-line break-words border-l-2 border-border pl-2.5 text-label leading-relaxed text-foreground/80">
+                    {myText.content}
+                  </p>
+                ) : null}
                 {r.reply ? (
                   <div className="mt-2 rounded-xl bg-primary/5 px-3 py-2.5">
                     <p className="flex items-center gap-1 text-micro font-bold text-primary">
@@ -594,7 +642,8 @@ const SurveyPage = () => {
                   <p className="mt-1.5 text-label text-muted-foreground">답변을 기다리는 중이에요</p>
                 )}
               </li>
-            ))}
+              );
+            })}
           </ul>
         </section>
       )}

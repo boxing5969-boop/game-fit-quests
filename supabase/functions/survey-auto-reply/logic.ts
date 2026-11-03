@@ -124,3 +124,34 @@ export function composeReply(id: string, v: Partial<PositiveFlags>, salt = 0): s
 
 /** 한국 시각(시) — 자동 답변은 9~21시, 의견 알림은 8~22시에만 */
 export const kstHour = (d: Date) => (d.getUTCHours() + 9) % 24;
+
+// ── 고객의 소리 — 답이 없으면 대표님께 알림 (2026-11-03 대표님 "고객의 소리에도 답변 달수있게해줘") ──
+//   고객의 소리는 모두 대표님이 직접 답한다(자동 답변 없음 — 칭찬 글도 대표님이 직접, 10-30 원칙과 같다).
+export interface VoiceIn {
+  category: string;
+  content: string;
+  branch: string;
+  /** 앱에서 낸 글(영수증 있음) = 답변이 그 회원에게 간다 */
+  fromApp: boolean;
+}
+const VOICE_LABEL: Record<string, string> = { coach_praise: "코치 칭찬", improvement: "개선 제안", complaint: "불편·건의", free: "자유 한마디" };
+
+/** 대표님께 갈 알림 하나 — 1건이면 그 글 앞부분, 여러 건이면 건수와 분류별 수 */
+export function voiceNotice(items: VoiceIn[]): { title: string; body: string } | null {
+  if (!items.length) return null;
+  if (items.length === 1) {
+    const v = items[0];
+    const text = short(v.content.replace(/\s+/g, " ").trim(), 60);
+    const body = [v.branch, VOICE_LABEL[v.category] ?? "의견", text ? `“${text}”` : "", v.fromApp ? "답변하면 그 회원에게 가요" : ""]
+      .filter(Boolean)
+      .join(" · ");
+    return { title: "📋 고객의 소리가 왔어요", body: body.slice(0, 160) };
+  }
+  const counts = new Map<string, number>();
+  for (const v of items) {
+    const label = VOICE_LABEL[v.category] ?? "의견";
+    counts.set(label, (counts.get(label) ?? 0) + 1);
+  }
+  const body = [...counts].map(([label, n]) => `${label} ${n}`).join(" · ");
+  return { title: `📋 고객의 소리 ${items.length}건이 답변을 기다려요`, body: body.slice(0, 160) };
+}

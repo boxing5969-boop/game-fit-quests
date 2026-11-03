@@ -52,6 +52,10 @@ verify_jwt = false
 [functions.os-app-content]
 verify_jwt = true
 
+# 고객의 소리 영수증(본사 답변이 보낸 회원에게만) · 내가 보낸 고객의 소리 원문 (로그인한 앱 사용자만) — 2026-11-03
+[functions.member-voice-receipt]
+verify_jwt = true
+
 # 153OS 앱 알림 → 알림함 · 휴대폰 — 크론이 매분 x-auto-key 로 호출 (2026-11-02)
 [functions.os-push-pull]
 verify_jwt = false

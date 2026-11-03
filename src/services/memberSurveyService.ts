@@ -5,7 +5,8 @@
  *   · 만족도 조사: 153-boxing-os Supabase RPC get_public_survey / submit_survey_response (anon 공개 함수)
  *   · 고객의 소리: 153-boxing-os API /api/feedback/ch/:slug · /api/feedback/submit (CORS: myboxer153.com 허용됨)
  * 지점별 주소(slug)는 마이복서153 DB branch_survey_links 에 둔다 — 새 지점 QR 을 만들면 그 표에 한 줄 추가.
- * 답변 내용은 마이복서153 DB 에 남기지 않는다(익명 유지). 여기에는 '이번 달 참여 보상'과 앱에서 낸 만족도 조사의 응답 번호(본사 답변을 받기 위해)만 기록한다.
+ * 답변 내용은 마이복서153 DB 에 남기지 않는다(익명 유지). 여기에는 '이번 달 참여 보상'과 앱에서 낸 만족도 조사 · 고객의 소리의
+ * 응답 번호(본사 답변을 받기 위해 — survey_receipts, 고객의 소리는 2026-11-03 부터)만 기록한다.
  * 답변 형식은 CRM PublicSurveyPage 와 같아야 한다: rating=answer_score, 보기=answer_text+번호, 예/아니오=answer_text "예"|"아니오".
  */
 import { supabase } from "@/integrations/supabase/client";
@@ -113,7 +114,8 @@ const rpc: LooseRpc = (fn, args) => (supabase.rpc as unknown as LooseRpc)(fn, ar
 
 /** 앱에서 낸 설문을 내가 보냈다고 남긴다 — 실패해도 설문 제출은 그대로(답변만 못 받는다) */
 export async function recordMySurveyReceipt(responseId: string, title: string | null): Promise<void> {
-  await rpc("record_my_survey_receipt", { p_response_id: responseId, p_title: title });
+  const { error } = await rpc("record_my_survey_receipt", { p_response_id: responseId, p_title: title });
+  if (error) throw new Error(error.message || "보낸 사람을 남기지 못했어요");
 }
 
 export interface MySurveyReceipt {
@@ -135,6 +137,73 @@ export async function markMySurveyRepliesRead(): Promise<number> {
   const { data } = await rpc("mark_my_survey_replies_read");
   return Number(data ?? 0);
 }
+
+// ── 내가 보낸 의견 — 만족도 조사 + 고객의 소리를 한 목록에 (2026-11-03 대표님 "고객의 소리에도 답변 · 한탭으로 합쳐줘") ──
+//   고객의 소리 영수증은 회원이 직접 못 남긴다: 보낸 직후 Edge Function member-voice-receipt(op claim)가 153OS 에서 방금 들어온
+//   그 글을 찾아 서버 키로 남긴다(153OS 공개 경로는 글 번호를 돌려주지 않는다). 원문은 153OS 에만 — 보여 줄 때 op mine 으로 읽는다.
+export type VoiceKind = "satisfaction" | "feedback";
+
+export interface MyVoiceReceipt {
+  response_id: string;
+  kind: VoiceKind;
+  title: string;
+  submitted_at: string;
+  reply: string | null;
+  replied_at: string | null;
+  read_at: string | null;
+}
+
+export async function getMyVoiceReceipts(): Promise<MyVoiceReceipt[]> {
+  const { data, error } = await rpc("get_my_voice_receipts");
+  if (error) throw error;
+  return ((data ?? []) as MyVoiceReceipt[]).map((r) => ({ ...r, kind: r.kind === "feedback" ? "feedback" : "satisfaction" }));
+}
+
+type VoiceReceiptAnswer = { ok?: boolean; code?: string; id?: string; items?: MyFeedbackText[] };
+
+async function voiceReceiptCall(body: Record<string, unknown>): Promise<VoiceReceiptAnswer> {
+  const { data, error } = await supabase.functions.invoke("member-voice-receipt", { body });
+  if (error) throw error;
+  return (data ?? {}) as VoiceReceiptAnswer;
+}
+
+/** 방금 낸 고객의 소리를 내가 보냈다고 남긴다 → 본사 답변이 나에게만 온다. 실패해도 제출은 그대로(답변만 못 받는다) */
+export async function claimMyFeedbackReceipt(input: Pick<FeedbackInput, "slug" | "category" | "content" | "rating">): Promise<boolean> {
+  const r = await voiceReceiptCall({
+    op: "claim",
+    slug: input.slug,
+    category: input.category,
+    content: input.content.trim(),
+    rating: input.rating ?? null,
+  });
+  return r.ok === true && !!r.id;
+}
+
+/** 내가 보낸 고객의 소리 원문 (153OS) — 응답 번호별 */
+export interface MyFeedbackText {
+  id: string;
+  category: string;
+  rating: number | null;
+  content: string;
+  coach: string | null;
+}
+
+export async function getMyFeedbackTexts(): Promise<Record<string, MyFeedbackText>> {
+  const r = await voiceReceiptCall({ op: "mine" });
+  if (!r.ok) throw new Error(r.code ?? "내가 보낸 글을 불러오지 못했어요");
+  const out: Record<string, MyFeedbackText> = {};
+  for (const it of r.items ?? []) out[it.id] = it;
+  return out;
+}
+
+/** 고객의 소리 분류 이름 — 회원 화면 · 받은 설문함이 같이 쓴다 (153OS 워커 분류 값) */
+export const VOICE_CATEGORY_LABEL: Record<string, string> = {
+  coach_praise: "코치 칭찬",
+  improvement: "개선 제안",
+  complaint: "불편·건의",
+  free: "자유 한마디",
+  circuit: "서키트 설문",
+};
 
 /** 본사 — 받은 설문함의 답변 (응답 번호별) */
 export interface SurveyReplyInfo {
