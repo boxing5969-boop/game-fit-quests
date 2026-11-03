@@ -343,8 +343,8 @@ const ChatAssistant = () => {
 
   // 복싱 트레이닝은 풀스크린 터치 게임이라 플로팅 버튼이 펀치 입력에 겹쳐 오조작을 유발함.
   // QR 출석 화면은 카메라 뷰 위에 버튼이 겹치면 안 된다.
-  // 메시지 대화방은 내 말풍선(오른쪽 아래)·입력창을 가린다 (2026-09-30). 1:1 문의 대화(/inquiries/:id)도 같다 (2026-11-03).
-  if (location.pathname === "/minigame" || location.pathname === "/qr-checkin" || location.pathname.startsWith("/messages/") || location.pathname.startsWith("/office/") || location.pathname.startsWith("/inquiries/")) return null;
+  // 메시지 대화방은 내 말풍선(오른쪽 아래)·입력창을 가린다 (2026-09-30). 1:1 문의(목록 · 새 문의 쓰기 · 대화)도 같다 (2026-11-03).
+  if (location.pathname === "/minigame" || location.pathname === "/qr-checkin" || location.pathname.startsWith("/messages/") || location.pathname.startsWith("/office/") || location.pathname === "/inquiries" || location.pathname.startsWith("/inquiries/")) return null;
 
   return (
     <>
