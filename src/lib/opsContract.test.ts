@@ -1,11 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
+  autoBreakMin,
+  breakShortMin,
   buildContractDoc,
   checkFreelance,
   checkLabor,
   contractFileName,
   contractNeeds,
+  dayGapMin,
   dayRow,
+  daySetSegs,
+  dayWorkMin,
   daysFromRules,
   defaultFreelanceTerms,
   defaultInsurance,
@@ -84,6 +89,36 @@ describe("계약서 — 글 조각", () => {
     expect(dayRow(days[0])).toEqual(["월요일", "18:00", "22:00", "근무 중 30분", "3시간 30분"]);
     // 3.5 × 3 + 4 = 14.5시간
     expect(weeklyWorkMin(days)).toBe(14.5 * 60);
+  });
+
+  it("휴게는 하루 전체로 따지고 구간 사이 시간도 휴게로 친다 (2026-11-04)", () => {
+    const seg = (start: string, end: string) => ({ start, end });
+    // 대표님 화면: 18:30~19:30 · 20:00~23:30 — 사이 30분이 휴게라 더 빼지 않는다 (예전엔 4시간으로 보였다)
+    const split = [seg("18:30", "19:30"), seg("20:00", "23:30")];
+    expect(dayGapMin({ segs: split })).toBe(30);
+    expect(autoBreakMin(split)).toBe(0);
+    expect(dayWorkMin({ weekday: 1, segs: split, breakMin: autoBreakMin(split) })).toBe(270);
+    expect(autoBreakMin([seg("18:00", "18:30"), seg("19:00", "23:00")])).toBe(0);
+    // 점심을 사이에 둔 하루 8시간 — 예전엔 4시간 구간마다 30분을 더 빼 7시간 30분이 됐다
+    const lunch = [seg("09:00", "13:00"), seg("14:00", "18:00")];
+    expect(autoBreakMin(lunch)).toBe(0);
+    expect(dayWorkMin({ weekday: 2, segs: lunch, breakMin: 0 })).toBe(480);
+    expect(checkLabor(labor({ days: [{ weekday: 2, segs: lunch, breakMin: 0 }] })).warns.some((w) => w.includes("54조"))).toBe(false);
+    // 한 구간이면 구간 안 휴게
+    expect(autoBreakMin([seg("09:00", "18:00")])).toBe(60);
+    expect(autoBreakMin([seg("18:00", "23:00")])).toBe(30);
+    expect(autoBreakMin([seg("18:00", "21:00")])).toBe(0);
+    expect(breakShortMin({ weekday: 3, segs: [seg("18:00", "22:30")], breakMin: 0 })).toBe(30);
+    expect(breakShortMin({ weekday: 3, segs: [seg("09:00", "18:00")], breakMin: 30 })).toBe(30);
+  });
+
+  it("시간을 바꾸면 기본 휴게는 따라가고, 직접 고른 휴게는 그대로", () => {
+    const seg = (start: string, end: string) => ({ start, end });
+    const auto = { weekday: 1, segs: [seg("18:00", "23:00")], breakMin: 30 };
+    expect(daySetSegs(auto, [seg("18:30", "19:30"), seg("20:00", "23:30")]).breakMin).toBe(0);
+    expect(daySetSegs(auto, [seg("18:00", "22:00")]).breakMin).toBe(30);
+    const picked = { weekday: 1, segs: [seg("18:00", "23:00")], breakMin: 60 };
+    expect(daySetSegs(picked, [seg("18:00", "23:30")]).breakMin).toBe(60);
   });
 
   it("앞으로 시작할 시간표만 있으면 그것을 쓴다", () => {

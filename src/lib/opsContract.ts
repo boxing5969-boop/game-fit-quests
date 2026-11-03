@@ -139,11 +139,29 @@ export const hourlyEquivalent = (t: Pick<LaborTerms, "payType" | "wage" | "days"
   const h = monthlyPaidHours(weeklyWorkMin(t.days));
   return h > 0 ? t.wage / h : 0;
 };
-/** 법이 정한 휴게(분) — 이어서 4시간이면 30분, 8시간이면 1시간 (근로기준법 54조) */
-export const requiredBreakMin = (d: ContractDay) => {
-  const longest = Math.max(0, ...d.segs.map(segMin));
-  return longest >= 480 ? 60 : longest >= 240 ? 30 : 0;
+/** 구간 사이 빈 시간(분) — 이미 휴게다 */
+export const dayGapMin = (d: Pick<ContractDay, "segs">) => {
+  const segs = [...d.segs].sort((a, b) => a.start.localeCompare(b.start));
+  let gap = 0;
+  for (let i = 1; i < segs.length; i++) gap += Math.max(0, hmToMin(segs[i].start) - hmToMin(segs[i - 1].end));
+  return gap;
 };
+/** 법이 정한 휴게(분) — 하루 근로 4시간이면 30분, 8시간이면 1시간 이상을 근로시간 도중에 (근로기준법 54조).
+ *  2026-11-04 — 예전엔 가장 긴 구간 하나로 따져, 구간 사이에 이미 쉬어도(18:30~19:30 · 20:00~23:30) 30분을 또 뺐다 */
+export const requiredBreakMin = (d: ContractDay) => {
+  const work = dayWorkMin(d);
+  return work >= 480 ? 60 : work >= 240 ? 30 : 0;
+};
+/** 휴게가 법 기준보다 모자란 분 — 구간 사이 시간 + 구간 안 휴게 */
+export const breakShortMin = (d: ContractDay) => Math.max(0, requiredBreakMin(d) - (dayGapMin(d) + Math.max(0, d.breakMin)));
+/** 구간 안 휴게 기본값 — 구간 사이 시간까지 쳐서 법 기준을 채우는 가장 작은 값 */
+export const autoBreakMin = (segs: ContractSeg[]) => [0, 30, 60].find((b) => breakShortMin({ weekday: 0, segs, breakMin: b }) === 0) ?? 60;
+/** 구간을 바꿀 때 — 휴게가 기본값이었으면 새 구간의 기본값으로 따라가고, 직접 고른 휴게는 그대로 */
+export const daySetSegs = (d: ContractDay, segs: ContractSeg[]): ContractDay => ({
+  ...d,
+  segs,
+  breakMin: d.breakMin === autoBreakMin(d.segs) ? autoBreakMin(segs) : d.breakMin,
+});
 /** 한 달 근로시간(대략) — 4대보험 기준 월 60시간 */
 export const monthlyWorkHours = (weeklyMin: number) => (weeklyMin / 60) * 4.345;
 
@@ -162,8 +180,7 @@ export const daysFromRules = (staffId: string, rules: OpsRule[], date: string): 
   return [...byDay.entries()]
     .map(([weekday, segs]) => {
       const sorted = segs.sort((a, b) => a.start.localeCompare(b.start));
-      const day: ContractDay = { weekday, segs: sorted, breakMin: 0 };
-      day.breakMin = requiredBreakMin(day);
+      const day: ContractDay = { weekday, segs: sorted, breakMin: autoBreakMin(sorted) };
       return day;
     })
     .sort((a, b) => weekSort(a.weekday, b.weekday));
@@ -557,8 +574,8 @@ export const checkLabor = (t: LaborTerms, ctx: { hasRules?: boolean } = {}): Con
 
   for (const d of days) {
     const need = requiredBreakMin(d);
-    if (need > 0 && d.breakMin < need) {
-      warns.push(`${OPS_WEEKDAY[d.weekday]}요일 — 이어서 ${need === 60 ? "8" : "4"}시간 일하면 휴게 ${need}분 이상이 필요해요 (근로기준법 54조)`);
+    if (need > 0 && breakShortMin(d) > 0) {
+      warns.push(`${OPS_WEEKDAY[d.weekday]}요일 — 하루 ${need === 60 ? "8" : "4"}시간 일하면 휴게 ${need}분 이상이 필요해요 · 구간 사이 시간도 휴게로 쳐요 (근로기준법 54조)`);
     }
     if (dayWorkMin(d) > 8 * 60) warns.push(`${OPS_WEEKDAY[d.weekday]}요일 — 하루 8시간을 넘는 부분은 연장근로예요`);
   }

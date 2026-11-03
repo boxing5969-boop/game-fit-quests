@@ -11,9 +11,13 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   WEEK_ORDER,
+  autoBreakMin,
+  breakShortMin,
   buildContractDoc,
   checkContract,
   contractTitle,
+  dayGapMin,
+  daySetSegs,
   dayWorkMin,
   daysFromRules,
   defaultFreelanceTerms,
@@ -22,7 +26,6 @@ import {
   defaultWeeklyHoliday,
   employerReady,
   hourlyEquivalent,
-  requiredBreakMin,
   weeklyWorkMin,
   type ContractDay,
   type ContractKind,
@@ -278,8 +281,8 @@ const LaborForm = ({
                       const cur = days.find((d) => d.weekday === wd);
                       const lastEnd = cur?.segs.map((s) => s.end).sort().at(-1) ?? "18:00";
                       const seg = { start: lastEnd, end: plus(lastEnd, 120) };
-                      if (!cur) return [...days, { weekday: wd, segs: [seg], breakMin: 0 }];
-                      return days.map((d) => (d.weekday === wd ? { ...d, segs: [...d.segs, seg] } : d));
+                      if (!cur) return [...days, { weekday: wd, segs: [seg], breakMin: autoBreakMin([seg]) }];
+                      return days.map((d) => (d.weekday === wd ? daySetSegs(d, [...d.segs, seg]) : d));
                     })
                   }
                   className="flex shrink-0 items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-label font-bold text-foreground active:scale-95"
@@ -298,7 +301,7 @@ const LaborForm = ({
                         aria-label="시업"
                         onChange={(e) =>
                           setDays((days) =>
-                            days.map((d) => (d.weekday === wd ? { ...d, segs: d.segs.map((x, j) => (j === i ? { ...x, start: e.target.value } : x)) } : d)),
+                            days.map((d) => (d.weekday === wd ? daySetSegs(d, d.segs.map((x, j) => (j === i ? { ...x, start: e.target.value } : x))) : d)),
                           )
                         }
                         className={`${opsInput} py-2`}
@@ -311,7 +314,7 @@ const LaborForm = ({
                         aria-label="종업"
                         onChange={(e) =>
                           setDays((days) =>
-                            days.map((d) => (d.weekday === wd ? { ...d, segs: d.segs.map((x, j) => (j === i ? { ...x, end: e.target.value } : x)) } : d)),
+                            days.map((d) => (d.weekday === wd ? daySetSegs(d, d.segs.map((x, j) => (j === i ? { ...x, end: e.target.value } : x))) : d)),
                           )
                         }
                         className={`${opsInput} py-2`}
@@ -320,7 +323,7 @@ const LaborForm = ({
                         type="button"
                         aria-label="이 시간 빼기"
                         onClick={() =>
-                          setDays((days) => days.map((d) => (d.weekday === wd ? { ...d, segs: d.segs.filter((_, j) => j !== i) } : d)))
+                          setDays((days) => days.map((d) => (d.weekday === wd ? daySetSegs(d, d.segs.filter((_, j) => j !== i)) : d)))
                         }
                         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted-foreground active:scale-95"
                       >
@@ -342,8 +345,9 @@ const LaborForm = ({
                       ))}
                     </div>
                   </div>
-                  {requiredBreakMin(day) > day.breakMin && (
-                    <p className="text-label font-bold text-orange-700">이어서 4시간이면 30분 · 8시간이면 1시간 이상 쉬어야 해요</p>
+                  {dayGapMin(day) > 0 && <p className="text-label text-muted-foreground">구간 사이 {fmtDuration(dayGapMin(day))}은 이미 휴게예요</p>}
+                  {breakShortMin(day) > 0 && (
+                    <p className="text-label font-bold text-orange-700">하루 4시간 일하면 30분 · 8시간이면 1시간 이상 쉬어야 해요</p>
                   )}
                 </div>
               )}
