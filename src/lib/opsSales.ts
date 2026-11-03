@@ -92,6 +92,7 @@ export const SALES_ERROR: Record<string, string> = {
   FORBIDDEN: "매출은 대표님 · 회계매니저만 볼 수 있어요",
   INVALID_REQUEST: "지점 · 달을 다시 골라 주세요",
   OS_NOT_CONFIGURED: "153OS 연결 설정이 없어요",
+  DAGYM_NOT_READY: "다짐(칠금점) 매출 연결을 준비하고 있어요",
   READ_FAILED: "매출 자료를 읽지 못했어요 — 잠시 후 다시 시도해 주세요",
 };
 

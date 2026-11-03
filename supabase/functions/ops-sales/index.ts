@@ -2,7 +2,8 @@
 //
 // 화면(src/components/ops/OpsSalesTab.tsx)이 부른다. verify_jwt = true.
 //   1) 부른 사람 토큰으로 앱 ops_sales_scope() — 돈을 보는 분(대표님 · 회계매니저, _ops_can_see_pay)이 볼 수 있는 지점만.
-//   2) 153OS(서버 키 OS_SERVICE_KEY)에서 그 지점 매출: 브로제이 sales_entries · 다짐 dagym_sales + 들어온 시각.
+//   2) 153OS(서버 키 OS_SERVICE_KEY)에서 그 지점 매출: 브로제이 sales_entries + 들어온 시각(broj_sync_runs) ·
+//      다짐은 153OS 함수 ops_sales_dagym(표를 서버 키로도 직접 못 읽게 막아 둠) — 함수가 없으면 다짐 지점만 DAGYM_NOT_READY.
 //      앱 DB 에서 앱 결제(payment_orders · payment_order_items, paid) — 브로제이에 이미 적힌 것은 뺀다(dedupeApp).
 //   3) 나누기 · 합치기는 logic.ts — 일반 수강권 · PT · 일일권 · 락카/운동복 · 용품 · 기타. 고른 달 합계 · 줄, 지난 n달 흐름.
 //   body { branch, month: 'YYYY-MM', months?: 1~12 (흐름, 기본 6) }
@@ -101,7 +102,7 @@ Deno.serve(async (req) => {
     if (obErr) throw new Error(obErr.message);
     const branchId = (ob as any)?.id as string | undefined;
 
-    const [broj, dagym, brojRun, dagymRun, orders] = await Promise.all([
+    const [broj, dg, brojRun, orders] = await Promise.all([
       branchId
         ? readAll<any>((a, b) =>
             os
@@ -115,20 +116,10 @@ Deno.serve(async (req) => {
               .range(a, b),
           )
         : Promise.resolve([]),
+      // 다짐(칠금) — dagym_sales · dagym_batches 는 153OS 서버 키로도 직접 못 읽는다(원본 보호) → 153OS 함수 ops_sales_dagym 으로만
       branchId
-        ? readAll<any>((a, b) =>
-            os
-              .from("dagym_sales")
-              .select("row_id, sale_id, sale_date, income_at, member_name, sale_category, sale_name, income, payment_method, status")
-              .eq("branch_id", branchId)
-              .gte("sale_date", crmFrom)
-              .lte("sale_date", crmTo)
-              .neq("status", "missing")
-              .order("sale_date", { ascending: true })
-              .order("row_id", { ascending: true })
-              .range(a, b),
-          )
-        : Promise.resolve([]),
+        ? os.rpc("ops_sales_dagym", { p_branch_id: branchId, p_from: crmFrom, p_to: crmTo })
+        : Promise.resolve({ data: null, error: null }),
       branchId
         ? os
             .from("broj_sync_runs")
@@ -137,16 +128,6 @@ Deno.serve(async (req) => {
             .eq("kind", "sales")
             .eq("status", "success")
             .order("started_at", { ascending: false })
-            .limit(1)
-        : Promise.resolve({ data: [], error: null }),
-      branchId
-        ? os
-            .from("dagym_batches")
-            .select("closed_at")
-            .eq("branch_id", branchId)
-            .gt("sales_received", 0)
-            .not("closed_at", "is", null)
-            .order("closed_at", { ascending: false })
             .limit(1)
         : Promise.resolve({ data: [], error: null }),
       readAll<any>((a, b) =>
@@ -161,6 +142,16 @@ Deno.serve(async (req) => {
           .range(a, b),
       ),
     ]);
+
+    const isBroj = broj.length > 0 || ((brojRun as any)?.data?.length ?? 0) > 0;
+    const dgErr = (dg as any)?.error;
+    const dagym: any[] = Array.isArray((dg as any)?.data?.rows) ? (dg as any).data.rows : [];
+    const dagymSynced: string | null = (dg as any)?.data?.synced_at ?? null;
+    if (dgErr) {
+      console.error("ops-sales dagym", branch, dgErr.code ?? dgErr.message);
+      // 153OS 함수가 아직 없거나 막혔으면 — 브로제이 지점은 그대로 보이고, 다짐 지점만 알린다
+      if (!isBroj) return json({ ok: false, code: "DAGYM_NOT_READY" });
+    }
 
     // 앱 결제한 분 이름 (중복 맞추기 · 줄에 보이기)
     const userIds = [...new Set(orders.map((o: any) => o.user_id).filter(Boolean))] as string[];
@@ -183,9 +174,8 @@ Deno.serve(async (req) => {
     const all = [...crm, ...appRows].filter((r) => r.day >= from && r.day <= to);
     const monthRows = all.filter((r) => r.day.startsWith(month));
 
-    const src = dagym.length > 0 || ((dagymRun as any)?.data?.length ?? 0) > 0 ? "dagym" : broj.length > 0 || ((brojRun as any)?.data?.length ?? 0) > 0 ? "broj" : "none";
-    const syncedAt =
-      src === "dagym" ? ((dagymRun as any)?.data?.[0]?.closed_at ?? null) : src === "broj" ? ((brojRun as any)?.data?.[0]?.started_at ?? null) : null;
+    const src = dagym.length > 0 || dagymSynced ? "dagym" : isBroj ? "broj" : "none";
+    const syncedAt = src === "dagym" ? dagymSynced : src === "broj" ? ((brojRun as any)?.data?.[0]?.started_at ?? null) : null;
     const sorted = sortRows(monthRows);
 
     console.log("ops-sales ok", branch, month, probe ? "probe" : "user", monthRows.length);
@@ -200,7 +190,9 @@ Deno.serve(async (req) => {
       trend: trendOf(all, months),
       rows: probe ? [] : sorted.slice(0, ROWS_OUT),
       truncated: !probe && sorted.length > ROWS_OUT,
-      ...(probe ? { probe: { broj: broj.length, dagym: dagym.length, app: orders.length, app_added: appRows.length } } : {}),
+      ...(probe
+        ? { probe: { broj: broj.length, dagym: dagym.length, dagym_error: dgErr ? String(dgErr.code ?? "error") : null, app: orders.length, app_added: appRows.length } }
+        : {}),
     });
   } catch (e) {
     console.error("ops-sales failed", branch, (e as Error).message);
