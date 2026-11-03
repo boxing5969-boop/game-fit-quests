@@ -71,6 +71,8 @@ talktalk 변경은 별도 commit 으로 처리하고 prefix 는 `chore(talktalk)
 - **큰 기능은 미리보기 먼저**: `preview/<이름>` 브랜치로 올리면 Cloudflare 가 `https://preview-<이름>.game-fit-quests.pages.dev` 를 만든다(자동 검사도 돈다) → 대표님 확인 → main 에 합친다. 미리보기도 **운영 DB · Edge Function 을 같이 쓴다** — 미리보기 단계의 DB 변경은 새 함수·새 칸 추가만(기존 함수 동작 바꾸기 금지) · 실회원 데이터로 쓰기 시험 금지 · 카카오 로그인은 미리보기 주소에서 안 될 수 있다(아이디 로그인으로 확인). 작은 수정·급한 고침은 지금처럼 main 으로.
 - **PC 폴더**(`C:\Users\82104\game-fit-quests`)는 bat 으로 푸시하는 통로다. 거기서 파일을 고쳤으면 그날 커밋·푸시까지 끝내고, 커밋 안 된 수정을 남겨 두지 않는다(10/14 수정 10개가 남아 GitHub 과 엇갈렸다 → 2026-10-20 `_backup/pc-wip-20261014/pc-wip.patch` + `git stash`(pc-wip-20261014) 로 보관하고 main 을 최신으로 맞춤).
 - 같은 요청을 두 창에 함께 하면 먼저 잡은 계정만 한다. 다른 계정은 "이미 하는 중"이라고 알리고 나눌 수 있는 다른 부분을 제안한다.
+- **저장소는 비공개** (2026-11-04 대표님 「비공개로진행하자」 · 153OS 저장소도 11/03 비공개): 익명 clone · raw 주소 읽기가 안 된다. 클라우드 세션은 `add_repo`(access `push`)로 붙여서 쓴다. 대표님 결정 없이 다시 공개로 바꾸지 않는다.
+  - 자동 검사 3가지(앱 자동 검사 · DB 어긋남 점검 · iOS 앱 빌드)는 이제 GitHub Free 포함량(한 달 $12어치)에서 빠진다. 쓰는 양은 한 달 약 $6(리눅스 약 855분 · 맥 약 18분 — 2026-10-19~11-03 실행 212번 기준). 맥(iOS 빌드)은 분당 $0.062 로 리눅스($0.006)보다 10배 비싸니 `ios.yml` 은 `ios-app/**` 가 바뀔 때만 돌게 둔다. 포함량을 넘고 결제 수단이 없으면 그달 남은 기간 자동 검사가 멈춘다(Cloudflare 배포는 계속된다).
 
 ---
 
@@ -437,7 +439,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 칠금은 매일 밤 다짐 → 앱: 153OS `app_rental_ends()`(다짐 rentalLocker · rentalSportsWear 끝나는 날 + '락커정보' 번호) → Edge Function [sync-rental-ends](supabase/functions/sync-rental-ends/index.ts)(23:40 KST, x-auto-key, `{dry_run:true}`) → 앱 `apply_rental_ends`(다짐 값이 있는 칸만, 다짐이 정본 — 락카 번호 포함) · 기록 `member_sync_runs`(mode `rental-sync`) — 20261027063559.
 - 남은 일: 브로제이 지점 데스크 판매(락카·운동복)는 앱에 저절로 안 들어온다(앱 결제만 자동) — 대표님 '수강' 탭에서 고치기 · 153OS 워커에 렌탈 따로 보내기.
 - **결제 취소**: 결제선생 관리자에서 승인 취소를 해도 콜백(apprState=C)이 오지 않는다(9/18 · 10/27 시험 모두 승인 F 만). → Edge Function [payssam-sync-cancels](supabase/functions/payssam-sync-cancels/index.ts)(x-auto-key, `{dry_run}` · `{bill_ids}` · `{days}`)가 paid 주문을 `/bill/read` 로 다시 조회해 apprState=C 면 주문 canceled → `revert_payment_order`(예전 주문은 수강권 일수 빼기) → 마일리지 트리거가 돌려줌 → 153OS `app_refund_paid_membership`(153OS DB 함수, 승인 때 만든 이용권·출입권한·payment_requests 를 거꾸로 — 153OS 워커 sync-refunded 는 404). 앱에서 이미 canceled 인데 153OS 에 남은 것도 맞춤(`raw._os_refund` 로 한 번만). 예약: 30분마다 7일 · 매일 05:20 KST 400일 — 20261027073702. 기록 `member_sync_runs`(mode `payssam-cancel`).
-- 2026-10-27: Supabase MCP 의 SQL 쓰기(apply_migration · execute_sql DDL) 승인 창이 대표님 화면에 안 떠 계속 '취소'됨 → 대표님 허락("Db 항상 승인할게")으로 크롬 Supabase SQL 편집기에서 실행(파일을 GitHub raw 로 받아 sha256 확인 후 Monaco 에 넣고 Run). Edge Function 배포(MCP)는 됨. 크롬 번역이 켜져 있으면 실행 뒤 대시보드가 하얗게 멈출 수 있다 — 실행은 됐으니 DB 를 읽어 확인.
+- 2026-10-27: Supabase MCP 의 SQL 쓰기(apply_migration · execute_sql DDL) 승인 창이 대표님 화면에 안 떠 계속 '취소'됨 → 대표님 허락("Db 항상 승인할게")으로 크롬 Supabase SQL 편집기에서 실행(파일을 GitHub raw 로 받아 sha256 확인 후 Monaco 에 넣고 Run). 2026-11-04 부터 저장소가 비공개라 raw 를 익명으로 못 받는다 → 클라우드에서 저장소 파일의 sha256 을 계산하고, 크롬 javascript 로 SQL 글을 Monaco 에 직접 넣은 뒤 편집기 글의 sha256 이 같은지 확인하고 Run. Edge Function 배포(MCP)는 됨. 크롬 번역이 켜져 있으면 실행 뒤 대시보드가 하얗게 멈출 수 있다 — 실행은 됐으니 DB 를 읽어 확인.
 
 ### 칠금점 회원 = 다짐매니저에서 매일 (2026-10-26 대표님 "다짐 매니저 크롬에 로그인 완료해놓았어")
 
