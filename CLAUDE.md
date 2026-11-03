@@ -251,6 +251,8 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 나누기: 브로제이 '수강권' 중 이름에 PT 낱말 · 퍼스널 · 피티 = PT, 일일 · 원데이 = 일일권, 나머지 = 일반 수강권 · '물품' 중 락커 · 운동복 = 락카/운동복, 나머지 = 용품 · '기타' = 기타. 다짐 general 도 같은 이름 규칙(rentalLocker · rentalSportsWear = 락카/운동복, etc = 용품, 양도 = 뺌, 나눠 낸 결제는 sale_id 로 한 건). 환불(음수 · refunded)은 그 묶음 금액에서 뺀다.
 - 앱 결제: 브로제이에 같은 사람(띄어쓰기 무시) · 같은 금액이 앱 결제 하루 전 ~ 사흘 뒤에 있으면 빼고, 없을 때만 더한다 — 줄에 '앱 결제' 표시 · 카드 '앱 결제 N건은 브로제이에 없어 더했어요'.
 - 늦음: 브로제이 매출은 153OS 가 매일 00:05 KST 에 전날까지 · 칠금 다짐 매출은 예약 작업 「칠금점 다짐 회원 동기화」가 돌 때 — 카드에 '브로제이/다짐 ○월 ○일 ○○:○○ 기준'.
+- 다짐(칠금): 153OS `dagym_sales` · `dagym_batches` 는 서버 키(service_role)로도 직접 못 읽게 막혀 있다(표 권한 그대로 둔다) → 153OS 함수 `ops_sales_dagym(p_branch_id, p_from, p_to)`(SECURITY DEFINER · anon/authenticated 막음 · rows + synced_at)로만 읽는다. 2026-11-03 이 함수는 아직 153OS 에 없다(대표님 승인 대기) — 그동안 칠금 칩은 '다짐(칠금점) 매출 연결을 준비하고 있어요'(DAGYM_NOT_READY), 선릉은 그대로. 함수를 만들면 Edge Function 은 다시 배포하지 않아도 된다.
+- 점검: 앱 DB 에서 `net.http_post(…/functions/v1/ops-sales, headers: Authorization(anon) + x-auto-key = internal_sync_config.auto_sync_key)` → 합계 · 흐름 + `probe`(broj · dagym · dagym_error · app · app_added). 2026-11-03 선릉 10월 25,497,500(브로제이 25,447,500 + 브로제이에 없는 앱 결제 3건 50,000).
 - 보는 사람: 돈을 보는 분만(대표님 · 회계매니저 — 10-29 규칙). 지점장 · 코치님에게는 탭이 없다(서버 `ops_sales_scope` · Edge Function 둘 다 막음). 탭이 다섯이면(사무실 · 전략 · 근무 · 일정 · 매출) '전략 회의'는 '전략'으로.
 
 ### 회원 화면 리디자인 — 글씨 6단계 · 화면 규칙 7가지 (2026-10-28 대표님 "위보고한 기준대로 전면 리 디자인하자 · 많이 바뀌어도 되니까 가장 이상적인 방향으로")
