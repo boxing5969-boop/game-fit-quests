@@ -83,21 +83,23 @@ Deno.serve(async (req) => {
   const { data: ch } = await os.from("member_feedback_channels").select("id").eq("slug", input.slug).maybeSingle();
   if (!ch?.id) return json({ ok: false, code: "NOT_FOUND" });
 
+  // 글 비교는 여기서 — 긴 글(2000자)을 주소에 실으면 요청이 너무 길어진다. 10분 · 한 의견함 · 한 분류라 줄이 몇 개 안 된다
   const since = new Date(Date.now() - CLAIM_WINDOW_MS).toISOString();
   const { data: rows, error: osErr } = await os
     .from("member_feedback")
-    .select("id, rating, created_at")
+    .select("id, rating, created_at, content")
     .eq("channel_id", ch.id)
     .eq("category", input.category)
-    .eq("content", input.content)
     .gte("created_at", since)
     .order("created_at", { ascending: false })
-    .limit(10);
+    .limit(50);
   if (osErr) {
     console.error("member-voice-receipt claim os", osErr.code);
     return json({ ok: false, code: "OS_UNAVAILABLE" });
   }
-  const found = (rows ?? []) as { id: string; rating: number | null; created_at: string }[];
+  const found = ((rows ?? []) as { id: string; rating: number | null; created_at: string; content: string | null }[]).filter(
+    (r) => (r.content ?? "").trim() === input.content,
+  );
   const { data: taken } = found.length
     ? await app.from("survey_receipts").select("response_id").in("response_id", found.map((r) => r.id))
     : { data: [] as { response_id: string }[] };
