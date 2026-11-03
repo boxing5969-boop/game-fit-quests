@@ -29,6 +29,14 @@ describe("얼굴 키오스크 — 153OS 출석 프로그램 설정 받기", () =
     expect(s.settings.welcome_text).toBe("🥊".repeat(40));
   });
 
+  it("줄바꿈은 빈칸 · 이모지 잇기(ZWJ)는 둔다 · 한글 채움 문자만 있으면 기본값 (2026-11-03)", () => {
+    const n = (t: string) => normalizeKioskSettings({ settings: { notice_text: t } }).settings.notice_text;
+    expect(n("오늘\t휴관\r\n내일 정상")).toBe("오늘 휴관 내일 정상");
+    expect(n("가족 👨\u200d👩\u200d👧 환영")).toBe("가족 👨\u200d👩\u200d👧 환영");
+    expect(n("\u3164\u3164")).toBeNull();
+    expect(n("휴\u0085관\u00ad 안\u2060내")).toBe("휴관 안내");
+  });
+
   it("호명 · 다시 인식 간격", () => {
     expect(kioskVoiceLine(null, "김일삼")).toBe("김일삼님 환영합니다!");
     expect(kioskVoiceLine("{이름}님! {이름}님 파이팅", "박")).toBe("박님! 박님 파이팅");

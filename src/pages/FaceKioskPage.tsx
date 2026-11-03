@@ -25,6 +25,8 @@ const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/face-kiosk`; /
 const OS_URL = "https://153-boxing-os-api.boxing5969.workers.dev/api/face";     // 153OS: 판단·등록·장부(FC-2)
 const KEY_LS = "153_kiosk_key";
 const SOUND_LS = "153_kiosk_sound";
+/** 153OS 에 저장된 소리 값 중 마지막으로 기기에 맞춘 것(on · off) — 다시 켜도 기기 단추로 바꾼 소리를 덮지 않게(2026-11-03 검수) */
+const SERVER_SOUND_LS = "153_kiosk_sound_server";
 const CDN = "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2";
 // 앱(APK)·오프라인 대비: 같은 0.22.2 자산을 앱/사이트에 번들해 두고 그걸 먼저 쓴다.
 // 번들이 없으면 기존 CDN 그대로 — 동작 변화 없음. 버전을 바꾸면 등록된 특징값이
@@ -145,7 +147,7 @@ const FaceKioskPage = () => {
   const [kiosk, setKiosk] = useState<KioskSettingsState>(() => ({ settings: { ...KIOSK_DEFAULTS }, saved: false }));
   const kioskRef = useRef<KioskSettings>(kiosk.settings);
   kioskRef.current = kiosk.settings;
-  const lastServerSoundRef = useRef<boolean | null>(null);
+  const lastServerSoundRef = useRef<boolean | null>((() => { const v = lsGet(SERVER_SOUND_LS); return v === "on" ? true : v === "off" ? false : null; })());
   // FC-6: 이 기기의 키가 어느 지점에 묶여 있는지(서버가 알려줌). 화면 URL 지점과 다르면 즉시 눈에 띈다.
   const [keyBranch, setKeyBranch] = useState<string | null>(null);
   // 고장 상태(회원용) / 기술 진단(직원용, 평소엔 숨김)
@@ -275,11 +277,14 @@ const FaceKioskPage = () => {
       try {
         const { status: st, json } = await osApi("settings", {});
         if (!alive || st !== 200 || !json?.success) return;
+        // 153OS 가 자기 DB 를 못 읽어 기본값을 보낸 것(fallback) — 지난 값 그대로(쉬기로 한 키오스크가 잠깐 다시 켜지지 않게)
+        if (json.data?.fallback === true) return;
         const next = normalizeKioskSettings(json.data);
         setKiosk((cur) => (JSON.stringify(cur) === JSON.stringify(next) ? cur : next));
         // 소리: 153OS 에 저장된 값이 있고 바뀌었을 때만 맞춘다(기기 단추로 잠깐 바꾼 건 다음 변경 전까지 둔다)
         if (next.saved && lastServerSoundRef.current !== next.settings.sound_on) {
           lastServerSoundRef.current = next.settings.sound_on;
+          lsSet(SERVER_SOUND_LS, next.settings.sound_on ? "on" : "off");
           setSoundOn(next.settings.sound_on);
         }
       } catch { /* 네트워크 — 지난 값 그대로 */ }

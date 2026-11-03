@@ -7,7 +7,8 @@
 //      notifications 트리거가 휴대폰 알림을 켠 회원 몫만 push-send 로 보낸다(기존 알림 길 그대로).
 //      앱에 없는 계정 줄은 넣지 않고 받은 것으로만 친다.
 //   3) POST /api/external/push/ack {recipient_ids} — 받은 줄 모두(새로 넣은 줄 · 전에 넣은 줄 · 건너뛴 줄).
-//   한 번에 200줄씩 최대 3번(분당 600줄).
+//   한 번에 200줄씩 최대 3번(분당 600줄). 153OS 는 limit 뒤에 '보내기 직전 다시 확인'으로 줄을 뺄 수 있어
+//   200줄보다 적게 와도 더 남아 있을 수 있다 → 빈 쪽이 나오거나 3번이 될 때까지 받는다(2026-11-03 검수).
 // 시험: body {dry_run:true} = 1)만 하고 숫자만(넣지도 ack 도 안 한다 → 다음에 다시 나온다)
 //       body {probe_user:"<앱 계정 id>"} = 그 계정으로 /me/branch 를 불러 상태 코드만(키 · 회원 연결 시험, 내용은 안 돌려준다)
 // 로그에는 숫자만 남긴다(이름 · 내용을 찍지 않는다).
@@ -99,7 +100,6 @@ Deno.serve(async (req) => {
       if (a.status === 200 && a.body?.success) acked += Number(a.body?.data?.acked ?? 0);
       else console.log(`os-push-pull ack_failed status=${a.status}`); // 다음 바퀴에 다시 나오고, os_push_inbox 가 두 번 넣지 않는다
     }
-    if (rawRows.length < PAGE) break;
   }
   if (pulled || inserted || acked) {
     console.log(`os-push-pull rounds=${rounds} pulled=${pulled} inserted=${inserted} dup=${dup} skipped=${skipped} acked=${acked}${body.dry_run ? " dry_run" : ""}`);

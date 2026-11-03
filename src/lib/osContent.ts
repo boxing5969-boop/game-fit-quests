@@ -83,6 +83,8 @@ export interface OsMyReview {
   reply: string | null;
   /** 운영진이 숨김 — 나만 보인다 */
   hidden: boolean;
+  /** 고른 코치(153OS staff id) — 153OS 38단계부터. 없으면(옛 153OS) 화면이 이름으로 찾는다 */
+  coach_staff_id?: string | null;
   created_at: string;
   updated_at: string;
 }

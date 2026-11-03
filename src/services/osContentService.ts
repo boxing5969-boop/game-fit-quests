@@ -6,6 +6,7 @@
  *   code NOT_REGISTERED = 이 앱 계정이 153OS 회원과 아직 안 이어짐(화면은 안내만 · 다시 묻지 않는다)
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { FunctionsFetchError, FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { InquiryCategory, OsBranchInfo, OsInquiry, OsInquiryThread, OsNotice, OsReviews } from "@/lib/osContent";
@@ -26,9 +27,29 @@ export const isNotRegistered = (e: unknown): boolean => e instanceof OsContentEr
 
 type OsAnswer<T> = { ok: true; data: T; message: string | null } | { ok: false; status?: number; code: string; message: string };
 
+/**
+ * invoke 오류 → 화면 말 (2026-11-03 검수 — 예전엔 모두 '인터넷 연결'이었다).
+ *   함수까지 못 감(오프라인 · 연결 끊김) → NETWORK · 로그인 만료(게이트웨이 401) → NOT_AUTHENTICATED ·
+ *   함수가 ok:false 모양으로 답했으면 그 말 · 그 밖(함수 5xx · 중계 오류) → OS_UNAVAILABLE
+ */
+async function invokeError(error: unknown): Promise<OsContentError> {
+  if (error instanceof FunctionsFetchError) return new OsContentError("NETWORK", "인터넷 연결을 확인하고 다시 시도해 주세요");
+  if (error instanceof FunctionsHttpError) {
+    const res = error.context instanceof Response ? error.context : null;
+    const status = res?.status ?? null;
+    const j = res ? ((await res.json().catch(() => null)) as { ok?: unknown; code?: unknown; message?: unknown } | null) : null;
+    if (j && j.ok === false && typeof j.code === "string") {
+      return new OsContentError(j.code, typeof j.message === "string" && j.message ? j.message : "잠시 뒤 다시 시도해 주세요", status);
+    }
+    if (status === 401) return new OsContentError("NOT_AUTHENTICATED", "다시 로그인해 주세요", 401);
+    return new OsContentError("OS_UNAVAILABLE", "잠시 뒤 다시 시도해 주세요", status);
+  }
+  return new OsContentError("OS_UNAVAILABLE", "잠시 뒤 다시 시도해 주세요");
+}
+
 export async function callOs<T>(op: string, args: Record<string, unknown> = {}): Promise<{ data: T; message: string | null }> {
   const { data, error } = await supabase.functions.invoke("os-app-content", { body: { op, ...args } });
-  if (error) throw new OsContentError("NETWORK", "인터넷 연결을 확인하고 다시 시도해 주세요");
+  if (error) throw await invokeError(error);
   const a = data as OsAnswer<T> | null;
   if (!a || typeof a !== "object") throw new OsContentError("BAD_RESPONSE", "잠시 뒤 다시 시도해 주세요");
   if (a.ok !== true) {

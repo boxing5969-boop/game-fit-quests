@@ -57,16 +57,23 @@ export const KIOSK_SETTINGS_POLL_MS = 60_000;
 const TEXT_MAX = { paused_text: 60, notice_text: 60, welcome_text: 40, voice_text: 40 } as const;
 
 /** 한 줄 글 — 제어 · 보이지 않는 문자 빼고 빈칸 정리. 비었거나 너무 길면 null(기본값) */
+/**
+ * 보이지 않는 글자 — 제어(Cc) · 짝 없는 서로게이트(Cs) · 서식(Cf) · 한글 채움 문자(ㅤ 등). 이모지를 잇는 U+200D 와
+ *   깃발 태그(U+E0020~E007F)는 남긴다. 153OS workers/api/src/lib/kioskSettings.ts oneLineText 와 같은 규칙 (2026-11-03 검수)
+ */
+const INVISIBLE = /(?![\u200d\u{e0020}-\u{e007f}])[\p{Cc}\p{Cs}\p{Cf}]|[\u115f\u1160\u3164\uffa0]/gu;
+const JOINERS = /[\u200d\u{e0020}-\u{e007f}]/gu;
+
 function line(v: unknown, max: number): string | null {
   if (typeof v !== "string") return null;
-  // 줄바꿈·탭은 빈칸으로(아래 \s+), 그 밖의 제어 문자와 보이지 않는 방향·폭 문자는 뺀다 — 153OS 워커와 같은 규칙
+  // 줄바꿈·탭·연속 빈칸은 먼저 빈칸 하나로, 그다음 보이지 않는 글자를 뺀다 — 153OS 워커와 같은 규칙
   const t = v
-    // eslint-disable-next-line no-control-regex -- 제어 문자를 지우려는 정규식
-    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, "")
-    .replace(/[\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, "")
+    .normalize("NFC")
     .replace(/\s+/g, " ")
+    .replace(INVISIBLE, "")
+    .replace(/ {2,}/g, " ")
     .trim();
-  return t && [...t].length <= max ? t : null;
+  return t.replace(JOINERS, "").trim() && [...t].length <= max ? t : null;
 }
 
 /** 153OS 답(data) → 키오스크 설정. 모양이 틀리면 기본값 */

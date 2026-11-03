@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { ChevronRight, MessageCircleQuestion, Send } from "lucide-react";
 import { AppPage, PageHeader } from "@/components/ui/rankingup";
 import { OsBackButton, OsChip, OsEmpty, OsErrorState, OsLoading } from "@/components/os/OsParts";
-import { useCreateOsInquiry, useOsInquiries, useOsInquiry, useReplyOsInquiry } from "@/services/osContentService";
+import { isNotRegistered, useCreateOsInquiry, useOsInquiries, useOsInquiry, useReplyOsInquiry } from "@/services/osContentService";
 import {
   INQUIRY_BODY_MAX,
   INQUIRY_CATEGORIES,
@@ -30,16 +30,22 @@ function InquiryList() {
   const navigate = useNavigate();
   const list = useOsInquiries();
   const rows = list.data ?? [];
+  // 153OS 회원과 아직 안 이어진 계정은 문의를 남길 수 없다 — 단추 없이 안내만 (2026-11-03 검수)
+  const notLinked = list.isError && isNotRegistered(list.error);
   return (
     <div className="space-y-4">
-      <button
-        type="button"
-        onClick={() => navigate("/inquiries?new=1")}
-        className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-body font-extrabold text-primary-foreground shadow-elev-1 active:scale-[0.98]"
-      >
-        <MessageCircleQuestion className="h-5 w-5" aria-hidden /> 새 문의 남기기
-      </button>
-      <p className="px-1 text-center text-label text-muted-foreground">지점 운영진이 확인하고 답장해요</p>
+      {!notLinked && (
+        <>
+          <button
+            type="button"
+            onClick={() => navigate("/inquiries?new=1")}
+            className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-body font-extrabold text-primary-foreground shadow-elev-1 active:scale-[0.98]"
+          >
+            <MessageCircleQuestion className="h-5 w-5" aria-hidden /> 새 문의 남기기
+          </button>
+          <p className="px-1 text-center text-label text-muted-foreground">지점 운영진이 확인하고 답장해요</p>
+        </>
+      )}
       {list.isLoading ? (
         <OsLoading label="문의 불러오는 중" />
       ) : list.isError ? (
@@ -92,10 +98,13 @@ function InquiryList() {
 function NewInquiry() {
   const navigate = useNavigate();
   const create = useCreateOsInquiry();
+  const list = useOsInquiries();
   const [category, setCategory] = useState<InquiryCategory>("membership");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const ready = title.trim().length > 0 && body.trim().length > 0;
+  // 주소로 바로 들어와도 — 153OS 회원과 안 이어진 계정이면 쓰기 칸 대신 안내 (2026-11-03 검수)
+  if (list.isError && isNotRegistered(list.error)) return <OsErrorState error={list.error} onRetry={() => list.refetch()} what="문의" />;
 
   const submit = () => {
     if (!ready || create.isPending) return;

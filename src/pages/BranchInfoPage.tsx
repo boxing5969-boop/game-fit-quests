@@ -423,8 +423,11 @@ function ReviewsTab({ coaches, writeFirst }: { coaches: OsCoach[]; writeFirst: b
   const mine = reviews.data?.mine ?? null;
   const all = reviews.data?.rows ?? [];
   const rows = all.filter((r) => !r.is_mine);
+  // 고른 코치: 153OS 가 보낸 id 그대로(목록에 없는 코치여도 고칠 때 지워지지 않게) — 옛 153OS 면 공개 후기 속 이름으로 (2026-11-03 검수)
   const myCoachName = all.find((r) => r.is_mine)?.coach_name ?? null;
-  const initialCoach = myCoachName ? coaches.find((c) => c.name === myCoachName)?.staff_id ?? null : null;
+  const initialCoach = mine && mine.coach_staff_id !== undefined
+    ? mine.coach_staff_id ?? null
+    : myCoachName ? coaches.find((c) => c.name === myCoachName)?.staff_id ?? null : null;
 
   const remove = () => {
     if (!window.confirm("내 후기를 지울까요?")) return;

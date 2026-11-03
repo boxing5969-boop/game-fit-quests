@@ -32,6 +32,8 @@ const isSetupPath = (pathname: string): boolean => {
   if (pathname.startsWith("/messages/")) return true;
   // 지점 회의실 회의 화면 — 입력창을 가리지 않게 (2026-10-27)
   if (pathname.startsWith("/office/")) return true;
+  // 1:1 문의 대화 — 입력창을 가리지 않게 (2026-11-03)
+  if (pathname.startsWith("/inquiries/")) return true;
   return false;
 };
 

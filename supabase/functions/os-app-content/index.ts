@@ -11,6 +11,8 @@
 //   code 예: NOT_REGISTERED(153OS 회원과 아직 안 이어짐) · TOO_MANY(문의 하루 5건) · INVALID_REQUEST · OS_UNAVAILABLE
 // 로그에는 op · 상태 코드만 남긴다(글 · 이름을 찍지 않는다).
 // 153OS 쪽 설명: 153-boxing-os docs/partner-api-app-content.md
+// 2026-11-03 검수: 로그인 확인 실패도 200 { ok:false, code:NOT_AUTHENTICATED } — 화면이 '인터넷 연결' 대신 '다시 로그인'을 보이게.
+//   153OS 오류 글은 회원에게 보여도 되는 것(PASS_MESSAGE_CODES)만 그대로, 나머지(DB 오류 원문 · 키 오류 등)는 일반 문구로.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const cors = {
@@ -24,6 +26,9 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const CATEGORIES = ["membership", "class", "pt", "facility", "refund", "etc"];
 const MAX_BODY_BYTES = 12_000;
 const TIMEOUT_MS = 12_000;
+/** 153OS 오류 글을 회원 화면에 그대로 보여도 되는 코드 — 회원에게 쓴 글(하루 5건 · 탈퇴 회원 · 찾을 수 없음 · 입력 확인)만 */
+const PASS_MESSAGE_CODES = new Set(["NOT_REGISTERED", "NOT_FOUND", "TOO_MANY", "INVALID_REQUEST", "MEMBER_WITHDRAWN"]);
+const GENERIC_MESSAGE = "잠시 뒤 다시 시도해 주세요";
 
 type Body = Record<string, unknown>;
 type Op = { method: "GET" | "POST" | "DELETE"; path: (b: Body) => string | null; body?: (b: Body) => unknown };
@@ -77,10 +82,10 @@ Deno.serve(async (req) => {
 
   // 1) 부른 사람
   const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
-  if (!token) return json({ ok: false, code: "NOT_AUTHENTICATED", message: "다시 로그인해 주세요" }, 401);
+  if (!token) return json({ ok: false, code: "NOT_AUTHENTICATED", message: "다시 로그인해 주세요" });
   const app = createClient(SUPABASE_URL, SERVICE, { auth: { persistSession: false } });
   const { data: who, error: whoErr } = await app.auth.getUser(token);
-  if (whoErr || !who?.user) return json({ ok: false, code: "NOT_AUTHENTICATED", message: "다시 로그인해 주세요" }, 401);
+  if (whoErr || !who?.user) return json({ ok: false, code: "NOT_AUTHENTICATED", message: "다시 로그인해 주세요" });
   const uid = who.user.id;
 
   // 2) op
@@ -125,10 +130,12 @@ Deno.serve(async (req) => {
   const j: any = await res.json().catch(() => null);
   console.log(`os-app-content op=${opName} status=${res.status}`);
   if (res.ok && j?.success) return json({ ok: true, data: j.data ?? null, message: typeof j.message === "string" ? j.message : null });
+  const code = typeof j?.error?.code === "string" ? j.error.code : `HTTP_${res.status}`;
+  const osMessage = typeof j?.error?.message === "string" ? j.error.message.trim() : "";
   return json({
     ok: false,
     status: res.status,
-    code: typeof j?.error?.code === "string" ? j.error.code : `HTTP_${res.status}`,
-    message: typeof j?.error?.message === "string" ? j.error.message : "잠시 뒤 다시 시도해 주세요",
+    code: PASS_MESSAGE_CODES.has(code) ? code : res.status >= 500 || res.status === 401 || res.status === 403 ? "OS_UNAVAILABLE" : code,
+    message: PASS_MESSAGE_CODES.has(code) && osMessage ? osMessage.slice(0, 200) : GENERIC_MESSAGE,
   });
 });
