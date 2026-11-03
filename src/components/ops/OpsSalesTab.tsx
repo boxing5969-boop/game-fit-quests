@@ -23,9 +23,13 @@ import {
   type SalesFilter,
   type SalesRow,
 } from "@/lib/opsSales";
+import type { SavedCosts } from "@/lib/opsCosts";
 import { useOpsSales } from "@/services/opsSalesService";
+import { useOpsCosts } from "@/services/opsCostService";
 import { readOpsBranch, saveOpsBranch, shortBranch } from "@/services/opsService";
-import { MonthSwitcher, OpsChip, fmtDay, kstToday, monthOf } from "./OpsParts";
+import OpsCostImportSheet from "./OpsCostImportSheet";
+import OpsProfitCard from "./OpsProfitCard";
+import { MonthSwitcher, OpsChip, fmtDay, kstToday, monthOf, shiftMonth } from "./OpsParts";
 
 const card = "rounded-2xl border border-border bg-card p-5";
 const PAGE = 40;
@@ -46,6 +50,9 @@ const OpsSalesTab = ({ branches }: { branches: string[] }) => {
   const [month, setMonth] = useState(() => monthOf(today)); // YYYY-MM-01
   const ym = month.slice(0, 7);
   const q = useOpsSales(branch, ym);
+  // 순이익 — 가계부에서 올린 사업 비용(최근 6개월, 흐름과 같은 기간)
+  const costsQ = useOpsCosts(branch, shiftMonth(month, -5).slice(0, 7), ym);
+  const [importOpen, setImportOpen] = useState(false);
   const [filter, setFilter] = useState<SalesFilter>("all");
   const [limit, setLimit] = useState(PAGE);
   useEffect(() => {
@@ -99,6 +106,17 @@ const OpsSalesTab = ({ branches }: { branches: string[] }) => {
           }}
           limit={limit}
           more={() => setLimit((n) => n + PAGE)}
+          costs={costsQ.data}
+          onImport={() => setImportOpen(true)}
+        />
+      )}
+      {branch && (
+        <OpsCostImportSheet
+          open={importOpen}
+          onClose={() => setImportOpen(false)}
+          branch={branch}
+          thisMonth={today.slice(0, 7)}
+          savedMonths={costsQ.data?.months.map((m) => m.month) ?? []}
         />
       )}
     </div>
@@ -113,6 +131,8 @@ const Report = ({
   setFilter,
   limit,
   more,
+  costs,
+  onImport,
 }: {
   data: NonNullable<ReturnType<typeof useOpsSales>["data"]>;
   monthNum: number;
@@ -121,7 +141,10 @@ const Report = ({
   setFilter: (f: SalesFilter) => void;
   limit: number;
   more: () => void;
+  costs: SavedCosts | undefined;
+  onImport: () => void;
 }) => {
+  const costOf = new Map((costs?.months ?? []).map((m) => [m.month, m.total]));
   const s = data.summary;
   const mem = s.groups.membership;
   const pt = s.groups.pt;
@@ -186,6 +209,9 @@ const Report = ({
         {data.app_added > 0 && <p className="mt-1 text-label text-muted-foreground">앱 결제 {data.app_added}건은 브로제이에 없어 더했어요</p>}
       </section>
 
+      {/* ② 순이익 — 매출 − 가계부에서 올린 사업 비용 */}
+      <OpsProfitCard month={data.month} monthNum={monthNum} sales={s.total} costs={costs} onImport={onImport} />
+
       {/* ② 최근 6개월 */}
       {data.trend.length > 1 && (
         <section className={card}>
@@ -211,6 +237,11 @@ const Report = ({
                       <span className="h-full bg-orange-400" style={{ width: w(t.pt) }} />
                       <span className="h-full bg-slate-400" style={{ width: w(t.other) }} />
                     </div>
+                    {costOf.has(t.month) && (
+                      <p className={cn("mt-1 text-right text-label font-bold tabular-nums", t.total - (costOf.get(t.month) ?? 0) < 0 ? "text-destructive" : "text-emerald-600 dark:text-emerald-400")}>
+                        순이익 {fmtMan(t.total - (costOf.get(t.month) ?? 0))}
+                      </p>
+                    )}
                   </button>
                 </li>
               );
