@@ -121,7 +121,7 @@ describe("달 · 항목별 비용", () => {
     });
     expect(defaultMonths(m, "2026-11")).toEqual(["2026-10", "2026-09"]); // 이번 달(11월)은 처음엔 빼 둔다
     expect(defaultMonths(m, "2026-12", 1)).toEqual(["2026-11"]);
-    expect(profitOf(25_497_500, 7_590_000)).toEqual({ profit: 17_907_500, pct: 70 });
+    expect(profitOf(20_000_000, 7_590_000)).toEqual({ profit: 12_410_000, pct: 62 });
     expect(profitOf(0, 100)).toEqual({ profit: -100, pct: null });
     expect(catLabel("bpay")).toBe("인건비");
     expect(catLabel("zzz")).toBe("기타");
