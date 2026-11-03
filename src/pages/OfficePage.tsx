@@ -21,6 +21,9 @@
  *   · 이름 「지점 회의실」 → 「153운영본부」 · 탭 「근무」(?tab=work — OpsWorkTab: 선릉 · 칠금 근무자 · 시간표 · 이번 달 근무 · 대타 · 연장)
  *   · 근무 탭은 서버 ops_me 가 정한다 — 관리(대표님 · 지정된 지점장 · 회계매니저) 또는 내 근무자 카드가 있는 분
  *
+ *   「매출」 탭 (2026-11-03 대표님 "153운영본부에 매출 자세히 · 일단 일반 수강권 매출과 PT 매출을 분리해서"):
+ *   · ?tab=sales — OpsSalesTab: 이 달 매출 · 일반 수강권 / PT 두 칸 · 최근 6개월 · 내역. 돈을 보는 분(대표님 · 회계매니저 — ops_sales_scope)만
+ *
  *   「일정」 탭 (2026-11-02 대표님 "직원 회의 관리 탭에 팀원들 스스로 스케줄 관리 … 내가 팀원들의 스케줄을 한눈에"):
  *   · ?tab=plan — OpsPlanTab: 코치님은 내 일정 넣기 · 고치기, 대표님 · 지점장은 한 주 팀 일정판 + 내 일정
  *   · 코치진(전략 회의와 같은 기준) 또는 근무자 카드가 있는 분에게 보인다 — 무엇을 보여 줄지는 서버 ops_plans_week 가 정한다
@@ -39,7 +42,9 @@ import { ScheduleSection } from "@/components/office/OfficeSchedule";
 import StrategyRoom from "@/components/strategy/StrategyRoom";
 import OpsWorkTab from "@/components/ops/OpsWorkTab";
 import OpsPlanTab from "@/components/ops/OpsPlanTab";
+import OpsSalesTab from "@/components/ops/OpsSalesTab";
 import { useOpsMe } from "@/services/opsService";
+import { useOpsSalesScope } from "@/services/opsSalesService";
 import { useOfficeOnline } from "@/lib/officePresence";
 import { useStrategyBadge } from "@/services/strategyService";
 import {
@@ -58,7 +63,7 @@ import {
 
 const STATUSES: OfficeStatus[] = ["on", "class", "away"];
 
-type OfficeTab = "office" | "strategy" | "work" | "plan";
+type OfficeTab = "office" | "strategy" | "work" | "plan" | "sales";
 
 const OfficePage = () => {
   const navigate = useNavigate();
@@ -78,6 +83,12 @@ const OfficePage = () => {
   const opsMe = opsMeQ.data;
   const hasWork = !!opsMe && (opsMe.manage.length > 0 || opsMe.mine.length > 0);
   const opsKnown = opsMeQ.isSuccess || opsMeQ.isError;
+  // 매출 탭 — 돈을 보는 분(대표님 · 회계매니저)이 볼 수 있는 지점이 있을 때 (서버 ops_sales_scope, 관리하는 지점이 있는 분만 묻는다)
+  const askSales = !!opsMe && opsMe.manage.length > 0;
+  const salesQ = useOpsSalesScope(askSales);
+  const salesBranches = salesQ.data ?? [];
+  const hasSales = salesBranches.length > 0;
+  const salesKnown = opsKnown && (!askSales || salesQ.isSuccess || salesQ.isError);
 
   const [branch, setBranchState] = useState<string | null>(readOfficeBranch);
   const stateQ = useOfficeState(branch, hasOffice);
@@ -94,15 +105,19 @@ const OfficePage = () => {
     if (minutesParam && /^[0-9a-f-]{36}$/i.test(minutesParam)) setMinutesId(minutesParam);
   }, [minutesParam]);
 
-  // 탭 — ?tab=strategy 전략 회의 · ?tab=work 근무 · ?tab=plan 일정. 고른 탭이 없으면 사무실 → 전략 회의 → 근무 → 일정 순서로
+  // 탭 — ?tab=strategy 전략 회의 · ?tab=work 근무 · ?tab=plan 일정 · ?tab=sales 매출. 고른 탭이 없으면 사무실 → 전략 회의 → 근무 → 일정 순서로
+  // 매출(2026-11-03)은 돈을 보는 분(대표님 · 회계매니저)만 — 탭이 다섯이면 '전략 회의'는 '전략'으로 줄인다(390px 한 줄)
+  const fiveTabs = hasOffice && staff && hasWork && hasSales;
   const tabs: Array<{ v: OfficeTab; label: string; badge: number }> = [
     ...(hasOffice ? [{ v: "office" as const, label: "사무실", badge: 0 }] : []),
-    ...(staff ? [{ v: "strategy" as const, label: "전략 회의", badge: strategyBadge }] : []),
+    ...(staff ? [{ v: "strategy" as const, label: fiveTabs ? "전략" : "전략 회의", badge: strategyBadge }] : []),
     ...(hasWork ? [{ v: "work" as const, label: "근무", badge: 0 }] : []),
     ...(staff || hasWork ? [{ v: "plan" as const, label: "일정", badge: 0 }] : []),
+    ...(hasSales ? [{ v: "sales" as const, label: "매출", badge: 0 }] : []),
   ];
   const want = params.get("tab");
-  const wanted: OfficeTab = want === "strategy" ? "strategy" : want === "work" ? "work" : want === "plan" ? "plan" : "office";
+  const wanted: OfficeTab =
+    want === "strategy" ? "strategy" : want === "work" ? "work" : want === "plan" ? "plan" : want === "sales" ? "sales" : "office";
   const tab: OfficeTab = tabs.some((t) => t.v === wanted) ? wanted : tabs[0]?.v ?? "strategy";
   const setTab = (t: OfficeTab) =>
     setParams(
@@ -167,7 +182,9 @@ const OfficePage = () => {
                 ? "근무 시간 · 시간표 · 대타 · 연장"
                 : tab === "plan"
                   ? "팀 일정 · 내 일정"
-                  : "코치님 · 지점장님 · 대표님만"
+                  : tab === "sales"
+                    ? "일반 수강권 · PT 매출"
+                    : "코치님 · 지점장님 · 대표님만"
           }
           sticky
           leftAction={
@@ -183,7 +200,7 @@ const OfficePage = () => {
         />
       }
     >
-      {!staffKnown || (staff && !officeKnown) || (!staff && !opsKnown) || (want === "work" && !opsKnown) ? (
+      {!staffKnown || (staff && !officeKnown) || (!staff && !opsKnown) || (want === "work" && !opsKnown) || (want === "sales" && !salesKnown) ? (
         <div className="space-y-3" aria-hidden>
           <div className="h-12 animate-pulse rounded-2xl bg-card shadow-elev-1" />
           <div className="aspect-[4/5] w-full animate-pulse rounded-3xl bg-card shadow-elev-1" />
@@ -195,14 +212,14 @@ const OfficePage = () => {
         </div>
       ) : (
       <div className="space-y-4">
-        {/* 탭 — 사무실 · 전략 회의 · 근무 · 일정 (보이는 것만) */}
+        {/* 탭 — 사무실 · 전략 회의 · 근무 · 일정 · 매출 (보이는 것만) */}
         {tabs.length > 1 && (
           <div
             role="tablist"
             aria-label="153운영본부"
             className={cn(
               "grid gap-1 rounded-2xl bg-secondary/70 p-1",
-              tabs.length === 4 ? "grid-cols-4" : tabs.length === 3 ? "grid-cols-3" : "grid-cols-2",
+              tabs.length >= 5 ? "grid-cols-5" : tabs.length === 4 ? "grid-cols-4" : tabs.length === 3 ? "grid-cols-3" : "grid-cols-2",
             )}
           >
             {tabs.map((t) => (
@@ -214,7 +231,7 @@ const OfficePage = () => {
                 onClick={() => tab !== t.v && setTab(t.v)}
                 className={cn(
                   "flex h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl font-black transition-all active:scale-[0.98]",
-                  tabs.length === 4 ? "text-label" : "text-body",
+                  tabs.length >= 4 ? "text-label" : "text-body",
                   tab === t.v ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground",
                 )}
               >
@@ -234,6 +251,8 @@ const OfficePage = () => {
 
       {tab === "work" && opsMe ? (
         <OpsWorkTab me={opsMe} />
+      ) : tab === "sales" ? (
+        <OpsSalesTab branches={salesBranches} />
       ) : tab === "plan" ? (
         <OpsPlanTab />
       ) : tab === "strategy" ? (

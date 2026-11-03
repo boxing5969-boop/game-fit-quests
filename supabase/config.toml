@@ -59,3 +59,7 @@ verify_jwt = true
 # 153OS 앱 알림 → 알림함 · 휴대폰 — 크론이 매분 x-auto-key 로 호출 (2026-11-02)
 [functions.os-push-pull]
 verify_jwt = false
+
+# 153운영본부 「매출」 탭 — 돈을 보는 분 토큰(ops_sales_scope) 또는 점검 x-auto-key (2026-11-03)
+[functions.ops-sales]
+verify_jwt = true
