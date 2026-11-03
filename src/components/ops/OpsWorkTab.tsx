@@ -10,13 +10,27 @@
  *     이번 달 내 근무 시간 · 내 예상 금액(공제 전) · 얼굴 출근 안내 · 내 시간표 · (PT 위탁 코치) 내 PT 회원 · 내 PT 수당
  *     · 날짜별(누르면 수업 대타 요청 · 연장 근무 신청) · 내 요청
  *   PT (2026-10-29): 브로제이 PT 차감 → 코치별 이번 달 PT · 회원별 남은 횟수 · 수당 — OpsPtPanel · src/lib/opsPt.ts
+ *   계약서 (2026-11-03): 돈을 보는 분은 근무자마다 '계약서 없음 · 서명 대기 · 사본 아직'(확인할 것 → 근무자 카드 계약서 탭),
+ *     코치님은 서명할 계약서가 맨 위 · 서명한 계약서는 '내 계약서'. ?contract=<id> 로 한 장(알림 링크) — OpsContractSheet
  *   계산은 src/lib/opsWork.ts 한 곳 — 서버는 자료만.
  */
 import { useEffect, useMemo, useState } from "react";
-import { ChevronRight, Plus } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { ChevronRight, FileSignature, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
+import {
+  CONTRACT_STATUS,
+  contractShortName,
+  josa,
+  krShortDay,
+  staffContractState,
+  visibleContracts,
+  type ContractKind,
+  type StaffContractState,
+} from "@/lib/opsContract";
+import { useOpsContractBranch, useOpsContractMine } from "@/services/opsContractService";
 import {
   OPS_KIND_LABEL,
   computeStaffMonth,
@@ -41,9 +55,10 @@ import {
   type OpsMonthData,
 } from "@/services/opsService";
 import { computePtMonth, type OpsPtSummary } from "@/lib/opsPt";
+import OpsContractSheet from "./OpsContractSheet";
 import OpsDaySheet from "./OpsDaySheet";
 import OpsPtPanel, { PtCheckItem } from "./OpsPtPanel";
-import OpsStaffSheet from "./OpsStaffSheet";
+import OpsStaffSheet, { type OpsStaffTab } from "./OpsStaffSheet";
 import { DayRow, MonthSwitcher, OpsChip, StatusPill, fmtDay, kstToday, monthOf } from "./OpsParts";
 
 const card = "rounded-2xl border border-border bg-card p-5";
@@ -78,6 +93,16 @@ const buildStaffById = (data: OpsMonthData) => {
   return m;
 };
 
+/** '확인할 것' 계약서 한 줄 — "근로계약서 없음 · 사본 아직 안 줌" */
+const contractTodoText = (st: StaffContractState) => {
+  const kinds = (ks: ContractKind[]) => (ks.length > 1 ? "근로 · 위탁 계약서" : ks[0] === "freelance" ? "위탁 계약서" : contractShortName("labor"));
+  const parts: string[] = [];
+  if (st.missing.length) parts.push(`${kinds(st.missing)} 없음`);
+  if (st.waiting.length) parts.push(`${kinds(st.waiting)} 서명 기다림`);
+  if (st.undelivered.length) parts.push("사본 아직 안 줌");
+  return parts.join(" · ");
+};
+
 const entryLine = (e: OpsEntry, byId: Map<string, OpsStaff>) => {
   const who = byId.get(e.staff_id)?.name ?? "";
   if (e.kind === "cover") return `${who} → ${byId.get(e.cover_staff_id ?? "")?.name ?? "동료"} · ${e.start_time}~${e.end_time}`;
@@ -102,6 +127,26 @@ const OpsWorkTab = ({ me }: { me: OpsMe }) => {
   };
   const [month, setMonth] = useState(() => monthOf(today));
   const q = useOpsMonth(branch, month);
+  // 계약서 한 장 — 알림 링크 /office?tab=work&contract=<id> · 코치님 '내 계약서' (2026-11-03)
+  const [params, setParams] = useSearchParams();
+  const contractParam = params.get("contract");
+  const contractId = contractParam && /^[0-9a-f-]{36}$/i.test(contractParam) ? contractParam : null;
+  const openContract = (id: string) =>
+    setParams(
+      (p) => {
+        p.set("contract", id);
+        return p;
+      },
+      { replace: true },
+    );
+  const closeContract = () =>
+    setParams(
+      (p) => {
+        p.delete("contract");
+        return p;
+      },
+      { replace: true },
+    );
 
   return (
     <div className="space-y-4">
@@ -140,8 +185,9 @@ const OpsWorkTab = ({ me }: { me: OpsMe }) => {
       ) : q.data.manage ? (
         <ManagerView data={q.data} />
       ) : (
-        <CoachView data={q.data} />
+        <CoachView data={q.data} onOpenContract={openContract} />
       )}
+      <OpsContractSheet id={contractId} onClose={closeContract} />
     </div>
   );
 };
@@ -160,7 +206,7 @@ const ManagerView = ({ data }: { data: OpsMonthData }) => {
     return m;
   }, [data, ctx]);
 
-  const [staffSheet, setStaffSheet] = useState<{ staff: OpsStaff | null } | null>(null);
+  const [staffSheet, setStaffSheet] = useState<{ staff: OpsStaff | null; tab?: OpsStaffTab } | null>(null);
   const [daySheet, setDaySheet] = useState<{ staffId: string; date: string } | null>(null);
   const [showAll, setShowAll] = useState(false);
 
@@ -180,6 +226,19 @@ const ManagerView = ({ data }: { data: OpsMonthData }) => {
   }, [pt, data.staff, ptPay]);
   const ptGross = [...ptByCoach.values()].reduce((s, x) => s + (x.gross ?? 0), 0);
   const ptToCheck = pt ? pt.events.filter((e) => e.status === "check") : [];
+
+  // 계약서 — 돈을 보는 분(계약서에 시급이 있다)만: 근무자마다 '계약서 없음 · 서명 대기 · 사본 아직' (2026-11-03)
+  const contractsQ = useOpsContractBranch(data.branch, canPay);
+  const contractStates = useMemo(() => {
+    const m = new Map<string, StaffContractState>();
+    if (!contractsQ.data?.pay) return m;
+    for (const s of data.staff) if (s.active) m.set(s.id, staffContractState(s, contractsQ.data.contracts, data.today));
+    return m;
+  }, [contractsQ.data, data.staff, data.today]);
+  const contractTodo = data.staff
+    .filter((s) => s.active)
+    .map((s) => ({ staff: s, st: contractStates.get(s.id) }))
+    .filter((x): x is { staff: OpsStaff; st: StaffContractState } => !!x.st && (x.st.missing.length + x.st.waiting.length + x.st.undelivered.length > 0));
 
   const active = data.staff.filter((s) => s.active);
   const gone = data.staff.filter((s) => !s.active);
@@ -234,9 +293,28 @@ const ManagerView = ({ data }: { data: OpsMonthData }) => {
       </section>
 
       {/* 확인할 것 */}
-      {(pending.length > 0 || flags.length > 0 || ptToCheck.length > 0) && (
+      {(pending.length > 0 || flags.length > 0 || ptToCheck.length > 0 || contractTodo.length > 0) && (
         <section className={card}>
           <h2 className="text-heading font-black text-foreground">확인할 것</h2>
+          {contractTodo.length > 0 && (
+            <ul className="mt-3 divide-y divide-border/70 overflow-hidden rounded-xl border border-amber-200 bg-amber-50/60">
+              {contractTodo.map(({ staff, st }) => (
+                <li key={staff.id}>
+                  <button
+                    type="button"
+                    onClick={() => setStaffSheet({ staff, tab: "contract" })}
+                    className="flex w-full items-center gap-2 px-3 py-2.5 text-left active:bg-amber-100/70"
+                  >
+                    <FileSignature className="h-5 w-5 shrink-0 text-amber-700" />
+                    <span className="min-w-0 flex-1 truncate text-body text-foreground">
+                      <b className="font-black">{staff.name}</b> · {contractTodoText(st)}
+                    </span>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
           {ptToCheck.length > 0 && (
             <ul className="mt-3 space-y-2">
               {ptToCheck.map((e) => (
@@ -350,6 +428,11 @@ const ManagerView = ({ data }: { data: OpsMonthData }) => {
                       </p>
                       <p className="mt-0.5 truncate text-label text-muted-foreground">
                         {(m?.missing ?? 0) > 0 && <span className="font-bold text-destructive">출근 없음 {m!.missing}일 · </span>}
+                        {(contractStates.get(s.id)?.missing.length ?? 0) > 0 ? (
+                          <span className="font-bold text-amber-700">계약서 없음 · </span>
+                        ) : (contractStates.get(s.id)?.waiting.length ?? 0) > 0 ? (
+                          <span className="font-bold text-amber-700">서명 대기 · </span>
+                        ) : null}
                         {sched || "시간표를 넣어 주세요"}
                       </p>
                       {s.pt_freelancer && ptByCoach.get(s.id) && (
@@ -408,6 +491,7 @@ const ManagerView = ({ data }: { data: OpsMonthData }) => {
         rules={data.rules}
         summary={openStaff ? months.get(openStaff.id) ?? null : null}
         canPay={canPay}
+        initialTab={staffSheet?.tab}
         onPickDay={(d) => openStaff && setDaySheet({ staffId: openStaff.id, date: d.date })}
         ptPanel={
           openStaff?.pt_freelancer && pt && ptByCoach.get(openStaff.id) ? (
@@ -436,8 +520,13 @@ const ManagerView = ({ data }: { data: OpsMonthData }) => {
 };
 
 // ───────────────────────── 코치님 (내 근무) ─────────────────────────
-const CoachView = ({ data }: { data: OpsMonthData }) => {
+const CoachView = ({ data, onOpenContract }: { data: OpsMonthData; onOpenContract: (id: string) => void }) => {
   const cancel = useOpsEntryCancel();
+  // 내 계약서 — 서명할 것은 맨 위, 서명한 것은 내 시간표 아래 (2026-11-03)
+  const contractsQ = useOpsContractMine();
+  const myContracts = visibleContracts(contractsQ.data ?? []);
+  const toSign = myContracts.filter((c) => c.status === "sent");
+  const myDone = myContracts.filter((c) => c.status !== "sent");
   const byId = useMemo(() => buildStaffById(data), [data]);
   const mine = data.staff.find((s) => s.mine) ?? data.staff[0] ?? null;
   const ctx = useMemo(
@@ -471,6 +560,26 @@ const CoachView = ({ data }: { data: OpsMonthData }) => {
 
   return (
     <>
+      {/* 서명할 계약서 — 맨 위 */}
+      {toSign.map((c) => (
+        <button
+          key={c.id}
+          type="button"
+          onClick={() => onOpenContract(c.id)}
+          className="flex w-full items-center gap-3 rounded-2xl bg-primary px-4 py-4 text-left text-primary-foreground shadow-elev-1 active:scale-[0.99]"
+        >
+          <FileSignature className="h-7 w-7 shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-body font-black">
+              {contractShortName(c.kind)}
+              {josa(contractShortName(c.kind), "이", "가")} 도착했어요
+            </p>
+            <p className="text-label opacity-90">읽고 손가락으로 서명해 주세요</p>
+          </div>
+          <ChevronRight className="h-5 w-5 shrink-0" />
+        </button>
+      ))}
+
       {/* 주인공 — 이번 달 내 근무 */}
       <section className={card}>
         <p className="text-label font-bold text-muted-foreground">{Number(data.month.slice(5, 7))}월 내 근무</p>
@@ -521,6 +630,37 @@ const CoachView = ({ data }: { data: OpsMonthData }) => {
         <section className={card}>
           <h2 className="mb-3 text-heading font-black text-foreground">PT</h2>
           <OpsPtPanel summary={ptSummary} events={ptQ.data.events.filter((e) => e.coach_staff_id === mine.id)} manage={false} showPay={ptPay} />
+        </section>
+      )}
+
+      {/* 내 계약서 — 서명한 것 · 무효 (언제든 보기 · PDF) */}
+      {myDone.length > 0 && (
+        <section className="overflow-hidden rounded-2xl border border-border bg-card">
+          <h2 className="px-5 pb-2 pt-5 text-heading font-black text-foreground">내 계약서</h2>
+          <ul className="divide-y divide-border/70 border-t border-border/70">
+            {myDone.map((c) => (
+              <li key={c.id}>
+                <button
+                  type="button"
+                  onClick={() => onOpenContract(c.id)}
+                  className="flex w-full items-center gap-3 px-5 py-3.5 text-left active:bg-secondary/60"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-body font-bold text-foreground">{c.title}</p>
+                    <p className="truncate text-label text-muted-foreground">
+                      {c.status === "signed" ? `${krShortDay(c.signed_at)} 서명 · 보기 · PDF` : c.void_reason || "무효"}
+                    </p>
+                  </div>
+                  {c.status === "void" && (
+                    <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-micro font-bold", CONTRACT_STATUS.void.cls)}>
+                      {CONTRACT_STATUS.void.label}
+                    </span>
+                  )}
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                </button>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 

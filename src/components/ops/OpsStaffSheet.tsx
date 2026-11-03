@@ -1,6 +1,7 @@
 /**
  * 153운영본부 · 근무 — 근무자 카드 (지점장 · 대표님 · 회계매니저)
  *   정보(형태 · 시급 · 앱 계정 · 기간 · 출근 확인) · 시간표(요일마다 구간 여러 개, 고른 날부터) · 이번 달(날짜를 누르면 고치기)
+ *   · 계약서(2026-11-03 — 근로계약서 · PT 업무위탁 계약서 쓰기 · 서명 받기, 돈을 보는 분만 — OpsContractPanel)
  *   시급 · 월급 · 기본급은 대표님 · 회계매니저만(canPay) — 지점장은 급여 칸 없이 저장하고, 서버도 급여를 그대로 둔다 (2026-10-29).
  *   본인 카드는 서버가 본인 금액을 보내 주므로 기본급이 보인다.
  */
@@ -25,6 +26,7 @@ import {
   type OpsStaff,
 } from "@/lib/opsWork";
 import { useOpsCandidates, useOpsScheduleSave, useOpsStaffSave, type OpsStaffInput } from "@/services/opsService";
+import OpsContractPanel from "./OpsContractPanel";
 import { DayRow, OpsButton, OpsChip, OpsLabel, OpsSheet, fmtDay, kstToday, opsInput } from "./OpsParts";
 
 interface Props {
@@ -39,9 +41,13 @@ interface Props {
   onPickDay: (day: OpsDay) => void;
   /** PT 위탁 코치면 PT 탭 내용 (2026-10-29) */
   ptPanel?: ReactNode;
+  /** 처음 열 탭 — '확인할 것'의 계약서 없음에서 열면 계약서 (2026-11-03) */
+  initialTab?: OpsStaffTab;
 }
 
-type Tab = "info" | "schedule" | "month" | "pt";
+export type OpsStaffTab = "info" | "schedule" | "month" | "pt" | "contract";
+type Tab = OpsStaffTab;
+const TAB_COLS: Record<number, string> = { 3: "grid-cols-3", 4: "grid-cols-4", 5: "grid-cols-5" };
 const KINDS: OpsKind[] = ["parttime", "intern", "employee", "freelancer", "volunteer"];
 /** 월요일부터 */
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
@@ -52,7 +58,7 @@ interface SegDraft {
   end: string;
 }
 
-const OpsStaffSheet = ({ open, onClose, branch, staff, rules, summary, canPay, onPickDay, ptPanel }: Props) => {
+const OpsStaffSheet = ({ open, onClose, branch, staff, rules, summary, canPay, onPickDay, ptPanel, initialTab }: Props) => {
   const isNew = !staff;
   const today = kstToday();
   const [tab, setTab] = useState<Tab>("info");
@@ -68,7 +74,7 @@ const OpsStaffSheet = ({ open, onClose, branch, staff, rules, summary, canPay, o
 
   useEffect(() => {
     if (!open) return;
-    setTab(staff ? "month" : "info");
+    setTab(staff ? (initialTab === "contract" && !canPay ? "month" : initialTab ?? "month") : "info");
     setForm(
       staff
         ? {
@@ -133,6 +139,14 @@ const OpsStaffSheet = ({ open, onClose, branch, staff, rules, summary, canPay, o
   };
 
   const worked = (summary?.days ?? []).filter((d) => d.status !== "none");
+  // 계약서 탭 — 계약서에 시급이 있어 돈을 보는 분(대표님 · 회계매니저)만 (2026-11-03)
+  const tabs: Array<{ v: Tab; label: string }> = [
+    { v: "month", label: "이번 달" },
+    ...(ptPanel ? [{ v: "pt" as const, label: "PT" }] : []),
+    { v: "schedule", label: "시간표" },
+    ...(canPay ? [{ v: "contract" as const, label: "계약서" }] : []),
+    { v: "info", label: "정보" },
+  ];
 
   return (
     <OpsSheet
@@ -142,15 +156,8 @@ const OpsStaffSheet = ({ open, onClose, branch, staff, rules, summary, canPay, o
       sub={isNew ? undefined : `${OPS_KIND_LABEL[staff!.kind]}${staff!.pay_type === "hourly" && staff!.hourly_wage ? ` · 시급 ${fmtWon(staff!.hourly_wage)}` : ""}`}
     >
       {!isNew && (
-        <div role="tablist" className={cn("mb-4 grid gap-1 rounded-xl bg-secondary/70 p-1", ptPanel ? "grid-cols-4" : "grid-cols-3")}>
-          {(
-            [
-              { v: "month", label: "이번 달" },
-              ...(ptPanel ? [{ v: "pt", label: "PT" }] : []),
-              { v: "schedule", label: "시간표" },
-              { v: "info", label: "정보" },
-            ] as Array<{ v: Tab; label: string }>
-          ).map((t) => (
+        <div role="tablist" className={cn("mb-4 grid gap-1 rounded-xl bg-secondary/70 p-1", TAB_COLS[tabs.length] ?? "grid-cols-3")}>
+          {tabs.map((t) => (
             <button
               key={t.v}
               type="button"
@@ -169,6 +176,8 @@ const OpsStaffSheet = ({ open, onClose, branch, staff, rules, summary, canPay, o
       )}
 
       {tab === "pt" && ptPanel}
+
+      {tab === "contract" && staff && canPay && <OpsContractPanel branch={branch} staff={staff} rules={rules} />}
 
       {tab === "month" && summary && (
         <>

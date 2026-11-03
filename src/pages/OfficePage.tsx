@@ -110,6 +110,7 @@ const OfficePage = () => {
         if (t === "office") p.delete("tab");
         else p.set("tab", t);
         p.delete("minutes");
+        p.delete("contract");
         return p;
       },
       { replace: true },
