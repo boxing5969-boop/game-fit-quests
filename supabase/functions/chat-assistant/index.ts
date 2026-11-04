@@ -5,6 +5,7 @@ import { KNOWLEDGE_153 } from "../_shared/knowledge153.ts";
 import { KNOWLEDGE_BOXING_153 } from "../_shared/knowledgeBoxing153.ts";
 import { analyzeMealImage } from "../_shared/mealVision.ts";
 import { buildClaudeBody, CLAUDE_CHAT_MODEL, CLAUDE_COACH_MODEL, claudeMessage, claudeStream, claudeToOpenAiSse, hasClaude, keepAlive, logAiUsage, messageText, usageOf, type SystemPart } from "../_shared/claude.ts";
+import { buildFeedbackSystem, buildFeedbackUser, checkFeedback, cleanMarks, FEEDBACK_SCHEMA, parseFeedbackJson, type FeedbackStd } from "../_shared/coachFeedback.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -525,6 +526,109 @@ async function handlePolishDirective(
   }
 }
 
+// 153 코치 수업 관찰 다듬기 (action = "coach-observe-polish", 2026-11-05 대표님
+//   「153마이복서에 최고성능 프롬프트로 상세하게 만들자」)
+//   대표님 · 지점장님의 짧은 메모 + 다섯 가지 점검표 → 잘한 것 2 · 바꿀 것 1 (칸을 채울 뿐 저장은 화면이 coach_observe_save 로)
+//   · 지시권자만 · 그 코치님이 부른 분의 지점 코치님일 때만(coach_growth_me 의 board) · 스위치 internal_sync_config
+//     'coach_feedback_ai' = 'on' 일 때만(coach_growth_me.ai_polish) · 사람마다 하루 20번 · 메모는 저장하지 않는다
+//   · 모델 = 채팅 모델(Sonnet) — 다듬은 글은 _shared/coachFeedback.ts 가 검사(탓하는 말 · 지어낸 숫자 · 전화번호 · 길이)
+//   · 답은 늘 200 — 화면이 보여 줄 말은 {error}
+// ────────────────────────────────────────────────────────────────
+const COACH_POLISH_DAILY_LIMIT = 20;
+
+async function handleCoachObservePolish(
+  body: Record<string, unknown>,
+  authHeader: string | null,
+): Promise<Response> {
+  const jsonRes = (payload: unknown) =>
+    new Response(JSON.stringify(payload), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  if (!authHeader) return jsonRes({ ok: false, error: "다시 로그인해 주세요" });
+  if (!hasClaude()) return jsonRes({ ok: false, error: "지금은 다듬을 수 없어요 — 직접 써 주세요" });
+  const coachId = typeof body.coach_id === "string" ? body.coach_id : "";
+  const memo = typeof body.memo === "string" ? body.memo.trim().slice(0, 600) : "";
+  const marks = cleanMarks(body.marks);
+  if (!coachId) return jsonRes({ ok: false, error: "코치님을 골라 주세요" });
+  if (!memo && Object.keys(marks).length === 0) return jsonRes({ ok: false, error: "메모를 한두 줄 적거나 점검표를 눌러 주세요" });
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const userClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } } });
+  const { data: { user } } = await userClient.auth.getUser();
+  if (!user) return jsonRes({ ok: false, error: "다시 로그인해 주세요" });
+
+  // 지시권자 · 스위치 · 그 지점 코치님 — 153 기준 화면과 같은 서버 판정
+  const { data: me } = await userClient.rpc("coach_growth_me", { p_branch: null });
+  if (!me?.staff || !me?.can_direct) return jsonRes({ ok: false, error: "다듬기는 대표님 · 지점장님만 쓸 수 있어요" });
+  if (!me?.ai_polish) return jsonRes({ ok: false, error: "오삼코치 다듬기는 아직 준비 중이에요" });
+  const board = Array.isArray(me.board) ? (me.board as Array<{ person?: { user_id?: string; name?: string } }>) : [];
+  let target = board.find((p) => p?.person?.user_id === coachId);
+  if (!target && me.hq) {
+    // 대표님은 지점을 바꿔 보신다 — 코치님 지점으로 한 번 더
+    const { data: prof } = await userClient.rpc("coach_growth_me", { p_branch: typeof body.branch === "string" ? body.branch : null });
+    const b2 = Array.isArray(prof?.board) ? (prof.board as Array<{ person?: { user_id?: string; name?: string } }>) : [];
+    target = b2.find((p) => p?.person?.user_id === coachId);
+  }
+  if (!target) return jsonRes({ ok: false, error: "이 지점 코치님만 다듬을 수 있어요" });
+  const standards = (Array.isArray(me.standards) ? me.standards : [])
+    .map((s: { no?: unknown; title?: unknown; how?: unknown }) => ({
+      no: Number(s.no),
+      title: String(s.title ?? ""),
+      how: String(s.how ?? ""),
+    }))
+    .filter((s: FeedbackStd) => Number.isInteger(s.no) && s.title) as FeedbackStd[];
+  if (standards.length === 0) return jsonRes({ ok: false, error: "153 기준을 불러오지 못했어요" });
+
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const db = serviceKey ? createClient(supabaseUrl, serviceKey) : null;
+  if (db) {
+    try {
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { count } = await db
+        .from("ai_usage_log")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("feature", "coach_feedback")
+        .gte("created_at", since);
+      if ((count ?? 0) >= COACH_POLISH_DAILY_LIMIT) {
+        return jsonRes({ ok: false, error: "오늘은 다듬기를 많이 썼어요 — 직접 써 주세요" });
+      }
+    } catch (_e) {
+      // 집계 실패는 무시 — 상한은 요금 방어용
+    }
+  }
+
+  const model = CLAUDE_CHAT_MODEL;
+  const system = buildFeedbackSystem(standards);
+  const userText = buildFeedbackUser({ standards, marks, memo, coachName: String(target.person?.name ?? "코치님") });
+  const stdNos = standards.map((s) => s.no);
+  try {
+    // 검사에서 걸리면 한 번만 다시 — 그래도 걸리면 직접 쓰시게
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const msg = await claudeMessage(
+        buildClaudeBody({
+          model,
+          system: [system],
+          messages: [{ role: "user", content: userText }],
+          maxTokens: 600,
+          jsonSchema: FEEDBACK_SCHEMA,
+        }),
+      );
+      keepAlive(logAiUsage(db, { feature: "coach_feedback", model, usage: usageOf(msg), userId: user.id }));
+      const checked = checkFeedback(parseFeedbackJson(messageText(msg)), { memo, stdNos });
+      if (checked.ok) return jsonRes({ ok: true, ...checked.result });
+      if (checked.reason === "model_error") return jsonRes({ ok: false, error: checked.message ?? "메모를 한두 줄만 더 적어 주세요" });
+      console.warn("coach-observe-polish check failed", checked.reason);
+    }
+    return jsonRes({ ok: false, error: "다듬은 글이 기준에 맞지 않았어요 — 직접 써 주세요" });
+  } catch (e) {
+    console.error("coach-observe-polish failed", e instanceof Error ? e.message : e);
+    return jsonRes({ ok: false, error: "지금은 다듬지 못했어요 — 잠시 후 다시 눌러 주세요" });
+  }
+}
+
 // ── 앱이 보낸 지식 베이스 컨텍스트 위생 처리 ─────────────────────
 // body.kb = { hints: [{ q, answer }], index?: string } — 앱(lib/osamiKb.ts)이 질문과 관련 있는 항목을 골라 보낸다.
 // 회원 본인의 답에만 영향을 주는 자료지만 크기와 모양은 여기서 다시 묶는다 (토큰 예산·프롬프트 보호).
@@ -601,6 +705,11 @@ serve(async (req) => {
     // 전략 회의실 지시 다듬기 — 같은 함수 안의 다른 입구 (2026-10-16)
     if (body?.action === "polish-directive") {
       return await handlePolishDirective(body, req.headers.get("authorization"));
+    }
+
+    // 153 코치 수업 관찰 다듬기 — 같은 함수 안의 다른 입구 (2026-11-05)
+    if (body?.action === "coach-observe-polish") {
+      return await handleCoachObservePolish(body, req.headers.get("authorization"));
     }
 
     // AI 채팅은 로그인한 회원만 (식단 사진 분석과 같은 기준). 앱은 로그인 전에는 앱 안내만 보여 준다.
