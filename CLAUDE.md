@@ -531,6 +531,19 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
   - QR · 예전 응답의 보기 답은 글 없이 번호(answer_score)만 있다 → `member-voice-inbox` · `survey-auto-reply` 둘 다 보기 글로 채운다(받은 설문함에 '답 없음'으로 보이던 것, 2026-10-30).
   - 시험: body `{dry_run: true}` → 할 일만 돌려준다. 끄기 = `select cron.unschedule('survey-auto-reply')`. 마이그레이션 20261030114131 · 20261030114756.
 
+### 타이틀미션 「왜 미트를 잡아 줄까」 탭 · 레벨 10 3일 이야기 (2026-11-05 대표님 "레벨 10에 왜 미트를 대 주고 지도를 해 봐야 하는지 설득하는 탭 만들고, 레벨 10이 되면 이 글 3일간 발송되게 하자")
+
+| 파일 | 역할 |
+|---|---|
+| [src/lib/titleTeachLessons.ts](src/lib/titleTeachLessons.ts) | 3편 정본 — ①가르치기(가르칠 때 가장 많이 느는 건 나 · 3-2-1 공부법 다리) ②번갈아 하기(짝 연습 · 보는 것도 연습) ③왜 3번(3번 연속 = 운 아닌 실력 · 꺼내기 반복 · 7일과 잠) · 편마다 질문 → 답 → 연구 → 체육관에서는 → 오늘 해 볼 것 하나 → 출처 · 알림 글 `notice` (테스트 titleTeachLessons.test.ts) |
+| [src/components/titlematch/TitleTeachTab.tsx](src/components/titlematch/TitleTeachTab.tsx) | 타이틀미션 카드(TitleMatchChallengeCard) 위 탭 「도전 방법 · 왜 미트를 잡아 줄까」의 두 번째 탭 — 세 편 칸 · 9동작 외우는 말 덩어리 · 1편 행동 = 오늘 같이 해요(`/myboxer/community?together=1`) · 3편 행동 = 아래 심사 신청 버튼 |
+| [supabase/migrations/20261105011632_title_teach_drip.sql](supabase/migrations/20261105011632_title_teach_drip.sql) | `title_teach_drip`(회원 · 리그 · 편 · due_at · sent_at · skipped) · member_progress 트리거 `title_teach_on_progress`(화이트 레벨 10 이 되는 순간 · 신청 흐름이 열린 시범 지점만 · 통과 전) → `title_teach_start` 가 3편을 잡는다 · `title_teach_dispatch()` 10분마다(cron `title-teach-dispatch`) → `notifications`(링크 `/title-match?lv=10&why=1~3`) |
+
+- 보내는 때: 1편 = 레벨 10 + 1시간 · 2 · 3편 = 다음 평일들 같은 시각 · 평일 08:00~21:00(잡는 시각은 20:30 까지)만 · 주말은 건너뜀 · 앞 편 뒤 18시간 안엔 다음 편 없음 · 통과했거나 리그가 바뀌면 남은 편은 `skipped`. 한 회원 · 한 리그에 한 번.
+- 알림 글(제목 · 한 줄)은 DB 함수와 `titleTeachLessons.ts` `notice` 두 곳 — 바꾸면 둘 다. 화면 글(본문)은 lib 한 곳.
+- 스위치 `internal_sync_config` `title_teach_drip` = 'on' | 'off'. 켠 뒤 레벨 10 이 된 회원부터(이미 레벨 10 인 회원에게 보낼 때는 대표님 결정 뒤 `title_teach_start(user_id, 'white', now())`).
+- 휴대폰 알림을 켠 회원은 적다(11/05 레벨 10 회원 96명 중 5명) — 대부분 알림함으로 본다. 탭은 알림과 상관없이 화이트 리그 시범 지점 회원 모두에게 보인다.
+
 ### 로드맵 칸 (2026-10-30 대표님 "로드맵 메뉴가 안 보여" · "검색해도 안 나오고")
 - 랭크업(`/rank-up` — 40단계 길 · 리그별 레벨업 기준 · 타이틀매치 · 단증 도전)은 10-10 하단 '랭크업' 탭을 뺀 뒤 MY복서 라이센스 카드 승급 막대로만 들어갈 수 있었다.
 - 전체 메뉴(`src/lib/appMenu.ts`) 단독 칸 **「로드맵」**(글리프 `roadmap` = 접힌 지도 + 민트 점선 길 + 금 깃발) — 회원은 MY복서 다음 2번째, 코치진은 153운영본부 다음. 검색 `f:rankup` 이름 「로드맵 · 레벨업 기준」 · 관련어 로드맵 · 랭크업 로드맵 · 40단계 · 단증 도전 (테스트 appSearch.test.ts · officeLayout.test.ts).
