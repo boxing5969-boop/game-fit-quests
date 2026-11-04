@@ -5,8 +5,12 @@
  *   기획안: claude.ai 문서 '전략 회의실 기획안' · DB: 20261016030000_strategy_room.sql
  */
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
+import CoachStdSection from "@/components/coach153/CoachStdSection";
+import { COACH153_KEY, useCoachGrowthMe } from "@/services/coachGrowthService";
 
 import { cn } from "@/lib/utils";
 import VideoOverlay, { type OverlayVideo } from "@/components/common/VideoOverlay";
@@ -24,10 +28,12 @@ import {
   type StrategyVideo,
 } from "@/services/strategyService";
 
-type Section = "board" | "program" | "log" | "video";
+type Section = "board" | "std" | "program" | "log" | "video";
 
+// 153 기준 (2026-11-05) — 코치 기준 다섯 가지 · 4주 성장 · 수업 관찰 (components/coach153). 알림 링크 ?s=std 로 바로 연다
 const SECTIONS: Array<{ v: Section; label: string }> = [
   { v: "board", label: "지시·전략" },
+  { v: "std", label: "153 기준" },
   { v: "program", label: "오늘 프로그램" },
   { v: "log", label: "수업 기록" },
   { v: "video", label: "영상" },
@@ -37,7 +43,7 @@ const SECTION_KEY = "153strategy:section";
 const readSection = (): Section => {
   try {
     const v = window.localStorage.getItem(SECTION_KEY);
-    return v === "program" || v === "log" || v === "video" ? v : "board";
+    return v === "std" || v === "program" || v === "log" || v === "video" ? v : "board";
   } catch {
     return "board";
   }
@@ -77,7 +83,14 @@ const StrategyRoom = () => {
   const me = meQ.data;
   const ok = !!me?.staff;
   const b = me?.branch ?? branch;
-  const [section, setSectionState] = useState<Section>(readSection);
+  const [params] = useSearchParams();
+  const qc = useQueryClient();
+  const [section, setSectionState] = useState<Section>(() => {
+    const s = params.get("s");
+    return s === "std" || s === "board" || s === "program" || s === "log" || s === "video" ? s : readSection();
+  });
+  const growth = useCoachGrowthMe(me?.branch ?? branch, ok);
+  const growthUnseen = growth.data?.me?.unseen ?? 0;
   const setSection = (s: Section) => {
     setSectionState(s);
     try {
@@ -154,18 +167,21 @@ const StrategyRoom = () => {
       )}
 
       {/* 하위 탭 */}
-      <div className="grid grid-cols-4 gap-1 rounded-2xl bg-secondary/70 p-1">
+      <div className="flex gap-1 overflow-x-auto rounded-2xl bg-secondary/70 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {SECTIONS.map((s) => (
           <button
             key={s.v}
             type="button"
             onClick={() => setSection(s.v)}
             className={cn(
-              "rounded-xl py-2 text-[12.5px] font-black transition-all active:scale-[0.98]",
+              "relative flex-1 shrink-0 whitespace-nowrap rounded-xl px-2.5 py-2 text-[12.5px] font-black transition-all active:scale-[0.98]",
               section === s.v ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground",
             )}
           >
             {s.label}
+            {s.v === "std" && growthUnseen > 0 && (
+              <span aria-label="새 피드백" className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-primary" />
+            )}
           </button>
         ))}
       </div>
@@ -317,6 +333,16 @@ const StrategyRoom = () => {
         </>
       )}
 
+      {section === "std" && (
+        <CoachStdSection
+          branch={b}
+          onCheckClass={() => {
+            setLogProgram(null);
+            setLogOpen(true);
+          }}
+        />
+      )}
+
       {section === "video" && <VideoLibrary me={me} branch={b} videos={videos} loading={videosQ.isLoading} onPlay={play} />}
 
       <PostComposer open={postOpen} onClose={() => setPostOpen(false)} me={me} branch={b} />
@@ -329,7 +355,17 @@ const StrategyRoom = () => {
         templates={templates}
         initial={programInit}
       />
-      <ClassLogComposer open={logOpen} onClose={() => setLogOpen(false)} branch={b} programs={programRows} initialProgram={logProgram} />
+      <ClassLogComposer
+        open={logOpen}
+        onClose={() => {
+          setLogOpen(false);
+          qc.invalidateQueries({ queryKey: COACH153_KEY });
+        }}
+        branch={b}
+        programs={programRows}
+        initialProgram={logProgram}
+        standards={growth.data?.standards}
+      />
       <VideoOverlay video={overlay} onClose={() => setOverlay(null)} />
     </div>
   );
