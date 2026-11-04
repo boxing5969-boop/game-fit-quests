@@ -1,13 +1,13 @@
 /**
  * 153운영본부 「매출」 · 순이익 카드 (2026-11-04 대표님 "153가계부랑 연동해서 … 순이익도 계산하자" → 「매출 − 사업 비용」)
- *   순이익 = 이 달 매출(ops-sales) − 이 달 사업 비용(153가계부 CSV 에서 올린 합계, ops_costs).
+ *   순이익 = 이 달 매출(ops-sales) − 이 달 사업 비용(153가계부 CSV 에서 올린 합계 · 통장 내역서로 정리한 합계, ops_costs).
  *   비용을 아직 안 올린 달은 '가계부 CSV 올리기'만.
  */
 import { FileUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { fmtMan } from "@/lib/opsSales";
-import { profitOf, topCats, type SavedCosts } from "@/lib/opsCosts";
+import { costSourceLine, profitOf, topCats, type SavedCosts } from "@/lib/opsCosts";
 
 const card = "rounded-2xl border border-border bg-card p-5";
 
@@ -58,9 +58,6 @@ const OpsProfitCard = ({
   const { profit, pct } = profitOf(sales, cost);
   const { top, rest } = topCats(cats, 6);
   const max = Math.max(1, ...top.map((c) => c.amount));
-  const short = (s: string) => s.replace(/^153\s*복싱짐\s*/, "");
-  const stores = [...meta.stores.map(short), ...(meta.no_store ? ["매장 없음"] : [])];
-  const skippedLoan = meta.excluded.includes("loan");
 
   return (
     <section className={card}>
@@ -98,10 +95,7 @@ const OpsProfitCard = ({
       )}
 
       <div className="mt-4 flex items-center justify-between gap-3 border-t border-border pt-3">
-        <p className="min-w-0 truncate text-label text-muted-foreground">
-          가계부 {savedText(meta.saved_at)} 올림{stores.length ? ` · ${stores.join(", ")}` : ""}
-          {skippedLoan ? " · 대출 뺌" : ""}
-        </p>
+        <p className="min-w-0 truncate text-label text-muted-foreground">{costSourceLine(meta, savedText(meta.saved_at))}</p>
         <button
           type="button"
           onClick={onImport}

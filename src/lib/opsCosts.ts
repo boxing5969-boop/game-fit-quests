@@ -256,12 +256,30 @@ export const defaultMonths = (months: CostMonth[], thisMonth: string, n = 12): s
 export interface SavedCostMonth {
   month: string;
   total: number;
+  /** 어디서 왔나 — 가계부 CSV(기본) · 통장 내역서(클로드가 정리, 2026-11-04) */
+  source?: "gagyebu_csv" | "bank_statement";
   stores: string[];
   no_store: boolean;
+  /** 가계부 = 뺀 항목 키(loan …) · 통장 내역서 = 뺀 묶음 이름(큰 것부터) */
   excluded: string[];
   saved_at: string;
   saved_by: string | null;
 }
+
+/** 순이익 카드 아래 줄 — 어디서 왔나 · 뺀 것. savedDay = '11월 4일' */
+export const costSourceLine = (
+  meta: Pick<SavedCostMonth, "source" | "stores" | "no_store" | "excluded">,
+  savedDay: string,
+): string => {
+  if (meta.source === "bank_statement") {
+    const ex = meta.excluded.filter((x) => x.trim() !== "");
+    const tail = ex.length === 0 ? "" : ex.length === 1 ? ` · ${ex[0]} 뺌` : ` · ${ex[0]} 등 ${ex.length}가지 뺌`;
+    return `통장 내역 ${savedDay} 정리${tail}`;
+  }
+  const short = (s: string) => s.replace(/^153\s*복싱짐\s*/, "");
+  const stores = [...meta.stores.map(short), ...(meta.no_store ? ["매장 없음"] : [])];
+  return `가계부 ${savedDay} 올림${stores.length ? ` · ${stores.join(", ")}` : ""}${meta.excluded.includes("loan") ? " · 대출 뺌" : ""}`;
+};
 export interface SavedCosts {
   months: SavedCostMonth[];
   rows: Array<{ month: string; k: string; label: string; amount: number; count: number }>;

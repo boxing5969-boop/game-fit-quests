@@ -4,6 +4,7 @@ import {
   branchKey,
   catLabel,
   costsByMonth,
+  costSourceLine,
   defaultMonths,
   defaultStores,
   parseCsv,
@@ -135,5 +136,22 @@ describe("달 · 항목별 비용", () => {
     );
     expect(t.top.map((x) => x.label)).toEqual(["b", "c"]);
     expect(t.rest).toEqual({ n: 1, amount: 1 });
+  });
+});
+
+describe("순이익 카드 아래 줄", () => {
+  const base = { stores: [] as string[], no_store: false, excluded: [] as string[] };
+  it("가계부 CSV — 매장 · 매장 없음 · 대출 뺌 (예전 그대로)", () => {
+    expect(costSourceLine({ ...base, stores: ["153복싱짐 선릉역점"], no_store: true, excluded: ["loan", "save"] }, "11월 4일")).toBe(
+      "가계부 11월 4일 올림 · 선릉역점, 매장 없음 · 대출 뺌",
+    );
+    expect(costSourceLine({ ...base, source: "gagyebu_csv" }, "11월 4일")).toBe("가계부 11월 4일 올림");
+  });
+  it("통장 내역서 — 뺀 묶음은 가장 큰 것 하나 + 가짓수", () => {
+    expect(costSourceLine({ ...base, source: "bank_statement" }, "11월 4일")).toBe("통장 내역 11월 4일 정리");
+    expect(costSourceLine({ ...base, source: "bank_statement", excluded: ["카드 대금"] }, "11월 4일")).toBe("통장 내역 11월 4일 정리 · 카드 대금 뺌");
+    expect(costSourceLine({ ...base, source: "bank_statement", excluded: ["카드 대금", "법무법인", " "] }, "11월 4일")).toBe(
+      "통장 내역 11월 4일 정리 · 카드 대금 등 2가지 뺌",
+    );
   });
 });
