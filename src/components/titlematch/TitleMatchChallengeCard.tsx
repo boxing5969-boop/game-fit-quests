@@ -6,9 +6,13 @@
  *
  * 아래쪽 버튼·상태는 서버 상태(get_title_match_state)로만 정한다 — 신청 전 / 신청함 / 도전 중 / 7일 잠금 / 통과.
  * 레벨 10 전이어도 같은 리그면 카드를 보여 준다 (미리 알고 준비하도록) — 버튼만 잠겨 있다.
+ *
+ * 탭 두 개 (2026-11-05 대표님 "왜 미트를 대 주고 지도를 해 봐야 하는지 설득하는 탭"):
+ *   도전 방법(①②③ · 심사 기준) · 왜 미트를 잡아 줄까(3편 이야기 — TitleTeachTab). 아래 상태 · 신청 버튼은 두 탭 모두 그대로.
+ *   레벨 10 알림 링크 ?why=1~3 이면 '왜' 탭의 그 편으로 열고 카드까지 내려 준다.
  */
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronRight, Loader2, Lock, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,7 +31,10 @@ import {
   titleMissionRules,
 } from "@/lib/titleMatchChallenge";
 import TitleAttemptList, { AttemptDots } from "./TitleAttemptList";
+import TitleTeachTab from "./TitleTeachTab";
 import { toGlobalLevel } from "@/lib/rankLabels";
+import { teachDayFromParam, type TeachDay } from "@/lib/titleTeachLessons";
+import { cn } from "@/lib/utils";
 
 interface Props {
   /** 지금 보는 칸의 리그 — 회원의 리그와 같을 때만 그린다 (화면에서 거른다) */
@@ -41,6 +48,20 @@ const LEAGUE_ORDER = ["white", "blue", "red", "black"];
 const TitleMatchChallengeCard = ({ league, level }: Props) => {
   const navigate = useNavigate();
   const { refreshProgress } = useAuth();
+  const [params] = useSearchParams();
+  const whyDay = teachDayFromParam(params.get("why"));
+  const [tab, setTab] = useState<"how" | "why">(whyDay ? "why" : "how");
+  const [teachDay, setTeachDay] = useState<TeachDay>(whyDay ?? 1);
+  const sectionRef = useRef<HTMLElement>(null);
+
+  // 알림(레벨 10 이야기 n편)으로 들어오면 '왜' 탭의 그 편 → 카드까지 내려 준다
+  useEffect(() => {
+    if (!whyDay) return;
+    setTab("why");
+    setTeachDay(whyDay);
+    const t = window.setTimeout(() => sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 300);
+    return () => window.clearTimeout(t);
+  }, [whyDay]);
   const { data: state, isLoading } = useTitleMatchState();
   const request = useRequestTitleMatch();
   const cancel = useCancelTitleMatch();
@@ -73,16 +94,44 @@ const TitleMatchChallengeCard = ({ league, level }: Props) => {
 
   return (
     <section
+      ref={sectionRef}
       aria-labelledby="title-mission-heading"
-      className="mt-4 overflow-hidden rounded-2xl bg-card shadow-elev-1 ring-1 ring-border/60"
+      className="mt-4 scroll-mt-20 overflow-hidden rounded-2xl bg-card shadow-elev-1 ring-1 ring-border/60"
     >
       <div className="border-b border-border/60 bg-reward/10 px-4 py-3">
         <p className="text-label font-bold text-reward">🏆 타이틀미션</p>
         <h3 id="title-mission-heading" className="text-body font-black leading-snug text-foreground">
-          이렇게 도전해요
+          {tab === "how" ? "이렇게 도전해요" : "미트를 잡아 주는 이유 3가지"}
         </h3>
+        {/* 탭 — 도전 방법 · 왜 미트를 잡아 줄까 */}
+        <div role="tablist" aria-label="타이틀미션 보기" className="mt-3 grid grid-cols-2 gap-1 rounded-xl bg-card/70 p-1">
+          {(
+            [
+              ["how", "도전 방법"],
+              ["why", "왜 미트를 잡아 줄까"],
+            ] as const
+          ).map(([v, label]) => (
+            <button
+              key={v}
+              type="button"
+              role="tab"
+              aria-selected={tab === v}
+              onClick={() => setTab(v)}
+              className={cn(
+                "h-9 min-w-0 truncate rounded-lg px-2 text-label font-bold transition-colors",
+                tab === v ? "bg-foreground text-background" : "text-muted-foreground",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
+      {tab === "why" ? (
+        <TitleTeachTab day={teachDay} onDay={setTeachDay} who={who} league={league} />
+      ) : (
+      <>
       {/* ① ② ③ — 대표님 원문 */}
       <ol className="space-y-3 px-4 pt-4">
         {TITLE_MISSION_STEPS.map((s) => (
@@ -120,7 +169,19 @@ const TitleMatchChallengeCard = ({ league, level }: Props) => {
             </li>
           ))}
         </ul>
+        <button
+          type="button"
+          onClick={() => {
+            setTeachDay(3);
+            setTab("why");
+          }}
+          className="mt-2 inline-flex h-8 items-center gap-0.5 text-label font-bold text-primary"
+        >
+          왜 3번 연속 · 미트 3번일까? <ChevronRight className="h-3.5 w-3.5" />
+        </button>
       </div>
+      </>
+      )}
 
       {/* 지금 내 상태 · 신청 */}
       <div className="px-4 pb-4 pt-4" aria-live="polite">
