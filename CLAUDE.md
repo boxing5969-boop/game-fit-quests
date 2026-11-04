@@ -135,12 +135,12 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 | [src/lib/coachGrowth.ts](src/lib/coachGrowth.ts) | 4주 주제(1주 이름과 인사 · 2주 칭찬과 첫 방문 · 3주 다음 목표 · 4주 다섯 가지 모두 · 5주부터 가장 약한 한 가지) · 점수(했어요 1 · 조금 0.5 · 못 했어요 0 — 서버와 같은 식) · 가장 약한 기준 · 첫 관찰 → 마지막 관찰 (테스트 coachGrowth.test.ts) |
 | [src/services/coachGrowthService.ts](src/services/coachGrowthService.ts) · [src/components/coach153/](src/components/coach153/) | `CoachStdSection`(코치님: 나의 4주 · 받은 피드백 · 나의 다섯 가지 · 기준 / 대표님 · 지점장님: 코치님들 · 나) · `CoachStdCards` · `CoachStdSheets`(수업 관찰 · 4주 시작 · 돌아보기 · 기준 고치기 · 점검표 `StdMarksEditor`) |
 | [src/components/strategy/StrategyComposers.tsx](src/components/strategy/StrategyComposers.tsx) `ClassLogComposer` | 코치님 자기 점검 = 수업 기록 창의 「153 기준 점검(선택)」 → `strategy_items.data.std`({"1":"y"…}) — 새 표 없이 수업 기록에. '오늘 수업 점검' 단추가 이 창을 연다 |
-| [supabase/functions/_shared/coachFeedback.ts](supabase/functions/_shared/coachFeedback.ts) · chat-assistant `action:"coach-observe-polish"` | 오삼코치로 다듬기 — 대표님 메모 + 점검표 → 잘한 것 2 · 바꿀 것 1(따옴표 말 한 줄). 채팅 모델(Sonnet) · 사람마다 하루 20번 · `ai_usage_log.feature='coach_feedback'` · 메모 저장 안 함 · 결과 검사(탓하는 말 · 지어낸 숫자 · 전화번호 · 길이, 걸리면 한 번 다시) — 테스트 src/lib/coachFeedback.test.ts |
+| [supabase/functions/_shared/coachFeedback.ts](supabase/functions/_shared/coachFeedback.ts) · chat-assistant `action:"coach-observe-polish"` | 오삼코치로 다듬기 — 대표님 메모 + 점검표 → 잘한 것 2 · 바꿀 것 1(따옴표 말 한 줄). 채팅 모델(Sonnet) · 사람마다 하루 20번 · `ai_usage_log.feature='coach_feedback'` · 메모 저장 안 함 · 지시문 = 기준(+ 예시 말 `say`) · 규칙 8 · 예시 한 벌(`FEEDBACK_EXAMPLE` — 이 예시도 검사를 통과해야 한다) · 결과 검사(탓하는 말 · 지어낸 숫자(메모 · 기준 글 · 153 은 허용) · 전화번호 · 길이, 걸리면 무엇이 걸렸는지 붙여 한 번 다시 `retryNote`) — 테스트 src/lib/coachFeedback.test.ts |
 
 - 보이는 범위: 코치님 = 본인 과정 · 본인이 받은 피드백만. 대표님 · 지점장님(`_strategy_can_direct`) = 그 지점 코치님들(대표님 계정 · 본인은 빠짐) · 돌아보기 결정과 메모는 지시권자만. 시작 · 관찰 · 돌아보기는 서버가 지점을 다시 본다(`_coach_target_branch`).
 - 알림(`notifications` → 휴대폰): 4주 시작 · 피드백 · 2주 더 · 4주 완료. '따로 이야기해요'는 알림 없음.
-- **오삼코치 다듬기 스위치**: `internal_sync_config` key `coach_feedback_ai` = 'on' 일 때만 관찰 창에 메모 칸 · 단추가 보인다(`coach_growth_me.ai_polish`). chat-assistant 를 배포한 뒤(배포 전 지금 배포본과 비교) 대표님 허락으로 켠다. 끄기 = 값을 'off'.
-- 미리보기 `preview/coach153` 로 먼저 — 대표님 확인 뒤 main.
+- **오삼코치 다듬기 스위치**: `internal_sync_config` key `coach_feedback_ai` = 'on' 일 때만 관찰 창에 메모 칸 · 단추가 보인다(`coach_growth_me.ai_polish`). chat-assistant 를 배포한 뒤(배포 전 지금 배포본과 비교) 대표님 허락으로 켠다. 끄기 = 값을 'off'. 켬 (2026-11-05 대표님 「같이 켜 줘」): chat-assistant v27(999baee — 배포 전 v26 = a1c7397 같음 확인) → 지시문 손보기 v28(a45d0fc, 보낸 파일 = 저장소 sha256 같음) · `coach_feedback_ai` = 'on' → 대표님 · 지점장 계정 `ai_polish` true 확인.
+- 미리보기 `preview/coach153` 로 먼저 — 대표님 확인 뒤 main. DB 는 대표님 「적용해」로 MCP 적용(2026-11-05 — 되돌림 시험: 코치 = 본인만 · 지점장 = 그 지점 코치님 · 다른 지점 · 겹친 시작 · 잘못된 점검표 막힘 · 돌아보기 결정은 지시권자만 · 알림 3건). **미리보기 단계에서 DB 를 적용하면 마이그레이션 파일은 main 에 먼저 올린다**(908eff2) — 안 올리면 「DB 어긋남 점검」이 '저장소에 정의가 없는 DB 함수'(이번엔 14개)로 다음 날 아침 빨개진다.
 
 ### 지점 회의실(2026-10-29 부터 이름 153운영본부) — 지도진 가상 사무실 · 회의 채팅 (2026-10-27 1단계 · 「마이복서153 지점 회의실 상세 보고서」 추천안)
 
