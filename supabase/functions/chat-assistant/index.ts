@@ -5,7 +5,7 @@ import { KNOWLEDGE_153 } from "../_shared/knowledge153.ts";
 import { KNOWLEDGE_BOXING_153 } from "../_shared/knowledgeBoxing153.ts";
 import { analyzeMealImage } from "../_shared/mealVision.ts";
 import { buildClaudeBody, CLAUDE_CHAT_MODEL, CLAUDE_COACH_MODEL, claudeMessage, claudeStream, claudeToOpenAiSse, hasClaude, keepAlive, logAiUsage, messageText, usageOf, type SystemPart } from "../_shared/claude.ts";
-import { buildFeedbackSystem, buildFeedbackUser, checkFeedback, cleanMarks, FEEDBACK_SCHEMA, parseFeedbackJson, type FeedbackStd } from "../_shared/coachFeedback.ts";
+import { buildFeedbackSystem, buildFeedbackUser, checkFeedback, cleanMarks, FEEDBACK_SCHEMA, parseFeedbackJson, retryNote, stdAllowText, type FeedbackStd } from "../_shared/coachFeedback.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -573,10 +573,11 @@ async function handleCoachObservePolish(
   }
   if (!target) return jsonRes({ ok: false, error: "이 지점 코치님만 다듬을 수 있어요" });
   const standards = (Array.isArray(me.standards) ? me.standards : [])
-    .map((s: { no?: unknown; title?: unknown; how?: unknown }) => ({
+    .map((s: { no?: unknown; title?: unknown; how?: unknown; say?: unknown }) => ({
       no: Number(s.no),
       title: String(s.title ?? ""),
       how: String(s.how ?? ""),
+      say: typeof s.say === "string" ? s.say : "",
     }))
     .filter((s: FeedbackStd) => Number.isInteger(s.no) && s.title) as FeedbackStd[];
   if (standards.length === 0) return jsonRes({ ok: false, error: "153 기준을 불러오지 못했어요" });
@@ -604,23 +605,26 @@ async function handleCoachObservePolish(
   const system = buildFeedbackSystem(standards);
   const userText = buildFeedbackUser({ standards, marks, memo, coachName: String(target.person?.name ?? "코치님") });
   const stdNos = standards.map((s) => s.no);
+  const allow = stdAllowText(standards);
   try {
-    // 검사에서 걸리면 한 번만 다시 — 그래도 걸리면 직접 쓰시게
+    // 검사에서 걸리면 한 번만 다시 — 무엇이 걸렸는지 붙여서. 그래도 걸리면 직접 쓰시게
+    let note = "";
     for (let attempt = 0; attempt < 2; attempt++) {
       const msg = await claudeMessage(
         buildClaudeBody({
           model,
           system: [system],
-          messages: [{ role: "user", content: userText }],
+          messages: [{ role: "user", content: note ? `${userText}\n\n${note}` : userText }],
           maxTokens: 600,
           jsonSchema: FEEDBACK_SCHEMA,
         }),
       );
       keepAlive(logAiUsage(db, { feature: "coach_feedback", model, usage: usageOf(msg), userId: user.id }));
-      const checked = checkFeedback(parseFeedbackJson(messageText(msg)), { memo, stdNos });
+      const checked = checkFeedback(parseFeedbackJson(messageText(msg)), { memo, stdNos, allow });
       if (checked.ok) return jsonRes({ ok: true, ...checked.result });
       if (checked.reason === "model_error") return jsonRes({ ok: false, error: checked.message ?? "메모를 한두 줄만 더 적어 주세요" });
       console.warn("coach-observe-polish check failed", checked.reason);
+      note = retryNote(checked.reason);
     }
     return jsonRes({ ok: false, error: "다듬은 글이 기준에 맞지 않았어요 — 직접 써 주세요" });
   } catch (e) {

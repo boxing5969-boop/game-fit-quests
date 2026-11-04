@@ -4,7 +4,10 @@ import {
   buildFeedbackUser,
   checkFeedback,
   cleanMarks,
+  FEEDBACK_EXAMPLE,
   parseFeedbackJson,
+  retryNote,
+  stdAllowText,
   type FeedbackStd,
 } from "../../supabase/functions/_shared/coachFeedback.ts";
 
@@ -26,6 +29,12 @@ describe("오삼코치 다듬기 — 지시문 · 입력", () => {
     expect(u).toContain("1. 이름을 불러요: 했어요");
     expect(u).toContain("4. 처음 온 회원을 먼저: 표시 안 함");
     expect(u).toContain("(메모 없음)");
+  });
+  it("기준의 예시 말이 한 줄로 들어가고, 지시문 속 예시 답도 검사를 통과한다", () => {
+    const s = buildFeedbackSystem([{ no: 1, title: "이름을 불러요", how: "회원마다", say: '"○○님, 잽 좋아요!"\n"○○님 표정 좋네요"' }]);
+    expect(s).toContain('예시 말: "○○님, 잽 좋아요!" / "○○님 표정 좋네요"');
+    expect(s).toContain(JSON.stringify(FEEDBACK_EXAMPLE.output));
+    expect(checkFeedback(FEEDBACK_EXAMPLE.output, { memo: FEEDBACK_EXAMPLE.memo, stdNos: [1, 2, 3, 4, 5] })).toMatchObject({ ok: true });
   });
   it("점검표는 1~9번 · y/s/n 만", () => {
     expect(cleanMarks({ "1": "y", "2": "x", "10": "y", a: "n", "4": "n" })).toEqual({ "1": "y", "4": "n" });
@@ -67,6 +76,18 @@ describe("오삼코치 다듬기 — 결과 검사", () => {
       reason: "model_error",
       message: "메모를 한두 줄만 더 적어 주세요",
     });
+  });
+  it("153 · 기준 글에 있는 숫자는 써도 된다 (기준을 고쳐 숫자를 넣어도)", () => {
+    const withNum: FeedbackStd[] = [{ no: 1, title: "이름을 불러요", how: "수업 시작 5분 안에 이름을 불러요" }];
+    const allow = stdAllowText(withNum);
+    expect(checkFeedback({ ...good, good2: "153다운 수업이었어요" }, ctx)).toMatchObject({ ok: true });
+    expect(checkFeedback({ ...good, fix1: '시작 5분 안에 "○○님!" 하고 불러 주세요' }, { ...ctx, allow })).toMatchObject({ ok: true });
+    expect(checkFeedback({ ...good, fix1: '시작 7분 안에 "○○님!" 하고 불러 주세요' }, { ...ctx, allow })).toMatchObject({ ok: false, reason: "digits" });
+  });
+  it("다시 쓸 때 무엇이 걸렸는지 붙인다", () => {
+    expect(retryNote("digits")).toContain("숫자는 메모에 있던 것만");
+    expect(retryNote("too_long")).toContain("120자");
+    expect(retryNote("모름")).toContain("JSON 하나만");
   });
   it("JSON 꺼내기", () => {
     expect(parseFeedbackJson('설명 {"good1":"a"} 끝')).toEqual({ good1: "a" });
