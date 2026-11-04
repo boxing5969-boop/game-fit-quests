@@ -535,14 +535,17 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 
 | 파일 | 역할 |
 |---|---|
-| [src/lib/titleTeachLessons.ts](src/lib/titleTeachLessons.ts) | 3편 정본 — ①가르치기(가르칠 때 가장 많이 느는 건 나 · 3-2-1 공부법 다리) ②번갈아 하기(짝 연습 · 보는 것도 연습) ③왜 3번(3번 연속 = 운 아닌 실력 · 꺼내기 반복 · 7일과 잠) · 편마다 질문 → 답 → 연구 → 체육관에서는 → 오늘 해 볼 것 하나 → 출처 · 알림 글 `notice` (테스트 titleTeachLessons.test.ts) |
+| [src/lib/titleTeachLessons.ts](src/lib/titleTeachLessons.ts) | 3편 정본 — ①가르치기(가르쳐 본 사람이 더 오래 기억 · 3-2-1 공부법 다리) ②번갈아 하기(짝 연습 · 지켜보기도 연습) ③왜 3번(3번 연속 = 운 아닌 실력 · 꺼내기 반복 · 날을 나눠 연습) · 편마다 질문 → 답 → 연구 → 체육관에서는 → 오늘 해 볼 것 하나 → 출처 · 알림 글 `notice` (테스트 titleTeachLessons.test.ts) |
 | [src/components/titlematch/TitleTeachTab.tsx](src/components/titlematch/TitleTeachTab.tsx) | 타이틀미션 카드(TitleMatchChallengeCard) 위 탭 「도전 방법 · 왜 미트를 잡아 줄까」의 두 번째 탭 — 세 편 칸 · 9동작 외우는 말 덩어리 · 1편 행동 = 오늘 같이 해요(`/myboxer/community?together=1`) · 3편 행동 = 아래 심사 신청 버튼 |
 | [supabase/migrations/20261105011632_title_teach_drip.sql](supabase/migrations/20261105011632_title_teach_drip.sql) | `title_teach_drip`(회원 · 리그 · 편 · due_at · sent_at · skipped) · member_progress 트리거 `title_teach_on_progress`(화이트 레벨 10 이 되는 순간 · 신청 흐름이 열린 시범 지점만 · 통과 전) → `title_teach_start` 가 3편을 잡는다 · `title_teach_dispatch()` 10분마다(cron `title-teach-dispatch`) → `notifications`(링크 `/title-match?lv=10&why=1~3`) |
 
 - 보내는 때: 1편 = 레벨 10 + 1시간 · 2 · 3편 = 다음 평일들 같은 시각 · 평일 08:00~21:00(잡는 시각은 20:30 까지)만 · 주말은 건너뜀 · 앞 편 뒤 18시간 안엔 다음 편 없음 · 통과했거나 리그가 바뀌면 남은 편은 `skipped`. 한 회원 · 한 리그에 한 번.
 - 알림 글(제목 · 한 줄)은 DB 함수와 `titleTeachLessons.ts` `notice` 두 곳 — 바꾸면 둘 다. 화면 글(본문)은 lib 한 곳.
-- 스위치 `internal_sync_config` `title_teach_drip` = 'on' | 'off'. 켠 뒤 레벨 10 이 된 회원부터(이미 레벨 10 인 회원에게 보낼 때는 대표님 결정 뒤 `title_teach_start(user_id, 'white', now())`).
+- 스위치 `internal_sync_config` `title_teach_drip` = 'on' | 'off'(보내기도 멈춤) · 끄기는 `select cron.unschedule('title-teach-dispatch');` 도.
+- 켬 (2026-11-05 08:2x 대표님 「켜기 + 기존 레벨 10에도」 — MCP `apply_migration`): 이미 레벨 10 이던 회원 중 최근 14일에 출석한 47명(모두 일반 회원)에게도 `title_teach_start(user_id, 'white', now())` — 1편 11/5(목) 09:24 · 2편 11/6(금) · 3편 11/9(월) 같은 시각. 오래 안 온 회원은 넣지 않았다.
 - 휴대폰 알림을 켠 회원은 적다(11/05 레벨 10 회원 96명 중 5명) — 대부분 알림함으로 본다. 탭은 알림과 상관없이 화이트 리그 시범 지점 회원 모두에게 보인다.
+- 글 근거(2026-11-05 원문 요약을 하나씩 확인): 연구로 보면 = 확인한 연구만 · 체육관에서는 = 153 의 적용(미트 잡기 자체를 다룬 연구는 없다). '가르치면 90% 기억'(학습 피라미드 — 근거 없음) · 잠 하룻밤 20%(반론 있음) · '3번 · 7일이 최적'은 쓰지 않는다. '절반만 쳐도 같다'는 비에룸 2014(내시경 시뮬레이션) — 셰이 1999 는 '번갈아 하며 지켜본 쪽이 앞질렀다'. 그라나도스 · 울프 2007 은 대화 효과가 없었다(지켜보기만).
+- MCP 적용 팁: 맨 위에 `drop trigger` · `cron.unschedule` 가 든 판은 확인 창이 0.8초 만에 저절로 취소됐다 → `create or replace trigger` · 같은 이름 `cron.schedule`(pg_cron 이 바꿈) · 설정 줄은 `on conflict do nothing` 으로 바꾸니 바로 들어갔다.
 
 ### 로드맵 칸 (2026-10-30 대표님 "로드맵 메뉴가 안 보여" · "검색해도 안 나오고")
 - 랭크업(`/rank-up` — 40단계 길 · 리그별 레벨업 기준 · 타이틀매치 · 단증 도전)은 10-10 하단 '랭크업' 탭을 뺀 뒤 MY복서 라이센스 카드 승급 막대로만 들어갈 수 있었다.

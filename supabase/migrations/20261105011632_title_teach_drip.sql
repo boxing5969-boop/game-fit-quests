@@ -151,8 +151,7 @@ begin
 end;
 $$;
 
-drop trigger if exists title_teach_on_progress on public.member_progress;
-create trigger title_teach_on_progress
+create or replace trigger title_teach_on_progress
   after insert or update of current_level, current_rank on public.member_progress
   for each row execute function public._title_teach_on_progress();
 
@@ -242,10 +241,11 @@ revoke execute on function public.title_teach_start(uuid, rank_name, timestamptz
 revoke execute on function public._title_teach_on_progress() from public, anon, authenticated;
 revoke execute on function public.title_teach_dispatch() from public, anon, authenticated;
 
--- 켜기 (대표님 요청) — 끄기: update internal_sync_config set value = 'off' where key = 'title_teach_drip';
+-- 켜기 (2026-11-05 대표님 「켜기 + 기존 레벨 10에도」) — 끄기: update internal_sync_config set value = 'off' where key = 'title_teach_drip';
+-- 이미 줄이 있으면(누가 꺼 두었으면) 그대로 둔다.
 insert into public.internal_sync_config (key, value, updated_at)
 values ('title_teach_drip', 'on', now())
-on conflict (key) do update set value = excluded.value, updated_at = now();
+on conflict (key) do nothing;
 
-select cron.unschedule(j.jobid) from cron.job j where j.jobname = 'title-teach-dispatch';
+-- 같은 이름이 있으면 pg_cron 이 그 일을 바꾼다(1.3+). 끄기: select cron.unschedule('title-teach-dispatch');
 select cron.schedule('title-teach-dispatch', '*/10 * * * *', $$select public.title_teach_dispatch();$$);
