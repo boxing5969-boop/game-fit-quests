@@ -125,6 +125,23 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 입구 (2026-10-29 대표님 "둘다 비슷한 기능이라 지점회의실에 전략 회의실 기능을 넣어주고 전략회의실은 메뉴에서 빼줘"): 지점 회의실 `/office?tab=strategy` 하나 — 탭 「사무실 · 전략 회의」(OfficePage, StrategyRoom 은 그대로 넣음). 전체 메뉴 '전략 회의실' 칸 · 메시지 '전략' 탭은 뺐다. 예전 주소 `/messages?tab=strategy`(서버 알림 링크 — strategy_save · strategy_comment_add · strategy_star · strategy_remind_unacked · office_wrap_up 이 아직 이 주소를 쓴다)는 MessagesPage 가 `/office?tab=strategy` 로 넘긴다 — 서버 링크는 바꾸지 않아도 된다. 지점 회의실 칸은 코치님·지점장·운영진 모두(`requires: "staff"`) — 사무실이 안 켜진 지점(office_me 에 없음, 지금 선릉역점만 켜짐)의 코치님은 전략 회의만 보인다. 칸 빨간 숫자 = 확인 안 한 지시(strategy_badge), 없으면 회의 중 빨간 점.
 '오삼코치 정리'는 chat-assistant `action:"polish-directive"` (Haiku, 하루 30회, `ai_usage_log.feature='directive_polish'`, 입력 저장 안 함).
 
+### 153 기준 — 코치 기준 다섯 가지 · 4주 성장 · 수업 관찰 (전략 회의 「153 기준」, 2026-11-05 대표님 「153마이복서에 최고성능 프롬프트로 상세하게 만들자」)
+
+대표님 말씀 「회원님들 짧은 시간 안에 행복을 드리자」를 코치님이 매 수업 할 수 있는 행동 다섯 가지로 바꾼 것 — ① 이름을 불러요 ② 시작과 끝은 인사로 ③ 칭찬은 구체적으로 ④ 처음 온 회원을 먼저 ⑤ 다음 목표를 알려줘요. 새 페이지가 아니라 153운영본부 › 전략 회의의 하위 칸(`/office?tab=strategy&s=std` — 알림 링크).
+
+| 파일 | 역할 |
+|---|---|
+| [supabase/migrations/20261105005333_coach_std_growth.sql](supabase/migrations/20261105005333_coach_std_growth.sql) | 새 표 3 · 새 함수만(기존 함수 그대로): `coach_std_items`(브랜드 공통 기준 · 처음 판 5개 — 대표님만 `coach_std_save`) · `coach_growth_plans`(코치님마다 진행 중 과정 하나 · 4주 기본 · 돌아보기 decision keep/extend(+2주)/talk) · `coach_observations`(수업 관찰 — 점검표 marks · 잘한 것 good1 · good2 · 바꿀 것 fix1 · fix_no · seen_at) · `coach_growth_me`(한 번에 — 기준 · 나 · 지시권자면 지점 코치님 board) · `coach_growth_start` · `coach_observe_save` · `coach_observe_seen` · `coach_observe_delete` · `coach_growth_review` |
+| [src/lib/coachGrowth.ts](src/lib/coachGrowth.ts) | 4주 주제(1주 이름과 인사 · 2주 칭찬과 첫 방문 · 3주 다음 목표 · 4주 다섯 가지 모두 · 5주부터 가장 약한 한 가지) · 점수(했어요 1 · 조금 0.5 · 못 했어요 0 — 서버와 같은 식) · 가장 약한 기준 · 첫 관찰 → 마지막 관찰 (테스트 coachGrowth.test.ts) |
+| [src/services/coachGrowthService.ts](src/services/coachGrowthService.ts) · [src/components/coach153/](src/components/coach153/) | `CoachStdSection`(코치님: 나의 4주 · 받은 피드백 · 나의 다섯 가지 · 기준 / 대표님 · 지점장님: 코치님들 · 나) · `CoachStdCards` · `CoachStdSheets`(수업 관찰 · 4주 시작 · 돌아보기 · 기준 고치기 · 점검표 `StdMarksEditor`) |
+| [src/components/strategy/StrategyComposers.tsx](src/components/strategy/StrategyComposers.tsx) `ClassLogComposer` | 코치님 자기 점검 = 수업 기록 창의 「153 기준 점검(선택)」 → `strategy_items.data.std`({"1":"y"…}) — 새 표 없이 수업 기록에. '오늘 수업 점검' 단추가 이 창을 연다 |
+| [supabase/functions/_shared/coachFeedback.ts](supabase/functions/_shared/coachFeedback.ts) · chat-assistant `action:"coach-observe-polish"` | 오삼코치로 다듬기 — 대표님 메모 + 점검표 → 잘한 것 2 · 바꿀 것 1(따옴표 말 한 줄). 채팅 모델(Sonnet) · 사람마다 하루 20번 · `ai_usage_log.feature='coach_feedback'` · 메모 저장 안 함 · 결과 검사(탓하는 말 · 지어낸 숫자 · 전화번호 · 길이, 걸리면 한 번 다시) — 테스트 src/lib/coachFeedback.test.ts |
+
+- 보이는 범위: 코치님 = 본인 과정 · 본인이 받은 피드백만. 대표님 · 지점장님(`_strategy_can_direct`) = 그 지점 코치님들(대표님 계정 · 본인은 빠짐) · 돌아보기 결정과 메모는 지시권자만. 시작 · 관찰 · 돌아보기는 서버가 지점을 다시 본다(`_coach_target_branch`).
+- 알림(`notifications` → 휴대폰): 4주 시작 · 피드백 · 2주 더 · 4주 완료. '따로 이야기해요'는 알림 없음.
+- **오삼코치 다듬기 스위치**: `internal_sync_config` key `coach_feedback_ai` = 'on' 일 때만 관찰 창에 메모 칸 · 단추가 보인다(`coach_growth_me.ai_polish`). chat-assistant 를 배포한 뒤(배포 전 지금 배포본과 비교) 대표님 허락으로 켠다. 끄기 = 값을 'off'.
+- 미리보기 `preview/coach153` 로 먼저 — 대표님 확인 뒤 main.
+
 ### 지점 회의실(2026-10-29 부터 이름 153운영본부) — 지도진 가상 사무실 · 회의 채팅 (2026-10-27 1단계 · 「마이복서153 지점 회의실 상세 보고서」 추천안)
 
 | 파일 | 역할 |
