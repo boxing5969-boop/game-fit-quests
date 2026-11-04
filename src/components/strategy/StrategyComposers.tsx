@@ -10,6 +10,8 @@ import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { DmSheet } from "@/components/dm/DmParts";
+import { StdMarksEditor } from "@/components/coach153/CoachStdSheets";
+import { markedCount, type CoachStd, type Marks } from "@/lib/coachGrowth";
 import {
   BLOCK_LABEL,
   DEFAULT_BLOCKS,
@@ -514,13 +516,17 @@ export const ClassLogComposer = ({
   branch,
   programs,
   initialProgram,
+  standards,
 }: {
   open: boolean;
   onClose: () => void;
   branch: string | null;
   programs: StrategyItem[];
   initialProgram?: StrategyItem | null;
+  /** 153 기준 다섯 가지 (2026-11-05) — 있으면 '153 기준 점검' 칸을 그린다 · data.std 로 저장 */
+  standards?: CoachStd[];
 }) => {
+  const [std, setStd] = useState<Marks>({});
   const save = useSaveStrategy();
   const [date, setDate] = useState(kstToday());
   const [hour, setHour] = useState<number>(kstHour());
@@ -541,6 +547,7 @@ export const ClassLogComposer = ({
       setWentWell("");
       setIssues("");
       setNextFocus("");
+      setStd({});
     }
   }, [open, initialProgram]);
 
@@ -561,7 +568,7 @@ export const ClassLogComposer = ({
   }, [open, branch, date, hour]);
 
   const nearPrograms = useMemo(() => programs.slice(0, 20), [programs]);
-  const valid = !!(wentWell.trim() || issues.trim() || nextFocus.trim() || programTitle.trim());
+  const valid = !!(wentWell.trim() || issues.trim() || nextFocus.trim() || programTitle.trim() || markedCount(std) > 0);
 
   const submit = () =>
     save.mutate(
@@ -578,6 +585,7 @@ export const ClassLogComposer = ({
           went_well: wentWell.trim(),
           issues: issues.trim(),
           next_focus: nextFocus.trim(),
+          ...(markedCount(std) > 0 ? { std } : {}),
         },
       },
       {
@@ -659,6 +667,12 @@ export const ClassLogComposer = ({
           placeholder="예: 원·투 스텝 드릴 + 미트 3R"
           className={cn(inputCls, "mt-2")}
         />
+      )}
+      {standards && standards.length > 0 && (
+        <>
+          <Label hint="선택 · 1분">153 기준 점검</Label>
+          <StdMarksEditor standards={standards} marks={std} onChange={setStd} />
+        </>
       )}
       <Label>잘된 점</Label>
       <textarea value={wentWell} onChange={(e) => setWentWell(e.target.value)} rows={2} maxLength={600} placeholder="예: 미트 타이밍이 좋았어요" className={cn(inputCls, "resize-none")} />
