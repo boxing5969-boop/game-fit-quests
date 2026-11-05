@@ -157,6 +157,8 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 보내기 · 부탁의 겹침 막기: `coach_note_send` 는 보낸 분마다 한 줄로(advisory lock) — 2분 안에 같은 기준을 다시 보내면(두 번 누름 · 받는 분 더하기) 같은 피드백에 이어 붙이고 이미 받은 분께는 다시 안 감. 맞춘 글(body)은 동의한 카드가 있는 코치님 몫만 남긴다(없으면 null = 기준 그대로). `coach_mind_ask` 는 부탁 기록을 먼저 잡은 분께만 알림(동시에 눌러도 한 번). 화면은 닫았다 열거나 기준을 고쳐 다시 맞추면 지난 답을 버린다(늘 올라가는 번호).
 - 알림: 카드 부탁 '🧭 코치 성향 카드를 부탁드려요'(`&mind=1` → 카드 창이 열림) · 피드백 '💬 피드백이 왔어요 · 이름 직함' · 한마디 '💬 ○○님이 피드백에 답했어요'. 받은 피드백은 화면에 보이면 읽음, 확인은 단추.
 - 개인정보 처리방침: 선택 항목 · 위탁(Anthropic) · 국외 이전에 '코치 성향 카드 · 피드백 정리' 추가(2026-11-05).
+- 적용 (2026-11-05 15시 대표님 「적용해」): DB = MCP `apply_migration`(새 표 4 · 새 함수 13) → 되돌림 시험 ALL_OK(코치 저장 · 지점장 있음/없음만 · 대표님 카드 · 부탁 두 번째 0 · 카드 없는 분 body null · 2분 안 다시 보내기 = 같은 피드백 · 확인 + 한마디 알림 · 다른 지시권자 숫자만 · 다른 지점 안 보임 · 지우기) → 서버 파일 3개를 main 에 먼저(d6a700d · 0aa8a02, DB 어긋남 0) → Edge Function `coach-mind` v1 배포(main 0aa8a02 의 index.ts · _shared/claude.ts · _shared/coachMind.ts, verify_jwt true). 화면은 `preview/coach-mind` — 대표님 확인 뒤 main.
+- 점검 부르기(DB 에서): `net.http_post(…/functions/v1/coach-mind, headers: Authorization = Bearer <anon 키> · x-auto-key = internal_sync_config.auto_sync_key, body {action:'check', step:'core', text} 또는 {action:'check', step:'tailor', core, coach, profile, scope})` → `net._http_response` 에서 답(지어낸 카드만 — 실제 코치님 카드는 넣지 않는다).
 
 ### 지점 회의실(2026-10-29 부터 이름 153운영본부) — 지도진 가상 사무실 · 회의 채팅 (2026-10-27 1단계 · 「마이복서153 지점 회의실 상세 보고서」 추천안)
 
