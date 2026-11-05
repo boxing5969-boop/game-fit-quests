@@ -12,6 +12,9 @@
 //   모델: 시크릿 CLAUDE_COACH_MIND_MODEL(없으면 claude-opus-5-5 · effort CLAUDE_COACH_MIND_EFFORT 기본 medium) — API 오류면 채팅 모델로 한 번
 //   답 검사: _shared/coachMind.ts (빠진 기준 · 지어낸 숫자 · 꼬리표 · 탓하는 말 · 길이) — 걸리면 무엇이 걸렸는지 붙여 한 번 다시
 //   사용량: ai_usage_log feature coach_mind_summary · coach_mind_core · coach_mind_tailor — 사람마다 하루 6 · 20 · 80번 · 글은 남기지 않는다
+//   점검(서버끼리만): x-auto-key = internal_sync_config.auto_sync_key 면 { action:"check", step:"core", text } ·
+//     { action:"check", step:"tailor", core, coach:{name,title}, profile:{answers,mbti,…}, scope:"full"|"delivery" } — 지어낸 카드 · 메모로
+//     지시문과 검사를 시험하고 글 + 첫 시도에 걸린 까닭(fails)만 돌려준다. DB 에 쓰지 않고 사용량만(feature coach_mind_check · 하루 40번)
 // deno-lint-ignore-file no-explicit-any
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { buildClaudeBody, CLAUDE_CHAT_MODEL, claudeMessage, hasClaude, keepAlive, logAiUsage, messageText, usageOf } from "../_shared/claude.ts";
@@ -24,6 +27,7 @@ import {
   checkSummary,
   checkTailor,
   cleanCore,
+  cleanMindAnswers,
   CORE_LIMITS,
   CORE_SCHEMA,
   MIND_SUMMARY_SCHEMA,
@@ -37,7 +41,7 @@ import {
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-auto-key",
 };
 const json = (b: unknown) => new Response(JSON.stringify(b), { status: 200, headers: { ...cors, "Content-Type": "application/json" } });
 const fail = (error: string) => json({ ok: false, error });
@@ -45,22 +49,20 @@ const fail = (error: string) => json({ ok: false, error });
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MODEL = (Deno.env.get("CLAUDE_COACH_MIND_MODEL") ?? "").trim() || "claude-opus-5-5";
 const EFFORT = (Deno.env.get("CLAUDE_COACH_MIND_EFFORT") ?? "").trim() || "medium";
-const DAILY: Record<string, number> = { coach_mind_summary: 6, coach_mind_core: 20, coach_mind_tailor: 80 };
+const DAILY: Record<string, number> = { coach_mind_summary: 6, coach_mind_core: 20, coach_mind_tailor: 80, coach_mind_check: 40 };
 const BUSY = "오삼코치가 지금 바빠요 — 잠시 뒤 다시 눌러 주세요";
 const PROFILE_COLS = "coach_id, answers, mbti, mbti_source, note_power, note_know, summary, consent_at, updated_at";
 
 type Db = ReturnType<typeof createClient> | null;
 
-async function overLimit(db: Db, uid: string, feature: string): Promise<boolean> {
+/** 하루 상한 — uid 가 null 이면(점검) 사람 구분 없이 그 feature 전체 */
+async function overLimit(db: Db, uid: string | null, feature: string): Promise<boolean> {
   if (!db) return false;
   try {
     const since = new Date(Date.now() - 24 * 3600_000).toISOString();
-    const { count } = await db
-      .from("ai_usage_log")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", uid)
-      .eq("feature", feature)
-      .gte("created_at", since);
+    let q = db.from("ai_usage_log").select("id", { count: "exact", head: true }).eq("feature", feature).gte("created_at", since);
+    if (uid) q = q.eq("user_id", uid);
+    const { count } = await q;
     return (count ?? 0) >= (DAILY[feature] ?? 20);
   } catch {
     return false; // 집계 실패는 넘어간다 — 상한은 요금 방어용
@@ -74,7 +76,7 @@ async function callModel(opts: {
   user: string;
   schema: Record<string, unknown>;
   maxTokens: number;
-  uid: string;
+  uid: string | null;
   db: Db;
   meta?: Record<string, unknown>;
 }): Promise<string> {
@@ -104,22 +106,79 @@ async function callModel(opts: {
   throw last ?? new Error("ai_failed");
 }
 
-/** 검사에 걸리면 무엇이 걸렸는지 붙여 한 번 다시 — 그래도 걸리면 null */
+/** 검사에 걸리면 무엇이 걸렸는지 붙여 한 번 다시 — 그래도 걸리면 실패 · fails = 걸린 까닭(점검 화면용) */
 async function askChecked<T>(
   base: Omit<Parameters<typeof callModel>[0], "user"> & { user: string },
   check: (raw: unknown) => { ok: true; value: T } | { ok: false; reason: string; message?: string },
-): Promise<{ ok: true; value: T } | { ok: false; error: string }> {
+): Promise<{ ok: true; value: T; fails: string[] } | { ok: false; error: string; fails: string[] }> {
   let note = "";
+  const fails: string[] = [];
   for (let attempt = 0; attempt < 2; attempt++) {
     const text = await callModel({ ...base, user: note ? `${base.user}\n\n${note}` : base.user });
     const c = check(parseJson(text));
-    if (c.ok) return c;
-    if (c.reason === "model_error") return { ok: false, error: c.message || "한두 줄만 더 적어 주세요" };
+    if (c.ok) return { ok: true, value: c.value, fails };
+    if (c.reason === "model_error") return { ok: false, error: c.message || "한두 줄만 더 적어 주세요", fails: [...fails, c.reason] };
     console.warn("coach-mind check failed", base.feature, c.reason);
+    fails.push(c.reason === "echo" || !c.message ? c.reason : `${c.reason}: ${c.message.slice(0, 80)}`);
     // 걸린 곳(빠진 기준 이름 · 빠진 숫자)을 붙여 다시 — 그분이 쓴 글은 붙이지 않는다(echo 는 까닭만)
     note = retryNote(c.reason, c.reason === "echo" ? undefined : c.message);
   }
-  return { ok: false, error: "오삼코치 글이 기준에 맞지 않았어요 — 한 번 더 눌러 주세요" };
+  return { ok: false, error: "오삼코치 글이 기준에 맞지 않았어요 — 한 번 더 눌러 주세요", fails };
+}
+
+/** 점검(서버끼리만) — 지어낸 메모 · 카드로 지시문과 검사를 시험한다. DB 에 쓰지 않는다 */
+async function runCheck(body: any, db: ReturnType<typeof createClient>): Promise<Response> {
+  if (await overLimit(db, null, "coach_mind_check")) return fail("오늘은 점검을 많이 했어요");
+  if (body?.step === "core") {
+    const text = typeof body?.text === "string" ? body.text.trim().slice(0, CORE_LIMITS.memo) : "";
+    if (text.replace(/\s/g, "").length < 8) return fail("메모가 짧아요");
+    const { data: rows } = await db.from("coach_std_items").select("no, title").eq("active", true).order("no");
+    const standards = (Array.isArray(rows) ? rows : [])
+      .map((s: any) => ({ no: Number(s?.no), title: String(s?.title ?? "") }))
+      .filter((s: { no: number; title: string }) => Number.isInteger(s.no) && s.title);
+    const allow = standards.map((s: { title: string }) => s.title).join(" ");
+    const r = await askChecked(
+      { feature: "coach_mind_check", system: buildCoreSystem(standards), user: buildCoreUser(text), schema: CORE_SCHEMA, maxTokens: 10000, uid: null, db, meta: { step: "core" } },
+      (raw) => {
+        const c = checkCore(raw, { memo: text, allow });
+        return c.ok ? { ok: true, value: c.core } : c;
+      },
+    );
+    return r.ok ? json({ ok: true, core: r.value, fails: r.fails }) : json({ ok: false, error: r.error, fails: r.fails });
+  }
+  if (body?.step === "tailor") {
+    const core = cleanCore(body?.core);
+    if (!core) return fail("공통 기준이 비었어요");
+    const p = body?.profile && typeof body.profile === "object" ? body.profile : {};
+    const profile: MindProfileInput = {
+      answers: cleanMindAnswers(p.answers),
+      mbti: typeof p.mbti === "string" ? p.mbti.toUpperCase() : null,
+      mbti_source: p.mbti_source === "test" ? "test" : "guess",
+      note_power: typeof p.note_power === "string" ? p.note_power.slice(0, 120) : null,
+      note_know: typeof p.note_know === "string" ? p.note_know.slice(0, 200) : null,
+    };
+    const full = body?.scope !== "delivery";
+    const name = String(body?.coach?.name ?? "김코치").slice(0, 20);
+    const title = String(body?.coach?.title ?? "코치").slice(0, 20);
+    const r = await askChecked(
+      {
+        feature: "coach_mind_check",
+        system: TAILOR_SYSTEM,
+        user: buildTailorUser({ name, title }, core, profile, full ? body?.summary ?? null : null, full ? "full" : "delivery"),
+        schema: TAILOR_SCHEMA,
+        maxTokens: 10000,
+        uid: null,
+        db,
+        meta: { step: "tailor", scope: full ? "full" : "delivery" },
+      },
+      (raw) => {
+        const c = checkTailor(raw, { core, profile: full ? profile : null, allow: `${name} ${title}` });
+        return c.ok ? { ok: true, value: c.body } : c;
+      },
+    );
+    return r.ok ? json({ ok: true, body: r.value, fails: r.fails }) : json({ ok: false, error: r.error, fails: r.fails });
+  }
+  return fail("잘못된 요청이에요");
 }
 
 Deno.serve(async (req) => {
@@ -129,12 +188,27 @@ Deno.serve(async (req) => {
   if (!/^Bearer\s+\S+/i.test(auth)) return fail("다시 로그인해 주세요");
   const body: any = await req.json().catch(() => ({}));
   const action = String(body?.action ?? "");
-  if (!["summary", "core", "tailor"].includes(action)) return fail("잘못된 요청이에요");
+  if (!["summary", "core", "tailor", "check"].includes(action)) return fail("잘못된 요청이에요");
   if (!hasClaude()) return fail("지금은 오삼코치를 쓸 수 없어요");
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
   const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+  // 점검 — 서버 열쇠(x-auto-key)가 맞을 때만. 사람 확인 · 카드 읽기 없이 보낸 글로만 시험한다
+  if (action === "check") {
+    const autoKey = req.headers.get("x-auto-key") ?? "";
+    if (!autoKey || !SERVICE) return fail("잘못된 요청이에요");
+    const sdb = createClient(SUPABASE_URL, SERVICE, { auth: { persistSession: false } });
+    const { data: cfg } = await sdb.from("internal_sync_config").select("value").eq("key", "auto_sync_key").maybeSingle();
+    if (!cfg?.value || autoKey !== cfg.value) return fail("잘못된 요청이에요");
+    try {
+      return await runCheck(body, sdb);
+    } catch (e) {
+      console.error("coach-mind check failed", e instanceof Error ? e.message.slice(0, 300) : e);
+      return fail(BUSY);
+    }
+  }
   const asUser = createClient(SUPABASE_URL, ANON, { global: { headers: { Authorization: auth } }, auth: { persistSession: false } });
   const { data: who } = await asUser.auth.getUser();
   const uid = who?.user?.id;
