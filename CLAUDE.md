@@ -536,7 +536,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 
 | 파일 | 역할 |
 |---|---|
-| [src/lib/titleTeachLessons.ts](src/lib/titleTeachLessons.ts) | 3편 정본 — ①가르치기(가르쳐 본 사람이 더 오래 기억 · 3-2-1 공부법 다리) ②번갈아 하기(짝 연습 · 지켜보기도 연습) ③왜 3번(3번 연속 = 운 아닌 실력 · 꺼내기 반복 · 날을 나눠 연습) · 편마다 질문 → 답 → 연구 → 체육관에서는 → 오늘 해 볼 것 하나 → 출처 · 알림 글 `notice` (테스트 titleTeachLessons.test.ts) |
+| [src/lib/titleTeachLessons.ts](src/lib/titleTeachLessons.ts) | 「설계 노트」 3편 정본(11:24 대표님 다시 씀 — 설득 대신 '3번 공격 · 3번 미트로 만든 이유' 설명 · 긍정어) — ①가르치기(가르쳐 본 사람이 가장 오래 기억 · 연구 3 + 하버드 동료 교수법 · 파인만 · 수능 만점자 · 3-2-1) ②함께 자라기(짝 연습 · 지켜보기 연구 3 + 유도 자타공영 · 올블랙스 · 가완디) ③반복(3번 연속 확률 · 연구 3 · 153의 성장 순서 도전 → 몰입 → 다시 도전 → 성장 · 「반복은 천재를 만든다」) · 편마다 머리말 → 큰 제목 → 설명 → 연구(실험 자세히) → 이야기 → 153 체육관에서는 → 오늘 해 볼 것 하나 → 출처 · 알림 글 `notice` · 탭 이름 `TEACH_TAB_LABEL` · 카드 제목 `TEACH_SERIES_TITLE` (테스트 titleTeachLessons.test.ts — 부정어 · 근거 없는 말 검사) |
 | [src/components/titlematch/TitleTeachTab.tsx](src/components/titlematch/TitleTeachTab.tsx) | 타이틀미션 카드(TitleMatchChallengeCard) 위 탭 「도전 방법 · 왜 미트를 잡아 줄까」의 두 번째 탭 — 세 편 칸 · 9동작 외우는 말 덩어리 · 1편 행동 = 오늘 같이 해요(`/myboxer/community?together=1`) · 3편 행동 = 아래 심사 신청 버튼 |
 | [supabase/migrations/20261105011632_title_teach_drip.sql](supabase/migrations/20261105011632_title_teach_drip.sql) | `title_teach_drip`(회원 · 리그 · 편 · due_at · sent_at · skipped) · member_progress 트리거 `title_teach_on_progress`(화이트 레벨 10 이 되는 순간 · 신청 흐름이 열린 시범 지점만 · 통과 전) → `title_teach_start` 가 3편을 잡는다 · `title_teach_dispatch()` 10분마다(cron `title-teach-dispatch`) → `notifications`(링크 `/title-match?lv=10&why=1~3`) |
 
@@ -547,6 +547,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 휴대폰 알림을 켠 회원은 적다(11/05 레벨 10 회원 96명 중 5명) — 대부분 알림함으로 본다. 탭은 알림과 상관없이 화이트 리그 시범 지점 회원 모두에게 보인다.
 - 운영진 미리 보기 (2026-11-05 대표님 "먼저 어떻게 나가는지 내가 확인할수있게"): 전체관리자가 `/title-match?lv=10&why=1~3` 을 열고 회원 카드 조건이 아니면(대표님 계정은 블루) TitleMatchPage 가 '운영진 미리 보기' 칸에 같은 TitleTeachTab 을 보여 준다. 대표님 계정에 회원과 같은 알림 3개를 한 번 보냄(11/05 11:17).
 - 글 근거(2026-11-05 원문 요약을 하나씩 확인): 연구로 보면 = 확인한 연구만 · 체육관에서는 = 153 의 적용(미트 잡기 자체를 다룬 연구는 없다). '가르치면 90% 기억'(학습 피라미드 — 근거 없음) · 잠 하룻밤 20%(반론 있음) · '3번 · 7일이 최적'은 쓰지 않는다. '절반만 쳐도 같다'는 비에룸 2014(내시경 시뮬레이션) — 셰이 1999 는 '번갈아 하며 지켜본 쪽이 앞질렀다'. 그라나도스 · 울프 2007 은 대화 효과가 없었다(지켜보기만).
+- 11:24 다시 씀 — 화면(토스식: 큰 제목 한 문장 · 상자 줄이고 여백 · 연구는 번호 줄 + '실험 자세히'로 펼침) · 알림 글 [20261105113800_title_teach_notice_v2.sql](supabase/migrations/20261105113800_title_teach_notice_v2.sql)(title_teach_dispatch 글만). 사람 이야기는 기사 · 책에서 확인한 것만 — 수능 만점자 인터뷰에는 '친구를 가르쳤다'가 없어 '문제를 만들어 친구와 함께 풀었다'만(이름 없이), 서울대는 확인된 자료가 없어 뺐다.
 - MCP 적용 팁: 맨 위에 `drop trigger` · `cron.unschedule` 가 든 판은 확인 창이 0.8초 만에 저절로 취소됐다 → `create or replace trigger` · 같은 이름 `cron.schedule`(pg_cron 이 바꿈) · 설정 줄은 `on conflict do nothing` 으로 바꾸니 바로 들어갔다.
 
 ### 로드맵 칸 (2026-10-30 대표님 "로드맵 메뉴가 안 보여" · "검색해도 안 나오고")
