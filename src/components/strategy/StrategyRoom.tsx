@@ -11,6 +11,7 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import CoachStdSection from "@/components/coach153/CoachStdSection";
 import { COACH153_KEY, useCoachGrowthMe } from "@/services/coachGrowthService";
+import { useCoachMindState } from "@/services/coachMindService";
 
 import { cn } from "@/lib/utils";
 import VideoOverlay, { type OverlayVideo } from "@/components/common/VideoOverlay";
@@ -90,7 +91,9 @@ const StrategyRoom = () => {
     return s === "std" || s === "board" || s === "program" || s === "log" || s === "video" ? s : readSection();
   });
   const growth = useCoachGrowthMe(me?.branch ?? branch, ok);
-  const growthUnseen = growth.data?.me?.unseen ?? 0;
+  const mindQ = useCoachMindState(me?.branch ?? branch, ok);
+  // 153 기준 점 — 안 읽은 수업 관찰 + 안 읽은 대표님 피드백(성향 카드 맞춤)
+  const growthUnseen = (growth.data?.me?.unseen ?? 0) + (mindQ.data?.unseen ?? 0);
   const setSection = (s: Section) => {
     setSectionState(s);
     try {

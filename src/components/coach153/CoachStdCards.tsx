@@ -389,12 +389,15 @@ export function CoachRowCard({
   onObserve,
   onStart,
   onReview,
+  extra,
 }: {
   person: GrowthPerson;
   standards: CoachStd[];
   onObserve: () => void;
   onStart: () => void;
   onReview: () => void;
+  /** 표시 줄 끝에 붙는 것 — 성향 카드 표시(MindChip) */
+  extra?: React.ReactNode;
 }) {
   const phase = planPhase(person.plan);
   const stdNos = standards.map((s) => s.no);
@@ -423,7 +426,7 @@ export function CoachRowCard({
         </span>
       </div>
 
-      {(weakest || person.unseen > 0) && (
+      {(weakest || person.unseen > 0 || extra) && (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {weakest && (
             <span className="rounded-full bg-secondary px-2.5 py-1 text-micro font-bold text-foreground">
@@ -433,6 +436,7 @@ export function CoachRowCard({
           {person.unseen > 0 && (
             <span className="rounded-full bg-primary/15 px-2.5 py-1 text-micro font-bold text-primary">안 읽은 피드백 {person.unseen}</span>
           )}
+          {extra}
         </div>
       )}
 

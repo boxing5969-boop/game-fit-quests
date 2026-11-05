@@ -30,10 +30,10 @@ import {
 } from "@/lib/coachGrowth";
 import { PrimaryButton, ReviewRow } from "./CoachStdCards";
 
-const fieldCls =
+export const fieldCls =
   "w-full rounded-2xl border border-border bg-background px-3 py-2.5 text-body text-foreground outline-none focus:border-foreground";
 
-const FieldLabel = ({ children, hint }: { children: React.ReactNode; hint?: string }) => (
+export const FieldLabel = ({ children, hint }: { children: React.ReactNode; hint?: string }) => (
   <p className="mb-1.5 mt-4 flex items-baseline justify-between gap-2 text-label font-bold text-foreground first:mt-0">
     <span>{children}</span>
     {hint && <span className="text-micro font-bold text-muted-foreground">{hint}</span>}
