@@ -8,9 +8,10 @@
  *
  * 의존 RPC:
  *   · get_partner_journal_feed
- *   · list_journal_comments
+ *   · list_journal_comments_v2 (답글 칸 포함 — 2026-11-05, 예전 list_journal_comments 는 DB 에 그대로)
  *   · add_journal_comment
- *   · delete_journal_comment
+ *   · add_journal_reply (댓글 · 답글에 답글 — 한 단계만, 2026-11-05)
+ *   · delete_journal_comment (답글이 달린 댓글을 지우면 답글도 함께)
  */
 
 import { supabase } from "@/integrations/supabase/client";
@@ -40,6 +41,8 @@ const COMMENT_ERROR_MAP: ReadonlyArray<{ match: string; ko: string }> = [
   { match: "댓글 내용을 입력", ko: "댓글 내용을 입력해주세요." },
   { match: "댓글은 500자", ko: "댓글은 500자 이하로 작성해주세요." },
   { match: "본인 댓글만", ko: "본인 댓글만 삭제할 수 있습니다." },
+  { match: "답글을 달 댓글을 찾을 수 없어요", ko: "답글을 달 댓글이 지워졌어요." },
+  { match: "승인된 회원만", ko: "승인된 회원만 쓸 수 있어요." },
 ];
 
 function throwKo(err: unknown): never {
@@ -82,6 +85,11 @@ export interface JournalCommentRow {
   content: string;
   created_at: string;
   is_mine: boolean;
+  /** 맨 위 댓글 id — null 이면 맨 위 댓글, 있으면 그 댓글 밑 답글 */
+  parent_id?: string | null;
+  /** 답글을 받은 사람 */
+  reply_to_user_id?: string | null;
+  reply_to_name?: string | null;
 }
 
 export interface AddJournalCommentResult {
@@ -109,11 +117,28 @@ export async function listJournalComments(
   entryId: string,
 ): Promise<JournalCommentRow[]> {
   const { data, error } = await sbRpc<JournalCommentRow[]>(
-    "list_journal_comments",
+    "list_journal_comments_v2",
     { p_entry_id: entryId },
   );
   if (error) throwKo(error);
   return data ?? [];
+}
+
+/** 댓글 · 답글에 답글 — 서버가 맨 위 댓글 밑으로 붙이고, 누른 댓글 주인에게 알림 */
+export async function addJournalReply(
+  commentId: string,
+  content: string,
+): Promise<AddJournalCommentResult> {
+  const { data, error } = await sbRpc<AddJournalCommentResult[]>(
+    "add_journal_reply",
+    { p_comment_id: commentId, p_content: content },
+  );
+  if (error) throwKo(error);
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row || row.success !== true) {
+    throw new Error("답글을 저장하지 못했습니다.");
+  }
+  return row;
 }
 
 export async function addJournalComment(

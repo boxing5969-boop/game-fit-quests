@@ -2,6 +2,11 @@
  * 153 QUEST — 파트너 챔피언 일기 댓글 시트.
  *
  * 코너맨 또는 세컨드 응원 파트너의 일기 1건을 열어 댓글을 보고/달 수 있다.
+ * 답글 (2026-11-05 대표님 "내가 댓글 남기면 답글 못 남겨?" → 「진행하자」):
+ *   · 댓글 · 답글마다 '답글 달기' → 입력칸 위에 누구에게 다는지 표시
+ *   · 한 단계만 — 답글에 단 답글도 같은 댓글 밑에 들여쓰기로(받은 사람이 다르면 @이름)
+ *   · 받은 사람에게 「○○님이 답글을 남겼어요」 알림(서버 트리거)
+ *   · 답글이 달린 댓글을 지우면 답글도 함께 지워진다 — 먼저 묻는다
  *
  * 보호 원칙:
  *   · 공식 1~40 / 공식 XP / wallet 변경 0
@@ -9,18 +14,22 @@
  *   · ChatAssistant / 새 AI 챗박스 미사용
  */
 
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, Send, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import {
   useAddJournalComment,
+  useAddJournalReply,
   useDeleteJournalComment,
   useJournalComments,
 } from "@/hooks/useChampionJournalPartner";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
-import type { PartnerJournalFeedRow } from "@/services/championJournalPartnerService";
+import type {
+  JournalCommentRow,
+  PartnerJournalFeedRow,
+} from "@/services/championJournalPartnerService";
 
 interface Props {
   open: boolean;
@@ -53,22 +62,126 @@ function formatTime(iso: string): string {
   }
 }
 
+interface CommentItemProps {
+  c: JournalCommentRow;
+  isReply?: boolean;
+  /** 받은 사람이 맨 위 댓글 주인과 다를 때만 — @이름 */
+  mention?: string | null;
+  onReply: (c: JournalCommentRow) => void;
+  onDelete: (c: JournalCommentRow) => void;
+}
+
+function CommentItem({ c, isReply, mention, onReply, onDelete }: CommentItemProps) {
+  return (
+    <div
+      className={
+        isReply
+          ? "rounded-card bg-muted/40 px-3 pt-2 pb-0.5"
+          : "rounded-card border border-border bg-card px-3 pt-2.5 pb-0.5"
+      }
+    >
+      <div className="mb-1 flex items-center justify-between">
+        <p className="text-micro font-bold text-foreground">
+          {c.is_mine ? "나" : c.commenter_name}
+        </p>
+        <div className="flex items-center gap-2">
+          <p className="text-label text-muted-foreground">{formatTime(c.created_at)}</p>
+          {c.is_mine && (
+            <button
+              type="button"
+              onClick={() => onDelete(c)}
+              aria-label={isReply ? "답글 삭제" : "댓글 삭제"}
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-muted-foreground active:scale-95"
+            >
+              <Trash2 className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+      </div>
+      <p className="whitespace-pre-wrap text-label leading-relaxed text-foreground">
+        {mention && <span className="mr-1 font-bold text-primary">@{mention}</span>}
+        {c.content}
+      </p>
+      <button
+        type="button"
+        onClick={() => onReply(c)}
+        className="-ml-2 inline-flex h-9 items-center rounded-pill px-2 text-label font-bold text-muted-foreground active:scale-95"
+      >
+        답글 달기
+      </button>
+    </div>
+  );
+}
+
 const PartnerJournalCommentSheet = ({ open, entry, onClose }: Props) => {
   const entryId = entry?.id ?? null;
   const { data: comments, isLoading } = useJournalComments(entryId, open);
   const addComment = useAddJournalComment(entryId);
+  const addReply = useAddJournalReply(entryId);
   const deleteComment = useDeleteJournalComment(entryId);
   useModalDismiss(open, onClose);
 
   const [draft, setDraft] = useState("");
+  // 답글 다는 중 — id 는 누른 댓글(서버가 맨 위 댓글 밑으로 붙인다)
+  const [replyTo, setReplyTo] = useState<{ id: string; label: string } | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const trimmed = draft.trim();
   const canSubmit =
-    !!entry && trimmed.length >= MIN_LEN && trimmed.length <= MAX_LEN && !addComment.isPending;
+    !!entry &&
+    trimmed.length >= MIN_LEN &&
+    trimmed.length <= MAX_LEN &&
+    !addComment.isPending &&
+    !addReply.isPending;
+
+  // 다른 글을 열면 답글 표시를 지운다
+  useEffect(() => {
+    setReplyTo(null);
+  }, [entryId]);
+
+  // 답글을 달려던 댓글이 지워졌으면 답글 표시도 지운다
+  useEffect(() => {
+    if (replyTo && comments && !comments.some((c) => c.id === replyTo.id)) setReplyTo(null);
+  }, [comments, replyTo]);
+
+  // 맨 위 댓글 + 그 밑 답글 (서버가 시간 순으로 준다)
+  const threads = useMemo(() => {
+    const list = comments ?? [];
+    const ids = new Set(list.map((c) => c.id));
+    const byParent = new Map<string, JournalCommentRow[]>();
+    const tops: JournalCommentRow[] = [];
+    for (const c of list) {
+      if (c.parent_id && ids.has(c.parent_id)) {
+        const arr = byParent.get(c.parent_id) ?? [];
+        arr.push(c);
+        byParent.set(c.parent_id, arr);
+      } else {
+        tops.push(c);
+      }
+    }
+    return tops.map((top) => ({ top, replies: byParent.get(top.id) ?? [] }));
+  }, [comments]);
+
+  const startReply = (c: JournalCommentRow) => {
+    setReplyTo({
+      id: c.id,
+      label: c.is_mine
+        ? c.parent_id
+          ? "내 답글에 답글"
+          : "내 댓글에 답글"
+        : `${c.commenter_name}님에게 답글`,
+    });
+    requestAnimationFrame(() => inputRef.current?.focus());
+  };
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
     try {
-      await addComment.mutateAsync(trimmed);
+      if (replyTo) {
+        await addReply.mutateAsync({ commentId: replyTo.id, content: trimmed });
+        setReplyTo(null);
+      } else {
+        await addComment.mutateAsync(trimmed);
+      }
       setDraft("");
     } catch (err) {
       const msg =
@@ -77,9 +190,16 @@ const PartnerJournalCommentSheet = ({ open, entry, onClose }: Props) => {
     }
   };
 
-  const handleDelete = async (commentId: string) => {
+  const handleDelete = async (c: JournalCommentRow) => {
+    const replyCount = (comments ?? []).filter((x) => x.parent_id === c.id).length;
+    if (
+      replyCount > 0 &&
+      !window.confirm(`이 댓글을 지우면 답글 ${replyCount}개도 함께 지워져요. 지울까요?`)
+    ) {
+      return;
+    }
     try {
-      await deleteComment.mutateAsync(commentId);
+      await deleteComment.mutateAsync(c.id);
     } catch (err) {
       const msg =
         err instanceof Error ? err.message : "댓글 삭제 중 문제가 발생했습니다.";
@@ -164,34 +284,29 @@ const PartnerJournalCommentSheet = ({ open, entry, onClose }: Props) => {
                   </p>
                 ) : (
                   <div className="space-y-2">
-                    {(comments ?? []).map((c) => (
-                      <div
-                        key={c.id}
-                        className="rounded-card border border-border bg-card px-3 py-2.5"
-                      >
-                        <div className="mb-1 flex items-center justify-between">
-                          <p className="text-micro font-bold text-foreground">
-                            {c.is_mine ? "나" : c.commenter_name}
-                          </p>
-                          <div className="flex items-center gap-2">
-                            <p className="text-label text-muted-foreground">
-                              {formatTime(c.created_at)}
-                            </p>
-                            {c.is_mine && (
-                              <button
-                                type="button"
-                                onClick={() => handleDelete(c.id)}
-                                aria-label="댓글 삭제"
-                                className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-muted-foreground active:scale-95"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </button>
-                            )}
+                    {threads.map(({ top, replies }) => (
+                      <div key={top.id}>
+                        <CommentItem c={top} onReply={startReply} onDelete={handleDelete} />
+                        {replies.length > 0 && (
+                          <div className="ml-4 mt-1.5 space-y-1.5 border-l-2 border-primary/15 pl-3">
+                            {replies.map((r) => (
+                              <CommentItem
+                                key={r.id}
+                                c={r}
+                                isReply
+                                mention={
+                                  r.reply_to_user_id &&
+                                  r.reply_to_user_id !== top.commenter_user_id &&
+                                  r.reply_to_user_id !== r.commenter_user_id
+                                    ? r.reply_to_name
+                                    : null
+                                }
+                                onReply={startReply}
+                                onDelete={handleDelete}
+                              />
+                            ))}
                           </div>
-                        </div>
-                        <p className="whitespace-pre-wrap text-label leading-relaxed text-foreground">
-                          {c.content}
-                        </p>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -205,13 +320,29 @@ const PartnerJournalCommentSheet = ({ open, entry, onClose }: Props) => {
 
             {/* 댓글 입력 */}
             <div className="border-t border-border bg-card px-5 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
+              {replyTo && (
+                <div className="mb-2 flex items-center justify-between gap-2 rounded-pill bg-primary/10 pl-3">
+                  <p className="min-w-0 truncate text-label font-bold text-primary">
+                    {replyTo.label}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setReplyTo(null)}
+                    aria-label="답글 그만두기"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-primary active:scale-95"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
               <div className="flex items-end gap-2">
                 <textarea
+                  ref={inputRef}
                   value={draft}
                   onChange={(e) =>
                     setDraft(e.target.value.slice(0, MAX_LEN + 50))
                   }
-                  placeholder="응원의 한마디…"
+                  placeholder={replyTo ? "답글을 남겨 주세요…" : "응원의 한마디…"}
                   rows={1}
                   className="flex-1 resize-none rounded-card border border-border bg-card px-3 py-2 text-label text-foreground focus:border-primary focus:outline-none"
                 />
@@ -219,7 +350,7 @@ const PartnerJournalCommentSheet = ({ open, entry, onClose }: Props) => {
                   type="button"
                   onClick={handleSubmit}
                   disabled={!canSubmit}
-                  aria-label="댓글 보내기"
+                  aria-label={replyTo ? "답글 보내기" : "댓글 보내기"}
                   className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all ${
                     canSubmit
                       ? "bg-primary text-primary-foreground active:scale-95"

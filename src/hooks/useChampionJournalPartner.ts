@@ -12,6 +12,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   addJournalComment,
+  addJournalReply,
   deleteJournalComment,
   getPartnerJournalFeed,
   listJournalComments,
@@ -53,6 +54,22 @@ export function useAddJournalComment(entryId: string | null) {
         queryKey: [...PARTNER_JOURNAL_KEY, "comments", entryId ?? "none"],
       });
       // 피드의 comment_count 도 갱신되도록
+      qc.invalidateQueries({ queryKey: [...PARTNER_JOURNAL_KEY, "feed"] });
+      qc.invalidateQueries({ queryKey: ["community-feed"] });
+    },
+  });
+}
+
+/** 답글 — commentId 는 누른 댓글(맨 위 댓글이든 답글이든) */
+export function useAddJournalReply(entryId: string | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ commentId, content }: { commentId: string; content: string }) =>
+      addJournalReply(commentId, content),
+    onSuccess: () => {
+      qc.invalidateQueries({
+        queryKey: [...PARTNER_JOURNAL_KEY, "comments", entryId ?? "none"],
+      });
       qc.invalidateQueries({ queryKey: [...PARTNER_JOURNAL_KEY, "feed"] });
       qc.invalidateQueries({ queryKey: ["community-feed"] });
     },
