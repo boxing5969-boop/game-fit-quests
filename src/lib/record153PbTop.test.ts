@@ -18,9 +18,9 @@ describe("최초 153 PB 1위 — 안내 문구", () => {
   });
 
   it("시작 전 · 진행 중 · 끝난 뒤", () => {
-    expect(pbTopEmptyText("남자", null)).toBe("첫 공식 기록일부터 한 달 — 그때 오픈 남자 1위가 주인이 돼요");
-    expect(pbTopEmptyText("여자", WIN, new Date("2026-11-19T14:59:59Z"))).toBe("11월 19일까지 잰 기록 중 오픈 여자 1위가 주인이 돼요");
-    expect(pbTopEmptyText("남자", WIN, new Date("2026-11-19T15:00:00Z"))).toBe("한 달이 끝났어요 — 오픈 남자 1위 기록이 곧 새겨져요");
+    expect(pbTopEmptyText("남자", null)).toBe("첫 공식 기록일부터 한 달 — 그때 오픈 남자 회원 1위가 주인이 돼요");
+    expect(pbTopEmptyText("여자", WIN, new Date("2026-11-19T14:59:59Z"))).toBe("11월 19일까지 잰 기록 중 오픈 여자 회원 1위가 주인이 돼요");
+    expect(pbTopEmptyText("남자", WIN, new Date("2026-11-19T15:00:00Z"))).toBe("한 달이 끝났어요 — 오픈 남자 회원 1위 기록이 곧 새겨져요");
   });
 
   it("1위 기록 표시 — 완주 시간 · 타임캡", () => {

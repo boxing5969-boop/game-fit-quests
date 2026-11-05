@@ -144,6 +144,8 @@ const Test153Board = ({ onOpenMember }: Props) => {
   const improvedMs = first && best && first.id !== best.id && first.finished && best.finished ? first.score_ms - best.score_ms : 0;
   // 구간 막대 — 가장 오래 걸린 구간을 꽉 찬 막대로
   const maxSplit = Math.max(1, ...(best?.splits_ms ?? []).filter((v): v is number => v != null));
+  // 총 시간만 넣은 기록(구간 없음)이면 '구간 기록' 칸을 그리지 않는다
+  const hasSplits = [best, compare].some((r) => (r?.splits_ms ?? []).some((v) => v != null));
 
   // 다음 목표 — 완주했으면 PB보다 1초, 타임캡이면 남은 개수 1개 줄이기
   const capLeft = best && !best.finished ? best.remaining_reps ?? 0 : 0;
@@ -222,13 +224,15 @@ const Test153Board = ({ onOpenMember }: Props) => {
 
           {/* 구간 기록 16개 — 하이록스처럼 막대로 (가장 오래 걸린 구간 = 꽉 찬 막대) · 최근 기록과 차이 */}
           <div className="mt-3 space-y-2">
-            <FoldButton open={splitsOpen} onClick={() => setSplitsOpen((v) => !v)}>
-              <span>
-                구간 기록 {segments.length}개
-                <span className="ml-1 font-medium text-muted-foreground">· 최고{compare ? " vs 최근" : ""}</span>
-              </span>
-            </FoldButton>
-            {splitsOpen && (
+            {hasSplits && (
+              <FoldButton open={splitsOpen} onClick={() => setSplitsOpen((v) => !v)}>
+                <span>
+                  구간 기록 {segments.length}개
+                  <span className="ml-1 font-medium text-muted-foreground">· 최고{compare ? " vs 최근" : ""}</span>
+                </span>
+              </FoldButton>
+            )}
+            {hasSplits && splitsOpen && (
               <ul className="space-y-1.5 px-1">
                 {segments.map((s, i) => {
                   const b = best.splits_ms[i];
@@ -379,44 +383,57 @@ const Test153Board = ({ onOpenMember }: Props) => {
             <p className="mt-3 text-center text-label font-bold text-muted-foreground">첫 기록의 주인공이 되어 보세요</p>
           </div>
         ) : (
-          <ul className="overflow-hidden rounded-2xl border border-border bg-card">
-            {ranking.map((r, i) => {
-              const me = r.r_user_id === user?.id;
-              return (
-                <li key={r.r_user_id} className={cn(i > 0 && "border-t border-border", me && "bg-primary/10")}>
-                  <button
-                    type="button"
-                    onClick={() => onOpenMember?.({ id: r.r_user_id, nickname: r.r_nickname })}
-                    className="flex w-full items-center gap-3 px-4 py-2.5 text-left active:bg-secondary/40"
-                  >
-                    <span
-                      className={cn(
-                        "w-7 text-center text-body font-black tabular-nums",
-                        r.r_position === 1 ? "text-amber-500" : r.r_position <= 3 ? "text-foreground" : "text-muted-foreground",
-                      )}
+          <>
+            <ul className="overflow-hidden rounded-2xl border border-border bg-card">
+              {ranking.map((r, i) => {
+                const me = r.r_user_id === user?.id;
+                return (
+                  <li key={r.r_user_id} className={cn(i > 0 && "border-t border-border", me && "bg-primary/10")}>
+                    <button
+                      type="button"
+                      onClick={() => onOpenMember?.({ id: r.r_user_id, nickname: r.r_nickname })}
+                      className="flex w-full items-center gap-3 px-4 py-2.5 text-left active:bg-secondary/40"
                     >
-                      {r.r_position <= 3 ? ["🥇", "🥈", "🥉"][r.r_position - 1] : r.r_position}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-body font-bold text-foreground">
-                        {r.r_nickname}
-                        <MedalMark userId={r.r_user_id} className="ml-1 text-body" />
-                        {me && <span className="ml-1 text-label text-primary">나</span>}
+                      <span
+                        className={cn(
+                          "w-7 text-center text-body font-black tabular-nums",
+                          r.r_position === 1 ? "text-amber-500" : r.r_position <= 3 ? "text-foreground" : "text-muted-foreground",
+                        )}
+                      >
+                        {r.r_position <= 3 ? ["🥇", "🥈", "🥉"][r.r_position - 1] : r.r_position}
                       </span>
-                      <span className="block truncate text-micro text-muted-foreground">
-                        {[scope === "all" ? shortBranch(r.r_branch_name) : null, r.r_gender, r.r_age_group, fmtDate(r.r_measured_at)]
-                          .filter(Boolean)
-                          .join(" · ")}
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-body font-bold text-foreground">
+                          {r.r_nickname}
+                          <MedalMark userId={r.r_user_id} className="ml-1 text-body" />
+                          {r.r_staff_label && (
+                            <span className="ml-1 rounded-full bg-secondary px-1.5 py-0.5 align-middle text-micro font-bold text-muted-foreground">
+                              {r.r_staff_label}
+                            </span>
+                          )}
+                          {me && <span className="ml-1 text-label text-primary">나</span>}
+                        </span>
+                        <span className="block truncate text-micro text-muted-foreground">
+                          {[scope === "all" ? shortBranch(r.r_branch_name) : null, r.r_gender, r.r_age_group, fmtDate(r.r_measured_at)]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </span>
                       </span>
-                    </span>
-                    <span className="tabular-nums text-body font-black text-foreground">
-                      {fmtScore({ finished: r.r_finished, score_ms: r.r_score_ms, remaining_reps: r.r_remaining_reps })}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+                      <span className="tabular-nums text-body font-black text-foreground">
+                        {fmtScore({ finished: r.r_finished, score_ms: r.r_score_ms, remaining_reps: r.r_remaining_reps })}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            {/* 2026-11-05 대표님 — 코치님 · 운영진은 순위에만 (153 레코드 '최초 153 PB 1위'는 회원 기록으로) */}
+            {ranking.some((r) => r.r_staff_label) && (
+              <p className="break-keep px-1 text-label text-muted-foreground">
+                코치님 · 운영진 기록은 순위에만 들어가요. 153 레코드는 회원 기록으로 정해요.
+              </p>
+            )}
+          </>
         )}
       </section>
 

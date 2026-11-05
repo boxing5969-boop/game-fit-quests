@@ -35,9 +35,10 @@ export function lastDayLabel(endsAtIso: string): string {
 
 /** 주인 없는 칸 안내 — 시작 전 · 한 달 진행 중 · 끝나고 새기는 중 */
 export function pbTopEmptyText(gender: PbTopGender, win: PbTopWindow | null, now: Date = new Date()): string {
-  if (!win) return `첫 공식 기록일부터 한 달 — 그때 오픈 ${gender} 1위가 주인이 돼요`;
-  if (now.getTime() < Date.parse(win.ends_at)) return `${lastDayLabel(win.ends_at)}까지 잰 기록 중 오픈 ${gender} 1위가 주인이 돼요`;
-  return `한 달이 끝났어요 — 오픈 ${gender} 1위 기록이 곧 새겨져요`;
+  // '회원' 1위 — 2026-11-05 부터 153 PB 순위에는 코치님 · 운영진도 오르지만, 이 기록은 회원만 (DB elig)
+  if (!win) return `첫 공식 기록일부터 한 달 — 그때 오픈 ${gender} 회원 1위가 주인이 돼요`;
+  if (now.getTime() < Date.parse(win.ends_at)) return `${lastDayLabel(win.ends_at)}까지 잰 기록 중 오픈 ${gender} 회원 1위가 주인이 돼요`;
+  return `한 달이 끝났어요 — 오픈 ${gender} 회원 1위 기록이 곧 새겨져요`;
 }
 
 /** 새겨진 1위 기록 — score_ms (완주면 시간, 타임캡이면 '캡 + N개') */

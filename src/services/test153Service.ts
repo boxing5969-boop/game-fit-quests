@@ -57,6 +57,8 @@ export interface Test153RankRow {
   r_gender: string | null;
   r_age_group: string | null;
   r_measured_at: string;
+  /** 코치님 · 운영진이면 직함('코치' · '지점장' · '운영진'), 회원은 null — get_test153_ranking_v2 (2026-11-05) */
+  r_staff_label?: string | null;
 }
 
 export interface SaveTest153Result {
@@ -79,13 +81,19 @@ export const fetchTest153Ranking = async (opts: {
   age: string | null;
   limit?: number;
 }): Promise<Test153RankRow[]> => {
-  const { data, error } = await sb.rpc("get_test153_ranking", {
+  const args = {
     p_division: opts.division,
     p_branch: opts.branch,
     p_gender: opts.gender,
     p_age: opts.age,
     p_limit: opts.limit ?? 100,
-  });
+  };
+  // 2026-11-05 대표님 "코치님들은 최초 레코드에 포함하지 말고 랭킹에만" — 순위에 코치님 · 운영진도 오르고,
+  //   v2 가 직함(r_staff_label)을 같이 준다. v2 가 아직 없는 DB 면 v1.
+  const v2 = await sb.rpc("get_test153_ranking_v2", args);
+  if (!v2.error) return (v2.data ?? []) as Test153RankRow[];
+  if (v2.error.code !== "PGRST202") throw v2.error;
+  const { data, error } = await sb.rpc("get_test153_ranking", args);
   if (error) throw error;
   return (data ?? []) as Test153RankRow[];
 };

@@ -107,8 +107,8 @@ export const RECORD_153_FIRSTS: ReadonlyArray<{
   { key: "first_test153", section: "fitness", emoji: "⏱️", title: "최초 153 PB 완주", desc: "코치님과 공식 153 PB를 처음 끝까지 마친 회원", empty: "153 PB를 처음 완주하는 회원이 주인이 돼요" },
   // 2026-10-20 대표님: "최초 153 PB 1위 — 한 달간 회원님들 테스트 후 최고 기록 보유자에게 수상" · 첫 공식 기록일부터 한 달 · 남녀 각각
   //   빈 칸 안내는 날짜에 따라 바뀐다 (Record153Board → lib/record153PbTop pbTopEmptyText)
-  { key: "first_test153_top_m", section: "fitness", emoji: "👑", title: "최초 153 PB 1위 · 남자", desc: "첫 공식 기록일부터 한 달 동안 오픈 남자 1위", empty: "" },
-  { key: "first_test153_top_f", section: "fitness", emoji: "👑", title: "최초 153 PB 1위 · 여자", desc: "첫 공식 기록일부터 한 달 동안 오픈 여자 1위", empty: "" },
+  { key: "first_test153_top_m", section: "fitness", emoji: "👑", title: "최초 153 PB 1위 · 남자", desc: "첫 공식 기록일부터 한 달 동안 오픈 남자 회원 1위", empty: "" },
+  { key: "first_test153_top_f", section: "fitness", emoji: "👑", title: "최초 153 PB 1위 · 여자", desc: "첫 공식 기록일부터 한 달 동안 오픈 여자 회원 1위", empty: "" },
 ];
 
 /** 첫 대회 기록 칸 — 우승 · 준우승 (153 레코드 탭 '대회의 역사' · 랭킹/명예의 전당 띠) */
