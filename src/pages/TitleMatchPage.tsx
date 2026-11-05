@@ -12,7 +12,7 @@
  *   · 내 리그 칸이고 그 리그가 신청 흐름(지금은 화이트)이면 영상 위에 '타이틀미션' 카드 — ① 파트너 ② 연습 ③ 지점장님께
  *     심사 신청 + 심사 기준 + 신청 버튼·도전 기록 (2026-10-14 대표님, components/titlematch/TitleMatchChallengeCard).
  */
-import { useCallback, useMemo, useState, type SyntheticEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type SyntheticEvent } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Check, CheckCircle2, ChevronLeft, ChevronRight, Clapperboard, Play, RotateCcw } from "lucide-react";
@@ -26,6 +26,8 @@ import { formatRankShort } from "@/lib/rankLabels";
 import { isTitleFlowFor } from "@/lib/titleMatchChallenge";
 import TitleMatchChallengeCard from "@/components/titlematch/TitleMatchChallengeCard";
 import TitleMissionGuideCard from "@/components/titlematch/TitleMissionGuideCard";
+import TitleTeachTab from "@/components/titlematch/TitleTeachTab";
+import { teachDayFromParam, type TeachDay } from "@/lib/titleTeachLessons";
 import {
   TITLE_STAGES,
   defaultStage,
@@ -226,6 +228,20 @@ const TitleMatchPage = () => {
   const prev = previousStage(stage);
   const isHq = role === "super_admin";
 
+  // 운영진 미리 보기 (2026-11-05 대표님 "어떻게 나가는지 내가 확인할수있게") — 레벨 10 이야기 알림 링크(?why=1~3)로
+  // 들어왔는데 내 리그 카드가 아니면(대표님 계정은 화이트를 이미 넘음) 회원에게 가는 이야기를 그대로 보여 준다.
+  const whyDay = teachDayFromParam(params.get("why"));
+  const showMemberCard = state === "mine" && !!spot && isTitleFlowFor(stage.league, profile?.branch_name);
+  const showTeachPreview = isHq && !!whyDay && !showMemberCard && stage.league === "white";
+  const [previewDay, setPreviewDay] = useState<TeachDay>(whyDay ?? 1);
+  const previewRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!whyDay || !showTeachPreview) return;
+    setPreviewDay(whyDay);
+    const t = window.setTimeout(() => previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 300);
+    return () => window.clearTimeout(t);
+  }, [whyDay, showTeachPreview]);
+
   const statusLine =
     state === "passed"
       ? "통과했어요 · 복습용으로 언제든 다시 보세요"
@@ -311,8 +327,23 @@ const TitleMatchPage = () => {
         <TitleMissionGuideCard league={stage.league} />
 
         {/* 🏆 타이틀미션 — 도전 방법·심사 기준·신청 (내 리그 칸 · 신청 흐름이 열린 리그 · 시범 지점 회원만) */}
-        {state === "mine" && spot && isTitleFlowFor(stage.league, profile?.branch_name) && (
-          <TitleMatchChallengeCard league={stage.league} level={spot.level} />
+        {showMemberCard && spot && <TitleMatchChallengeCard league={stage.league} level={spot.level} />}
+
+        {/* 운영진 미리 보기 — 회원에게 가는 레벨 10 이야기 그대로 (알림 링크 ?why=1~3) */}
+        {showTeachPreview && (
+          <section
+            ref={previewRef}
+            aria-labelledby="title-teach-preview-heading"
+            className="mt-4 scroll-mt-20 overflow-hidden rounded-2xl bg-card pb-4 shadow-elev-1 ring-1 ring-border/60"
+          >
+            <div className="border-b border-border/60 bg-reward/10 px-4 py-3">
+              <p className="text-label font-bold text-reward">운영진 미리 보기 · 레벨 10 회원에게 가는 이야기</p>
+              <h3 id="title-teach-preview-heading" className="text-body font-black leading-snug text-foreground">
+                미트를 잡아 주는 이유 3가지
+              </h3>
+            </div>
+            <TitleTeachTab day={previewDay} onDay={setPreviewDay} who="지점장님" league={stage.league} />
+          </section>
         )}
 
         <div className="mt-4">
