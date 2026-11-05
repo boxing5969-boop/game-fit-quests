@@ -142,6 +142,21 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - **오삼코치 다듬기 스위치**: `internal_sync_config` key `coach_feedback_ai` = 'on' 일 때만 관찰 창에 메모 칸 · 단추가 보인다(`coach_growth_me.ai_polish`). chat-assistant 를 배포한 뒤(배포 전 지금 배포본과 비교) 대표님 허락으로 켠다. 끄기 = 값을 'off'. 켬 (2026-11-05 대표님 「같이 켜 줘」): chat-assistant v27(999baee — 배포 전 v26 = a1c7397 같음 확인) → 지시문 손보기 v28(a45d0fc, 보낸 파일 = 저장소 sha256 같음) · `coach_feedback_ai` = 'on' → 대표님 · 지점장 계정 `ai_polish` true 확인.
 - 미리보기 `preview/coach153` 로 먼저 — 대표님 확인 뒤 main. DB 는 대표님 「적용해」로 MCP 적용(2026-11-05 — 되돌림 시험: 코치 = 본인만 · 지점장 = 그 지점 코치님 · 다른 지점 · 겹친 시작 · 잘못된 점검표 막힘 · 돌아보기 결정은 지시권자만 · 알림 3건). **미리보기 단계에서 DB 를 적용하면 마이그레이션 파일은 main 에 먼저 올린다**(908eff2) — 안 올리면 「DB 어긋남 점검」이 '저장소에 정의가 없는 DB 함수'(이번엔 14개)로 다음 날 아침 빨개진다.
 
+#### 코치 성향 카드 · 맞춤 피드백 (2026-11-05 대표님 「코치님들의 mbti와 심리 상세한 정보를 먼저 획득한 뒤에 … 이런 식으로 남기면 코치님들이 알아들을 수 있도록 피드백해 주는 기능」)
+
+대표님 · 지점장님이 생각나는 대로 남긴 지도 원칙(예: 스트레이트 전에 훅 · 어퍼 금지 · 실력별 최소 2그룹 · 시범 → 단계 → 한 명 30초)을 오삼코치가 **공통 기준**으로 정리하고, 코치님마다 스스로 답한 **성향 카드**에 맞춰 말하는 순서 · 길이 · 말투 · 예시 · 맺음만 바꿔 보낸다. **기준은 모두에게 같다** — 코치님 화면에 '모든 코치님께 같은 원래 기준'이 늘 같이 보인다. 153 기준 칸 안에 넣었다(새 페이지 없음).
+
+| 파일 | 역할 |
+|---|---|
+| [supabase/migrations/20261105124544_coach_mind.sql](supabase/migrations/20261105124544_coach_mind.sql) | 새 표 4 · 새 함수만: `coach_mind_profiles`(답 · MBTI · 한 줄 둘 · 전달 설명서 `summary` · 동의 `consent_at`) · `coach_mind_asks`(카드 부탁 20시간에 한 번) · `coach_notes`(공통 기준 `core`) · `coach_note_deliveries`(코치님마다 `body` — 카드가 없으면 null = 기준 그대로 · 읽음 · 확인 · 한마디) · `coach_mind_state`(한 번에) · `coach_mind_save` · `coach_mind_clear`(본인 또는 대표님 — 내용만 비움) · `coach_mind_ask` · `coach_note_send` · `coach_note_seen` · `coach_note_ack`(한마디면 보낸 분께 알림) · `coach_note_remove` · 문항 값 `_coach_mind_allowed()` |
+| [supabase/functions/_shared/coachMind.ts](supabase/functions/_shared/coachMind.ts) | **문항 한 곳**(MBTI 네 축을 수업 상황으로 · 피드백 순서 · 말투 · 이해가 빠른 모양 · 때 · 힘이 나는 것 · 힘 빠지는 말 · 힘들 때 · 자신 있는 것 · 키울 것 · 경력) + 지시문 셋(전달 설명서 · 공통 기준 · 코치님마다) + 답 검사(빠진 기준 `covers` · 빠진 숫자 · 지어낸 숫자 · MBTI/성향 꼬리표 · 탓하는 말 · 카드 글 그대로 옮기기 · 길이, 걸리면 `retryNote` 붙여 한 번 다시) — 테스트 src/lib/coachMind.test.ts(DB `_coach_mind_allowed()` 와 문항이 같은지도 본다) |
+| [supabase/functions/coach-mind/](supabase/functions/coach-mind/index.ts) | 오삼코치 — `summary`(코치님 본인 · 서버 키로 내 카드만 읽고 summary 칸만 씀) · `core`(메모 → 공통 기준, 메모 저장 안 함) · `tailor`(공통 기준 + 코치님 → 맞춘 글, 카드는 서버 키로만 읽음 — 지점장님은 카드를 못 보고 글만 받는다). 권한 = 부른 분 토큰으로 `coach_growth_me`(can_direct · board · 스위치 `coach_feedback_ai`). 모델 `CLAUDE_COACH_MIND_MODEL`(기본 claude-opus-5-5 · effort `CLAUDE_COACH_MIND_EFFORT` 기본 medium, API 오류면 채팅 모델) · 하루 6 · 20 · 80번 · `ai_usage_log.feature` coach_mind_summary · coach_mind_core · coach_mind_tailor |
+| [src/lib/coachMind.ts](src/lib/coachMind.ts) · [src/services/coachMindService.ts](src/services/coachMindService.ts) · [src/components/coach153/CoachMind*.tsx](src/components/coach153/) | 코치님: 카드 부탁 → `MindFormSheet`(안내 · 동의 · 16문항 · MBTI 선택) → 내 성향 카드(전달 설명서) · 받은 피드백 `NotesList`(맞춘 글 · 오늘 해 볼 것 · 스스로 물어볼 것 · 원래 기준 · 확인했어요 · 한마디). 대표님 · 지점장님: 「코치님들」 맨 위 `MindTeamCard`(카드 n/m · 카드 부탁하기 · 피드백 쓰기 · 보낸 피드백 확인 n/m) → `NoteComposeSheet` 3단계(메모 → 공통 기준 고치기 → 코치님마다 확인 · 다시 만들기 · 고치기 · 기준 그대로) · 코치님 줄 `MindChip`(대표님은 눌러 `MindViewSheet`) |
+
+- 보이는 범위: 카드 내용 = 본인 · 대표님(`_strategy_hq`). 지점장님 = 있음/없음만. 맞춘 글 · 한마디 = 받은 코치님 · 보낸 분 · 대표님(같은 지점의 다른 지시권자는 읽음/확인 숫자만). 카드는 **평가 · 급여 · 근무에 쓰지 않는다**(코치님 안내 · 대표님 카드 보기 아래에 같은 약속) — 이 약속을 바꾸려면 코치님께 다시 동의를 받는다.
+- 알림: 카드 부탁 '🧭 코치 성향 카드를 부탁드려요'(`&mind=1` → 카드 창이 열림) · 피드백 '💬 피드백이 왔어요 · 이름 직함' · 한마디 '💬 ○○님이 피드백에 답했어요'. 받은 피드백은 화면에 보이면 읽음, 확인은 단추.
+- 개인정보 처리방침: 선택 항목 · 위탁(Anthropic) · 국외 이전에 '코치 성향 카드 · 피드백 정리' 추가(2026-11-05).
+
 ### 지점 회의실(2026-10-29 부터 이름 153운영본부) — 지도진 가상 사무실 · 회의 채팅 (2026-10-27 1단계 · 「마이복서153 지점 회의실 상세 보고서」 추천안)
 
 | 파일 | 역할 |
