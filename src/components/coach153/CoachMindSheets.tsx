@@ -491,7 +491,11 @@ export function NoteComposeSheet({
       ? "생각나는 대로 — 오삼코치가 정리해요"
       : step === "core"
         ? "모든 코치님께 같은 기준이에요 · 고쳐도 돼요"
-        : `카드 있는 ${withCard}명은 맞춤 · 나머지는 기준 그대로`;
+        : !ai
+          ? "오삼코치가 꺼져 있어 모두 기준 그대로 가요"
+          : withCard === 0
+            ? "성향 카드가 있는 분이 없어 모두 기준 그대로 가요"
+            : `카드 있는 ${withCard}명은 맞춤 · 나머지는 기준 그대로`;
 
   const footer =
     step === "write" ? (
