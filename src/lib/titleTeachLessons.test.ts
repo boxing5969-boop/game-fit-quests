@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   TEACH_SERIES_TITLE,
@@ -5,9 +7,12 @@ import {
   chantChunks,
   fillWho,
   lessonFor,
+  readingMinutes,
   teachDayFromParam,
+  teachVideoEmbed,
   titleTeachLink,
 } from "./titleTeachLessons";
+import { icon3dSrc } from "./emoji3d/map";
 import { titleMatchLink } from "./titleMatchChallenge";
 import { titleMissionGuideFor } from "./titleMissionGuide";
 
@@ -25,6 +30,8 @@ const allText = (l: (typeof TITLE_TEACH_LESSONS)[number]) =>
     ...(l.steps?.items.flatMap((s) => [s.label, s.text]) ?? []),
     ...(l.stories?.items.flatMap((s) => [s.who, s.text]) ?? []),
     ...l.gym,
+    l.hero.caption,
+    ...(l.videos ?? []).flatMap((v) => [v.title, ...(v.points ?? [])]),
     l.action.text,
     l.closing?.line ?? "",
     l.notice.title,
@@ -50,6 +57,63 @@ describe("titleTeachLessons — 설계 노트 3편", () => {
       expect(l.sources.length).toBe(cited);
     }
     expect(lessonFor(2).day).toBe(2);
+  });
+
+  it("출처 · 연구 · 이야기는 누르면 원문으로 — https 주소", () => {
+    for (const l of TITLE_TEACH_LESSONS) {
+      for (const r of l.research) expect(r.url ?? "", `${l.day}편 ${r.by}`).toMatch(/^https:\/\//);
+      for (const s of l.stories?.items ?? []) if (s.by) expect(s.url ?? "", `${l.day}편 ${s.who}`).toMatch(/^https:\/\//);
+      for (const s of l.steps?.items ?? []) if (s.url) expect(s.url).toMatch(/^https:\/\//);
+      for (const s of l.sources) {
+        expect(s.label.length).toBeGreaterThan(10);
+        if (s.url) expect(s.url).toMatch(/^https:\/\//);
+      }
+      // 책(피츠 · 포스너)만 주소 없이
+      expect(l.sources.filter((s) => !s.url).every((s) => /Human Performance/.test(s.label))).toBe(true);
+    }
+  });
+
+  it("사진 · 아이콘 · 쇼츠 표지 파일이 public 에 있다", () => {
+    const pub = (src: string) => path.resolve(process.cwd(), "public", src.replace(/^\//, "").split("?")[0]);
+    for (const l of TITLE_TEACH_LESSONS) {
+      expect(existsSync(pub(l.hero.src)), l.hero.src).toBe(true);
+      expect(l.hero.alt.length).toBeGreaterThan(5);
+      const icons = [...(l.stories?.items ?? []), ...(l.steps?.items ?? [])].map((x) => x.icon);
+      for (const name of icons) expect(existsSync(pub(icon3dSrc(name))), name).toBe(true);
+      for (const v of l.videos ?? []) if (v.poster) expect(existsSync(pub(v.poster)), v.poster).toBe(true);
+    }
+  });
+
+  it("영상 — 유튜브 번호 · TED 는 한국어 자막 페이지와 자막 켜기, 쇼츠는 표지", () => {
+    const all = TITLE_TEACH_LESSONS.flatMap((l) => l.videos ?? []);
+    expect(all.length).toBeGreaterThan(0);
+    for (const v of all) {
+      expect(v.id).toMatch(/^[A-Za-z0-9_-]{11}$/);
+      const url = teachVideoEmbed(v);
+      expect(url.startsWith(`https://www.youtube.com/embed/${v.id}?autoplay=1`)).toBe(true);
+      if (v.kind === "ted") {
+        expect(v.koUrl).toMatch(/^https:\/\/www\.ted\.com\/talks\/.+language=ko$/);
+        expect(url).toContain("cc_lang_pref=ko");
+        expect(v.points?.length ?? 0).toBeGreaterThan(0);
+        expect(v.poster).toBeUndefined(); // 강연자 얼굴 사진 표지는 쓰지 않는다
+      } else {
+        expect(v.poster).toBeTruthy();
+        expect(url).not.toContain("cc_lang_pref");
+      }
+    }
+    expect(lessonFor(1).titleVideo).toBe(true);
+  });
+
+  it("숫자 두 칸 — 3번 연속 확률 계산이 맞다", () => {
+    const stats = lessonFor(3).stats!;
+    expect(stats.items.map((s) => s.pct)).toEqual([12.5, 72.9]);
+    expect(0.5 ** 3 * 100).toBeCloseTo(12.5);
+    expect(0.9 ** 3 * 100).toBeCloseTo(72.9);
+    expect(stats.items[1].value).toBe("73%");
+  });
+
+  it("읽는 시간은 1분 이상", () => {
+    for (const l of TITLE_TEACH_LESSONS) expect(readingMinutes(l)).toBeGreaterThanOrEqual(1);
   });
 
   it("설득하는 질문 대신 설계를 설명한다 — 큰 제목은 질문이 아니다", () => {
