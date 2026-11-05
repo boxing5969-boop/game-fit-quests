@@ -8,7 +8,7 @@
  * 레벨 10 전이어도 같은 리그면 카드를 보여 준다 (미리 알고 준비하도록) — 버튼만 잠겨 있다.
  *
  * 탭 두 개 (2026-11-05 대표님 "왜 미트를 대 주고 지도를 해 봐야 하는지 설득하는 탭"):
- *   도전 방법(①②③ · 심사 기준) · 왜 미트를 잡아 줄까(3편 이야기 — TitleTeachTab). 아래 상태 · 신청 버튼은 두 탭 모두 그대로.
+ *   도전 방법(①②③ · 심사 기준) · 설계 노트(3번 공격 · 3번 미트로 만든 이유 3편 — TitleTeachTab). 아래 상태 · 신청 버튼은 두 탭 모두 그대로.
  *   레벨 10 알림 링크 ?why=1~3 이면 '왜' 탭의 그 편으로 열고 카드까지 내려 준다.
  */
 import { useEffect, useRef, useState } from "react";
@@ -33,7 +33,7 @@ import {
 import TitleAttemptList, { AttemptDots } from "./TitleAttemptList";
 import TitleTeachTab from "./TitleTeachTab";
 import { toGlobalLevel } from "@/lib/rankLabels";
-import { teachDayFromParam, type TeachDay } from "@/lib/titleTeachLessons";
+import { TEACH_SERIES_TITLE, TEACH_TAB_LABEL, teachDayFromParam, type TeachDay } from "@/lib/titleTeachLessons";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -101,14 +101,14 @@ const TitleMatchChallengeCard = ({ league, level }: Props) => {
       <div className="border-b border-border/60 bg-reward/10 px-4 py-3">
         <p className="text-label font-bold text-reward">🏆 타이틀미션</p>
         <h3 id="title-mission-heading" className="text-body font-black leading-snug text-foreground">
-          {tab === "how" ? "이렇게 도전해요" : "미트를 잡아 주는 이유 3가지"}
+          {tab === "how" ? "이렇게 도전해요" : TEACH_SERIES_TITLE}
         </h3>
-        {/* 탭 — 도전 방법 · 왜 미트를 잡아 줄까 */}
+        {/* 탭 — 도전 방법 · 설계 노트 */}
         <div role="tablist" aria-label="타이틀미션 보기" className="mt-3 grid grid-cols-2 gap-1 rounded-xl bg-card/70 p-1">
           {(
             [
               ["how", "도전 방법"],
-              ["why", "왜 미트를 잡아 줄까"],
+              ["why", TEACH_TAB_LABEL],
             ] as const
           ).map(([v, label]) => (
             <button
@@ -172,12 +172,12 @@ const TitleMatchChallengeCard = ({ league, level }: Props) => {
         <button
           type="button"
           onClick={() => {
-            setTeachDay(3);
+            setTeachDay(1);
             setTab("why");
           }}
           className="mt-2 inline-flex h-8 items-center gap-0.5 text-label font-bold text-primary"
         >
-          왜 3번 연속 · 미트 3번일까? <ChevronRight className="h-3.5 w-3.5" />
+          {TEACH_SERIES_TITLE} <ChevronRight className="h-3.5 w-3.5" />
         </button>
       </div>
       </>

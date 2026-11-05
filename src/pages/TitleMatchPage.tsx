@@ -27,7 +27,7 @@ import { isTitleFlowFor } from "@/lib/titleMatchChallenge";
 import TitleMatchChallengeCard from "@/components/titlematch/TitleMatchChallengeCard";
 import TitleMissionGuideCard from "@/components/titlematch/TitleMissionGuideCard";
 import TitleTeachTab from "@/components/titlematch/TitleTeachTab";
-import { teachDayFromParam, type TeachDay } from "@/lib/titleTeachLessons";
+import { TEACH_SERIES_TITLE, teachDayFromParam, type TeachDay } from "@/lib/titleTeachLessons";
 import {
   TITLE_STAGES,
   defaultStage,
@@ -339,7 +339,7 @@ const TitleMatchPage = () => {
             <div className="border-b border-border/60 bg-reward/10 px-4 py-3">
               <p className="text-label font-bold text-reward">운영진 미리 보기 · 레벨 10 회원에게 가는 이야기</p>
               <h3 id="title-teach-preview-heading" className="text-body font-black leading-snug text-foreground">
-                미트를 잡아 주는 이유 3가지
+                {TEACH_SERIES_TITLE}
               </h3>
             </div>
             <TitleTeachTab day={previewDay} onDay={setPreviewDay} who="지점장님" league={stage.league} />
