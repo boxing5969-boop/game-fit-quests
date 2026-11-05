@@ -235,7 +235,8 @@ export function profileLines(p: MindProfileInput, scope: ProfileScope = "full"):
 
 /* ───────────────────────── 공통 검사 도구 ───────────────────────── */
 
-const EMOJI_RE = /\p{Extended_Pictographic}|️|‍/gu;
+// 이모지 · 이모지 꾸밈(U+FE0F) · 잇기(U+200D) — 눈에 안 보이는 글자는 \u 로 적는다(복사할 때 사라지지 않게)
+const EMOJI_RE = /\p{Extended_Pictographic}|\u{FE0F}|\u{200D}/gu;
 const PHONE_RE = /01[016789][-.\s]?\d{3,4}[-.\s]?\d{4}/;
 const tidy = (v: unknown): string => (typeof v === "string" ? v.replace(EMOJI_RE, "").replace(/\s+/g, " ").trim() : "");
 const tidyList = (v: unknown): string[] => (Array.isArray(v) ? v.map(tidy).filter(Boolean) : []);
