@@ -12,6 +12,7 @@ import {
   agoKo,
   answeredCount,
   answerLabels,
+  checkTailor,
   cleanMindAnswers,
   coreReady,
   emptyCore,
@@ -22,6 +23,7 @@ import {
   MIND_QUESTIONS,
   noteCounts,
   requiredDone,
+  tailorIssueKo,
   tidyCore,
   toggleAnswer,
   type MbtiSource,
@@ -140,7 +142,7 @@ export function MindFormSheet({
         <p className="text-body font-bold text-foreground">대표님 · 지점장님이 코치님이 가장 잘 알아듣는 방식으로 피드백을 전하도록 돕는 카드예요.</p>
         <ul className="mt-2 space-y-1 text-label text-foreground">
           <li>· 평가 · 급여 · 근무에는 쓰지 않아요. 전하는 순서와 말투에만 써요</li>
-          <li>· 볼 수 있는 사람: 나 · 대표님 (지점장님은 카드를 볼 수 없어요)</li>
+          <li>· 볼 수 있는 사람: 나 · 대표님. 지점장님은 카드를 볼 수 없고, 지점장님 피드백은 MBTI · 힘들 때 · 한 줄 글을 빼고 맞춰요</li>
           <li>· 오삼코치(AI · Anthropic, 미국)가 요약과 맞춤 글을 만들 때 읽어요</li>
           <li>· 쓰지 않아도 괜찮아요 — 그때는 기준 그대로 받아요. 언제든 고치거나 지울 수 있어요</li>
         </ul>
@@ -189,7 +191,7 @@ export function MindFormSheet({
 
       <section className="mt-7">
         <h3 className="text-heading font-black text-foreground">한 줄씩</h3>
-        <p className="mt-0.5 text-label text-muted-foreground">선택 · 그대로 옮기지 않고 말투를 맞출 때만 써요</p>
+        <p className="mt-0.5 text-label text-muted-foreground">선택 · 대표님 피드백의 말투를 맞출 때만 써요 (글을 그대로 옮기지 않아요)</p>
         <FieldLabel hint={`${power.length}/${MIND_NOTE_LIMITS.power}`}>이렇게 말해 주시면 가장 힘이 나요</FieldLabel>
         <textarea
           value={power}
@@ -306,7 +308,8 @@ export function MindViewSheet({
 /* ───────────── 대표님 · 지점장님 — 피드백 쓰기 (메모 → 공통 기준 → 코치님마다) ───────────── */
 
 type Step = "write" | "core" | "review";
-type Tailor = { status: "loading" | "done" | "plain" | "error"; body: NoteBody | null; error?: string };
+/** edited = 보낸 분이 손으로 고친 글 — 오삼코치 답과 같은 검사로 확인할 곳을 알려 준다(막지는 않음) */
+type Tailor = { status: "loading" | "done" | "plain" | "error"; body: NoteBody | null; error?: string; edited?: boolean };
 
 const MEMO_EXAMPLE =
   "예: 아직 스트레이트도 안 되어 있는데 어퍼나 훅 같은 동작을 지도하면 안 됨. 경력이나 실력별로 최소 2그룹으로 나눠 지도. 새 동작은 시범 먼저 → 단계별로 → 한 명 한 명 빠르게 잡아 주기(한 사람당 30초 넘기지 않기)…";
@@ -351,23 +354,32 @@ export function NoteComposeSheet({
   const [coreBusy, setCoreBusy] = useState(false);
   const [tail, setTail] = useState<Record<string, Tailor>>({});
   const [editing, setEditing] = useState<string | null>(null);
+  const [warnOk, setWarnOk] = useState(false);
   const openRef = useRef(open);
+  // 부를 때마다 새 번호(늘 올라가기만 한다 · 되돌리지 않는다) — 닫았다 열거나 기준을 고쳐 다시 맞춰도
+  // 지난번에 부른 답이 늦게 와서 새 화면에 들어오지 않게
+  const seq = useRef(0);
   const tok = useRef<Record<string, number>>({});
+  const coreTok = useRef(0);
+  const dropTailor = () => {
+    for (const k of Object.keys(tok.current)) tok.current[k] = ++seq.current;
+  };
 
   const members = useMemo(() => team.filter((t) => !!t.person?.user_id), [team]);
   const byId = useMemo(() => new Map(members.map((t) => [t.person!.user_id, t])), [members]);
 
   useEffect(() => {
     openRef.current = open;
-    if (!open) {
-      tok.current = {};
-      return;
-    }
+    dropTailor();
+    coreTok.current = ++seq.current;
+    if (!open) return;
     setStep("write");
     setMemo("");
     setCore(emptyCore());
+    setCoreBusy(false);
     setTail({});
     setEditing(null);
+    setWarnOk(false);
     const all = members.map((t) => t.person!.user_id);
     setPicked(preselect?.length ? preselect.filter((id) => all.includes(id)) : all);
     // 열 때 한 번만
@@ -385,16 +397,18 @@ export function NoteComposeSheet({
       toast.error("한두 줄만 더 적어 주세요");
       return;
     }
+    const my = ++seq.current;
+    coreTok.current = my;
     setCoreBusy(true);
     try {
       const r = await makeNoteCore(memo.trim(), branch);
-      if (!openRef.current) return;
+      if (!openRef.current || coreTok.current !== my) return;
       setCore({ ...r.core, checks: r.core.checks ?? [] });
       setStep("core");
     } catch (e) {
-      toast.error((e as Error).message);
+      if (openRef.current && coreTok.current === my) toast.error((e as Error).message);
     } finally {
-      setCoreBusy(false);
+      if (coreTok.current === my) setCoreBusy(false);
     }
   };
 
@@ -423,7 +437,7 @@ export function NoteComposeSheet({
     const queue = [...ids];
     const mine: Record<string, number> = {};
     for (const id of ids) {
-      mine[id] = (tok.current[id] ?? 0) + 1;
+      mine[id] = ++seq.current;
       tok.current[id] = mine[id];
     }
     setTail((t) => ({ ...t, ...Object.fromEntries(ids.map((id) => [id, { status: "loading", body: null } as Tailor])) }));
@@ -456,9 +470,10 @@ export function NoteComposeSheet({
     }
     setCore(c);
     setEditing(null);
+    setWarnOk(false);
     const cards = picked.filter((id) => byId.get(id)?.has_mind);
     const plain = picked.filter((id) => !byId.get(id)?.has_mind || !ai);
-    tok.current = {};
+    dropTailor();
     setTail(Object.fromEntries(plain.map((id) => [id, { status: "plain", body: null } as Tailor])));
     setStep("review");
     if (ai) startTailor(cards, c);
@@ -467,7 +482,27 @@ export function NoteComposeSheet({
   const busy = picked.some((id) => tail[id]?.status === "loading");
   const failed = picked.filter((id) => tail[id]?.status === "error").length;
 
+  // 손으로 고친 글 — 오삼코치 답과 같은 검사(빠진 기준 · 숫자 · 꼬리표 · 탓하는 말). 알려 주고, 한 번 더 누르면 그대로 보낸다
+  const issues = useMemo(() => {
+    const out: Record<string, string> = {};
+    const all = core.points.map((_, i) => i + 1);
+    for (const id of picked) {
+      const t = tail[id];
+      if (t?.status !== "done" || !t.body || !t.edited) continue;
+      const p = byId.get(id)?.person;
+      const c = checkTailor({ ...t.body, covers: all, error: "" }, { core, allow: `${p?.name ?? ""} ${p?.title ?? ""}` });
+      if ("reason" in c) out[id] = tailorIssueKo(c);
+    }
+    return out;
+  }, [picked, tail, core, byId]);
+  const warnCount = Object.keys(issues).length;
+
   const submit = () => {
+    if (warnCount > 0 && !warnOk) {
+      setWarnOk(true);
+      toast(`고친 글 ${warnCount}개에 확인할 곳이 있어요 — 그대로 보내려면 한 번 더 눌러 주세요`);
+      return;
+    }
     const items = picked.map((id) => {
       const t = tail[id];
       const b = t?.status === "done" && t.body ? { ...t.body, lines: t.body.lines.map((l) => l.trim()).filter(Boolean) } : null;
@@ -526,7 +561,15 @@ export function NoteComposeSheet({
           기준으로
         </GhostButton>
         <PrimaryButton onClick={submit} disabled={busy || failed > 0 || send.isPending || picked.length === 0} className="flex-1">
-          {send.isPending ? "보내는 중…" : busy ? "맞추는 중…" : failed > 0 ? "다시 만들기가 필요해요" : `${picked.length}명에게 보내기`}
+          {send.isPending
+            ? "보내는 중…"
+            : busy
+              ? "맞추는 중…"
+              : failed > 0
+                ? "다시 만들기가 필요해요"
+                : warnCount > 0 && warnOk
+                  ? `그래도 ${picked.length}명에게 보내기`
+                  : `${picked.length}명에게 보내기`}
         </PrimaryButton>
       </div>
     );
@@ -668,10 +711,19 @@ export function NoteComposeSheet({
                 {t?.status === "done" &&
                   t.body &&
                   (editing === id ? (
-                    <BodyEditor body={t.body} onChange={(b) => setTail((x) => ({ ...x, [id]: { status: "done", body: b } }))} />
+                    <BodyEditor
+                      body={t.body}
+                      onChange={(b) => {
+                        setWarnOk(false);
+                        setTail((x) => ({ ...x, [id]: { status: "done", body: b, edited: true } }));
+                      }}
+                    />
                   ) : (
                     <NoteBodyView body={t.body} className="mt-3" />
                   ))}
+                {issues[id] && (
+                  <p className="mt-2 rounded-xl bg-amber-400/15 px-3 py-2 text-label font-bold text-amber-800 dark:text-amber-300">확인해 주세요 · {issues[id]}</p>
+                )}
                 {t?.status === "plain" && (
                   <p className="mt-3 text-label text-muted-foreground">
                     {m?.has_mind ? "공통 기준 그대로 보내요" : "성향 카드가 아직 없어 공통 기준 그대로 가요"}
@@ -854,7 +906,7 @@ export function NoteReplySheet({ open, onClose, note }: { open: boolean; onClose
       open={open}
       onClose={onClose}
       title="한마디 남기기"
-      subtitle={`${to}님께만 가요`}
+      subtitle={note?.from_hq ? `${to}님께 가요` : `${to}님께 가요 · 대표님도 볼 수 있어요`}
       footer={
         <PrimaryButton onClick={submit} disabled={!text.trim() || ack.isPending}>
           {ack.isPending ? "보내는 중…" : "보내기"}

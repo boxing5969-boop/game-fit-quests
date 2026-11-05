@@ -11,13 +11,16 @@ import {
   cleanMindAnswers,
   echoes,
   inventedDigits,
+  keysOf,
   MIND_QUESTIONS,
   mindAllowedSpec,
+  numbersIn,
   profileLines,
   retryNote,
+  TAILOR_MODEL_ERROR,
   type NoteCore,
 } from "../../supabase/functions/_shared/coachMind.ts";
-import { answeredCount, noteCounts, requiredDone, toggleAnswer } from "./coachMind";
+import { answeredCount, noteCounts, requiredDone, tailorIssueKo, toggleAnswer } from "./coachMind";
 
 // 대표님이 11/05 에 남긴 글 그대로 — 이 메모가 공통 기준이 되면 이렇게 되어야 한다(모양 예)
 const MEMO =
@@ -37,7 +40,9 @@ const CORE: NoteCore = {
 };
 
 const PROFILE = {
-  answers: { order: "conclusion", tone: "soft", shape: ["demo", "scene"], power: ["members"], strong: ["mood"], box_years: "gt5" },
+  answers: {
+    energy: "people", order: "conclusion", tone: "soft", shape: ["demo", "scene"], power: ["members"], stress: "sharp", strong: ["mood"], box_years: "gt5",
+  },
   mbti: "ENFP",
   mbti_source: "guess",
   note_power: "회원님들이 좋아했다는 말을 들으면 정말 힘이 나요",
@@ -100,6 +105,17 @@ describe("성향 카드 문항", () => {
     expect(lines).toContain("이해가 빠른 모양: 시범 · 영상으로, 실제 수업 장면 예시");
     expect(lines.some((l) => l.startsWith("힘 빠지는 말"))).toBe(false);
   });
+
+  it("지점장님 몫(delivery) — MBTI · 나는 이런 사람 · 힘들 때 · 직접 쓴 글은 빠진다", () => {
+    const lines = profileLines(PROFILE, "delivery").join("\n");
+    expect(lines).toContain("피드백 순서: 결론 먼저 짧게");
+    expect(lines).toContain("복싱 경력: 5년 넘게");
+    expect(lines).not.toContain("ENFP");
+    expect(lines).not.toContain("MBTI");
+    expect(lines).not.toContain("힘이 채워지는 쪽");
+    expect(lines).not.toContain("힘들 때");
+    expect(lines).not.toContain(PROFILE.note_power);
+  });
 });
 
 describe("공통 기준 검사", () => {
@@ -146,10 +162,49 @@ describe("코치님마다 맞춘 글 검사", () => {
     expect(r.ok).toBe(true);
   });
 
-  it("빠진 기준(covers) · 빠진 숫자를 막는다", () => {
-    expect(checkTailor({ ...goodBody, covers: [1, 2, 3] }, { core: CORE, profile: PROFILE })).toMatchObject({ reason: "coverage" });
+  it("빠진 기준은 글로 본다 — covers 를 다 적어도 숫자 없는 기준을 빼면 막는다", () => {
+    const noDemo = { ...goodBody, lines: goodBody.lines.filter((l) => !l.includes("시범")) };
+    expect(checkTailor(noDemo, { core: CORE, profile: PROFILE })).toMatchObject({ reason: "coverage", message: "「시범 먼저, 단계별로」" });
+    // covers 를 빠뜨려도 글에 다 있으면 통과(모델이 적은 번호보다 글이 먼저)
+    expect(checkTailor({ ...goodBody, covers: [1, 2] }, { core: CORE, profile: PROFILE }).ok).toBe(true);
     const noThirty = { ...goodBody, lines: goodBody.lines.map((l) => l.replace("30초", "짧게")) };
-    expect(checkTailor(noThirty, { core: CORE, profile: PROFILE })).toMatchObject({ reason: "dropped" });
+    expect(checkTailor(noThirty, { core: CORE, profile: PROFILE })).toMatchObject({ reason: "dropped", message: "30" });
+  });
+
+  it("'두 그룹' · '삼십 초'처럼 말로 쓴 수도 기준의 숫자로 센다", () => {
+    const words = { ...goodBody, lines: goodBody.lines.map((l) => l.replace("최소 2그룹", "최소 두 그룹").replace("30초", "삼십 초")) };
+    expect(checkTailor(words, { core: CORE, profile: PROFILE }).ok).toBe(true);
+    expect([...numbersIn("두 그룹 · 한 명씩 · 삼십 초 · 열두 명 · 십 분")].sort()).toEqual(["1", "10", "12", "2", "30"]);
+  });
+
+  it("꼬리표 — 소문자 · 한글 줄임말 · 한 글자 꼬리표도 막는다", () => {
+    for (const greeting of ["enfp 코치님, 오늘도 힘내요.", "엔프피 코치님답게 가 볼까요?", "F라서 마음이 먼저 와닿으시죠?", "인팁 코치님 반가워요."]) {
+      expect(checkTailor({ ...goodBody, greeting }, { core: CORE, profile: PROFILE })).toMatchObject({ reason: "label" });
+    }
+  });
+
+  it("카드 답을 말로 옮기면 막는다", () => {
+    const talk = { ...goodBody, greeting: "김코치 코치님, 결론부터 듣는 걸 좋아하신다고 해서 짧게 갈게요." };
+    expect(checkTailor(talk, { core: CORE, profile: PROFILE })).toMatchObject({ reason: "card" });
+    expect(checkTailor({ ...goodBody, closing: "카드에 적어 주신 대로 회원님 웃음을 만들어 주세요." }, { core: CORE, profile: PROFILE })).toMatchObject({ reason: "card" });
+  });
+
+  it("공통 기준에 있는 낱말(부족 · 유형)은 탓하는 말 · 꼬리표로 보지 않는다", () => {
+    const core: NoteCore = { ...CORE, points: [...CORE.points, { head: "펀치 유형 나누기", body: "시간이 부족하면 펀치 유형을 하나만 골라요." }] };
+    const body = { ...goodBody, lines: [...goodBody.lines, "시간이 부족한 날은 펀치 유형을 하나만 골라 집중해요."] };
+    expect(checkTailor(body, { core, profile: PROFILE }).ok).toBe(true);
+    expect(checkTailor({ ...body, closing: "코치님 지도가 부족해 보여요." }, { core: CORE, profile: PROFILE })).toMatchObject({ reason: "blame" });
+  });
+
+  it("카드의 숫자(경력)는 못 쓰고 · 코치님 이름의 숫자는 된다", () => {
+    expect(checkTailor({ ...goodBody, closing: "5년 넘게 해 오신 경험으로 다듬어 주세요." }, { core: CORE, profile: PROFILE })).toMatchObject({ reason: "digits", message: "5" });
+    const named = { ...goodBody, greeting: "코치2 코치님, 분위기 띄우는 건 코치님이 정말 잘하시죠." };
+    expect(checkTailor(named, { core: CORE, profile: PROFILE, allow: "코치2 코치" }).ok).toBe(true);
+  });
+
+  it("모델 error 글은 돌려주지 않고 정해 둔 말만", () => {
+    const r = checkTailor({ greeting: "", lines: [], covers: [], try_today: "", closing: "", error: "ENFP 이고 힘들 때 예민해지는 분이라 어려워요" }, { core: CORE });
+    expect(r).toMatchObject({ ok: false, reason: "model_error", message: TAILOR_MODEL_ERROR });
   });
 
   it("MBTI · 성향 같은 꼬리표를 막는다", () => {
@@ -175,6 +230,23 @@ describe("코치님마다 맞춘 글 검사", () => {
     expect(u).toContain("한 줄: 결론부터 짧게");
     expect(u).toContain("공통 기준은 4개예요");
   });
+
+  it("지점장님 몫 지시문 — 전하는 법 답만, 전달 설명서 · MBTI · 직접 쓴 글은 없다", () => {
+    const u = buildTailorUser({ name: "김코치", title: "코치" }, CORE, PROFILE, { one_line: "결론부터 짧게", do: [], avoid: [] }, "delivery");
+    expect(u).toContain("전하는 법 답만");
+    expect(u).toContain("피드백 순서: 결론 먼저 짧게");
+    expect(u).not.toContain("ENFP");
+    expect(u).not.toContain("전달 설명서");
+    expect(u).not.toContain(PROFILE.note_power);
+    expect(u).not.toContain("힘들 때");
+  });
+
+  it("손으로 고친 글 — 같은 검사 · 보낸 분께 보일 말", () => {
+    const edited = { ...goodBody, lines: goodBody.lines.filter((l) => !l.includes("30초")) };
+    const c = checkTailor(edited, { core: CORE });
+    expect(c.ok).toBe(false);
+    if ("reason" in c) expect(tailorIssueKo(c)).toBe("기준의 숫자가 빠졌어요 — 30");
+  });
 });
 
 describe("전달 설명서 검사", () => {
@@ -198,14 +270,19 @@ describe("도구", () => {
     expect(inventedDigits("12명", MEMO)).toBe(true);
     expect(echoes("가나다", ["짧은 글"])).toBe(false);
     expect(retryNote("coverage")).toContain("covers");
+    expect(retryNote("coverage", "「시범 먼저」")).toContain("걸린 곳: 「시범 먼저」");
     expect(retryNote("없는 이유")).toBe("");
+    // 기준에도 있는 대목은 그대로 옮긴 것으로 보지 않는다
+    expect(echoes("회원님들이 좋아했다는 말을 들으면 정말 힘이 나요", ["회원님들이 좋아했다는 말을 들으면 정말 힘이 나요"], 15, "회원님들이 좋아했다는 말을 들으면 정말 힘이 나요")).toBe(false);
+    expect(keysOf("최소 2그룹으로 나눠요")).toEqual(["최소", "그룹", "나눠"]);
   });
 
   it("확인 현황 세기", () => {
+    // 한마디는 reply_at 으로 — 다른 지시권자에게는 글(reply)이 오지 않아도 수는 맞다
     const n = noteCounts([
-      { seen_at: "x", acked_at: "x", reply: "네" },
-      { seen_at: "x", acked_at: null, reply: null },
-      { seen_at: null, acked_at: null, reply: null },
+      { seen_at: "x", acked_at: "x", reply_at: "x" },
+      { seen_at: "x", acked_at: null, reply_at: null },
+      { seen_at: null, acked_at: null, reply_at: null },
     ]);
     expect(n).toEqual({ total: 3, seen: 2, acked: 1, replies: 1 });
   });
