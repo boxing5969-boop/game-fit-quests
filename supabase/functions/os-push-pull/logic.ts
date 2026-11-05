@@ -1,7 +1,8 @@
 // os-push-pull 순수 로직 — Deno(Edge Function)와 vitest(src/lib/osPushPull.test.ts)가 같이 쓴다.
 //
-// 153OS 앱 알림 링크(cleanAppLink — home · notices · notice:<id> · classes · branch · coaches · reviews · inquiries)
+// 153OS 앱 알림 링크(cleanAppLink — home · notices · notice:<id> · classes · branch · coaches · reviews · inquiries · membership)
 //   → 마이복서153 앱 안 경로. 앱에 아직 없는 화면(classes 등)은 null = 알림함에서 내용만 펼쳐 본다.
+//   membership = 수강권 탭 (2026-11-05 만료 안내 · 마일리지 알림 — 대표님 "마이복서 153 링크 수강권탭 주면서")
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -12,6 +13,7 @@ const OS_LINKS: Readonly<Record<string, string>> = {
   coaches: "/branch?tab=coaches",
   reviews: "/branch?tab=reviews",
   inquiries: "/inquiries",
+  membership: "/membership",
 };
 
 export function mapOsLink(link: unknown): string | null {

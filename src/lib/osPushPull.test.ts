@@ -16,6 +16,8 @@ describe("os-push-pull — 153OS 알림 링크 → 앱 경로", () => {
     expect(mapOsLink("reviews")).toBe("/branch?tab=reviews");
     expect(mapOsLink("inquiries")).toBe("/inquiries");
     expect(mapOsLink(`inquiry:${NID}`)).toBe(`/inquiries/${NID}`);
+    expect(mapOsLink("membership")).toBe("/membership");
+    expect(mapOsLink(" membership ")).toBe("/membership");
   });
 
   it("앱에 없는 화면 · 이상한 값은 null (알림함에서 내용만)", () => {
