@@ -8,6 +8,7 @@
 import type { StaffDisplay } from "@/lib/coachGrowth";
 import {
   MIND_QUESTIONS,
+  type CheckFail,
   type MindAnswers,
   type MindQuestion,
   type MindSummary,
@@ -20,8 +21,11 @@ export {
   MIND_QUESTIONS,
   MBTI_TYPES,
   MIND_NOTE_LIMITS,
+  TAILOR_LIMITS,
+  checkTailor,
   cleanMindAnswers,
   labelOf,
+  type CheckFail,
   type MindAnswers,
   type MindQuestion,
   type MindSummary,
@@ -49,6 +53,8 @@ export interface ReceivedNote {
   note_id: string;
   created_at: string;
   from: StaffDisplay | null;
+  /** 보낸 분이 대표님인가 — 한마디 안내('대표님도 봐요')에 쓴다 */
+  from_hq?: boolean;
   core: NoteCore;
   body: NoteBody | null;
   tailored: boolean;
@@ -145,13 +151,43 @@ export function answerLabels(a: MindAnswers, q: MindQuestion): string[] {
   return list.map((x) => q.options.find((o) => o.v === x)?.label ?? "").filter(Boolean);
 }
 
-export function noteCounts(items: Array<{ seen_at: string | null; acked_at: string | null; reply: string | null }>) {
+/** 한마디 수는 reply_at 으로 센다 — 같은 지점의 다른 지시권자에게는 한마디 글(reply)이 오지 않는다 */
+export function noteCounts(items: Array<{ seen_at: string | null; acked_at: string | null; reply_at: string | null }>) {
   return {
     total: items.length,
     seen: items.filter((i) => !!i.seen_at).length,
     acked: items.filter((i) => !!i.acked_at).length,
-    replies: items.filter((i) => !!i.reply).length,
+    replies: items.filter((i) => !!i.reply_at).length,
   };
+}
+
+/** 손으로 고친 맞춤 글 검사 결과 → 보낸 분께 보일 말 (오삼코치 답과 같은 검사 · 막지 않고 알려 준다) */
+export function tailorIssueKo(c: CheckFail): string {
+  const m = c.message ? ` ${c.message}` : "";
+  switch (c.reason) {
+    case "empty":
+      return "줄 · 오늘 해 볼 것을 채워 주세요";
+    case "too_many":
+      return "줄이 너무 많아요 (10줄까지)";
+    case "too_long":
+      return "너무 긴 줄이 있어요";
+    case "blame":
+      return `탓하는 말이 있어요 —${m}`;
+    case "phone":
+      return "전화번호가 있어요";
+    case "label":
+      return "MBTI · 성향 같은 꼬리표가 있어요";
+    case "card":
+      return "성향 카드 답을 말로 옮긴 문장이 있어요";
+    case "digits":
+      return `기준에 없는 숫자가 있어요 —${m}`;
+    case "dropped":
+      return `기준의 숫자가 빠졌어요 —${m}`;
+    case "coverage":
+      return `빠진 기준이 있어요 —${m}`;
+    default:
+      return "기준과 다른 곳이 있어요";
+  }
 }
 
 export const emptyCore = (): NoteCore => ({ title: "", points: [{ head: "", body: "" }], why: "", checks: [] });

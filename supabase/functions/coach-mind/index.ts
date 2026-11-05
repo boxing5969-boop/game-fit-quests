@@ -4,8 +4,10 @@
 //   verify_jwt = true (로그인한 앱 사용자만). POST { action, … } — 답은 늘 200 { ok, … } / { ok:false, error }(화면에 보일 말)
 //     · summary  코치님 본인 — 내 성향 카드 → 전달 설명서. 서버 키로 내 카드만 읽고 summary 칸만 쓴다(그사이 카드를 고쳤으면 쓰지 않음)
 //     · core     대표님 · 지점장님 — { text } 메모 → 공통 기준. 저장하지 않는다(메모도)
-//     · tailor   대표님 · 지점장님 — { coach_id, core } → 그 코치님께 맞춘 글. 성향 카드는 서버 키로만 읽는다
-//                (지점장님은 카드를 볼 수 없다 — 글만 돌려준다). 카드가 없으면 { ok, body: null } → 화면은 공통 기준 그대로 보낸다
+//     · tailor   대표님 · 지점장님 — { coach_id, core } → 그 코치님께 맞춘 글. 성향 카드는 서버 키로만 읽는다.
+//                대표님 = 카드 전부 · 지점장님 = '전하는 법' 답만(MBTI · 나는 이런 사람 · 힘들 때 · 직접 쓴 한 줄 · 전달 설명서 빼고 —
+//                맞춘 글은 보낸 분이 읽으니 지점장님 몫 모델은 카드 내용을 모른다). 모델 error 글은 돌려주지 않는다(정해 둔 말만).
+//                카드가 없으면 { ok, body: null } → 화면은 공통 기준 그대로 보낸다
 //   권한: 부른 분 토큰으로 coach_growth_me — staff · can_direct · board(그 지점 코치님) · ai_polish(스위치 coach_feedback_ai = 'on')
 //   모델: 시크릿 CLAUDE_COACH_MIND_MODEL(없으면 claude-opus-5-5 · effort CLAUDE_COACH_MIND_EFFORT 기본 medium) — API 오류면 채팅 모델로 한 번
 //   답 검사: _shared/coachMind.ts (빠진 기준 · 지어낸 숫자 · 꼬리표 · 탓하는 말 · 길이) — 걸리면 무엇이 걸렸는지 붙여 한 번 다시
@@ -114,7 +116,8 @@ async function askChecked<T>(
     if (c.ok) return c;
     if (c.reason === "model_error") return { ok: false, error: c.message || "한두 줄만 더 적어 주세요" };
     console.warn("coach-mind check failed", base.feature, c.reason);
-    note = retryNote(c.reason);
+    // 걸린 곳(빠진 기준 이름 · 빠진 숫자)을 붙여 다시 — 그분이 쓴 글은 붙이지 않는다(echo 는 까닭만)
+    note = retryNote(c.reason, c.reason === "echo" ? undefined : c.message);
   }
   return { ok: false, error: "오삼코치 글이 기준에 맞지 않았어요 — 한 번 더 눌러 주세요" };
 }
@@ -198,31 +201,31 @@ Deno.serve(async (req) => {
     if (!UUID.test(coachId)) return fail("코치님을 골라 주세요");
     const core = cleanCore(body?.core);
     if (!core) return fail("공통 기준을 먼저 정리해 주세요");
-    const findIn = (m: any) => (Array.isArray(m?.board) ? m.board : []).find((p: any) => p?.person?.user_id === coachId);
-    let target = findIn(me);
-    if (!target && me.hq && branch) {
-      // 대표님은 지점을 바꿔 보신다 — 그 지점으로 한 번 더 (coach_growth_me 가 다시 판단)
-      const { data: me2 } = await asUser.rpc("coach_growth_me", { p_branch: branch });
-      target = findIn(me2);
-    }
+    // 그 지점 코치님만 — coach_growth_me 가 부른 분의 지점(대표님은 고른 지점)으로 board 를 준다
+    const target = (Array.isArray(me?.board) ? me.board : []).find((p: any) => p?.person?.user_id === coachId);
     if (!target) return fail("이 지점 코치님만 맞출 수 있어요");
     const { data: row } = await db.from("coach_mind_profiles").select(PROFILE_COLS).eq("coach_id", coachId).maybeSingle();
     if (!row || !row.consent_at) return json({ ok: true, body: null, tailored: false });
     if (await overLimit(db, uid, "coach_mind_tailor")) return fail("오늘은 맞춤을 많이 만들었어요 — 내일 다시 눌러 주세요");
     const profile = row as MindProfileInput & { summary?: any };
+    // 카드 내용은 본인 · 대표님만 — 지점장님 몫 지시문에는 '전하는 법' 답만 넣는다(맞춘 글은 보낸 분이 읽으니
+    // MBTI · 힘들 때 · 직접 쓴 한 줄 · 전달 설명서는 모델에게도 주지 않는다)
+    const full = me?.hq === true;
+    const coachName = String(target.person?.name ?? "");
+    const coachTitle = String(target.person?.title ?? "");
     const r = await askChecked(
       {
         feature: "coach_mind_tailor",
         system: TAILOR_SYSTEM,
-        user: buildTailorUser({ name: target.person?.name, title: target.person?.title }, core, profile, profile.summary),
+        user: buildTailorUser({ name: coachName, title: coachTitle }, core, profile, full ? profile.summary : null, full ? "full" : "delivery"),
         schema: TAILOR_SCHEMA,
         maxTokens: 10000,
         uid,
         db,
-        meta: { coach_id: coachId },
+        meta: { coach_id: coachId, scope: full ? "full" : "delivery" },
       },
       (raw) => {
-        const c = checkTailor(raw, { core, profile });
+        const c = checkTailor(raw, { core, profile: full ? profile : null, allow: `${coachName} ${coachTitle}` });
         return c.ok ? { ok: true, value: c.body } : c;
       },
     );

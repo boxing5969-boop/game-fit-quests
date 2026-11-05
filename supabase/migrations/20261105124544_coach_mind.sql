@@ -219,6 +219,7 @@ begin
     from (select n.created_at,
                  jsonb_build_object('id', d.id, 'note_id', n.id, 'created_at', n.created_at,
                                     'from', public._strategy_display(n.author_id),
+                                    'from_hq', public._strategy_hq(n.author_id),
                                     'core', n.core, 'body', d.body, 'tailored', d.body is not null,
                                     'seen_at', d.seen_at, 'acked_at', d.acked_at,
                                     'reply', d.reply, 'reply_at', d.reply_at) as j
@@ -242,6 +243,8 @@ begin
               left join public.coach_mind_asks a on a.coach_id = s.user_id
              where s.user_id <> v_uid and not public._strategy_hq(s.user_id)) t;
 
+    -- 보낸 피드백 — 같은 지점의 다른 지시권자는 제목(알림 제목과 같은 한 줄) · 읽음 · 확인 · 한마디 수만.
+    -- 기준 · 맞춘 글 · 한마디 글은 보낸 분 · 대표님만(한 분께만 보낸 피드백도 있어서)
     select coalesce(jsonb_agg(x.j order by x.created_at desc), '[]'::jsonb) into v_sent
       from (select n.created_at,
                    jsonb_build_object(
@@ -333,6 +336,7 @@ begin
 end $$;
 
 -- 성향 카드 부탁하기 — 카드가 없는 그 지점 코치님께 알림(사람마다 20시간에 한 번). 보낸 수를 돌려준다
+--   부탁 기록을 먼저 잡고(20시간 안이면 잡히지 않음) 잡힌 분께만 알림 — 두 분이 동시에 눌러도 한 번만 간다
 create or replace function public.coach_mind_ask(p_branch text default null)
 returns integer language plpgsql security definer set search_path to 'public' as $$
 declare
@@ -346,24 +350,30 @@ begin
   v_branch := public._strategy_scope(v_uid, p_branch);
   v_by := public._strategy_display(v_uid);
   for r in
-    select s.user_id
-      from public._strategy_branch_staff(v_branch) s
-     where s.user_id <> v_uid and not public._strategy_hq(s.user_id)
-       and not exists (select 1 from public.coach_mind_profiles m where m.coach_id = s.user_id and m.consent_at is not null)
-       and not exists (select 1 from public.coach_mind_asks a where a.coach_id = s.user_id and a.asked_at > now() - interval '20 hours')
+    with cand as (
+      select s.user_id
+        from public._strategy_branch_staff(v_branch) s
+       where s.user_id <> v_uid and not public._strategy_hq(s.user_id)
+         and not exists (select 1 from public.coach_mind_profiles m where m.coach_id = s.user_id and m.consent_at is not null)
+    )
+    insert into public.coach_mind_asks as a (coach_id, asked_by, asked_at)
+    select c.user_id, v_uid, now() from cand c
+    on conflict (coach_id) do update set asked_by = excluded.asked_by, asked_at = excluded.asked_at
+     where a.asked_at <= now() - interval '20 hours'
+    returning a.coach_id
   loop
     insert into public.notifications (user_id, title, body, link)
-    values (r.user_id, '🧭 코치 성향 카드를 부탁드려요',
+    values (r.coach_id, '🧭 코치 성향 카드를 부탁드려요',
             coalesce(v_by ->> 'name', '') || ' ' || coalesce(v_by ->> 'title', '') || '님이 코치님께 맞는 방식으로 피드백을 전하고 싶어 해요 · 5분',
             '/office?tab=strategy&s=std&mind=1');
-    insert into public.coach_mind_asks (coach_id, asked_by, asked_at) values (r.user_id, v_uid, now())
-    on conflict (coach_id) do update set asked_by = excluded.asked_by, asked_at = excluded.asked_at;
     v_n := v_n + 1;
   end loop;
   return v_n;
 end $$;
 
 -- 피드백 보내기 — 공통 기준 하나 + 코치님마다 {coach, body|null}. 받는 분께 알림
+--   · 맞춘 글(body)은 동의한 성향 카드가 있는 코치님께만 남긴다 — 카드가 없으면 기준 그대로(null)
+--   · 같은 분이 2분 안에 같은 기준을 다시 보내면(두 번 누름 · 받는 분 더하기) 그 피드백에 이어 붙이고, 이미 받은 분께는 다시 보내지 않는다
 create or replace function public.coach_note_send(p_branch text, p_core jsonb, p_items jsonb)
 returns uuid language plpgsql security definer set search_path to 'public' as $$
 declare
@@ -375,6 +385,7 @@ declare
   it jsonb;
   v_coach uuid;
   v_done uuid[] := '{}'::uuid[];
+  v_did uuid;
 begin
   if not public._strategy_can_direct(v_uid) then raise exception '피드백은 대표님 · 지점장님만 보낼 수 있어요'; end if;
   v_branch := public._strategy_scope(v_uid, p_branch);
@@ -384,7 +395,17 @@ begin
   end if;
   if jsonb_array_length(p_items) > 30 then raise exception '한 번에 30명까지 보낼 수 있어요'; end if;
 
-  insert into public.coach_notes (branch_name, author_id, core) values (v_branch, v_uid, v_core) returning id into v_id;
+  -- 같은 분의 보내기는 한 줄로 — 거의 동시에 두 번 눌러도 두 번째는 첫 번째가 끝난 뒤 그 피드백을 찾는다
+  perform pg_advisory_xact_lock(hashtext('coach_note_send:' || v_uid::text));
+  select n.id into v_id
+    from public.coach_notes n
+   where n.author_id = v_uid and n.branch_name = v_branch and n.deleted_at is null
+     and n.core = v_core and n.created_at > now() - interval '2 minutes'
+   order by n.created_at desc
+   limit 1;
+  if v_id is null then
+    insert into public.coach_notes (branch_name, author_id, core) values (v_branch, v_uid, v_core) returning id into v_id;
+  end if;
   v_by := public._strategy_display(v_uid);
 
   for it in select t.value from jsonb_array_elements(p_items) t loop
@@ -395,7 +416,13 @@ begin
     continue when v_coach = any (v_done);
     if public._coach_target_branch(v_uid, v_coach) is distinct from v_branch then raise exception '다른 지점 코치님이 섞여 있어요'; end if;
     v_done := v_done || v_coach;
-    insert into public.coach_note_deliveries (note_id, coach_id, body) values (v_id, v_coach, public._coach_note_body(it -> 'body'));
+    insert into public.coach_note_deliveries (note_id, coach_id, body)
+    values (v_id, v_coach,
+            case when exists (select 1 from public.coach_mind_profiles m where m.coach_id = v_coach and m.consent_at is not null)
+                 then public._coach_note_body(it -> 'body') end)
+    on conflict (note_id, coach_id) do nothing
+    returning id into v_did;
+    continue when v_did is null;
     insert into public.notifications (user_id, title, body, link)
     values (v_coach, '💬 피드백이 왔어요 · ' || coalesce(v_by ->> 'name', '') || ' ' || coalesce(v_by ->> 'title', ''),
             left(v_core ->> 'title', 60), '/office?tab=strategy&s=std');
