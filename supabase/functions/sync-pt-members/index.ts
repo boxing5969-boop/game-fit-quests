@@ -15,7 +15,14 @@
 //           한 번에 너무 많이(현재 PT 회원의 50% 초과, 최소 5명) 끝나면 종료 처리만 보류하고 보고한다.
 // 체험용 계정(profiles.is_test_account)은 건드리지 않는다.
 //
-// 흐름: pg_cron(sync-pt-members, 매시 40분) → 이 함수. 인증은 auto-sync-members 와 같은
+// 2026-11-06 (v5 · 대표님 「진행하자」 — 메이삼 11/1 「끝남」 카드 오탐 · 재등록 겹침): 수업권마다 따로 센다.
+//   153OS 스냅샷에 pt_tickets(PT 수업권 목록 [{id,name,left,total,start,end,on}])가 있으면 profiles.pt_tickets 로 그대로 옮기고,
+//   profiles.pt_remaining = 살아 있는 장(on)의 남은 횟수 합으로 쓴다(재등록 직후 두 장이면 합). 차감 기록은 DB 트리거
+//   _ops_pt_capture 가 수업권(id)마다 비교해서 남긴다. 153OS 에 pt_tickets 칸이 아직 없으면(워커 배포 전) 예전과 똑같이 돈다.
+//   PT 가 끝나 pt_* 를 비울 때도 목록은 마지막 모습(on=false)으로 남겨 트리거가 마지막 수업 · 기한 만료를 가를 수 있게 한다.
+//   7일 확인 끊김 · 기한 지남으로 비울 때는 목록을 건드리지 않는다(확인 없이 「끝남」 카드를 만들지 않게).
+//
+// 흐름: pg_cron(sync-pt-members, 매시 45분 — 153OS 홀딩 스윕(매시 40분) 뒤) → 이 함수. 인증은 auto-sync-members 와 같은
 // x-auto-key(internal_sync_config.auto_sync_key). verify_jwt=false 필수(config.toml).
 // 이력: member_sync_runs(mode='pt-sync'). body {dry_run:true} 면 쓰지 않고 결과만 돌려준다.
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -44,14 +51,58 @@ const addDays = (d: string, n: number) => new Date(Date.parse(`${d}T00:00:00Z`) 
 type OsPtRow = {
   id: string; normalized_phone: string | null; member_name: string | null;
   pt_ticket_name: string | null; pt_remaining: number | null; pt_end_date: string | null; pt_checked_at: string | null;
+  pt_tickets?: unknown;
 };
 type AppProfile = {
   user_id: string; phone_number: string | null; pt_until: string | null; pt_ticket: string | null;
   pt_remaining: number | null; pt_end_date: string | null; pt_checked_at: string | null; is_test_account: boolean | null;
+  pt_tickets?: unknown;
+};
+/** PT 수업권 한 장 — 153OS 워커(브로제이 lesson_ticket)가 만든 모양 그대로. on = 확인한 날 살아 있음 */
+export type PtTicket = {
+  id: string; name: string; left: number | null; total: number | null; start: string | null; end: string | null; on: boolean;
 };
 type Want = {
   until: string; ticket: string | null; remaining: number | null; endDate: string | null; checkedAt: string | null; label: string;
+  /** 수업권 목록 — 153OS 에 목록이 없으면 null(예전 방식) */
+  tickets: PtTicket[] | null;
 };
+
+const isDay = (x: unknown): string | null => {
+  const s = String(x ?? "").slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
+};
+const isCount = (x: unknown): number | null => (typeof x === "number" && Number.isFinite(x) ? Math.trunc(x) : null);
+/** 153OS pt_tickets → 앱에 저장할 모양(키 순서 · 정렬 고정). 목록이 아니면 null */
+export function normTickets(v: unknown): PtTicket[] | null {
+  if (!Array.isArray(v)) return null;
+  const out: PtTicket[] = [];
+  for (const raw of v) {
+    if (!raw || typeof raw !== "object") continue;
+    const r = raw as Record<string, unknown>;
+    const id = String(r.id ?? "").trim().slice(0, 80);
+    if (!id) continue;
+    out.push({
+      id,
+      name: String(r.name ?? "").trim().slice(0, 60) || "PT",
+      left: isCount(r.left),
+      total: isCount(r.total),
+      start: isDay(r.start),
+      end: isDay(r.end),
+      on: r.on === true,
+    });
+  }
+  out.sort((a, b) => (b.end ?? "9999-12-31").localeCompare(a.end ?? "9999-12-31") || a.id.localeCompare(b.id));
+  return out.slice(0, 12);
+}
+/** 살아 있는 장(on)의 남은 횟수 합 — 숫자가 하나도 없으면 null */
+export function sumLeft(ts: PtTicket[]): number | null {
+  let n = 0, any = false;
+  for (const t of ts) if (t.on && t.left != null) { n += t.left; any = true; }
+  return any ? n : null;
+}
+/** 저장된 목록과 같은가 (jsonb 는 키 순서를 바꿔 돌려주므로 정리한 뒤 비교) */
+const sameTickets = (stored: unknown, want: PtTicket[] | null) => JSON.stringify(normTickets(stored)) === JSON.stringify(want);
 /** 시각 비교용 — 같은 순간이면 같은 글자 (DB 는 +00:00, 153OS 는 Z 로 줄 수 있다) */
 const sameInstant = (a: string | null, b: string | null) =>
   (a ?? null) === (b ?? null) || (!!a && !!b && Date.parse(a) === Date.parse(b));
@@ -109,9 +160,26 @@ Deno.serve(async (req) => {
     }
 
     // 3) 153OS PT 회원 — 살아 있는 PT 수업권이 확인된 행. 같은 번호가 여러 지점에 있으면 유효일이 가장 늦은 것.
-    const ptRows = await fetchAll<OsPtRow>((f, t) => os.from("member_snapshots")
-      .select("id, normalized_phone, member_name, pt_ticket_name, pt_remaining, pt_end_date, pt_checked_at")
-      .eq("pt_active", true).not("pt_checked_at", "is", null).order("id").range(f, t));
+    //    pt_tickets(수업권 목록) 칸은 153OS 워커 배포 뒤에 생긴다 — 없으면 예전 칸만 읽는다.
+    const OS_SEL = "id, normalized_phone, member_name, pt_ticket_name, pt_remaining, pt_end_date, pt_checked_at";
+    const readPt = (sel: string) => fetchAll<OsPtRow>((f, t) => os.from("member_snapshots")
+      .select(sel).eq("pt_active", true).not("pt_checked_at", "is", null).order("id").range(f, t));
+    //    앱 profiles.pt_tickets 칸(마이그레이션 20261106154112)도 없으면 목록은 쓰지 않는다 — 함수가 먼저 배포돼도 예전대로 돈다.
+    const appProbe = await app.from("profiles").select("pt_tickets").limit(1);
+    const appHasTickets = !appProbe.error;
+    let hasTickets = appHasTickets;
+    let ptRows: OsPtRow[];
+    if (!hasTickets) {
+      ptRows = await readPt(OS_SEL);
+    } else {
+      try {
+        ptRows = await readPt(`${OS_SEL}, pt_tickets`);
+      } catch (e) {
+        if (!/pt_tickets/.test(e instanceof Error ? e.message : String(e))) throw e;
+        hasTickets = false;
+        ptRows = await readPt(OS_SEL);
+      }
+    }
     const want = new Map<string, Want>();
     let badPhone = 0, lapsed = 0;
     for (const r of ptRows) {
@@ -121,19 +189,24 @@ Deno.serve(async (req) => {
       if (!until || until < today) { lapsed++; continue; } // 종료일이 지났거나 확인이 7일 넘게 끊김 — PT 아님
       const prev = want.get(phone);
       if (!prev || until > prev.until) {
+        const tickets = hasTickets ? normTickets(r.pt_tickets) : null;
+        const single = typeof r.pt_remaining === "number" ? r.pt_remaining : null;
         want.set(phone, {
           until,
           ticket: String(r.pt_ticket_name ?? "").trim().slice(0, 60) || null,
-          remaining: typeof r.pt_remaining === "number" ? r.pt_remaining : null,
+          // 수업권 목록이 있으면 살아 있는 장의 남은 횟수 합(재등록 직후 두 장이면 합), 없으면 대표 한 장
+          remaining: tickets && tickets.length ? (sumLeft(tickets) ?? single) : single,
           endDate: r.pt_end_date ? String(r.pt_end_date).slice(0, 10) : null,
           checkedAt: r.pt_checked_at ?? null,
           label: mask(r.member_name, phone),
+          tickets,
         });
       }
     }
 
     // 4) 앱 계정 — PT 회원 번호로 찾기 + 지금 PT 표시가 있는 계정 전부
-    const SEL = "user_id, phone_number, pt_until, pt_ticket, pt_remaining, pt_end_date, pt_checked_at, is_test_account";
+    const SEL = "user_id, phone_number, pt_until, pt_ticket, pt_remaining, pt_end_date, pt_checked_at, is_test_account"
+      + (appHasTickets ? ", pt_tickets" : "");
     const phones = [...want.keys()];
     const byPhone = new Map<string, AppProfile[]>();
     for (let i = 0; i < phones.length; i += 150) {
@@ -158,13 +231,16 @@ Deno.serve(async (req) => {
         if (p.is_test_account === true) { testSkipped++; continue; } // 체험용 계정은 그대로
         if (
           p.pt_until === w.until && (p.pt_ticket ?? null) === w.ticket && (p.pt_remaining ?? null) === w.remaining &&
-          (p.pt_end_date ?? null) === w.endDate && sameInstant(p.pt_checked_at, w.checkedAt)
+          (p.pt_end_date ?? null) === w.endDate && sameInstant(p.pt_checked_at, w.checkedAt) &&
+          (w.tickets === null || sameTickets(p.pt_tickets, w.tickets))
         ) continue;
         const wasActive = !!p.pt_until && p.pt_until >= today;
         if (!dryRun) {
           const { error } = await app.from("profiles")
             .update({
               pt_until: w.until, pt_ticket: w.ticket, pt_remaining: w.remaining, pt_end_date: w.endDate, pt_checked_at: w.checkedAt,
+              // 목록은 153OS 가 줄 때만 쓴다 — 목록이 없는 회원의 기존 목록을 지우지 않는다
+              ...(w.tickets !== null ? { pt_tickets: w.tickets } : {}),
             }).eq("user_id", p.user_id);
           if (error) { failed.push(`${w.label}: ${error.message}`); continue; }
         }
@@ -180,11 +256,18 @@ Deno.serve(async (req) => {
       .map((p) => normPhone(p.phone_number))
       .filter((x) => x.length >= 10))];
     const checkedPhones = new Set<string>();
+    /** 끝난 회원의 마지막 수업권 목록(on=false 인 장들) — 트리거가 마지막 수업 · 기한 만료를 가른다 */
+    const lastTickets = new Map<string, PtTicket[]>();
     for (let i = 0; i < livePhones.length; i += 150) {
-      const { data, error } = await os.from("member_snapshots").select("normalized_phone")
+      const { data, error } = await os.from("member_snapshots").select(hasTickets ? "normalized_phone, pt_tickets" : "normalized_phone")
         .in("normalized_phone", livePhones.slice(i, i + 150)).not("pt_checked_at", "is", null);
       if (error) return json({ error: "OS 조회 실패: " + error.message }, 502);
-      for (const r of (data ?? []) as { normalized_phone: string | null }[]) checkedPhones.add(normPhone(r.normalized_phone));
+      for (const r of (data ?? []) as { normalized_phone: string | null; pt_tickets?: unknown }[]) {
+        const k = normPhone(r.normalized_phone);
+        checkedPhones.add(k);
+        const ts = hasTickets ? normTickets(r.pt_tickets) : null;
+        if (ts) lastTickets.set(k, ts);
+      }
     }
     const toClear: { p: AppProfile; label: string; expired: boolean }[] = [];
     let noEvidence = 0;
@@ -207,8 +290,13 @@ Deno.serve(async (req) => {
     let ended = 0, tidied = 0;
     for (const { p, label, expired } of clearList) {
       if (!dryRun) {
+        // 확인으로 끝난 회원만 마지막 목록을 같이 쓴다(기한 지남 · 7일 끊김 정리는 목록을 그대로 둔다)
+        const last = expired ? undefined : lastTickets.get(normPhone(p.phone_number));
         const { error } = await app.from("profiles")
-          .update({ pt_until: null, pt_ticket: null, pt_remaining: null, pt_end_date: null, pt_checked_at: null }).eq("user_id", p.user_id);
+          .update({
+            pt_until: null, pt_ticket: null, pt_remaining: null, pt_end_date: null, pt_checked_at: null,
+            ...(last ? { pt_tickets: last } : {}),
+          }).eq("user_id", p.user_id);
         if (error) { failed.push(`${label}: ${error.message}`); continue; }
       }
       if (expired) tidied++; else ended++;
@@ -223,6 +311,7 @@ Deno.serve(async (req) => {
       lapsed ? `기간·확인이 지난 PT 기록 ${lapsed}건` : null,
       badPhone ? `번호 형식 오류 ${badPhone}건` : null,
       held || null,
+      hasTickets ? `수업권 목록 ${[...want.values()].filter((w) => w.tickets !== null).length}명` : null,
       `${elapsed}초${dryRun ? " (dry-run)" : ""}`,
     ].filter(Boolean).join(" / ");
 
