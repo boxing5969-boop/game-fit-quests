@@ -596,6 +596,11 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - `useModalDismiss(open, onClose)` 또는 `lockBodyScroll()`([src/lib/scrollLock.ts](src/lib/scrollLock.ts))만 쓴다 — 잠금 개수를 세서 마지막 창이 닫힐 때만 푼다.
 - `document.body.style.overflow` 를 창마다 직접 기억·복원하지 않는다. 창이 겹치면(지금 운동 중 전체화면 → 회원 카드) 닫은 뒤에도 hidden 이 남아 페이지가 안 내려간다(대표님: "지금운동중 회원카드 클릭후 밑으로 스크롤이 안됨").
 
+### 홈 당겨서 새로고침 (2026-11-06 대표님 "마이복서 153홈에서 위로 한번더 올리면 새로고침되게 해줘")
+
+- 브라우저 기본 당겨서 새로고침은 `index.css`(html, body `overscroll-behavior: none`)로 꺼 둔 그대로 — 홈(`/home` · `/myboxer`)에만 [src/components/home/HomePullToRefresh.tsx](src/components/home/HomePullToRefresh.tsx)를 둔다. 맨 위에서 72px(저항 뒤) 넘게 끌고 놓으면 알약 표시 '놓으면 새로고침' → 도는 표시 → '새로고침 완료'.
+- 놓으면 `queryClient.refetchQueries({ type: "active" })` + `refreshProfile()`(내 정보 · 역할 · 진행도) — 페이지를 통째로 다시 열지 않는다(흰 화면 · 앱 접속 출석 · 보상 자동 받기가 다시 돌지 않게). 창이 열려 있음(body 스크롤 잠금 · `aria-modal`) · 가로 밀기 · 안쪽 스크롤 칸이 맨 위가 아님 · 홈의 전체 화면 · 시트가 열림이면 받지 않는다. 시험 `HomePullToRefresh.test.tsx`.
+
 ### Claude API 크레딧 (2026-10-15 연결)
 
 - Console 조직 **153복싱짐** — Max 플랜 월 $200 크레딧 (매달 16일 지급). 조직 월 한도 $500, 워크스페이스 한도는 매달 1일(UTC) 초기화.

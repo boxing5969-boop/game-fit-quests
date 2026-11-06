@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef, Fragment } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { User, Ticket, Trophy, Settings, ChevronDown, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -64,6 +65,7 @@ import BirthdayCongratsCard from "@/components/home/BirthdayCongratsCard";
 import GrowthLessonCard from "@/components/home/GrowthLessonCard";
 import OfficeEntryCard from "@/components/office/OfficeEntryCard";
 import CommunityTodayStrip from "@/components/home/CommunityTodayStrip";
+import HomePullToRefresh from "@/components/home/HomePullToRefresh";
 import { useTodayBirthdays } from "@/services/birthdayService";
 import HandWrapPracticeCard from "@/components/handwrap/HandWrapPracticeCard";
 import TitleMatchInvitePopup from "@/components/titlematch/TitleMatchInvitePopup";
@@ -98,7 +100,8 @@ import {
  */
 const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
   const navigate = useNavigate();
-  const { user, profile, progress, role, refreshProgress } = useAuth();
+  const { user, profile, progress, role, refreshProgress, refreshProfile } = useAuth();
+  const queryClient = useQueryClient();
   const { data: levels } = useLevels();
   // useMyBadges 호출 제거 — 배지 섹션 제거 후 결과 미사용인데 홈 진입마다
   // member_badges 조회가 나감. 복구 시 useQuestData 의 훅을 다시 호출하면 됨.
@@ -204,6 +207,16 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
     }
     openChallenge(session);
   }, [activitySession, checkedInToday, openChallenge]);
+
+  // 맨 위에서 한 번 더 당기면 새로고침 (2026-11-06 대표님) — 화면에 떠 있는 자료 + 내 정보 · 진행도를 다시 받는다.
+  // 페이지를 통째로 다시 열지 않아 빠르고, 출석 · 보상 같은 첫 진입 동작은 다시 돌지 않는다.
+  const handlePullRefresh = useCallback(async () => {
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      toast.error("인터넷에 연결되어 있지 않아요");
+      return;
+    }
+    await Promise.allSettled([queryClient.refetchQueries({ type: "active" }), refreshProfile()]);
+  }, [queryClient, refreshProfile]);
 
   if (!profile || !progress) return <LoadingState />;
 
@@ -843,6 +856,12 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
 
       {/* 오늘 도전 — 전체 화면 (홈 어느 보기에서든) */}
       {challengeFlow}
+
+      {/* 맨 위에서 한 번 더 당기면 새로고침 — 전체 화면 · 시트 · 창이 열려 있으면 받지 않는다 */}
+      <HomePullToRefresh
+        onRefresh={handlePullRefresh}
+        enabled={!challengeOpen && !showCustomize && !likeListOpen && !nickEditOpen && !levelUpModal.show}
+      />
 
       {/* 🏆 레벨 10 회원 — "타이틀매치로 다음 리그로" 팝업 + '타이틀미션 보기' (하루 한 번 · 신청 전 회원만, 2026-10-14) */}
       <TitleMatchInvitePopup />
