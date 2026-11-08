@@ -64,10 +64,19 @@ describe("TV 화면 바꾸기 — 앱 화면 상태", () => {
   });
 
   it("켜짐 · 지금 화면 · 바꾸는 중 · 꺼짐", () => {
-    expect(tvStatusLine(st[0], NOW)).toEqual({ online: true, text: "지금 153 PB 기록", pending: false });
-    expect(tvStatusLine(st[1], NOW)).toMatchObject({ online: true, pending: true, text: "바꾸는 중…" }); // 기본(2) 인데 1을 보여 줌
+    expect(tvStatusLine(st[0], NOW)).toEqual({ online: true, text: "켜짐 · 153 PB 기록", pending: false });
+    // 아무도 고른 적 없는 번호면 TV 시작 화면 그대로 — 바꾸는 중 아님
+    expect(tvStatusLine(st[1], NOW)).toMatchObject({ online: true, pending: false, text: "켜짐 · 지금 운동 중" });
+    // 기본으로 고른 뒤인데 다른 화면이면 바꾸는 중
+    expect(tvStatusLine({ ...st[1], setAt: ago(3000) }, NOW)).toMatchObject({ online: true, pending: true, text: "바꾸는 중…" });
     expect(tvStatusLine(st[2], NOW).text).toBe("아직 이 번호로 켠 TV가 없어요");
     expect(tvStatusLine(st[3], NOW)).toMatchObject({ online: false, text: "꺼져 있어요 · 마지막 5시간 전" });
+  });
+
+  it("1 · 2번 기본 화면이 짝 PB 화면이면 = 측정 중 자동 전환", () => {
+    const s = { slot: "2" as const, mode: "home" as const, setAt: ago(60_000), setBy: null, showing: "pb2" as const, seenAt: ago(5000) };
+    expect(tvStatusLine(s, NOW)).toEqual({ online: true, text: "켜짐 · 153 PB 기록 · 측정 중 자동", pending: false });
+    expect(tvStatusLine({ ...s, showing: "pb1" }, NOW).pending).toBe(true); // 2번이 pb1 이면 자동 전환이 아님
   });
 
   it("보일 줄 — 1 · 2번은 늘, 3 · 4번은 켠 적이 있거나 골라 둔 것만", () => {

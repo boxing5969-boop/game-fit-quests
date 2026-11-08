@@ -6,6 +6,8 @@
  *     · 앱에서 바꾸면 채널 tv-mode:<지점 이름> 으로 이름 없는 신호가 온다 → 바로 다시 읽는다(신호를 놓쳐도 1분 안에).
  *     · 고른 화면이 지금 화면과 다르면 그 주소로 넘어간다(열쇠 ?k= 등 쿼리 유지 · 번호와 다른 화면이면 ?tv=<번호>).
  *   앱 안 미리보기(iframe)에서는 아무것도 하지 않는다 — 미리보기가 TV 인 척 알리거나 저절로 넘어가면 안 된다.
+ *   (창이 1920×1080 이 아닌 TV 는 TvFitFrame 이 같은 주소를 embed=1 iframe 으로 띄운다 — 그 안은 TV 이므로 그대로 한다.
+ *    넘어가는 것도 그 iframe 안에서 — 바깥 주소는 TV 시작 주소 그대로라 20분 새로고침 · 껐다 켜도 다시 고른 화면으로 간다.)
  *   153 PB 자동 전환으로 들어온 화면(holdUntilNewCommand)은 들어온 뒤에 새로 고른 화면만 따른다 — 그 전 설정이면 자동 복귀를 기다린다.
  *   보내기 · 읽기는 늘 조용히 실패한다(TV 화면은 그대로).
  */
@@ -41,11 +43,15 @@ const nameCache = new Map<string, string>();
 export function useTvRemote({ rawBranchCode, branchName, slot, showing, holdUntilNewCommand = false }: Opts) {
   const navigate = useNavigate();
   const { search } = useLocation();
+  // iframe 안이면 아무것도 안 한다 — 단 TvFitFrame(창이 1920×1080 이 아닌 TV 는 같은 주소를 embed=1 iframe 으로 띄움) 안은 TV 그 자체다.
+  //   앱 미리보기(LiveBoardPreviewPage)는 embed 없이 /manager/... 안에 띄우므로 여기서 걸러진다.
   const inFrame = useMemo(() => {
     try {
-      return window.self !== window.top;
+      if (window.self === window.top) return false;
+      const embed = new URLSearchParams(window.location.search).get("embed") === "1";
+      return !(embed && window.parent.location.pathname.startsWith("/tv/"));
     } catch {
-      return true;
+      return true; // 다른 사이트 안
     }
   }, []);
   const active = !inFrame && !!slot && !!rawBranchCode;
@@ -150,9 +156,10 @@ export function useTvRemote({ rawBranchCode, branchName, slot, showing, holdUnti
     };
   }, [active, name, slot, check]);
 
-  // 고른 화면으로 넘어가기
+  // 고른 화면으로 넘어가기 — 그 번호에 누가 화면을 고른 적이 있을 때만(set_at). 한 번도 안 골랐으면 TV 시작 주소 그대로
+  //   (예: 시작 페이지를 /tv/<지점>/pb1 로 직접 넣은 TV 는 앱에서 고르기 전까지 pb1 그대로)
   useEffect(() => {
-    if (!active || !state || !slot || !rawBranchCode) return;
+    if (!active || !state || !state.setAt || !slot || !rawBranchCode) return;
     const desired = tvDesired(slot, state.mode);
     if (desired === showing) return;
     if (holdUntilNewCommand && baseline.current != null && state.setAt <= baseline.current) return;

@@ -99,8 +99,14 @@ export const tvStatusLine = (s: TvSlotState, now: number): { online: boolean; te
     const ago = min < 60 ? `${min}분 전` : min < 60 * 24 ? `${Math.round(min / 60)}시간 전` : `${Math.round(min / 1440)}일 전`;
     return { online: false, text: `꺼져 있어요 · 마지막 ${ago}`, pending: false };
   }
-  const pending = s.showing !== desired;
-  return { online: true, text: pending ? "바꾸는 중…" : `지금 ${tvScreenLabel(s.showing)}`, pending };
+  if (s.showing === desired) return { online: true, text: `켜짐 · ${tvScreenLabel(s.showing)}`, pending: false };
+  // 1 · 2번 기본 화면인데 짝 PB 화면 = 153 PB 측정 중 자동 전환 (끝나고 3분 뒤 돌아온다)
+  if (desired === s.slot && s.showing === (s.slot === "1" ? "pb1" : s.slot === "2" ? "pb2" : null)) {
+    return { online: true, text: `켜짐 · ${tvScreenLabel(s.showing)} · 측정 중 자동`, pending: false };
+  }
+  // 아직 아무도 고르지 않은 번호 — TV 는 시작 주소 그대로 둔다(useTvRemote)
+  if (!s.setAt) return { online: true, text: `켜짐 · ${tvScreenLabel(s.showing)}`, pending: false };
+  return { online: true, text: "바꾸는 중…", pending: true };
 };
 
 /** 화면에 보일 TV 줄 — 1 · 2번은 늘, 3 · 4번은 켠 적이 있거나 화면을 골라 둔 것만 */
