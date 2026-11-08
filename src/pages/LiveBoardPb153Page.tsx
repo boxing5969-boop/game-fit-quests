@@ -6,6 +6,8 @@
  *   · 측정 중 표시는 코치 측정 화면이 보내는 신호(채널 test153-live:<지점 이름>, 이름 없음)를 따른다.
  *   · /tv/:지점/1 · 2 가 측정 신호를 받으면 이 화면으로 넘어온다(?auto=1) → 마지막 측정이 끝나고 3분 뒤 돌아간다.
  *   · 주소 쿼리: ?demo=1 예시 화면 · ?lite=1 시범 영상 대신 정지 그림(저사양 TV) · ?k= TV 열쇠 · ?pb=0 자동 전환 끄기(1 · 2번 화면)
+ *     · ?tv=<번호> 관리자 앱 › 라이브보드에서 이 화면으로 바꾼 TV 번호 (없으면 pb1 = 1번 · pb2 = 2번) — useTvRemote
+ *   · 2단계(히트): 닉네임 · 지난번의 나는 usePb153Live 의 people (board_test153_live)
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
@@ -13,7 +15,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { resolveBranchCode } from "@/lib/branchAlias";
 import { isBoardKeyError, readBoardKey } from "@/lib/boardKey";
 import { usePb153Live } from "@/hooks/usePb153Live";
-import { PB_AUTO_RETURN_MS, PB_DEMO_BOARD, pbRunPhase, pbSearchWith, type PbBoardData } from "@/lib/pbBoard";
+import { useTvRemote } from "@/hooks/useTvRemote";
+import { PB_AUTO_RETURN_MS, PB_DEMO_BOARD, pbRunPhase, type PbBoardData } from "@/lib/pbBoard";
+import { tvNaturalSlot, tvRouteFor, tvSearchFor, tvSlotFrom } from "@/lib/tvRemote";
 import { PB_TV_CSS } from "@/components/liveBoard/pb/pbTvStyles";
 import PbCourseBoard from "@/components/liveBoard/pb/PbCourseBoard";
 import PbRecordBoard from "@/components/liveBoard/pb/PbRecordBoard";
@@ -46,6 +50,10 @@ const LiveBoardPb153Page = ({ screen }: { screen: "pb1" | "pb2" }) => {
   const branchLabel = (branchName || "153복싱짐").replace(/^153복싱짐\s*/, "") || "153복싱짐";
 
   const live = usePb153Live(branchName, demo);
+
+  // 📺 관리자 앱 › 라이브보드에서 고른 화면 따라가기 — 자동 전환으로 들어왔으면 들어온 뒤 새로 고른 것만
+  const slot = demo ? null : tvSlotFrom(search, tvNaturalSlot(screen));
+  const remote = useTvRemote({ rawBranchCode, branchName, slot, showing: screen, holdUntilNewCommand: auto });
 
   // 0.5초 시계 — 큰 타이머는 초 단위라 이걸로 충분하다(TV 부담 줄이기 · 10/26 렉 규칙)
   const [now, setNow] = useState(() => Date.now());
@@ -96,9 +104,29 @@ const LiveBoardPb153Page = ({ screen }: { screen: "pb1" | "pb2" }) => {
   useEffect(() => {
     if (!auto || demo || !rawBranchCode) return;
     if (!running && Date.now() - lastActive.current > PB_AUTO_RETURN_MS) {
-      navigate(`/tv/${rawBranchCode}/${screen === "pb1" ? "1" : "2"}${pbSearchWith(search, false)}`, { replace: true });
+      // 돌아갈 곳 = 이 TV 번호에 골라 둔 화면(기본이면 1 · 2번 원래 화면). 같은 화면이면 자동 표시만 뺀다
+      const back = slot ?? tvNaturalSlot(screen);
+      const target = remote.desired ?? back;
+      navigate(`${tvRouteFor(rawBranchCode, target)}${tvSearchFor(search, back, target)}`, { replace: true });
     }
-  }, [now, auto, demo, running, rawBranchCode, screen, search, navigate]);
+  }, [now, auto, demo, running, rawBranchCode, screen, search, navigate, slot, remote.desired]);
+
+  // 20분마다 새로고침 (새로 배포한 화면 받기 · 오래 켜 둔 TV 메모리) — 달리는 측정 · 축하 화면이 없을 때만 (라이브보드와 같은 규칙)
+  const idleRef = useRef(true);
+  idleRef.current = !live.runs.length;
+  useEffect(() => {
+    if (demo) return;
+    let timer: ReturnType<typeof setTimeout>;
+    const tryReload = () => {
+      if (!idleRef.current) {
+        timer = setTimeout(tryReload, 30_000);
+        return;
+      }
+      window.location.reload();
+    };
+    timer = setTimeout(tryReload, 20 * 60_000);
+    return () => clearTimeout(timer);
+  }, [demo]);
 
   // TV 화면 꺼짐 막기 (되는 기기만 — 라이브보드와 같은 방법)
   useEffect(() => {
@@ -131,12 +159,13 @@ const LiveBoardPb153Page = ({ screen }: { screen: "pb1" | "pb2" }) => {
     <div style={{ width: 1920, height: 1080, overflow: "hidden", background: "#F5F8F7" }}>
       <style>{PB_TV_CSS}</style>
       {screen === "pb1" ? (
-        <PbCourseBoard branchLabel={branchLabel} runs={live.runs} now={now} lite={lite} />
+        <PbCourseBoard branchLabel={branchLabel} runs={live.runs} people={live.people} now={now} lite={lite} />
       ) : (
         <PbRecordBoard
           branchLabel={branchLabel}
           data={board}
           runs={live.runs}
+          people={live.people}
           now={now}
           keyRequired={keyRequired}
           demo={demo}

@@ -53,8 +53,8 @@ export const PB_TV_CSS = `
 .pbx-seg.done{background:var(--mintSoft);color:var(--mintInk)}
 .pbx-seg.on{background:var(--panel);color:var(--ink);border:3px solid var(--mint)}
 .pbx-seg .n{font-weight:900;margin-right:8px}
-.pbx-mk{position:absolute;top:0;width:40px;height:40px;border-radius:50%;background:var(--ink);color:#fff;font-size:24px;font-weight:900;display:grid;place-items:center}
-.pbx-mk::after{content:"";position:absolute;bottom:-6px;left:50%;margin-left:-6px;border:6px solid transparent;border-top-color:var(--ink);border-bottom:0}
+.pbx-mk{position:absolute;top:0;width:40px;height:40px;border-radius:50%;background:var(--mk,var(--ink));color:#fff;font-size:24px;font-weight:900;display:grid;place-items:center}
+.pbx-mk::after{content:"";position:absolute;bottom:-6px;left:50%;margin-left:-6px;border:6px solid transparent;border-top-color:var(--mk,var(--ink));border-bottom:0}
 
 /* 8분할 — 영상 1개 + 카드 겹치기 */
 .pbx-grid{position:absolute}
@@ -118,6 +118,14 @@ export const PB_TV_CSS = `
 .pbx-mini b.r{flex:.42}
 .pbx-mini b.f{background:var(--mint)}
 .pbx-mini b.c{background:var(--mint);opacity:.45}
+.pbx-mini b.g{outline:4px solid var(--gold);outline-offset:1px}
+.pbx-lane .pos{color:var(--ln,var(--ink))}
+.pbx-lane.lane{border-left-color:var(--ln,var(--line))}
+.pbx-lname{overflow:hidden;text-overflow:ellipsis;min-width:0;max-width:300px}
+.pbx-lg{width:16px;height:16px;border-radius:50%;flex:0 0 16px}
+.pbx-chip.mint{background:var(--mintSoft);color:var(--mintInk)}
+.pbx-ghost{font-size:28px;font-weight:900;white-space:nowrap;color:var(--ink)}
+.pbx-ghost.ahead{color:var(--mintInk)}
 .pbx-lr3{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
 .pbx-lr3 .st{font-size:28px;font-weight:700;color:var(--ink2);white-space:nowrap}
 .pbx-lr3 .st b{color:var(--ink);font-weight:900;font-size:34px}

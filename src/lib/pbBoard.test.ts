@@ -6,8 +6,18 @@ import {
   PB_RUN_TOTAL_M,
   PB_SEGMENT_COUNT,
   PB_TITLE_MS,
+  PB_DEMO_PEOPLE,
   applyPbLive,
   isPbLiveMsg,
+  normalizePbLive,
+  pbDemoRuns,
+  pbGhostDelta,
+  pbGhostSeg,
+  pbGhostText,
+  pbRaceOrder,
+  pbRunKey,
+  pbRunMark,
+  pbRunName,
   pbClock,
   pbDelta,
   pbEtaMs,
@@ -166,6 +176,94 @@ describe("자동 전환", () => {
     expect(pbSearchWith("?k=abc&embed=1", true)).toBe("?k=abc&embed=1&auto=1");
     expect(pbSearchWith("?k=abc&auto=1", false)).toBe("?k=abc");
     expect(pbSearchWith("?auto=1", false)).toBe("");
+  });
+});
+
+describe("2단계 히트 — 레인 · 닉네임 · 지난번의 나", () => {
+  const cum = Array.from({ length: 16 }, (_, i) => (i + 1) * 60_000); // 지난번: 구간마다 1분 → 16:00
+  const ghost = { ms: 960_000, finished: true, remaining: 0, cum };
+
+  it("히트 신호는 레인 번호를 TV 번호로 (비어 있으면)", () => {
+    let runs = applyPbLive([], msg({ id: "h:3", heat: "h", lane: 3 }), 1000);
+    runs = applyPbLive(runs, msg({ id: "h:1", heat: "h", lane: 1 }), 1000);
+    expect(runs.map((r) => r.slot)).toEqual([3, 1]);
+    // 다른 측정이 이미 3번이면 빈 번호
+    const other = applyPbLive([], msg({ id: "x" }), 1000); // slot 1
+    expect(applyPbLive(other, msg({ id: "h:1", heat: "h", lane: 1 }), 1000)[1].slot).toBe(2);
+  });
+
+  it("board_test153_live 답 → 신호 id 별 참가자 (닉네임 없으면 '153 복서' · 구간 16개가 아니면 cum 없음)", () => {
+    const people = normalizePbLive({
+      heats: [
+        {
+          id: "h",
+          lanes: [
+            { lane: 1, name: "민준", league: "red", level: 22, staff: null, division: "open", ghost, first: false },
+            { lane: 2, name: "  ", division: "starter", ghost: { ms: 1290000, finished: true, remaining: 0, cum: [1290000] }, first: false },
+            { lane: 3, name: "지호", division: "open", ghost: null, first: true },
+          ],
+        },
+      ],
+    });
+    expect(people[pbRunKey("h", 1)]).toMatchObject({ name: "민준", league: "red", first: false });
+    expect(people[pbRunKey("h", 1)].ghost?.cum).toHaveLength(16);
+    expect(people[pbRunKey("h", 2)].name).toBe("153 복서");
+    expect(people[pbRunKey("h", 2)].ghost).toMatchObject({ ms: 1290000, cum: null });
+    expect(people[pbRunKey("h", 3)]).toMatchObject({ ghost: null, first: true });
+    expect(normalizePbLive(null)).toEqual({});
+  });
+
+  it("이름 · 레일 글자 — 모르면 '측정 N번' · 번호", () => {
+    const r = { id: "demo:1", slot: 1 };
+    expect(pbRunName(r, PB_DEMO_PEOPLE)).toBe("민준");
+    expect(pbRunMark(r, PB_DEMO_PEOPLE)).toBe("민");
+    expect(pbRunName({ id: "z", slot: 4 }, {})).toBe("측정 4번");
+    expect(pbRunMark({ id: "z", slot: 4 }, {})).toBe("4");
+  });
+
+  it("같은 구간을 끝낸 시각 비교 — 음수 = 빨라요 · 구간 기록 없으면 null", () => {
+    const r = { startAt: 0, marks: [55_000, 115_000, 170_000] }; // 3구간 2:50 (지난번 3:00)
+    expect(pbGhostDelta(r, ghost)).toBe(-10_000);
+    expect(pbGhostDelta({ startAt: 0, marks: [70_000] }, ghost)).toBe(10_000);
+    expect(pbGhostDelta({ startAt: 0, marks: [] }, ghost)).toBeNull();
+    expect(pbGhostDelta(r, { ...ghost, cum: null })).toBeNull();
+    expect(pbGhostDelta(r, null)).toBeNull();
+  });
+
+  it("지금 경과 시간에 지난번의 나 위치 · 끝났으면 16", () => {
+    expect(pbGhostSeg(0, ghost)).toBe(0);
+    expect(pbGhostSeg(150_000, ghost)).toBe(2);
+    expect(pbGhostSeg(999_999, ghost)).toBe(16);
+    expect(pbGhostSeg(150_000, null)).toBeNull();
+  });
+
+  it("TV 글 — 앞서면 '빨라요', 뒤지면 따라잡을 거리 (늦다는 말 없음)", () => {
+    expect(pbGhostText(-24_000)).toEqual({ text: "지난번보다 0:24 빨라요", ahead: true });
+    expect(pbGhostText(65_000)).toEqual({ text: "지난번의 나까지 1:05", ahead: false });
+    expect(pbGhostText(300).ahead).toBe(true);
+    expect(pbGhostText(65_000).text).not.toMatch(/늦/);
+  });
+
+  it("레이스 순서 — 끝낸 구간 많은 사람 → 같으면 먼저 끝낸 사람", () => {
+    const base = applyPbLive([], msg({ id: "h:1", heat: "h", lane: 1, startAt: 0, marks: [50_000, 100_000] }), 0);
+    const b = applyPbLive(base, msg({ id: "h:2", heat: "h", lane: 2, startAt: 0, marks: [40_000, 90_000] }), 0);
+    const c = applyPbLive(b, msg({ id: "h:3", heat: "h", lane: 3, startAt: 0, marks: [30_000, 60_000, 95_000] }), 0);
+    expect(pbRaceOrder(c).map((r) => r.lane)).toEqual([3, 2, 1]);
+    // 스타터는 더 많이 갔어도 오픈 뒤 (개수가 절반)
+    const d = applyPbLive(c, msg({ id: "h:4", heat: "h", lane: 4, division: "starter", startAt: 0, marks: [20_000, 40_000, 60_000, 80_000] }), 0);
+    expect(pbRaceOrder(d).map((r) => r.lane)).toEqual([3, 2, 1, 4]);
+  });
+
+  it("예시 화면 — 3명 히트 · 1번은 지난번보다 빠름 · 2번은 따라가는 중 · 3번 첫 도전", () => {
+    const now = 1_000_000_000;
+    const runs = pbDemoRuns(now, now);
+    expect(runs.map((r) => r.id)).toEqual(["demo:1", "demo:2", "demo:3"]);
+    const d1 = pbGhostDelta(runs[0], PB_DEMO_PEOPLE["demo:1"].ghost)!;
+    const d2 = pbGhostDelta(runs[1], PB_DEMO_PEOPLE["demo:2"].ghost)!;
+    expect(d1).toBeLessThan(0);
+    expect(d2).toBeGreaterThan(0);
+    expect(PB_DEMO_PEOPLE["demo:3"].first).toBe(true);
+    expect(PB_DEMO_PEOPLE["demo:1"].ghost?.ms).toBe(PB_DEMO_PEOPLE["demo:1"].ghost?.cum?.[15]);
   });
 });
 

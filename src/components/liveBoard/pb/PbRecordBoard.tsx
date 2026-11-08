@@ -1,12 +1,14 @@
 /**
  * 📺 153 PB 라이브보드 TV2 「기록 보드」 — /tv/:지점/pb2 (2026-11-08 대표님 「다음진행 추천대로」)
  *   끝까지 달리게 만드는 화면 — 상대는 지난번의 나.
- *   왼쪽: 지금 측정(코치 측정 화면 신호 · 이름 없이 번호로 — 이름 나오는 히트는 2단계) / 없으면 코스 안내 · 아래 오늘 기록
+ *   왼쪽: 지금 측정(코치 측정 화면 신호) / 없으면 코스 안내 · 아래 오늘 기록
+ *         2단계(히트 · 2026-11-08 「2단계넘어가자」): 닉네임 · 레인 색 · 레이스 순서 · 지난번의 나(같은 구간 비교 + 미니 막대의 금 테두리)
+ *         — 닉네임 · 고스트는 board_test153_live(TV 열쇠)로 읽은 people. 없으면 '측정 N번'
  *   가운데: 부문별 TOP 10 (기록 있는 부문만 10초마다 페이드) · 오픈은 22:00 레드 타이틀 통과선
  *   오른쪽: 이번 달 가장 많이 당긴 사람 · 153 레코드 · QR(앱 153 PB 탭)
  *   데이터: board_test153(지점, TV 열쇠) — 닉네임만 (supabase/migrations/20261108140609_board_test153.sql)
  */
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { TEST153_STATIONS, stationReps } from "@/lib/test153";
 import {
@@ -18,16 +20,24 @@ import {
   pbClock,
   pbDelta,
   pbEtaMs,
+  pbGhostDelta,
+  pbGhostSeg,
+  pbGhostText,
+  pbLaneColor,
   pbPrimaryRun,
+  pbRaceOrder,
   pbRankPages,
   pbRunElapsed,
+  pbRunName,
   pbRunPhase,
   pbRunSeg,
   pbScore,
   pbSegLabel,
   pbTotalReps,
   type PbBoardData,
+  type PbLanePerson,
   type PbLiveRun,
+  type PbPeople,
   type PbRankRow,
 } from "@/lib/pbBoard";
 
@@ -47,12 +57,13 @@ interface Props {
   branchLabel: string;
   data: PbBoardData | null;
   runs: PbLiveRun[];
+  people: PbPeople;
   now: number;
   keyRequired: boolean;
   demo: boolean;
 }
 
-const PbRecordBoard = ({ branchLabel, data, runs, now, keyRequired, demo }: Props) => {
+const PbRecordBoard = ({ branchLabel, data, runs, people, now, keyRequired, demo }: Props) => {
   const pages = pbRankPages(data);
   const [page, setPage] = useState(0);
   useEffect(() => {
@@ -66,7 +77,9 @@ const PbRecordBoard = ({ branchLabel, data, runs, now, keyRequired, demo }: Prop
   const primary = pbPrimaryRun(runs);
   const liveCount = runs.filter((r) => pbRunPhase(r) === "running").length;
   const clock = kstClock(now);
-  const sortedRuns = [...runs].sort((a, b) => pbRunSeg(b) - pbRunSeg(a) || a.startAt - b.startAt);
+  const sortedRuns = pbRaceOrder(runs);
+  const anyGhost = runs.some((r) => !!people[r.id]?.ghost?.cum);
+  const anyNamed = runs.some((r) => !!people[r.id]);
 
   return (
     <div className="pbx">
@@ -98,10 +111,12 @@ const PbRecordBoard = ({ branchLabel, data, runs, now, keyRequired, demo }: Prop
             <>
               <div className="pbx-ph">
                 <h3>지금 측정</h3>
-                <span className="s">번호 = 1번 TV 레일의 동그라미</span>
+                <span className="s">
+                  {anyGhost ? "금 테두리 = 지난번의 나" : anyNamed ? "색 = 1번 TV 레일 동그라미" : "번호 = 1번 TV 레일의 동그라미"}
+                </span>
               </div>
-              {sortedRuns.map((r, i) => (
-                <LiveLane key={r.id} r={r} lead={i === 0 && sortedRuns.length > 1} now={now} />
+              {sortedRuns.map((r) => (
+                <LiveLane key={r.id} r={r} person={people[r.id]} name={pbRunName(r, people)} now={now} />
               ))}
             </>
           ) : (
@@ -231,7 +246,14 @@ const PbRecordBoard = ({ branchLabel, data, runs, now, keyRequired, demo }: Prop
   );
 };
 
-const LiveLane = ({ r, lead, now }: { r: PbLiveRun; lead: boolean; now: number }) => {
+interface LaneProps {
+  r: PbLiveRun;
+  person: PbLanePerson | undefined;
+  name: string;
+  now: number;
+}
+
+const LiveLane = ({ r, person, name, now }: LaneProps) => {
   const seg = pbRunSeg(r);
   const phase = pbRunPhase(r);
   // 끝나고 저장까지 했으면 공식 기록(저장 결과)을 그대로
@@ -239,29 +261,45 @@ const LiveLane = ({ r, lead, now }: { r: PbLiveRun; lead: boolean; now: number }
   const eta = pbEtaMs(r, now);
   const status =
     phase === "finished" ? "완주" : phase === "capped" ? "타임캡" : phase === "stopped" ? "멈춤" : pbSegLabel(seg, r.division);
+  // 지난번의 나 — 같은 구간을 끝낸 시각 비교 · 미니 막대에 지금 그 시각의 위치(금 테두리)
+  const ghost = person?.ghost ?? null;
+  const delta = phase === "running" || phase === "finished" ? pbGhostDelta(r, ghost) : null;
+  const gText = delta != null && !(phase === "finished" && delta >= 0) ? pbGhostText(delta) : null;
+  const gSeg = phase === "running" ? pbGhostSeg(el, ghost) : null;
+  const lg = person?.league && !person.staff ? PB_LEAGUE[person.league] : null;
   return (
-    <div className={`pbx-lane${lead ? " lead" : ""}`}>
+    <div className="pbx-lane lane" style={{ "--ln": pbLaneColor(r.slot) } as CSSProperties}>
+      {/* 레인 번호 — 측정 화면 칸 · 1번 TV 레일 동그라미와 같은 색 · 같은 번호 (줄 순서 = 레이스 순서) */}
       <div className="pos num">{r.slot}</div>
       <div>
         <div className="pbx-lr1">
-          <span className="pbx-lname">측정 {r.slot}번</span>
+          {lg && <i className="pbx-lg" style={{ background: lg.color }} />}
+          <span className="pbx-lname">{name}</span>
           <span className="pbx-chip">{r.division === "open" ? "오픈" : "스타터"}</span>
-          {r.pb?.isPb && <span className="pbx-chip gold">개인 최고 {r.pb.prevMs != null ? pbDelta(r.pb.prevMs - r.pb.scoreMs) : ""}</span>}
+          {r.pb?.isPb ? (
+            <span className="pbx-chip gold">개인 최고 {r.pb.prevMs != null ? pbDelta(r.pb.prevMs - r.pb.scoreMs) : ""}</span>
+          ) : person?.first ? (
+            <span className="pbx-chip mint">첫 도전</span>
+          ) : ghost && !ghost.cum && ghost.finished ? (
+            <span className="pbx-chip">지난 최고 {pbClock(ghost.ms)}</span>
+          ) : null}
           <span className="pbx-lnow">{status}</span>
         </div>
         <div className="pbx-mini">
           {Array.from({ length: PB_SEGMENT_COUNT }, (_, i) => (
-            <b key={i} className={`${i % 2 === 0 ? "r " : ""}${i < seg ? "f" : i === seg ? "c" : ""}`} />
+            <b key={i} className={`${i % 2 === 0 ? "r " : ""}${i < seg ? "f" : i === seg ? "c" : ""}${gSeg === i ? " g" : ""}`} />
           ))}
         </div>
         <div className="pbx-lr3">
           <span className="st">
             경과 <b className="num">{pbClock(el)}</b>
-            {r.division === "open" && phase === "running" && el <= PB_TITLE_MS && (
+            {!gText && r.division === "open" && phase === "running" && el <= PB_TITLE_MS && (
               <span style={{ marginLeft: 14 }}>22:00까지 {pbClock(PB_TITLE_MS - el)}</span>
             )}
           </span>
-          {eta != null ? (
+          {gText ? (
+            <span className={`pbx-ghost${gText.ahead ? " ahead" : ""}`}>{gText.text}</span>
+          ) : eta != null ? (
             <span className="pbx-eta">
               예상 완주 <b className="num">{pbClock(eta)}</b>
             </span>

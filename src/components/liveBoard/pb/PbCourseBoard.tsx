@@ -4,9 +4,10 @@
  *   ① 큰 타이머(경과 · 25:00 캡까지 · 22:00 레드 타이틀까지) ② 오늘 끝낼 것(410개 + 셀트런 800m · 스타터 205개)
  *   ③ 16구간 레일(측정 중인 사람 위치 = 번호) ④ 8분할 시범(영상 1개 — public/test153/pb-grid.mp4) ⑤ 종목 카드
  *   ⑥ 지금 그 종목 표시 ⑦ 완주 · 개인 최고 축하 10초.
+ *   2단계(히트 · 「2단계넘어가자」): 레일 동그라미 = 닉네임 첫 글자 + 레인 색 · 칸 표시 · 축하 화면에 닉네임 (people — board_test153_live)
  *   타이머는 코치 측정 화면 신호를 따른다. 신호가 없을 때 TV 리모컨: OK/Enter/스페이스 = 단체 타이머 시작·멈춤, ←/Backspace = 멈춘 타이머 지우기.
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { TEST153_CAP_MS, TEST153_STATIONS, stationReps, type Test153Division } from "@/lib/test153";
 import {
   PB_GRID,
@@ -16,13 +17,17 @@ import {
   pbCellPos,
   pbClock,
   pbDelta,
+  pbLaneColor,
   pbPrimaryRun,
   pbRunElapsed,
+  pbRunMark,
+  pbRunName,
   pbRunPhase,
   pbRunSeg,
   pbSegLabel,
   pbTotalReps,
   type PbLiveRun,
+  type PbPeople,
 } from "@/lib/pbBoard";
 
 /** TV 카드 한 줄 기준 (28px · 칸 폭 448px 안) — 종목을 바꾸면 같이 고친다. 정식 기준은 test153.ts standard */
@@ -60,11 +65,19 @@ interface Overlay {
 interface Props {
   branchLabel: string;
   runs: PbLiveRun[];
+  people: PbPeople;
   now: number;
   lite: boolean;
 }
 
-const PbCourseBoard = ({ branchLabel, runs, now, lite }: Props) => {
+/** 칸 위 표시 — '지금 · 민준 · 서연' (셋 넘으면 '외 N명') */
+const hereLabel = (names: string[], total: number) => {
+  if (total === 1 && names.length === 1) return "지금 측정 중";
+  const shown = names.slice(0, 2).join(" · ");
+  return names.length > 2 ? `지금 · ${shown} 외 ${names.length - 2}명` : `지금 · ${shown}`;
+};
+
+const PbCourseBoard = ({ branchLabel, runs, people, now, lite }: Props) => {
   // ── 단체 타이머 (신호가 없을 때만 · TV 리모컨) ──
   const [local, setLocal] = useState<{ start: number | null; acc: number }>({ start: null, acc: 0 });
   useEffect(() => {
@@ -208,8 +221,12 @@ const PbCourseBoard = ({ branchLabel, runs, now, lite }: Props) => {
           const k = same.findIndex((s) => s.r.id === r.id);
           const shift = (k - (same.length - 1) / 2) * 44;
           return (
-            <div key={r.id} className="pbx-mk" style={{ left: segCenter(seg) - 20 + shift }}>
-              {r.slot}
+            <div
+              key={r.id}
+              className="pbx-mk"
+              style={{ left: segCenter(seg) - 20 + shift, "--mk": pbLaneColor(r.slot) } as CSSProperties}
+            >
+              {pbRunMark(r, people)}
             </div>
           );
         })}
@@ -233,7 +250,7 @@ const PbCourseBoard = ({ branchLabel, runs, now, lite }: Props) => {
         {stations.map(({ i, open, starter, unit }) => {
           const pos = pbCellPos(i);
           const stSeg = i * 2 + 1;
-          const here = segs.filter((s) => s.seg === stSeg).map((s) => s.r.slot);
+          const here = segs.filter((s) => s.seg === stSeg).map((s) => pbRunName(s.r, people));
           const done = live && minSeg > stSeg;
           const on = here.length > 0;
           return (
@@ -244,8 +261,8 @@ const PbCourseBoard = ({ branchLabel, runs, now, lite }: Props) => {
             >
               {done && <div className="pbx-dim" style={{ height: PB_GRID.videoH }} />}
               {on && (
-                <div className="pbx-vchip" style={{ top: PB_GRID.videoH - 58 }}>
-                  {runs.length === 1 ? "지금 측정 중" : `지금 · ${here.join(" · ")}번`}
+                <div className="pbx-vchip" style={{ top: PB_GRID.videoH - 58, maxWidth: PB_GRID.cellW - 28, overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {hereLabel(here, runs.length)}
                 </div>
               )}
               {!on && done && (
@@ -272,12 +289,12 @@ const PbCourseBoard = ({ branchLabel, runs, now, lite }: Props) => {
         })}
       </div>
 
-      {overlay && <FinishOverlay o={overlay} />}
+      {overlay && <FinishOverlay o={overlay} name={pbRunName(overlay.run, people)} />}
     </div>
   );
 };
 
-const FinishOverlay = ({ o }: { o: Overlay }) => {
+const FinishOverlay = ({ o, name }: { o: Overlay; name: string }) => {
   const r = o.run;
   const score = o.kind === "cap" ? TEST153_CAP_MS : r.pb?.scoreMs ?? r.marks[PB_SEGMENT_COUNT - 1] - r.startAt;
   const passTitle = r.division === "open" && o.kind !== "cap" && score <= PB_TITLE_MS;
@@ -287,7 +304,7 @@ const FinishOverlay = ({ o }: { o: Overlay }) => {
       <div className={`pbx-ovc${o.kind === "pb" ? "" : " plain"}`}>
         <div className="pbx-ovk">{head}</div>
         <div className="pbx-ovn">
-          {r.division === "open" ? "오픈" : "스타터"} · 측정 {r.slot}번
+          {name} · {r.division === "open" ? "오픈" : "스타터"}
         </div>
         <div className="pbx-ovt num">
           {pbClock(score)}
@@ -296,7 +313,7 @@ const FinishOverlay = ({ o }: { o: Overlay }) => {
         <div className="pbx-ovs">
           {o.kind === "pb" && r.pb?.prevMs != null && <div className="g">지난번보다 {pbDelta(r.pb.prevMs - score)}</div>}
           {passTitle && <div className="r">레드 타이틀 22:00 통과</div>}
-          {o.kind === "finish" && <div>코치님이 저장하면 순위에 올라요</div>}
+          {o.kind === "finish" && <div>공식 기록으로 저장하면 순위에 올라요</div>}
           {o.kind === "cap" && <div>남은 개수는 코치님께</div>}
         </div>
         <div className="pbx-ovf">잠시 뒤 레이스 화면으로 돌아가요</div>

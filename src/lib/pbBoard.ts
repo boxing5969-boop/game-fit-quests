@@ -7,7 +7,9 @@
  *
  *   실시간 신호: 코치 측정 화면(Test153MeasurePanel)이 채널 `test153-live:<지점 이름>` 으로 측정 상태를 보낸다
  *   (시작 시각 · 끝낸 구간 시각 · 부문 · 저장 결과). 이름 · user_id 는 싣지 않는다 — 라이브보드 board-ping 과 같은 원칙
- *   (공개 채널이라 누구나 들을 수 있다). 이름이 나오는 히트(최대 4명)는 2단계에서 DB + board_* 함수로.
+ *   (공개 채널이라 누구나 들을 수 있다).
+ *   2단계(2026-11-08 「2단계넘어가자」): 히트(최대 4명) — 신호 id = `<히트 id>:<레인>`. 닉네임 · 지난번의 나(고스트)는
+ *   TV 가 board_test153_live(지점, TV 열쇠)로 따로 읽는다(supabase/migrations/20261108192625_test153_heats.sql).
  */
 import {
   TEST153_CAP_MS,
@@ -69,6 +71,9 @@ export interface PbLiveMsg {
   sentAt: number;
   /** 공식 기록으로 저장한 뒤에만 */
   pb?: { isPb: boolean; prevMs: number | null; scoreMs: number } | null;
+  /** 2단계 히트 — 히트 id · 레인(1~4). 레인 = TV 번호 · 색 */
+  heat?: string | null;
+  lane?: number | null;
 }
 
 export interface PbLiveRun extends PbLiveMsg {
@@ -124,7 +129,8 @@ export const applyPbLive = (runs: PbLiveRun[], msg: PbLiveMsg, now: number): PbL
     list = list.filter((r) => r.id !== oldest.id);
   }
   const used = new Set(list.map((r) => r.slot));
-  let slot = 1;
+  // 히트면 레인 번호 그대로(측정 화면 · TV 레일 색이 같게) — 다른 측정이 그 번호를 쓰고 있으면 빈 번호
+  let slot = typeof msg.lane === "number" && msg.lane >= 1 && msg.lane <= PB_MAX_RUNS && !used.has(msg.lane) ? msg.lane : 1;
   while (used.has(slot)) slot++;
   return [...list, { ...msg, offset: offsetNow, lastSeen: now, slot }];
 };
@@ -174,6 +180,125 @@ export const pbPrimaryRun = (runs: PbLiveRun[]): PbLiveRun | null => {
   const running = runs.filter((r) => pbRunPhase(r) === "running").sort((a, b) => a.startAt - b.startAt);
   if (running.length) return running[0];
   return [...runs].sort((a, b) => b.lastSeen - a.lastSeen)[0] ?? null;
+};
+
+/* ─────────────────────────── 히트 참가자 · 지난번의 나 (2단계) ─────────────────────────── */
+
+/** 레인 1~4 색 — 측정 화면 버튼 · TV 레일 동그라미 · 기록 보드 줄이 같은 색 (빨강은 22:00 통과선 · 경고에 남겨 둔다) */
+export const PB_LANE_COLORS = ["#0E9F70", "#2F6FB8", "#B7700C", "#2B3438"] as const;
+export const pbLaneColor = (lane: number): string => PB_LANE_COLORS[(lane - 1) % PB_LANE_COLORS.length] ?? PB_LANE_COLORS[0];
+
+export const pbRunKey = (heat: string, lane: number) => `${heat}:${lane}`;
+
+export interface PbGhost {
+  /** 지난번 최고 기록 점수 (완주 = 시간 · 캡 = 25:00 + 남은 개수 초) */
+  ms: number;
+  finished: boolean;
+  remaining: number;
+  /** 구간을 끝낸 누적 시각 16개 — 총 시간만 넣은 기록이면 null */
+  cum: number[] | null;
+}
+
+/** TV 가 board_test153_live 로 받은 참가자 — 닉네임만 */
+export interface PbLanePerson {
+  name: string;
+  league: string | null;
+  level: number | null;
+  staff: string | null;
+  division: Test153Division;
+  ghost: PbGhost | null;
+  /** 이 부문 첫 도전 */
+  first: boolean;
+}
+/** key = 신호 id `<히트 id>:<레인>` */
+export type PbPeople = Record<string, PbLanePerson>;
+
+const numOr = (v: unknown, d: number | null = null) => (typeof v === "number" && Number.isFinite(v) ? v : d);
+
+export const normalizePbGhost = (g: unknown): PbGhost | null => {
+  const o = g as Record<string, unknown> | null;
+  if (!o || typeof o !== "object") return null;
+  const ms = numOr(o.ms);
+  if (ms == null) return null;
+  const cum = Array.isArray(o.cum) && o.cum.length === PB_SEGMENT_COUNT && o.cum.every((c) => typeof c === "number")
+    ? (o.cum as number[])
+    : null;
+  return { ms, finished: o.finished === true, remaining: numOr(o.remaining, 0) ?? 0, cum };
+};
+
+/** board_test153_live 답 → 신호 id 별 참가자 */
+export const normalizePbLive = (data: unknown): PbPeople => {
+  const out: PbPeople = {};
+  const heats = (data as { heats?: unknown } | null)?.heats;
+  if (!Array.isArray(heats)) return out;
+  for (const h of heats) {
+    const id = (h as { id?: unknown })?.id;
+    const lanes = (h as { lanes?: unknown })?.lanes;
+    if (typeof id !== "string" || !Array.isArray(lanes)) continue;
+    for (const l of lanes as Record<string, unknown>[]) {
+      const lane = numOr(l?.lane);
+      if (lane == null) continue;
+      out[pbRunKey(id, lane)] = {
+        name: typeof l.name === "string" && l.name.trim() ? l.name.trim() : "153 복서",
+        league: typeof l.league === "string" ? l.league : null,
+        level: numOr(l.level),
+        staff: typeof l.staff === "string" && l.staff ? l.staff : null,
+        division: l.division === "starter" ? "starter" : "open",
+        ghost: normalizePbGhost(l.ghost),
+        first: l.first === true,
+      };
+    }
+  }
+  return out;
+};
+
+/** TV 에 보일 이름 — 히트 참가자면 닉네임, 아니면 '측정 N번' */
+export const pbRunName = (r: Pick<PbLiveRun, "id" | "slot">, people: PbPeople): string => people[r.id]?.name ?? `측정 ${r.slot}번`;
+/** 레일 동그라미 안 글자 — 닉네임 첫 글자 (없으면 번호) */
+export const pbRunMark = (r: Pick<PbLiveRun, "id" | "slot">, people: PbPeople): string => {
+  const n = people[r.id]?.name;
+  return n ? Array.from(n)[0] : String(r.slot);
+};
+
+/** 지난번의 나와 비교 — 같은 구간을 끝낸 시각 차이(ms · 음수 = 빨라요). 구간 기록이 없거나 아직 0구간이면 null */
+export const pbGhostDelta = (r: Pick<PbLiveMsg, "marks" | "startAt">, ghost: PbGhost | null | undefined): number | null => {
+  const cum = ghost?.cum;
+  if (!cum || cum.length !== PB_SEGMENT_COUNT || r.marks.length === 0) return null;
+  const k = Math.min(r.marks.length, PB_SEGMENT_COUNT);
+  return r.marks[k - 1] - r.startAt - cum[k - 1];
+};
+
+/** 지금 경과 시간에 지난번의 나는 몇 번째 구간을 하고 있었나 (0~15 · 끝났으면 16) */
+export const pbGhostSeg = (elapsed: number, ghost: PbGhost | null | undefined): number | null => {
+  const cum = ghost?.cum;
+  if (!cum || cum.length !== PB_SEGMENT_COUNT) return null;
+  const i = cum.findIndex((c) => c > elapsed);
+  return i === -1 ? PB_SEGMENT_COUNT : i;
+};
+
+/** '0:24' — 분:초 (반올림) */
+const mss = (ms: number) => {
+  const s = Math.round(Math.abs(ms) / 1000);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+};
+
+/**
+ * 지난번의 나 한 줄 — 앞서면 '지난번보다 0:24 빨라요', 뒤지면 '지난번의 나까지 0:05'(따라잡을 거리 — 늦다는 말 대신).
+ * TV 에 회원 이름과 같이 나가는 글이라 줄어든 것을 탓하는 말은 쓰지 않는다.
+ */
+export const pbGhostText = (delta: number): { text: string; ahead: boolean } => {
+  if (Math.round(Math.abs(delta) / 1000) === 0) return { text: "지난번의 나와 나란히", ahead: true };
+  return delta < 0 ? { text: `지난번보다 ${mss(delta)} 빨라요`, ahead: true } : { text: `지난번의 나까지 ${mss(delta)}`, ahead: false };
+};
+
+/**
+ * 레이스 순서 — 오픈 먼저 · 스타터 다음(개수가 절반이라 같이 줄 세우지 않는다),
+ * 같은 부문 안에서는 끝낸 구간이 많은 사람 → 같으면 그 구간을 먼저 끝낸 사람 (TV 시계)
+ */
+export const pbRaceOrder = (runs: PbLiveRun[]): PbLiveRun[] => {
+  const last = (r: PbLiveRun) => (r.marks.length ? r.marks[r.marks.length - 1] : r.startAt) + r.offset;
+  const div = (r: PbLiveRun) => (r.division === "open" ? 0 : 1);
+  return [...runs].sort((a, b) => div(a) - div(b) || pbRunSeg(b) - pbRunSeg(a) || last(a) - last(b) || a.slot - b.slot);
 };
 
 /** 자동 전환할 신호인가 — 달리는 중인 측정 */
@@ -273,21 +398,42 @@ export const PB_RECORD_SLOTS = [
 
 /* ─────────────────────────── 예시 화면 (?demo=1) ─────────────────────────── */
 
-/** 미리보기용 가짜 측정 2개 — 실제 신호가 오면 그쪽이 이긴다 */
+const DEMO_OPEN = [52, 118, 49, 96, 51, 84, 50, 95, 53, 101, 52, 108, 54, 92, 55, 120].map((s) => s * 1000);
+const DEMO_OPEN_B = [50, 124, 51, 99, 50, 90, 52, 98, 52, 104, 53, 110, 52, 96, 54, 118].map((s) => s * 1000);
+const DEMO_STARTER = [48, 60, 46, 50, 47, 44, 47, 48, 49, 52, 48, 55, 50, 47, 51, 62].map((s) => s * 1000);
+const demoGhost = (durs: number[], scale: number): PbGhost => {
+  let t = 0;
+  const cum = durs.map((d) => (t += Math.round(d * scale)));
+  return { ms: cum[cum.length - 1], finished: true, remaining: 0, cum };
+};
+
+/** 미리보기용 가짜 히트(3명 · 8분 42초째) — 실제 신호가 오면 그쪽이 이긴다 */
 export const pbDemoRuns = (now: number, base: number = now): PbLiveRun[] => {
-  const mk = (slot: number, startAgo: number, segDur: number[], division: Test153Division): PbLiveRun => {
-    const startAt = base - startAgo;
+  const startAt = base - 522_000;
+  const mk = (lane: number, segDur: number[], division: Test153Division): PbLiveRun => {
     const marks: number[] = [];
     let t = startAt;
     for (const d of segDur) {
       t += d;
       if (t < now) marks.push(t);
     }
-    return { v: 1, id: `demo-${slot}`, division, startAt, marks, stoppedAt: null, sentAt: now, offset: 0, lastSeen: now, slot };
+    return {
+      v: 1, id: pbRunKey("demo", lane), heat: "demo", lane, division, startAt, marks,
+      stoppedAt: null, sentAt: now, offset: 0, lastSeen: now, slot: lane,
+    };
   };
-  const open = [52, 118, 49, 96, 51, 84, 50, 95, 53, 101, 52, 108, 54, 92, 55, 120].map((s) => s * 1000);
-  const starter = [48, 60, 46, 50, 47, 44, 47, 48, 49, 52, 48, 55, 50, 47, 51, 62].map((s) => s * 1000);
-  return [mk(1, 522_000, open, "open"), mk(2, 470_000, starter, "starter")];
+  return [mk(1, DEMO_OPEN, "open"), mk(2, DEMO_OPEN_B, "open"), mk(3, DEMO_STARTER, "starter")];
+};
+
+/** 예시 참가자 — 닉네임 · 지난번의 나 (1번은 지난번보다 빠름 · 2번은 따라가는 중 · 3번은 첫 도전) */
+export const PB_DEMO_PEOPLE: PbPeople = {
+  [pbRunKey("demo", 1)]: {
+    name: "민준", league: "red", level: 22, staff: null, division: "open", first: false, ghost: demoGhost(DEMO_OPEN, 1.04),
+  },
+  [pbRunKey("demo", 2)]: {
+    name: "서연", league: "blue", level: 18, staff: null, division: "open", first: false, ghost: demoGhost(DEMO_OPEN_B, 0.97),
+  },
+  [pbRunKey("demo", 3)]: { name: "지호", league: "white", level: 6, staff: null, division: "starter", first: true, ghost: null },
 };
 
 export const PB_DEMO_BOARD: PbBoardData = {

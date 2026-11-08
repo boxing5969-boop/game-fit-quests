@@ -12,10 +12,12 @@ import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import SignageExitButton from "@/components/liveBoard/SignageExitButton";
 import { TV_BRANCHES } from "@/lib/branchAlias";
 import {
-  LIVE_BOARD_NOS,
+  LIVE_BOARD_IDS,
   LIVE_BOARD_PICKER_PATH,
-  isLiveBoardNo,
+  liveBoardChip,
   liveBoardPreviewPath,
+  liveBoardTitle,
+  parseLiveBoardId,
   tvBoardPath,
 } from "@/lib/liveBoards";
 
@@ -44,8 +46,8 @@ const LiveBoardPreviewPage = () => {
   }, []);
 
   const branch = TV_BRANCHES.find((b) => b.code === params.get("b"));
-  const no = Number(params.get("n"));
-  if (!branch || !isLiveBoardNo(no)) return <Navigate to={LIVE_BOARD_PICKER_PATH} replace />;
+  const no = parseLiveBoardId(params.get("n"));
+  if (!branch || no == null) return <Navigate to={LIVE_BOARD_PICKER_PATH} replace />;
 
   const src = tvBoardPath(branch.code, no);
   const portrait = vp.h > vp.w;
@@ -76,7 +78,7 @@ const LiveBoardPreviewPage = () => {
         <iframe
           key={src}
           src={src}
-          title={`라이브보드 ${no} 미리보기 — ${branch.label}`}
+          title={`${liveBoardTitle(no)} 미리보기 — ${branch.label}`}
           onLoad={() => setLoadedSrc(src)}
           allow="screen-wake-lock"
           className="block border-0"
@@ -84,7 +86,7 @@ const LiveBoardPreviewPage = () => {
         />
         {loadedSrc !== src && (
           <div className="absolute inset-0 grid place-items-center bg-gray-950 text-[13px] font-bold text-white/60">
-            라이브보드 {no} 여는 중…
+            {liveBoardTitle(no)} 여는 중…
           </div>
         )}
       </div>
@@ -102,19 +104,19 @@ const LiveBoardPreviewPage = () => {
         role="tablist"
         aria-label="라이브보드 번호"
       >
-        {LIVE_BOARD_NOS.map((n) => (
+        {LIVE_BOARD_IDS.map((n) => (
           <button
             key={n}
             type="button"
             role="tab"
             aria-selected={n === no}
-            aria-label={`라이브보드 ${n}`}
+            aria-label={liveBoardTitle(n)}
             onClick={() => n !== no && navigate(liveBoardPreviewPath(branch.code, n), { replace: true })}
             className={`h-9 w-9 rounded-full text-[15px] font-black tabular-nums transition-all active:scale-95 ${
               n === no ? "bg-white text-black" : "text-white/70"
             }`}
           >
-            {n}
+            {liveBoardChip(n)}
           </button>
         ))}
       </div>
@@ -125,7 +127,7 @@ const LiveBoardPreviewPage = () => {
           style={{ top: top + stageH + 16 }}
         >
           <p className="text-[15px] font-bold text-white">
-            라이브보드 {no} · {branch.label}
+            {liveBoardTitle(no)} · {branch.label}
           </p>
           <p className="mt-1 text-[12.5px] leading-relaxed text-white/55">
             TV 화면을 그대로 줄여서 보여 드려요 · 가로로 돌리면 크게 보여요

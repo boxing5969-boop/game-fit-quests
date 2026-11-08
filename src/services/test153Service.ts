@@ -120,6 +120,17 @@ export const saveTest153Record = async (args: {
   return data as SaveTest153Result;
 };
 
+/**
+ * 153 PB 히트(최대 4명) 상태 → 서버 (2026-11-08 · test153_heat_save · supabase/migrations/20261108192625_test153_heats.sql)
+ *   측정 기기의 히트를 통째로 보낸다(시각은 시작부터 누적 ms). 답: {id, lanes:[{lane, ghost, first}]} — 지난번의 나.
+ *   TV 는 이 표를 board_test153_live 로 읽어 닉네임 · 고스트를 보여 준다.
+ */
+export const saveTest153Heat = async (payload: object): Promise<unknown> => {
+  const { data, error } = await sb.rpc("test153_heat_save", { p_heat: payload });
+  if (error) throw error;
+  return data;
+};
+
 export const voidTest153Record = async (id: string) => {
   const { error } = await sb.rpc("void_test153_record", { p_id: id });
   if (error) throw error;

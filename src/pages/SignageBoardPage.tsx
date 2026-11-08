@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useParams } from "react-router-dom";
+import { useTvRemote } from "@/hooks/useTvRemote";
+import { tvSlotFrom } from "@/lib/tvRemote";
 import {
   SIGNAGE_SLIDES,
   SLIDE_MS,
@@ -14,8 +17,10 @@ import {
  * Supabase 도, 소켓도 보지 않는다 — 통신이 끊기거나 DB 가 멈춘 날에도
  * TV 는 계속 돌아야 하기 때문이다. 이미지는 앱과 함께 배포된 정적 파일이다.
  *
- * 지점 코드는 주소 형식을 1·2번과 맞추기 위해 받기만 하고 쓰지 않는다
+ * 지점 코드는 주소 형식을 1·2번과 맞추기 위해 받기만 하고 안내에는 쓰지 않는다
  * (안내 내용은 전 지점 공통). /tv/s/3, /tv/j/3 … 전부 같은 화면이 나온다.
+ * 단 하나 — 관리자 앱 › 라이브보드의 'TV 화면 바꾸기'(useTvRemote, 2026-11-08)는 지점 코드로 고른 화면을 묻는다.
+ * 통신이 안 되면 그냥 조용히 넘어가고 슬라이드쇼는 그대로 돈다.
  *
  * 조작 (직원이 TV 앞에서 확인할 때):
  *   화면 누르기 / → : 다음 장     ← : 이전 장     스페이스 : 일시정지
@@ -29,6 +34,10 @@ const FALLBACK_INK = "#11161A";
 const FALLBACK_INK2 = "#5A666C";
 
 const SignageBoardPage = () => {
+  const { branchCode: rawBranchCode } = useParams<{ branchCode: string }>();
+  const { search } = useLocation();
+  useTvRemote({ rawBranchCode, slot: tvSlotFrom(search, "3"), showing: "3" });
+
   // 계속 증가하는 카운터. 읽을 때 나머지로 위치를 구하기 때문에
   // 목록이 줄어들어도(깨진 이미지 제외) 인덱스가 어긋나지 않는다.
   const [step, setStep] = useState(0);

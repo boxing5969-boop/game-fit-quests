@@ -11,6 +11,10 @@
  *
  * 2026-10-19 TV 열쇠 주소 — TV 가 회원 이름을 읽으려면 지점별 열쇠가 필요하다(회원 정보 잠그기).
  *   이 화면에서 그 지점 운영진에게만 열쇠가 붙은 TV 주소를 보여 준다(get_board_tv_key). 열쇠 주소로 처음 연 순간 지점이 잠긴다.
+ *
+ * 2026-11-08 대표님 「라이브보드 탭에서 내가 버튼을 누르면 라이브보드 변경 가능하게해줘 모든 모드 별로」
+ *   ① 미리보기에 153 PB 코스 · 153 PB 기록 두 장 더 ② 「TV 화면 바꾸기」(TvRemotePanel) — TV 번호마다 화면 6개 버튼,
+ *   누르면 그 TV 가 몇 초 안에 넘어간다(lib/tvRemote · 서버 set_tv_board_mode).
  */
 import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
@@ -21,7 +25,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { TV_BRANCHES } from "@/lib/branchAlias";
 import { boardKeyUrl } from "@/lib/boardKey";
-import { LIVE_BOARD_NOS, liveBoardPreviewPath, tvBoardPath, type LiveBoardNo } from "@/lib/liveBoards";
+import {
+  LIVE_BOARD_NOS,
+  liveBoardChip,
+  liveBoardPreviewPath,
+  liveBoardTitle,
+  tvBoardPath,
+  type LiveBoardId,
+} from "@/lib/liveBoards";
+import TvRemotePanel from "@/components/liveBoard/TvRemotePanel";
 
 const STORE_KEY = "153liveboard:branch";
 const DOMAIN = "myboxer153.com";
@@ -95,11 +107,55 @@ const ArtAll = () => (
   </svg>
 );
 
-const BOARDS: { no: LiveBoardNo; desc: string; art: ReactNode }[] = [
+// 153 PB 화면은 흰 바탕 (TV 화면과 같은 색)
+const PB_INK = "#11161A";
+const PB_LINE = "#DCE3E1";
+const PB_MINT = "#10B981";
+
+const ArtPbCourse = () => (
+  <svg viewBox="0 0 160 90" className="h-full w-full" aria-hidden="true">
+    <rect width="160" height="90" fill="#F5F8F7" />
+    <rect x="8" y="7" width="44" height="17" rx="3" fill="#fff" stroke={PB_LINE} />
+    <rect x="56" y="7" width="44" height="17" rx="3" fill="#fff" stroke={PB_LINE} />
+    <rect x="104" y="7" width="48" height="17" rx="3" fill="#fff" stroke={PB_LINE} />
+    <rect x="109" y="11" width="22" height="9" rx="2" fill={PB_INK} opacity="0.85" />
+    <rect x="8" y="28" width="144" height="5" rx="2.5" fill="#E9EEEC" />
+    <rect x="8" y="28" width="58" height="5" rx="2.5" fill={PB_MINT} opacity="0.55" />
+    {[0, 1, 2, 3].flatMap((c) =>
+      [0, 1].map((r) => (
+        <rect key={`${c}${r}`} x={8 + c * 37} y={38 + r * 25} width="33" height="21" rx="3" fill="#fff" stroke={c === 1 && r === 0 ? PB_MINT : PB_LINE} strokeWidth={c === 1 && r === 0 ? 1.6 : 1} />
+      )),
+    )}
+  </svg>
+);
+
+const ArtPbRecord = () => (
+  <svg viewBox="0 0 160 90" className="h-full w-full" aria-hidden="true">
+    <rect width="160" height="90" fill="#F5F8F7" />
+    <rect x="8" y="9" width="58" height="72" rx="4" fill="#fff" stroke={PB_LINE} />
+    {[0, 1, 2].map((i) => (
+      <rect key={i} x="12" y={14 + i * 21} width="50" height="17" rx="3" fill="#fff" stroke={PB_LINE} />
+    ))}
+    {[0, 1, 2].map((i) => (
+      <rect key={`b${i}`} x="16" y={25 + i * 21} width={34 - i * 6} height="3" rx="1.5" fill={PB_MINT} />
+    ))}
+    <rect x="70" y="9" width="44" height="72" rx="4" fill="#fff" stroke={PB_LINE} />
+    <rect x="73" y="13" width="38" height="9" rx="2" fill="#FBF1CF" />
+    {[0, 1, 2, 3, 4].map((i) => (
+      <rect key={`r${i}`} x="76" y={27 + i * 10} width={30 - (i % 2) * 6} height="3" rx="1.5" fill={PB_INK} opacity={0.35} />
+    ))}
+    <rect x="118" y="9" width="34" height="34" rx="4" fill="#FBF1CF" stroke="#EFC94C" />
+    <rect x="118" y="47" width="34" height="34" rx="4" fill="#fff" stroke={PB_LINE} />
+  </svg>
+);
+
+const BOARDS: { no: LiveBoardId; desc: string; art: ReactNode; light?: boolean }[] = [
   { no: 1, desc: "지금 운동 중인 회원을 크게 · QR 출석", art: <ArtNow /> },
   { no: 2, desc: "런칭 이벤트 — 출석왕 · 앱 활동왕 · 좋아요왕", art: <ArtEvent /> },
   { no: 3, desc: "회원 안내 카드뉴스가 자동으로 넘어가요", art: <ArtGuide /> },
   { no: 4, desc: "전체 한 화면 — 운동 중 · 방문 명단 · 명예의 전당", art: <ArtAll /> },
+  { no: "pb1", desc: "8동작 시범 · 총 개수 · 25:00 타이머 · 측정 위치", art: <ArtPbCourse />, light: true },
+  { no: "pb2", desc: "지금 측정 · 지난번의 나 · TOP 10 · 153 레코드", art: <ArtPbRecord />, light: true },
 ];
 
 const readStored = (): string | null => {
@@ -134,7 +190,7 @@ const LiveBoardPickerPage = () => {
     }
   };
 
-  const open = (no: LiveBoardNo) => navigate(liveBoardPreviewPath(branch.code, no));
+  const open = (no: LiveBoardId) => navigate(liveBoardPreviewPath(branch.code, no));
 
   // TV 열쇠 — 그 지점 운영진만 받는다 (못 받으면 칸을 숨긴다)
   const [tvKey, setTvKey] = useState<{ key: string; locked: boolean } | null>(null);
@@ -165,7 +221,7 @@ const LiveBoardPickerPage = () => {
       <PageHeader
         sticky
         title="라이브보드"
-        subtitle={`${branch.label} · 보고 싶은 화면을 눌러요`}
+        subtitle={`${branch.label} · TV 화면 바꾸기 · 미리보기`}
         leftAction={
           <button
             type="button"
@@ -201,6 +257,9 @@ const LiveBoardPickerPage = () => {
           </div>
         )}
 
+        <TvRemotePanel key={branch.code} branchCode={branch.code} />
+
+        <p className="px-1 pt-1 text-[13px] font-bold text-foreground">미리보기 — 누르면 앱에서 크게 봐요</p>
         <div className="grid grid-cols-2 gap-3">
           {BOARDS.map((bd) => (
             <button
@@ -209,15 +268,15 @@ const LiveBoardPickerPage = () => {
               onClick={() => open(bd.no)}
               className="overflow-hidden rounded-2xl bg-card text-left shadow-elev-1 ring-1 ring-black/[0.04] transition-transform active:scale-[0.98] dark:ring-white/[0.06]"
             >
-              <div className="relative aspect-video bg-gradient-to-br from-[#0B0F14] to-[#16202A]">
+              <div className={`relative aspect-video ${bd.light ? "bg-[#F5F8F7]" : "bg-gradient-to-br from-[#0B0F14] to-[#16202A]"}`}>
                 {bd.art}
                 {/* 번호는 화면과 글 사이 이음새에 — 그림을 가리지 않는다 */}
                 <span className="absolute -bottom-3.5 left-3 grid h-7 min-w-[1.75rem] place-items-center rounded-lg bg-foreground px-1.5 text-[14px] font-black tabular-nums text-background ring-[3px] ring-card">
-                  {bd.no}
+                  {liveBoardChip(bd.no)}
                 </span>
               </div>
               <div className="px-3 pb-3 pt-5">
-                <p className="text-[15px] font-bold leading-tight text-foreground">라이브보드 {bd.no}</p>
+                <p className="text-[15px] font-bold leading-tight text-foreground">{liveBoardTitle(bd.no)}</p>
                 <p className="mt-1 text-[12px] leading-snug text-muted-foreground">{bd.desc}</p>
                 <p className="mt-2 font-mono text-[11px] tabular-nums text-muted-foreground/80">
                   {tvBoardPath(branch.short, bd.no)}

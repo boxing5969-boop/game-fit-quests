@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import SDBoxerCharacter from "@/components/SDBoxerCharacter";
 import CharacterSprite from "@/components/CharacterSprite";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { resolveBranchCode } from "@/lib/branchAlias";
 import logoWhite from "@/assets/branding/153-logo-white.png";
 import { supabase } from "@/integrations/supabase/client";
 import { isBoardKeyError, readBoardKey } from "@/lib/boardKey";
 import { usePb153AutoSwitch } from "@/hooks/usePb153AutoSwitch";
+import { useTvRemote } from "@/hooks/useTvRemote";
+import { tvSlotFrom, type TvScreen } from "@/lib/tvRemote";
 import { RANK_LABELS, toGlobalLevel } from "@/lib/rankLabels";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import MedalMark, { setPreviewMedal } from "@/components/MedalMark";
@@ -229,8 +231,16 @@ const LiveBoardPage = () => {
   const only1 = screen === "1";
   const only2 = screen === "2";
   const [branchName, setBranchName] = useState("");
+  // 📺 관리자 앱 › 라이브보드에서 고른 화면 따라가기 (2026-11-08) — TV 번호 = 주소 끝 번호(번호 없으면 4) 또는 ?tv=
+  const { pathname, search: tvQuery } = useLocation();
+  const tvShowing: TvScreen = screen === "1" || screen === "2" ? screen : "4";
+  const tvSlot = pathname.startsWith("/tv/") && (screen === undefined || screen === "1" || screen === "2")
+    ? tvSlotFrom(tvQuery, tvShowing)
+    : null;
+  useTvRemote({ rawBranchCode, branchName, slot: tvSlot, showing: tvShowing });
   // 153 PB 측정이 시작되면 1 · 2번 화면이 저절로 PB 화면(pb1 · pb2)으로 (2026-11-08 대표님 「추천대로」 — 끄기 ?pb=0)
-  usePb153AutoSwitch(branchName, screen, rawBranchCode);
+  //   관리자 앱에서 다른 화면으로 바꿔 둔 TV(?tv=)는 고른 화면 그대로 — 자동 전환은 '기본'일 때만
+  usePb153AutoSwitch(branchName, new URLSearchParams(tvQuery).get("tv") ? undefined : screen, rawBranchCode);
   const [dailyVisits, setDailyVisits] = useState<DailyVisit[]>([]);
   const [onDutyStaff, setOnDutyStaff] = useState<OnDutyCoach[]>([]);
   // user_id → 직원 여부 캐시. Realtime 이벤트마다 다시 조회하지 않는다.
