@@ -452,6 +452,16 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
   - 폰 카메라로 들어온 `/qr-checkin?b=&t=` 는 한 번 보낸 뒤 주소에서 지운다(새로고침 때 지난 QR 재전송 방지). 토큰 비교는 소문자로.
   - 칠금 TV(태블릿)는 지점장 계정으로 로그인해 보드를 띄운다 — 낮에 몇 시간씩 요청이 끊기는 때가 있다(10/29 13:30~16:00). 그동안 화면의 QR 은 지난 QR 이다.
 
+### 153 PB 라이브보드 — TV pb1 「코스 보드」 · pb2 「기록 보드」 (2026-11-08 대표님 「다음진행 추천대로」 · 보고서 「153 PB 라이브보드 설계」 1단계 — 화이트 · 최대 4명 · 자동 전환)
+
+- 주소: `/tv/<지점>/pb1` · `/tv/<지점>/pb2` ([LiveBoardPb153Page](src/pages/LiveBoardPb153Page.tsx) · [PbCourseBoard](src/components/liveBoard/pb/PbCourseBoard.tsx) · [PbRecordBoard](src/components/liveBoard/pb/PbRecordBoard.tsx)). 쿼리 `?demo=1` 예시 화면 · `?lite=1` 시범 영상 대신 정지 그림 · `?k=` TV 열쇠. 화이트(1920×1080 px 고정 · [pbTvStyles](src/components/liveBoard/pb/pbTvStyles.ts)) · 글자 28px 이상 · 페이드만 · 무한 애니메이션 없음.
+- 숫자는 전부 [test153.ts](src/lib/test153.ts) · [pbBoard.ts](src/lib/pbBoard.ts)(총 개수 오픈 410 · 스타터 205 · 셀트런 800m · 22:00 레드 타이틀 = `RED_TITLE_PB_LIMIT_MIN`). TV 카드 한 줄 기준(`TV_STD`)은 PbCourseBoard 안 — 종목을 바꾸면 같이.
+- 8분할 시범 = 영상 1개 `public/test153/pb-grid.mp4`(1856×734 · 6초 · 813KB, 시범 8편의 위쪽 동작 화면만) — TV 는 영상 여러 개를 같이 틀면 버벅인다. 칸 자리는 `PB_GRID` 와 같아야 한다 → 다시 만들기 `python3 scripts/make-pb-grid.py`.
+- 실시간 = 채널 `test153-live:<지점 이름>`(broadcast · **이름 · user_id 없음** — board-ping 과 같은 원칙). 코치 측정 화면이 [useTest153LiveSender](src/hooks/useTest153LiveSender.ts)로 바뀔 때마다 + 5초마다 보낸다(시작 · 구간 시각 · 부문 · 저장 결과 is_pb/prev_pb). 지점 = 측정하는 회원의 지점. TV 는 [usePb153Live](src/hooks/usePb153Live.ts) — 번호(1~4)로 보이고 끝난 측정은 끝난 지 3분 뒤 내린다.
+- 자동 전환: `/tv/<지점>/1 · 2`([usePb153AutoSwitch](src/hooks/usePb153AutoSwitch.ts))가 달리는 측정 신호를 받으면 `pb1 · pb2?auto=1` 로 넘어가고(열쇠 등 쿼리 유지), 달리는 측정이 없어지고 3분 뒤 돌아온다. 끄기 `?pb=0`. TV1 리모컨: 신호가 없을 때 OK/Enter = 단체 타이머 시작·멈춤, ←/Backspace = 멈춘 타이머 지우기.
+- 기록 보드 데이터 = `board_test153(p_branch, p_key)`(TV 열쇠 `_board_branch_ok` · 닉네임만 · 부문별 TOP 10 전 지점 · 이번 달 PB 단축 3명 · 153 레코드 PB 3종 · 이 지점 오늘 기록 4개 · 전체 수) — [20261108140609_board_test153.sql](supabase/migrations/20261108140609_board_test153.sql). 60초마다 + 저장 신호 1.5초 뒤 다시 읽는다. 22:00 통과선은 오픈 순위에만, 코치님 · 운영진 줄은 '순위에만' 한 줄.
+- 2단계(다음): 히트(최대 4명) — 이름이 나오려면 DB(히트 · 참가자 표) + board_* 함수로 읽기(공개 채널에 이름을 싣지 않는다) · 고스트('지난번의 나') · 구간 기록 자동 저장 · 코치 태블릿 참가자별 버튼.
+
 ### 수강권 화면 — PT 남은 횟수 · 락카 번호 (2026-10-19 대표님)
 
 - 멤버십 카드(`MembershipCard`, 수강권·내정보 공용)에 PT 회원은 수업권 이름·남은 횟수·기한, 락카가 있으면 락카 번호. 표시 규칙은 `src/lib/gymTicketInfo.ts`.

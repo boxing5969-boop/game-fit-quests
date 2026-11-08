@@ -27,6 +27,7 @@ import {
 } from "@/lib/test153";
 import { gripText, measureErrorText, measureInputError, parseMeasure, resultSummary } from "@/lib/test153Profile";
 import { fetchFitnessProfile, saveFitnessMeasure, saveTest153Record, type SaveTest153Result } from "@/services/test153Service";
+import { useTest153LiveSender } from "@/hooks/useTest153LiveSender";
 
 interface Member {
   id: string;
@@ -96,6 +97,10 @@ const Test153MeasurePanel = ({ branchName, isSuperAdmin, onBack }: Props) => {
     setRun(next);
     storeRun(next);
   }, []);
+
+  // 📺 라이브보드 TV 로 측정 상태 보내기 (2026-11-08) — 이름 없이 시작 시각 · 구간 · 부문 · 저장 결과만.
+  //   TV 1 · 2번 화면은 이 신호를 받으면 153 PB 화면으로 넘어간다. 지점 = 측정하는 회원의 지점(없으면 이 화면 지점)
+  useTest153LiveSender(run?.member.branch || branchName, run, result);
 
   const segments = useMemo(() => buildSegments(run?.division ?? division), [run?.division, division]);
   const running = !!run && run.marks.length < segments.length && !run.stoppedAt;

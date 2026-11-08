@@ -7,6 +7,7 @@ import { resolveBranchCode } from "@/lib/branchAlias";
 import logoWhite from "@/assets/branding/153-logo-white.png";
 import { supabase } from "@/integrations/supabase/client";
 import { isBoardKeyError, readBoardKey } from "@/lib/boardKey";
+import { usePb153AutoSwitch } from "@/hooks/usePb153AutoSwitch";
 import { RANK_LABELS, toGlobalLevel } from "@/lib/rankLabels";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import MedalMark, { setPreviewMedal } from "@/components/MedalMark";
@@ -228,6 +229,8 @@ const LiveBoardPage = () => {
   const only1 = screen === "1";
   const only2 = screen === "2";
   const [branchName, setBranchName] = useState("");
+  // 153 PB 측정이 시작되면 1 · 2번 화면이 저절로 PB 화면(pb1 · pb2)으로 (2026-11-08 대표님 「추천대로」 — 끄기 ?pb=0)
+  usePb153AutoSwitch(branchName, screen, rawBranchCode);
   const [dailyVisits, setDailyVisits] = useState<DailyVisit[]>([]);
   const [onDutyStaff, setOnDutyStaff] = useState<OnDutyCoach[]>([]);
   // user_id → 직원 여부 캐시. Realtime 이벤트마다 다시 조회하지 않는다.

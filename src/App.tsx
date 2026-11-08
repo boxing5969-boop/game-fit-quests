@@ -109,6 +109,8 @@ const SignageBoardPage = lazyWithRetry(() => import("@/pages/SignageBoardPage"))
 // 관리자용 라이브보드 고르기 — TV 화면 1·2·3·4 를 앱 안에서 바로 본다 (2026-09-29)
 const LiveBoardPickerPage = lazyWithRetry(() => import("@/pages/LiveBoardPickerPage"));
 const LiveBoardPreviewPage = lazyWithRetry(() => import("@/pages/LiveBoardPreviewPage"));
+// 153 PB 라이브보드 TV1 코스 보드 · TV2 기록 보드 (2026-11-08)
+const LiveBoardPb153Page = lazyWithRetry(() => import("@/pages/LiveBoardPb153Page"));
 const FaceKioskPage = lazyWithRetry(() => import("@/pages/FaceKioskPage"));
 const SuperAdminDashboard = lazyWithRetry(() => import("@/pages/SuperAdminDashboard"));
 // 153마인드셋 — 시각화 훈련 (153복싱짐으로 돌아온 사람).
@@ -383,6 +385,10 @@ const AppRoutes = () => {
         {/* 3번 화면은 실시간 보드가 아니라 회원 안내 카드뉴스 슬라이드쇼다.
             정적 세그먼트("3")가 :screen 보다 우선 매칭되므로 순서와 무관하게 잡힌다. */}
         <Route path="/tv/:branchCode/3" element={<TvFitFrame><SignageBoardPage /></TvFitFrame>} />
+        {/* 153 PB 라이브보드 (2026-11-08) — pb1 코스 보드(8분할 · 총 개수 · 타이머) · pb2 기록 보드(순위 · 153 레코드).
+            /1 · /2 는 측정이 시작되면 저절로 여기로 넘어온다(?auto=1). 정적 세그먼트라 :screen 보다 먼저 잡힌다. */}
+        <Route path="/tv/:branchCode/pb1" element={<TvFitFrame><LiveBoardPb153Page screen="pb1" /></TvFitFrame>} />
+        <Route path="/tv/:branchCode/pb2" element={<TvFitFrame><LiveBoardPb153Page screen="pb2" /></TvFitFrame>} />
         <Route path="/tv/:branchCode/:screen" element={<TvFitFrame><LiveBoardPage /></TvFitFrame>} />
         <Route path="/face-kiosk/:branchCode" element={<FaceKioskPage />} />
         {/* 설치형 앱 전용 — 지점은 키오스크 키가 결정한다(주소에 지점코드 불필요) */}
