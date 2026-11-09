@@ -53,7 +53,15 @@ const TileBack = ({ uid }: { uid: string }) => (
   </svg>
 );
 
-/** 글리프 그림만 (칸 없이) — 그림 글리프면 img, 아니면 SVG */
+/**
+ * 글리프 자리 — 칸 가운데 정사각형. inset 만 주지 말고 위치·크기를 직접 준다 (2026-11-09 대표님 "아이폰은 ui가 싱크가 잘안맞아").
+ * width/height 없는 svg 에 inset 만 주면 크롬은 칸 안으로 늘리지만 사파리(웹킷 — 아이폰 앱·사파리)는 늘리지 않고
+ * 칸 크기 그대로 그린 뒤 17.9% 밀어서, 전체 메뉴 아이콘이 오른쪽 아래로 밀려 칸 밖으로 넘쳤다 (10/18 붕대 그림 img 와 같은 원인).
+ */
+const SVG_GLYPH_BOX: CSSProperties = { left: "17.9%", top: "17.9%", width: "64.2%", height: "64.2%" };
+const IMAGE_GLYPH_BOX: CSSProperties = { left: "14%", top: "14%", width: "72%", height: "72%" };
+
+/** 글리프 그림만 (칸 없이) — 그림 글리프면 img, 아니면 SVG. style 은 left·top·width·height 로 (inset 만 주면 사파리에서 svg 가 안 늘어난다) */
 const GlyphArt = ({ name, uid, style }: { name: MenuGlyphName; uid: string; style: CSSProperties }) =>
   isImageGlyph(name) ? (
     // img 는 inset 만으로는 크기가 안 잡혀(제 크기·칸 너비로 그려져 칸 밖으로 나감) — 크기를 가진 칸 안에 꽉 채운다
@@ -76,7 +84,7 @@ const GlyphTile = ({ name, size = 56, className }: GlyphTileProps) => {
   return (
     <span aria-hidden className={cn("relative inline-block shrink-0", className)} style={{ width: size, height: size }}>
       <TileBack uid={uid} />
-      <GlyphArt name={name} uid={uid} style={{ inset: isImageGlyph(name) ? "14%" : "17.9%" }} />
+      <GlyphArt name={name} uid={uid} style={isImageGlyph(name) ? IMAGE_GLYPH_BOX : SVG_GLYPH_BOX} />
     </span>
   );
 };

@@ -619,6 +619,10 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - `useModalDismiss(open, onClose)` 또는 `lockBodyScroll()`([src/lib/scrollLock.ts](src/lib/scrollLock.ts))만 쓴다 — 잠금 개수를 세서 마지막 창이 닫힐 때만 푼다.
 - `document.body.style.overflow` 를 창마다 직접 기억·복원하지 않는다. 창이 겹치면(지금 운동 중 전체화면 → 회원 카드) 닫은 뒤에도 hidden 이 남아 페이지가 안 내려간다(대표님: "지금운동중 회원카드 클릭후 밑으로 스크롤이 안됨").
 
+### 아이폰(사파리 · 웹킷)에서만 어긋나는 그림 (2026-11-09 대표님 "아이폰은 ui가 싱크가 잘안맞아")
+
+- `svg` · `img` 를 `position:absolute` + `inset`(양쪽 0 아닌 값)만으로 크기 잡지 않는다 — 크롬(안드로이드 · PC)은 칸 안으로 늘려 멀쩡해 보이지만, 웹킷(아이폰 앱 · 사파리)은 제 크기(width/height 없는 svg 는 칸의 100%)로 그린 뒤 left/top 만큼 밀어 **오른쪽 아래로 칸 밖에 넘친다**. left · top · width · height 를 직접 주거나, 크기 가진 span 안에 `h-full w-full` 로 넣는다. 같은 일: 10/18 붕대 그림 img(2562114) · 11/09 전체 메뉴 글리프 svg(`GlyphTile` — `SVG_GLYPH_BOX`). 크롬 390px 화면 확인만으로는 안 보인다.
+
 ### 홈 당겨서 새로고침 (2026-11-06 대표님 "마이복서 153홈에서 위로 한번더 올리면 새로고침되게 해줘")
 
 - 브라우저 기본 당겨서 새로고침은 `index.css`(html, body `overscroll-behavior: none`)로 꺼 둔 그대로 — 홈(`/home` · `/myboxer`)에만 [src/components/home/HomePullToRefresh.tsx](src/components/home/HomePullToRefresh.tsx)를 둔다. 맨 위에서 72px(저항 뒤) 넘게 끌고 놓으면 알약 표시 '놓으면 새로고침' → 도는 표시 → '새로고침 완료'.
