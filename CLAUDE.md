@@ -481,6 +481,12 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - PT 원본은 브로제이 PT 수업권 → 153OS 워커(매시 :40 UTC, 한 지점 18명씩 — 회원마다 24~48시간에 한 번 확인) → `sync-pt-members`(매시 40분)가 `profiles.pt_ticket · pt_remaining · pt_end_date · pt_checked_at` 에 옮긴다. 늦을 수 있어 카드에 "PT 횟수는 ○○ 기준"을 같이 적는다. `pt_until` 은 배지 유효일(확인일+7일)이라 기한으로 쓰지 않는다.
 - 락카는 153OS 도 브로제이에서 읽지 않는다(6월 엑셀 한 번뿐). 지금은 지도진이 회원 상세(`MemberDetailPage` '락카' 줄)에서 넣는다 → `set_member_locker`(관리자 = 전체, 지점장·코치 = 같은 지점). `profiles.locker_label` 은 회원이 직접 못 바꾼다(guard). 본인·지도진만 본다 — 20261019200000.
 
+### 153 마일리지 지급 — 전체관리자 (2026-11-09 대표님 「챔피언 머니처럼 회원님들 마일리지 드리는거 내 계정으로 할수있게 만들자」)
+
+- 회원 상세 › 「153 마일리지」 칸 › '마일리지 지급' 줄(전체관리자만 보임 — 지점장은 지금처럼 '데스크 결제 할인'만): 줄 점수 · 사유(회원 마일리지 내역에 그대로 보임 · 60자 · 비우면 '153 보너스 마일리지') · '회원에게 알림 보내기'(기본 켬) → 확인 창 → `admin_grant_mileage`.
+- 서버 [20261109213315_admin_grant_mileage.sql](supabase/migrations/20261109213315_admin_grant_mileage.sql): 전체관리자만 · 한 번에 1 ~ 100,000점 · 코치님 · 운영진(is_staff · 운영진 역할)과 합쳐진 옛 계정에는 안 줌 → 기존 `grant_mileage`(kind `adjust`, idem_key `admin-grant:<준 사람>:<요청 id>` — 두 번 눌려도 한 번) → 알림이면 `notifications`(link `/mypage`, 푸시 트리거) 한 통. 아낀 금액(`get_my_mileage_savings`)에는 섞이지 않는다. 화면 값(최대 · 사유 길이 · 기본 사유 · 확인 글)은 [src/lib/mileageGrant.ts](src/lib/mileageGrant.ts) 한 곳.
+- 챔피언 머니 지급(`admin_grant_gems` · 지점장도)과 달리 마일리지는 1점 = 1원 결제 할인이라 전체관리자만 — 지점장에게 열려면 대표님 확인 뒤 서버 권한 검사와 `canGrantMileage` 를 같이 바꾼다.
+
 ### 앱 결제 장바구니 · 락카/운동복 남은 기간 (2026-10-27 대표님 보고서 「앱 결제 장바구니」 · "나머진 니추천대로")
 
 | 파일 | 역할 |

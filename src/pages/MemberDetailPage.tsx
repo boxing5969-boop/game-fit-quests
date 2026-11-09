@@ -21,6 +21,15 @@ import MemberMyInfoView from "@/components/admin/MemberMyInfoView";
 import MemberPassPanel from "@/components/admin/MemberPassPanel";
 import { useAttendanceHistory } from "@/hooks/useAttendanceHistory";
 import { minutesToHours } from "@/lib/achievement153";
+import {
+  MILEAGE_GRANT_REASON_MAX,
+  formatGrantInput,
+  grantAmountError,
+  grantConfirmText,
+  grantReason,
+  newGrantRequestId,
+  parseGrantAmount,
+} from "@/lib/mileageGrant";
 
 type TabKey = "overview" | "pass" | "myinfo" | "attendance" | "missions" | "levelmap" | "activity" | "notes";
 
@@ -208,6 +217,42 @@ const MemberDetailPage = () => {
     const bal = mileage?.balance ?? 0;
     return Math.max(0, Math.min(Math.floor(Math.max(bal, 0) / 1000) * 1000, Math.floor((pay * 0.1) / 1000) * 1000));
   })();
+
+  // 마일리지 지급 — 전체관리자(대표님)만 · 챔피언 머니처럼 (2026-11-09 대표님 「챔피언 머니처럼 회원님들 마일리지 드리는거 내 계정으로 할수있게 만들자」)
+  //   서버 admin_grant_mileage 가 다시 검사한다(전체관리자 · 1 ~ 100,000점 · 사유 60자 · 같은 요청 id 는 한 번만).
+  //   사유는 회원 마일리지 내역에 그대로 보이고, '회원에게 알림 보내기'면 알림함 + 휴대폰 알림이 한 통 간다.
+  const canGrantMileage = role === "super_admin";
+  const [mlGrantAmt, setMlGrantAmt] = useState("");
+  const [mlGrantReason, setMlGrantReason] = useState("");
+  const [mlGrantNotify, setMlGrantNotify] = useState(true);
+  // 요청 id — 지급이 끝나야 새로 만든다(실패 뒤 다시 눌러도 · 두 번 눌려도 한 번만 들어가게)
+  const [mlGrantReq, setMlGrantReq] = useState(newGrantRequestId);
+  const grantMileageMut = useMutation({
+    mutationFn: async (v: { amount: number; reason: string; notify: boolean; requestId: string }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).rpc("admin_grant_mileage", {
+        p_user_id: memberId,
+        p_amount: v.amount,
+        p_reason: v.reason,
+        p_request_id: v.requestId,
+        p_notify: v.notify,
+      });
+      if (error) throw error;
+      return data as { granted?: boolean; balance?: number };
+    },
+    onSuccess: (d, v) => {
+      if (d?.granted) {
+        toast.success(`마일리지 ${v.amount.toLocaleString("ko-KR")}점 지급 · 지금 ${Number(d.balance ?? 0).toLocaleString("ko-KR")}점`);
+      } else {
+        toast.info("이미 들어간 지급이에요 — 두 번 들어가지 않았어요");
+      }
+      setMlGrantAmt("");
+      setMlGrantReason("");
+      setMlGrantReq(newGrantRequestId());
+      void refetchMileage();
+    },
+    onError: (e: Error) => toast.error(e.message || "마일리지를 주지 못했어요"),
+  });
 
   // 출석 기록 전체 — 관리자 · 지점장만 (2026-10-21 대표님: "관리자와 지점장은 회원 상세보기에서 총 몇 회 · 전체 출석 확인")
   //   서버 get_attendance_history 가 같은 범위만 허락한다(전체관리자 · 관리자 · 같은 지점 지점장). 코치님은 출석 기록을 못 읽는다(RLS).
@@ -615,6 +660,59 @@ const MemberDetailPage = () => {
                       <span className="font-medium text-muted-foreground"> · {sm.count.toLocaleString("ko-KR")}건</span>
                     </span>
                   ))}
+                </div>
+              )}
+              {/* 마일리지 지급 — 전체관리자(대표님)만 · 챔피언 머니처럼 (2026-11-09) */}
+              {canGrantMileage && (
+                <div className="space-y-2 rounded-xl border border-border bg-card p-3">
+                  <p className="text-xs font-bold text-foreground">
+                    마일리지 지급 <span className="font-medium text-muted-foreground">· 전체관리자</span>
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      inputMode="numeric"
+                      value={mlGrantAmt}
+                      onChange={(e) => setMlGrantAmt(formatGrantInput(e.target.value))}
+                      placeholder="줄 점수"
+                      aria-label="줄 마일리지 점수"
+                      className="w-28 shrink-0 rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                    />
+                    <input
+                      value={mlGrantReason}
+                      onChange={(e) => setMlGrantReason(e.target.value)}
+                      maxLength={MILEAGE_GRANT_REASON_MAX}
+                      placeholder="사유 (회원 내역에 보여요)"
+                      aria-label="지급 사유"
+                      className="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <label className="flex items-center gap-2 text-xs text-foreground">
+                    <input
+                      type="checkbox"
+                      checked={mlGrantNotify}
+                      onChange={(e) => setMlGrantNotify(e.target.checked)}
+                      className="h-4 w-4 accent-primary"
+                    />
+                    회원에게 알림 보내기
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const amount = parseGrantAmount(mlGrantAmt);
+                      const err = grantAmountError(amount);
+                      if (err) {
+                        toast.error(err);
+                        return;
+                      }
+                      const reason = grantReason(mlGrantReason);
+                      if (!window.confirm(grantConfirmText(p.name || p.nickname || "", amount, reason, mlGrantNotify))) return;
+                      grantMileageMut.mutate({ amount, reason, notify: mlGrantNotify, requestId: mlGrantReq });
+                    }}
+                    disabled={grantMileageMut.isPending || !mlGrantAmt}
+                    className="w-full rounded-xl bg-status-complete/20 py-2.5 text-sm font-bold text-status-complete active:scale-95 disabled:opacity-40"
+                  >
+                    {grantMileageMut.isPending ? "주는 중..." : "마일리지 지급"}
+                  </button>
                 </div>
               )}
               <div className="flex gap-2">
