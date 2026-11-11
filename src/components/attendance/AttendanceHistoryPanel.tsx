@@ -19,8 +19,9 @@
  *     · 주 평균은 어디에도 두지 않는다 (2026-10-21 대표님)
  */
 import { useMemo, useState, type ReactNode } from "react";
-import { CalendarCheck, Check, ChevronDown, ChevronRight, CircleHelp } from "lucide-react";
+import { CalendarCheck, ChevronDown, ChevronRight, CircleHelp } from "lucide-react";
 import { useAttendanceHistory } from "@/hooks/useAttendanceHistory";
+import WorkoutCalendarCard from "@/components/attendance/WorkoutCalendar";
 import {
   WEEKDAY_KO,
   bestMonthAllTime,
@@ -38,7 +39,7 @@ import {
   type MonthCount,
 } from "@/lib/attendanceHistory";
 import { attendanceCheer, kstToday, sinceLabel } from "@/lib/attendanceCheer";
-import { CHECKOUT_WINDOW_HOURS, DEFAULT_SESSION_MINUTES, minutesToHours, weekMonday } from "@/lib/achievement153";
+import { CHECKOUT_WINDOW_HOURS, DEFAULT_SESSION_MINUTES, minutesToHours } from "@/lib/achievement153";
 import { cn } from "@/lib/utils";
 
 export type AttendanceAudience = "member" | "staff";
@@ -194,59 +195,27 @@ const SummaryBody = ({ data, onOpenAll }: { data: AttendanceHistory; onOpenAll?:
   );
 };
 
-/** '2026-10-27' 이 든 주의 월 ~ 일 날짜 7개 (KST 날짜 문자열) */
-const weekDates = (today: string): string[] => {
-  const mon = weekMonday(today);
-  if (!mon) return [];
-  const t = Date.parse(`${mon}T00:00:00Z`);
-  return Array.from({ length: 7 }, (_, i) => new Date(t + i * 86_400_000).toISOString().slice(0, 10));
-};
-
-/** 이번 주 — 월 ~ 일 7칸 (온 날은 민트 동그라미) + 몇 주 연속 + 응원 한 줄 (회원 본인) */
+/**
+ * 이번 주 — 월 ~ 일 7칸(온 날은 민트 도장) + 몇 주 연속 + 응원 한 줄 (회원 본인)
+ *   2026-11-12 선릉역점 봄 회원 제안 → 대표님 「추천대로 진행하자」: '달력 펼치기'로 한 달까지 — 홈 '운동 달력'과 같은 조각(WorkoutCalendar).
+ */
 const WeekCard = ({ data }: { data: AttendanceHistory }) => {
-  const today = kstToday();
-  const dates = weekDates(today);
-  const came = new Set(data.list.map((d) => d.day));
-  const count = dates.filter((d) => came.has(d)).length;
   const cheer = attendanceCheer({ ...data, next: 0 });
   return (
-    <Card label="이번 주">
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-heading text-foreground">이번 주</h3>
-        {data.weekStreak >= 2 ? (
-          <span className="rounded-full bg-primary/10 px-3 py-1 text-label font-bold text-primary">{n(data.weekStreak)}주 연속</span>
-        ) : count > 0 ? (
-          <span className="text-label font-bold text-foreground">{n(count)}번 왔어요</span>
-        ) : null}
-      </div>
-      <ol className="mt-4 grid grid-cols-7 gap-1" aria-label={`이번 주 ${count}번 출석`}>
-        {dates.map((d, i) => {
-          const on = came.has(d);
-          const isToday = d === today;
-          return (
-            <li key={d} className="flex flex-col items-center gap-1.5">
-              <span className={cn("text-micro", isToday ? "font-black text-foreground" : "text-muted-foreground")}>{WEEKDAY_KO[i]}</span>
-              <span
-                className={cn(
-                  "flex h-9 w-9 items-center justify-center rounded-full",
-                  on ? "bg-primary text-primary-foreground" : isToday ? "ring-2 ring-primary/60" : "bg-muted",
-                  !on && d > today && "opacity-50",
-                )}
-                aria-label={`${WEEKDAY_KO[i]}요일${on ? " 출석" : ""}`}
-              >
-                {on && <Check className="h-5 w-5" strokeWidth={3} aria-hidden />}
-              </span>
-            </li>
-          );
-        })}
-      </ol>
-      {data.total > 0 && (
-        <p className="mt-4 flex items-start gap-2 text-body leading-snug text-foreground">
-          <span aria-hidden>{cheer.emoji}</span>
-          <span className="min-w-0">{cheer.text}</span>
-        </p>
-      )}
-    </Card>
+    <WorkoutCalendarCard
+      data={data}
+      title="이번 주"
+      openTitle="운동 달력"
+      storageKey="153cal:record:open"
+      footer={
+        data.total > 0 ? (
+          <p className="mt-4 flex items-start gap-2 text-body leading-snug text-foreground">
+            <span aria-hidden>{cheer.emoji}</span>
+            <span className="min-w-0">{cheer.text}</span>
+          </p>
+        ) : null
+      }
+    />
   );
 };
 

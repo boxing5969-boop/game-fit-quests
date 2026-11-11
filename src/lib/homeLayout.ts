@@ -14,6 +14,10 @@
  *   - weeklyProgress : 이번 주 진행도 (세션·분)
  *   - rankingPreview : 이번 주 내 순위 카드
  *
+ * 첫 화면(내 카드 한 장 — HomePage view "menu") 카드 — 꾸미기에서는 켜고 끄기만 (firstScreen)
+ *   - workoutCalendar : 운동 달력 — 출석한 날에 도장 · 이번 주 한 줄, 펼치면 한 달
+ *                       (2026-11-12 선릉역점 봄 회원 제안 → 대표님 「추천대로 진행하자」 · 회원 모두 기본 켬)
+ *
  * 저장 위치는 localStorage. 기기마다 분리되지만 간단·빠름 — cross-device
  * 동기화는 이후 필요하면 DB 로 옮긴다.
  */
@@ -30,7 +34,8 @@ export type HomeWidgetId =
   | "storyRpg"
   | "dietPromo"
   | "todayMission"
-  | "weeklyProgress";
+  | "weeklyProgress"
+  | "workoutCalendar";
 
 export interface HomeWidgetMeta {
   id: HomeWidgetId;
@@ -40,6 +45,8 @@ export interface HomeWidgetMeta {
   conditional?: boolean;
   /** admin / super_admin 만 토글 항목에 노출 (회원 sheet 에서는 숨김). */
   adminOnly?: boolean;
+  /** 첫 화면(내 카드 한 장)에 자리가 정해진 카드 — 꾸미기 '첫 화면' 칸에서 켜고 끄기만 (순서 없음). */
+  firstScreen?: boolean;
 }
 
 export const HOME_WIDGETS: readonly HomeWidgetMeta[] = Object.freeze([
@@ -97,6 +104,12 @@ export const HOME_WIDGETS: readonly HomeWidgetMeta[] = Object.freeze([
     label: "이번 주 진행도",
     description: "세션 수 · 훈련 시간(분) 목표 바",
   },
+  {
+    id: "workoutCalendar",
+    label: "운동 달력",
+    description: "첫 화면 '내 운동' 아래 — 출석한 날에 도장, 누르면 한 달",
+    firstScreen: true,
+  },
 ]);
 
 // v2: visibility + order 함께 저장. v1 (visibility 만) 데이터는 자동 마이그레이션.
@@ -120,6 +133,7 @@ const DEFAULT_VISIBILITY: VisibilityMap = {
   dietPromo: false,
   todayMission: false,
   weeklyProgress: false,
+  workoutCalendar: true, // 첫 화면 운동 달력 — 회원 모두 기본 켬 (2026-11-12 대표님)
 };
 
 /**
@@ -137,6 +151,7 @@ const DEFAULT_ORDER: HomeWidgetId[] = [
   "masterTrack",
   "storyRpg",
   "todayMission",
+  "workoutCalendar", // 첫 화면 카드 — 순서는 쓰지 않는다 (MY복서 슬롯에 안 들어감)
 ];
 
 interface LayoutStateV2 {

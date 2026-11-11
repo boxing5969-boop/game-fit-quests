@@ -708,6 +708,19 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 브라우저 기본 당겨서 새로고침은 `index.css`(html, body `overscroll-behavior: none`)로 꺼 둔 그대로 — 홈(`/home` · `/myboxer`)에만 [src/components/home/HomePullToRefresh.tsx](src/components/home/HomePullToRefresh.tsx)를 둔다. 맨 위에서 72px(저항 뒤) 넘게 끌고 놓으면 알약 표시 '놓으면 새로고침' → 도는 표시 → '새로고침 완료'.
 - 놓으면 `queryClient.refetchQueries({ type: "active" })` + `refreshProfile()`(내 정보 · 역할 · 진행도) — 페이지를 통째로 다시 열지 않는다(흰 화면 · 앱 접속 출석 · 보상 자동 받기가 다시 돌지 않게). 창이 열려 있음(body 스크롤 잠금 · `aria-modal`) · 가로 밀기 · 안쪽 스크롤 칸이 맨 위가 아님 · 홈의 전체 화면 · 시트가 열림이면 받지 않는다. 시험 `HomePullToRefresh.test.tsx`.
 
+### 운동 달력 1단계 — 홈 첫 화면 · 내 운동 기록 (2026-11-12 선릉역점 봄 회원 제안 → 대표님 「추천대로 진행하자」 · 보고서 https://claude.ai/artifact/4s6m5nxaghb8Hpqxpx79Rn)
+
+| 파일 | 역할 |
+|---|---|
+| [src/lib/attendanceCalendar.ts](src/lib/attendanceCalendar.ts) | 날짜 계산 한 곳 — 월요일 시작 주 · 달력 4~6줄 · 넘겨 볼 달(첫 기록 달 ~ 이번 달) · 날짜 → 그날 출석. KST 'YYYY-MM-DD' 글자 그대로 (시험 attendanceCalendar.test.ts) |
+| [src/components/attendance/WorkoutCalendar.tsx](src/components/attendance/WorkoutCalendar.tsx) | 카드 하나 — 접힘 = 이번 주 7칸 · '달력 펼치기' = 한 달(‹ › 첫 기록 달까지) · 출석한 날 = 민트 도장(누르면 들어온 시각 · 운동 시간 한 줄) · 오늘 = 테두리 · 칩 = n주 연속(2주부터, 아니면 접혔을 때 'n번 왔어요') · 펼침은 기기마다 `153cal:<화면>:open` |
+| [src/components/home/HomeWorkoutCalendar.tsx](src/components/home/HomeWorkoutCalendar.tsx) | 홈 첫 화면(view menu) '내 운동' 바로 아래 — 출석이 한 번도 없으면 안 그림 · `homeWidgets.workoutCalendar`(기본 켬) |
+| AttendanceHistoryPanel `WeekCard` | 내 운동 기록 '이번 주'도 같은 조각 — 제목 '이번 주' → 펼치면 '운동 달력' · 응원 한 줄은 접혔을 때만 |
+
+- 숫자는 `get_attendance_history` 그대로(홈 '내 운동' · 내 운동 기록과 같은 캐시) — DB 변경 없음. 출석 '횟수'를 주인공 숫자로 두지 않는다(10-22 대표님 「몇 번 말고 몇 시간」) · 빠진 날 표시 없음.
+- 끄기 = 홈 커스터마이즈(MY복서 화면) 맨 위 '첫 화면' 칸 — `HomeWidgetMeta.firstScreen`(켜고 끄기만 · 순서 단추 없음 · MY복서 슬롯에는 그리지 않음, renderers 는 null).
+- 다음 단계(보고서 순서): 2단계 운동 약속(`myboxer:ops-schedule` 설계 — 약속한 날 = 민트 테두리 → 출석하면 채워짐 · 빠지면 회색 점) · 3단계 오늘의 체크(다 채운 날 금색 별) · 4단계 153OS 공지 '일정 날짜' · 한 줄 템플릿 칩. 모두 이 카드의 날짜 칸에 얹는다.
+
 ### 153플레이 「음악」 탭 — 체육관 자동재생 (2026-11-11 대표님 「153플레이에 복싱 음악 따로 모아놓자 · 복싱짐에서 틀 수 있는 인기 음악 100곡 · 카테고리 · 체육관에 자동재생 — 광고도 없고 멈추지도 않게」 · 「100곡 더 찾아줘 최신곡으로」)
 
 | 파일 | 역할 |

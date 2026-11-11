@@ -45,6 +45,7 @@ import TodayActionCard, { type TodayActionState } from "@/components/home/TodayA
 import WorkoutFinishCard from "@/components/home/WorkoutFinishCard";
 import MileageCard from "@/components/home/MileageCard";
 import HomeWorkoutCard from "@/components/home/HomeWorkoutCard";
+import HomeWorkoutCalendar from "@/components/home/HomeWorkoutCalendar";
 import { useLevelCycleProgress, promotionHint } from "@/hooks/useLevelCycleProgress";
 import {
   STAFF_CHAMPION_LABEL, STAFF_CHAMPION_LEVEL, STAFF_CHAMPION_LINE, isStaffProfile, staffChampionLine, staffDisplayName, staffTitleLabel,
@@ -631,6 +632,9 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
               근력 · 체력 · 체지방률(% 막대) · 피드백 · 정확도(넣을수록 ↑, 없으면 출석 + 남녀 평균) — 두 카드 안에서. */}
           {/* 2026-10-28 리디자인: 홈의 운동 카드는 '내 운동' 하나 — '153과 함께하며'는 '내 운동 기록'(자세히)으로 옮겼다 */}
           <HomeWorkoutCard />
+          {/* 📅 운동 달력 — 출석한 날에 도장 · 이번 주 한 줄, 펼치면 한 달 (2026-11-12 선릉역점 봄 회원 제안 → 대표님 「추천대로 진행하자」).
+              회원 모두 기본 켬 · 끄기는 홈 꾸미기 '첫 화면' · 출석이 한 번도 없으면 안 보인다 */}
+          {homeWidgets.workoutCalendar && <HomeWorkoutCalendar />}
           {renderRankingPreview(true)}
 
           {/* 휴대폰 알림 켜기 — 아직 안 켠 회원에게만 보인다 ('나중에'는 2주 접힘).
@@ -708,6 +712,8 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
             dietPromo: () => null,
             todayMission: () => null,
             weeklyProgress: () => null,
+            // 첫 화면(내 카드 한 장) 전용 — MY복서 슬롯에는 그리지 않는다 (2026-11-12 운동 달력)
+            workoutCalendar: () => null,
           };
 
           // order 배열에서 primary 슬롯에 해당하는 ID 만 정렬 순서로 렌더

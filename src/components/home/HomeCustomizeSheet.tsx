@@ -24,6 +24,11 @@ const PRIMARY_IDS: ReadonlySet<HomeWidgetId> = new Set([
   "rankingPreview",
 ]);
 
+// 첫 화면(내 카드 한 장)에 자리가 정해진 카드 — 켜고 끄기만, 순서 없음 (2026-11-12 운동 달력)
+const FIRST_SCREEN_IDS: ReadonlySet<HomeWidgetId> = new Set(
+  HOME_WIDGETS.filter((w) => w.firstScreen).map((w) => w.id),
+);
+
 /**
  * 홈 화면 커스터마이즈 바텀시트 — on/off 토글 + ↑↓ 순서 변경.
  * 상단 4개 (primary) + 나머지 (더보기 안) 시각 구분.
@@ -55,7 +60,11 @@ const HomeCustomizeSheet = ({ open, onClose }: HomeCustomizeSheetProps) => {
     [orderedAllowed],
   );
   const moreOrdered = useMemo(
-    () => orderedAllowed.filter((id) => !PRIMARY_IDS.has(id)),
+    () => orderedAllowed.filter((id) => !PRIMARY_IDS.has(id) && !FIRST_SCREEN_IDS.has(id)),
+    [orderedAllowed],
+  );
+  const firstScreenOrdered = useMemo(
+    () => orderedAllowed.filter((id) => FIRST_SCREEN_IDS.has(id)),
     [orderedAllowed],
   );
 
@@ -108,6 +117,35 @@ const HomeCustomizeSheet = ({ open, onClose }: HomeCustomizeSheetProps) => {
 
         {/* 위젯 리스트 — primary / more 그룹 분리 */}
         <div className="space-y-4 max-h-[55vh] overflow-y-auto pr-1">
+          {/* 첫 화면 — 내 카드 한 장 화면에 자리가 정해진 카드, 켜고 끄기만 (2026-11-12 운동 달력) */}
+          {firstScreenOrdered.length > 0 && (
+            <section>
+              <h3 className="mb-1.5 flex items-center gap-1.5 text-label font-bold text-primary">첫 화면</h3>
+              <ul className="space-y-1.5">
+                {firstScreenOrdered.map((id) => {
+                  const meta = metaById.get(id);
+                  if (!meta) return null;
+                  return (
+                    <WidgetRow
+                      key={id}
+                      id={id}
+                      label={meta.label}
+                      description={meta.description}
+                      conditional={meta.conditional}
+                      on={visibility[id]}
+                      onToggle={() => toggle(id)}
+                      fixed
+                      canMoveUp={false}
+                      canMoveDown={false}
+                      onMoveUp={() => undefined}
+                      onMoveDown={() => undefined}
+                    />
+                  );
+                })}
+              </ul>
+            </section>
+          )}
+
           {/* Primary 슬롯 — 상단 노출 */}
           <section>
             <h3 className="mb-1.5 flex items-center gap-1.5 text-label font-bold text-primary">
@@ -221,6 +259,8 @@ interface WidgetRowProps {
   canMoveDown: boolean;
   onMoveUp: () => void;
   onMoveDown: () => void;
+  /** 자리가 정해진 카드(첫 화면) — 순서 단추 없이 켜고 끄기만 */
+  fixed?: boolean;
 }
 
 const WidgetRow = ({
@@ -234,6 +274,7 @@ const WidgetRow = ({
   canMoveDown,
   onMoveUp,
   onMoveDown,
+  fixed = false,
 }: WidgetRowProps) => (
   <li
     className={cn(
@@ -243,7 +284,8 @@ const WidgetRow = ({
         : "border-border bg-card hover:border-primary/25",
     )}
   >
-    {/* 순서 변경 버튼 */}
+    {/* 순서 변경 버튼 (자리가 정해진 첫 화면 카드는 없음) */}
+    {!fixed && (
     <div className="flex flex-col gap-0.5">
       <button
         type="button"
@@ -274,6 +316,7 @@ const WidgetRow = ({
         <ArrowDown className="h-3 w-3" />
       </button>
     </div>
+    )}
 
     {/* 본문 (토글 버튼이기도 함) */}
     <button
