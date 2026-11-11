@@ -30,6 +30,7 @@ import WelcomeLetterSettingsCard from "@/components/admin/WelcomeLetterSettingsC
 import PushOptInCard from "@/components/notifications/PushOptInCard";
 import TextScaleToggle from "@/components/profile/TextScaleToggle";
 import AccountDeleteDialog from "@/components/account/AccountDeleteDialog";
+import AppShareCard from "@/components/share/AppShareCard";
 
 // ── Home widget toggle helpers ──
 const HOME_PREFS_KEY = "home-widget-prefs";
@@ -407,6 +408,9 @@ const SettingsPage = () => {
 
         {/* 레벨 테스트 — 체험용 계정·전체 관리자만 (그 외 계정엔 카드가 스스로 안 그려진다) */}
         <LevelTestCard />
+
+        {/* 마이복서153 공유하기 — 공유 창(카톡 · 문자) · 링크 복사 · QR (2026-11-12 대표님 「마이복서 153앱 공유기능 만들어줘 설정에」) */}
+        <AppShareCard />
 
         {/* 65-O: 화면 모드 (다크/라이트) — next-themes 기반 */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1">

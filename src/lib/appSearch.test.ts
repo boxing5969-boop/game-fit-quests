@@ -113,6 +113,13 @@ describe("자주 찾는 말", () => {
     const hit = FEATURES.find((e) => e.id === "f:rankup");
     expect(hit?.action).toEqual({ kind: "route", to: "/rank-up" });
   });
+  it("공유 → 설정의 마이복서153 공유하기 (2026-11-12)", () => {
+    expect(ids("공유")[0]).toBe("f:share-app");
+    expect(ids("앱 공유")[0]).toBe("f:share-app");
+    expect(ids("친구 초대")[0]).toBe("f:share-app");
+    const hit = FEATURES.find((e) => e.id === "f:share-app");
+    expect(hit?.action).toEqual({ kind: "route", to: "/settings" });
+  });
   it("단증 → 단증혜택이 1등 (로드맵의 '단증 도전' 이 앞지르지 않는다)", () => {
     expect(ids("단증")[0]).toBe("f:cert");
   });
