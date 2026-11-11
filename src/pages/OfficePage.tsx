@@ -20,6 +20,7 @@
  *   153운영본부 (2026-10-29 대표님 "지점 회의실이란 이름 153운영본부라고 이름 바꾸고 … 근무 출석 출결 근태 … 시급 자동계산"):
  *   · 이름 「지점 회의실」 → 「153운영본부」 · 탭 「근무」(?tab=work — OpsWorkTab: 선릉 · 칠금 근무자 · 시간표 · 이번 달 근무 · 대타 · 연장)
  *   · 근무 탭은 서버 ops_me 가 정한다 — 관리(대표님 · 지정된 지점장 · 회계매니저) 또는 내 근무자 카드가 있는 분
+ *     (2026-11-11 ?tab=work&demo=1 — 근무 탭이 없는 코치진에게는 PT 기록 예시 화면만: 옛 DB 를 보는 미리보기에서 확인하는 길)
  *
  *   「매출」 탭 (2026-11-03 대표님 "153운영본부에 매출 자세히 · 일단 일반 수강권 매출과 PT 매출을 분리해서"):
  *   · ?tab=sales — OpsSalesTab: 이 달 매출 · 일반 수강권 / PT 두 칸 · 최근 6개월 · 내역. 돈을 보는 분(대표님 · 회계매니저 — ops_sales_scope)만
@@ -45,6 +46,7 @@ import { MeetingSummaryCard, MinutesSheet, OpenMeetingSheet } from "@/components
 import { ScheduleSection } from "@/components/office/OfficeSchedule";
 import StrategyRoom from "@/components/strategy/StrategyRoom";
 import OpsWorkTab from "@/components/ops/OpsWorkTab";
+import { OpsPtRecordDemo } from "@/components/ops/OpsPtRecord";
 import OpsPlanTab from "@/components/ops/OpsPlanTab";
 import OpsSalesTab from "@/components/ops/OpsSalesTab";
 import { useOpsMe } from "@/services/opsService";
@@ -115,11 +117,13 @@ const OfficePage = () => {
   // 탭 — ?tab=strategy 전략 회의 · ?tab=work 근무 · ?tab=plan 일정 · ?tab=sales 매출. 고른 탭이 없으면 사무실 → 전략 회의 → 근무 → 일정 순서로
   // 매출(2026-11-03)은 돈을 보는 분(대표님 · 회계매니저)만 · 매뉴얼(2026-11-11)은 코치진 모두
   // 탭이 다섯 이상이면 '전략 회의'는 '전략'으로 줄인다(390px 한 줄)
-  const fiveTabs = [hasOffice, staff, hasWork, staff || hasWork, hasSales, staff].filter(Boolean).length >= 5;
+  // PT 기록 예시 화면 — 근무 탭이 없는 코치진이 ?tab=work&demo=1 로 왔을 때만 (지어낸 자료 · 서버를 부르지 않는다)
+  const ptDemoOnly = staff && !hasWork && opsKnown && params.get("tab") === "work" && params.get("demo") === "1";
+  const fiveTabs = [hasOffice, staff, hasWork || ptDemoOnly, staff || hasWork, hasSales, staff].filter(Boolean).length >= 5;
   const tabs: Array<{ v: OfficeTab; label: string; badge: number }> = [
     ...(hasOffice ? [{ v: "office" as const, label: "사무실", badge: 0 }] : []),
     ...(staff ? [{ v: "strategy" as const, label: fiveTabs ? "전략" : "전략 회의", badge: strategyBadge }] : []),
-    ...(hasWork ? [{ v: "work" as const, label: "근무", badge: 0 }] : []),
+    ...(hasWork || ptDemoOnly ? [{ v: "work" as const, label: "근무", badge: 0 }] : []),
     ...(staff || hasWork ? [{ v: "plan" as const, label: "일정", badge: 0 }] : []),
     ...(hasSales ? [{ v: "sales" as const, label: "매출", badge: 0 }] : []),
     ...(staff ? [{ v: "manual" as const, label: "매뉴얼", badge: 0 }] : []),
@@ -279,7 +283,9 @@ const OfficePage = () => {
           <p className="px-1 text-label text-muted-foreground">사무실 · 회의는 아직 우리 지점에 열리지 않았어요</p>
         )}
 
-      {tab === "work" && opsMe ? (
+      {tab === "work" && ptDemoOnly ? (
+        <OpsPtRecordDemo />
+      ) : tab === "work" && opsMe ? (
         <OpsWorkTab me={opsMe} />
       ) : tab === "sales" ? (
         <OpsSalesTab branches={salesBranches} />
