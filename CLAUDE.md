@@ -651,6 +651,23 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 브라우저 기본 당겨서 새로고침은 `index.css`(html, body `overscroll-behavior: none`)로 꺼 둔 그대로 — 홈(`/home` · `/myboxer`)에만 [src/components/home/HomePullToRefresh.tsx](src/components/home/HomePullToRefresh.tsx)를 둔다. 맨 위에서 72px(저항 뒤) 넘게 끌고 놓으면 알약 표시 '놓으면 새로고침' → 도는 표시 → '새로고침 완료'.
 - 놓으면 `queryClient.refetchQueries({ type: "active" })` + `refreshProfile()`(내 정보 · 역할 · 진행도) — 페이지를 통째로 다시 열지 않는다(흰 화면 · 앱 접속 출석 · 보상 자동 받기가 다시 돌지 않게). 창이 열려 있음(body 스크롤 잠금 · `aria-modal`) · 가로 밀기 · 안쪽 스크롤 칸이 맨 위가 아님 · 홈의 전체 화면 · 시트가 열림이면 받지 않는다. 시험 `HomePullToRefresh.test.tsx`.
 
+### 153플레이 「음악」 탭 — 체육관 자동재생 (2026-11-11 대표님 「153플레이에 복싱 음악 따로 모아놓자 · 복싱짐에서 틀 수 있는 인기 음악 100곡 · 카테고리 · 체육관에 자동재생 — 광고도 없고 멈추지도 않게」 · 「100곡 더 찾아줘 최신곡으로」)
+
+| 파일 | 역할 |
+|---|---|
+| [src/data/gymMusic.ts](src/data/gymMusic.ts) | 곡 목록 정본 200곡 — 7 카테고리(최신 100 · 레전드 16 · K-POP 28 · 힙합 10 · EDM 16 · 록 16 · 팝 14). 「최신」 = 2025~2026 발매 · 2026-11-11 유튜브 한국 인기곡 Top100 + 레이블 · 가수 공식 채널 최근 뮤직비디오. 공식 채널 영상만(가수 · 레이블 · VEVO · 공식 OST · 방송사), 퍼가기 허용 확인(2026-11-11 oEmbed 200/200), 욕설 · 선정성 센 곡 · 어두운 분위기 곡은 뺐다(키즈 · 여성부). **DB 에 넣지 않는다** — boxing_programs 에 넣으면 라이브러리 · AI 수업 · 옛 153library.pages.dev 에 훈련 영상처럼 섞인다 |
+| [src/components/library/GymMusicSection.tsx](src/components/library/GymMusicSection.tsx) | 153플레이 NAV 「음악」(BoxingLibraryPage `music`) — 카테고리 여러 개 고르기 · 곡 누르면 그 곡부터 · 자동재생 · 빼 둔 곡 다시 넣기 · ? 안내 |
+| [src/components/library/GymMusicPlayer.tsx](src/components/library/GymMusicPlayer.tsx) | 전체 화면 플레이어 — 섞어서 끝없이 · 멈춤 감시 2초 · 못 트는 곡 건너뛰기 · 연달아 실패하면 15→30→60초 기다렸다 다시(인터넷 끊김) · `online` 이면 바로 · Wake Lock · 영상 누르기 막음(실수로 멈춤 방지, 조작은 아래 단추) · 키보드(스페이스 · ← →) |
+| [src/lib/gymMusicQueue.ts](src/lib/gymMusicQueue.ts) (+test) | 섞기(같은 가수 연달아 X · 방금 들은 곡이 다음 바퀴 첫 곡 X) · 멈춤 감시 규칙 `watchdogAction` · 기다림 `retryDelayMs` |
+| [src/lib/youtubeIframeApi.ts](src/lib/youtubeIframeApi.ts) | 유튜브 IFrame API 한 번만 받기(실패하면 다음에 다시) |
+
+- 주소: `/library?tab=music`(탭) · `&play=1`(바로 플레이어 — 체육관 기기 즐겨찾기) · `&cats=kpop,edm`. 기기마다 기억(localStorage): `153play_music_cats` · `153play_music_hidden`(이 곡 빼기) · `153play_music_vol`.
+- **광고는 앱이 못 끈다** — 체육관 기기 브라우저에 유튜브 프리미엄 로그인 + 유튜브 쿠키 차단 끄기. 그래서 이 플레이어만 `youtube-nocookie` 가 아니라 `www.youtube.com` 을 쓴다(로그인 쿠키가 있어야 프리미엄이 적용).
+- 브라우저는 소리 나는 자동재생을 처음 한 번 눌러야 허락한다 — 한 곡도 못 틀었고 사람이 재생 화면을 누른 적이 없으면 '화면을 한 번 눌러' 덮개(`needTap`), 누른 뒤부터는 보통 규칙(건너뛰기).
+- 광고가 나오는 동안에도 상태가 '재생 중'일 수 있어서 '재생 중인데 시간이 안 감'은 150초까지 기다린다 — 줄이면 프리미엄이 아닌 기기에서 광고마다 곡이 넘어간다.
+- 곡을 바꾸려면 `gymMusic.ts` 만 고친다 — 공식 채널만 · `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=<id>` 가 200(401 = 퍼가기 막힘) · 시험이 200곡(최신 100) · id 형식 · 중복을 본다(곡 수를 바꾸면 시험 숫자도). 「최신」은 철마다 바꿔 준다 — 새 곡 id 는 유튜브 인기곡 재생목록(`/playlist?list=PL4fGSI1pDJn6jXS_Tv_N9B8Z0HTRVJE0m` 한국 인기곡 Top100)과 공식 채널 안 검색(`/@채널/search?query=`)에서 찾는다. 유튜브 전체 검색 페이지(`/results`) · `/youtubei/` 는 robots.txt 가 막는 경로라 쓰지 않는다.
+- 클라우드 작업공간(데이터센터 IP)에서는 유튜브가 영상 재생을 막는다('Video unavailable') — 실제 재생 확인은 체육관 · 사무실 기기에서.
+
 ### Claude API 크레딧 (2026-10-15 연결)
 
 - Console 조직 **153복싱짐** — Max 플랜 월 $200 크레딧 (매달 16일 지급). 조직 월 한도 $500, 워크스페이스 한도는 매달 1일(UTC) 초기화.

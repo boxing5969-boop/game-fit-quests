@@ -25,6 +25,7 @@ import {
 import VideoVariantTabs from "@/components/common/VideoVariantTabs";
 import { extraVariantLabels } from "@/lib/missionVideos";
 import { toGlobalLevel } from "@/lib/rankLabels";
+import GymMusicSection from "@/components/library/GymMusicSection";
 
 // ───────────────────────── 스타일 (원본 153플레이 그대로) ─────────────────────────
 
@@ -519,12 +520,13 @@ const LevelBody = ({ v, watchedApi }: { v: LevelVideo; watchedApi: WatchedApi })
 
 // ───────────────────────── 페이지 ─────────────────────────
 
-type CatKey = "home" | "mylv" | "lgd" | "docu" | "lsn" | "lib" | "saved";
+type CatKey = "home" | "mylv" | "lgd" | "docu" | "lsn" | "lib" | "music" | "saved";
 const NAV: [CatKey, string][] = [
   ["home", "홈"], ["mylv", "내 레벨"], ["lgd", "명경기"],
-  ["docu", "다큐"], ["lsn", "레슨"], ["lib", "훈련"], ["saved", "보관함"],
+  ["docu", "다큐"], ["lsn", "레슨"], ["lib", "훈련"], ["music", "음악"], ["saved", "보관함"],
 ];
-const CAT_META: Record<Exclude<CatKey, "home" | "mylv">, { t: string; sub: string }> = {
+// 「음악」 탭(2026-11-11)은 영상 목록이 아니라 GymMusicSection 이 따로 그린다
+const CAT_META: Record<Exclude<CatKey, "home" | "mylv" | "music">, { t: string; sub: string }> = {
   lgd: { t: "명경기", sub: "세계 타이틀전 · 레전드 매치" },
   docu: { t: "다큐", sub: "복싱 다큐멘터리 · 선수 이야기" },
   lsn: { t: "레슨", sub: "영상으로 배우는 기술" },
@@ -806,6 +808,8 @@ const BoxingLibraryPage = () => {
           </div>
           {gridOf(lvVideos.map(L))}
         </>
+      ) : cat === "music" ? (
+        <GymMusicSection />
       ) : (
         <>
           <div className="navPad" />
