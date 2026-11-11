@@ -63,7 +63,7 @@ import { useOpsPtRecord } from "@/services/opsPtRecordService";
 import OpsContractSheet from "./OpsContractSheet";
 import OpsDaySheet from "./OpsDaySheet";
 import OpsPtPanel, { PtCheckItem } from "./OpsPtPanel";
-import OpsPtRecord from "./OpsPtRecord";
+import OpsPtRecord, { OpsPtRecordDemo } from "./OpsPtRecord";
 import OpsStaffSheet, { type OpsStaffTab } from "./OpsStaffSheet";
 import { DayRow, MonthSwitcher, OpsChip, StatusPill, fmtDay, kstToday, monthOf } from "./OpsParts";
 
@@ -158,6 +158,8 @@ const OpsWorkTab = ({ me }: { me: OpsMe }) => {
 
   return (
     <div className="space-y-4">
+      {/* PT 기록 예시(?demo=1) — 코치 · 관리자 화면을 맨 위에서 바로 눌러 본다(어느 계정으로 들어와도 보이게) */}
+      {ptDemo && <OpsPtRecordDemo />}
       <div className="flex flex-wrap items-center justify-between gap-2">
         {branches.length > 1 ? (
           <div className="flex gap-1.5 overflow-x-auto pb-0.5">
@@ -617,7 +619,7 @@ const CoachView = ({ data, onOpenContract, ptDemo }: { data: OpsMonthData; onOpe
       ))}
 
       {/* PT 위탁 코치 — 오늘 PT · 확인 필요 (켠 지점만 그린다, 2026-11-11) */}
-      {(mine.pt_freelancer || ptDemo) && <OpsPtRecord branch={data.branch} coachId={ptDemo ? PT_SAMPLE_COACH : mine.id} demo={ptDemo} />}
+      {mine.pt_freelancer && !ptDemo && <OpsPtRecord branch={data.branch} coachId={mine.id} />}
 
       {/* 주인공 — 이번 달 내 근무 */}
       <section className={card}>
