@@ -339,7 +339,7 @@ export interface VideoInput {
   url?: string | null;
 }
 
-const videoContentType = (file: File): string => {
+export const videoContentType = (file: File): string => {
   if (file.type && file.type.startsWith("video/")) return file.type === "video/x-matroska" ? "video/webm" : file.type;
   const ext = (file.name.split(".").pop() || "").toLowerCase();
   if (ext === "mov") return "video/quicktime";

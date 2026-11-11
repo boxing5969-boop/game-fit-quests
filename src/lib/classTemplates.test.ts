@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { CLASS_TEMPLATES, classTemplateBlocks, classTemplateMinutes, classTemplateNote } from "./classTemplates";
+import {
+  CLASS_TEMPLATES,
+  TEMPLATE_OVERVIEW_STEP,
+  classTemplateBlocks,
+  classTemplateMinutes,
+  classTemplateNote,
+  formatClipLength,
+  templateVideoKey,
+  templateVideoPath,
+  templateVideoTitle,
+} from "./classTemplates";
 
 // strategyService 의 BlockKind 와 같게 (서비스를 불러오면 Supabase 연결이 필요해서 여기 적어 둔다)
 const KINDS = ["warmup", "skill", "mitt", "defense", "conditioning", "cooldown", "etc"];
@@ -45,5 +55,41 @@ describe("153 수업 템플릿", () => {
     const copy = classTemplateBlocks(t);
     copy[0].title = "바꿈";
     expect(t.blocks[0].title).not.toBe("바꿈");
+  });
+});
+
+describe("순서마다 참고 영상", () => {
+  const t = CLASS_TEMPLATES[0];
+
+  it("영상 자리는 DB step 칸(0~20)에 들어간다 — 블록은 20개까지", () => {
+    for (const x of CLASS_TEMPLATES) expect(x.blocks.length).toBeLessThanOrEqual(20);
+    expect(TEMPLATE_OVERVIEW_STEP).toBe(0);
+    expect(templateVideoKey(t.id, 2)).toBe("mitt2-sandbag-call:2");
+  });
+
+  it("저장소 경로는 넣는 분 폴더 안 · 서버 규칙(템플릿 이름 · .. 없음)에 맞다", () => {
+    const uid = "11111111-1111-1111-1111-111111111111";
+    const p = templateVideoPath(uid, t.id, 3, "mp4", "a1b2c3d4");
+    expect(p).toBe(`${uid}/tpl-mitt2-sandbag-call-3-a1b2c3d4.mp4`);
+    expect(p.split("/")[0]).toBe(uid);
+    // 이상한 확장자 · 글자는 걸러진다
+    const q = templateVideoPath(uid, t.id, 0, "../x", "../../zz");
+    expect(q).not.toContain("..");
+    expect(q.endsWith(".mp4")).toBe(true);
+    expect(q.length).toBeLessThanOrEqual(300);
+  });
+
+  it("영상 길이 글", () => {
+    expect(formatClipLength(31.4)).toBe("31초");
+    expect(formatClipLength(165)).toBe("2:45");
+    expect(formatClipLength(60)).toBe("1:00");
+    expect(formatClipLength(null)).toBe("");
+    expect(formatClipLength(0)).toBe("");
+  });
+
+  it("영상 창 제목 — 전체 흐름 · 블록 · 없는 블록", () => {
+    expect(templateVideoTitle(t, 0)).toBe(`${t.title} · 수업 요약`);
+    expect(templateVideoTitle(t, 2)).toBe(t.blocks[1].title);
+    expect(templateVideoTitle(t, 99)).toBe(t.title);
   });
 });

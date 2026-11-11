@@ -82,3 +82,33 @@ export function classTemplateBlocks(t: ClassTemplate): ProgramBlock[] {
 }
 
 export const classTemplateMinutes = (t: ClassTemplate): number => t.blocks.reduce((s, b) => s + b.minutes, 0);
+
+/* ───────── 순서마다 참고 영상 (2026-11-12 대표님 「각 순서마다 참고할수있는 영상을 첨부해서」) ─────────
+ *   DB class_template_videos (20261112020054) — 자리 = (템플릿 id, step). step 0 = 전체 흐름(실제 수업 요약), 1~ = 블록 순서(1부터)
+ *   코드에서 블록 순서를 바꾸면 DB 의 영상 자리(step)도 같이 옮긴다 */
+
+export const TEMPLATE_OVERVIEW_STEP = 0;
+
+/** 영상 자리 이름 — 화면 지도(Map) 열쇠 */
+export const templateVideoKey = (templateId: string, step: number): string => `${templateId}:${step}`;
+
+/** 저장소 경로 — 넣는 분 폴더 안(저장소 정책 · 서버가 맨 앞 폴더를 본다) */
+export function templateVideoPath(uid: string, templateId: string, step: number, ext: string, rand: string): string {
+  const safeExt = /^[a-z0-9]{2,4}$/.test(ext) ? ext : "mp4";
+  const safeRand = rand.replace(/[^a-z0-9]/gi, "").slice(0, 12) || "v";
+  return `${uid}/tpl-${templateId}-${step}-${safeRand}.${safeExt}`;
+}
+
+/** 영상 길이 글 — 59초까지 '31초', 그 위 '2:45' */
+export function formatClipLength(seconds: number | null | undefined): string {
+  if (seconds == null || !Number.isFinite(seconds) || seconds <= 0) return "";
+  const s = Math.round(seconds);
+  if (s < 60) return `${s}초`;
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+
+/** 영상 창 제목 — 전체 흐름이면 '템플릿 이름 · 수업 요약', 블록이면 그 블록 이름 */
+export function templateVideoTitle(t: ClassTemplate, step: number): string {
+  if (step === TEMPLATE_OVERVIEW_STEP) return `${t.title} · 수업 요약`;
+  return t.blocks[step - 1]?.title ?? t.title;
+}
