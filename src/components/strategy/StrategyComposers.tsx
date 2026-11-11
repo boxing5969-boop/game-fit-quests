@@ -2,11 +2,13 @@
  * 전략 회의실 쓰기 시트 (2026-10-16)
  *   · PostComposer    — 지시(상황·기준·요청·대상 4칸) · 전략 · 칭찬 · 운영 원칙 — 대표님·지점장님
  *   · ProgramComposer — 오늘 프로그램: 50분 4블록 틀 + 영상 붙이기 + 받을 코치 — 대표님·지점장님
- *   · ClassLogComposer — 수업 기록: 그 시간 입실 인원은 출석 기록에서 자동 — 모든 코치
+ *       153 수업 템플릿(lib/classTemplates, 2026-11-11)을 고르면 이름 · 블록 · 코치님께 한마디가 채워진다
+ *   · ClassLogComposer — 수업 기록: 그 시간 입실 인원은 출석 기록에서 자동 — 모든 코치 · 진행한 프로그램에 153 수업 템플릿도
  */
 import { useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, Plus, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
+import { CLASS_TEMPLATES, classTemplateBlocks, classTemplateNote, type ClassTemplate } from "@/lib/classTemplates";
 
 import { cn } from "@/lib/utils";
 import { DmSheet } from "@/components/dm/DmParts";
@@ -282,6 +284,7 @@ export const ProgramComposer = ({
   videos,
   templates,
   initial,
+  initialTemplate,
 }: {
   open: boolean;
   onClose: () => void;
@@ -290,6 +293,8 @@ export const ProgramComposer = ({
   videos: StrategyVideo[];
   templates: StrategyItem[];
   initial?: StrategyItem | null;
+  /** 153 수업 템플릿에서 시작 (템플릿 카드 「이 템플릿으로 오늘 프로그램 만들기」) */
+  initialTemplate?: ClassTemplate | null;
 }) => {
   const save = useSaveStrategy();
   const [title, setTitle] = useState("");
@@ -300,6 +305,12 @@ export const ProgramComposer = ({
   const [targets, setTargets] = useState<string[]>([]);
   const [template, setTemplate] = useState(false);
 
+  const applyClassTemplate = (t: ClassTemplate) => {
+    setTitle(t.title);
+    setBlocks(classTemplateBlocks(t));
+    setNote(classTemplateNote(t));
+  };
+
   useEffect(() => {
     if (open) {
       setTitle(initial?.title ?? "");
@@ -309,8 +320,13 @@ export const ProgramComposer = ({
       setNote(initial?.body ?? "");
       setTargets([]);
       setTemplate(false);
+      if (!initial && initialTemplate) {
+        setTitle(initialTemplate.title);
+        setBlocks(classTemplateBlocks(initialTemplate));
+        setNote(classTemplateNote(initialTemplate));
+      }
     }
-  }, [open, initial]);
+  }, [open, initial, initialTemplate]);
 
   const total = programTotal(blocks);
   const set = (i: number, patch: Partial<ProgramBlock>) => setBlocks((bs) => bs.map((b, j) => (j === i ? { ...b, ...patch } : b)));
@@ -368,6 +384,14 @@ export const ProgramComposer = ({
         </SubmitButton>
       }
     >
+      <Label>153 수업 템플릿</Label>
+      <div className="flex gap-1.5 overflow-x-auto pb-1">
+        {CLASS_TEMPLATES.map((t) => (
+          <Chip key={t.id} on={title === t.title} onClick={() => applyClassTemplate(t)}>
+            {t.title}
+          </Chip>
+        ))}
+      </div>
       {templates.length > 0 && (
         <>
           <Label>자주 쓰는 프로그램 불러오기</Label>
@@ -580,7 +604,8 @@ export const ClassLogComposer = ({
         data: {
           hour,
           attendees: attendees.trim() === "" ? null : Math.max(0, Math.round(Number(attendees) || 0)),
-          program_id: programId || null,
+          // 153 수업 템플릿을 골랐으면 이름만 남긴다 (프로그램 글이 아니라서)
+          program_id: programId && !programId.startsWith("tpl:") ? programId : null,
           program_title: programTitle.trim() || null,
           went_well: wentWell.trim(),
           issues: issues.trim(),
@@ -647,7 +672,8 @@ export const ClassLogComposer = ({
         onChange={(e) => {
           const id = e.target.value;
           setProgramId(id);
-          setProgramTitle(nearPrograms.find((p) => p.id === id)?.title ?? programTitle);
+          const tpl = id.startsWith("tpl:") ? CLASS_TEMPLATES.find((t) => `tpl:${t.id}` === id) : undefined;
+          setProgramTitle(tpl?.title ?? nearPrograms.find((p) => p.id === id)?.title ?? programTitle);
         }}
         className={inputCls}
         aria-label="프로그램 고르기"
@@ -658,6 +684,13 @@ export const ClassLogComposer = ({
             {shortDate(p.event_date)} {p.title}
           </option>
         ))}
+        <optgroup label="153 수업 템플릿">
+          {CLASS_TEMPLATES.map((t) => (
+            <option key={t.id} value={`tpl:${t.id}`}>
+              {t.title}
+            </option>
+          ))}
+        </optgroup>
       </select>
       {!programId && (
         <input

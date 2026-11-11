@@ -18,6 +18,8 @@ import VideoOverlay, { type OverlayVideo } from "@/components/common/VideoOverla
 import PushOptInCard from "@/components/notifications/PushOptInCard";
 import StrategyItemCard from "@/components/strategy/StrategyItemCard";
 import { ClassLogComposer, PostComposer, ProgramComposer } from "@/components/strategy/StrategyComposers";
+import ClassTemplateList from "@/components/strategy/ClassTemplates";
+import type { ClassTemplate } from "@/lib/classTemplates";
 import { VideoLibrary } from "@/components/strategy/StrategyVideos";
 import {
   strategyVideoUrl,
@@ -114,6 +116,7 @@ const StrategyRoom = () => {
   const [postOpen, setPostOpen] = useState(false);
   const [programOpen, setProgramOpen] = useState(false);
   const [programInit, setProgramInit] = useState<StrategyItem | null>(null);
+  const [programTpl, setProgramTpl] = useState<ClassTemplate | null>(null);
   const [logOpen, setLogOpen] = useState(false);
   const [logProgram, setLogProgram] = useState<StrategyItem | null>(null);
   const [overlay, setOverlay] = useState<OverlayVideo | null>(null);
@@ -274,12 +277,21 @@ const StrategyRoom = () => {
             <ActionButton
               onClick={() => {
                 setProgramInit(null);
+                setProgramTpl(null);
                 setProgramOpen(true);
               }}
             >
               오늘 프로그램 만들기
             </ActionButton>
           )}
+          <ClassTemplateList
+            canDirect={!!me.can_direct}
+            onUse={(t) => {
+              setProgramInit(null);
+              setProgramTpl(t);
+              setProgramOpen(true);
+            }}
+          />
           {programs.isLoading ? (
             <Skeleton />
           ) : programRows.length === 0 ? (
@@ -303,6 +315,7 @@ const StrategyRoom = () => {
                   }}
                   onReuse={(p) => {
                     setProgramInit(p);
+                    setProgramTpl(null);
                     setProgramOpen(true);
                   }}
                 />
@@ -357,6 +370,7 @@ const StrategyRoom = () => {
         videos={videos}
         templates={templates}
         initial={programInit}
+        initialTemplate={programTpl}
       />
       <ClassLogComposer
         open={logOpen}
