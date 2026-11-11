@@ -17,12 +17,12 @@ import { ArrowLeft, ChevronDown, Check } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { GYM_POLICIES } from "@/data/gymPolicies";
+import { buildAgreementRecord, policyFingerprint } from "@/lib/termsConsent";
 import { kstToday } from "@/lib/levelPractice";
 import { toast } from "sonner";
 import { SIGNUP_BRANCHES, branchShortName, isOfflinePayBranch } from "@/lib/branchPayment";
 import OfflinePayCard from "@/components/membership/OfflinePayCard";
 
-const AGREEMENT_VERSION = "2026-06";
 const toFakeEmail = (id: string) => `${id.toLowerCase().trim()}@153rankup.app`;
 const rawDigits = (s: string) => s.replace(/[^0-9]/g, "");
 const formatPhone = (v: string) => {
@@ -93,6 +93,11 @@ const SignupApply = () => {
   const [health, setHealth] = useState("");
   // 동의
   const [agree, setAgree] = useState<Record<string, boolean>>({});
+  // 동의 기록에 남길 규정 문구 지문 — 판 번호(GYM_POLICY_VERSION)와 함께 (lib/termsConsent, 2026-11-11)
+  const [policyHash, setPolicyHash] = useState<string | null>(null);
+  useEffect(() => {
+    void policyFingerprint().then(setPolicyHash);
+  }, []);
   const [openPolicy, setOpenPolicy] = useState<string | null>(null);
   // 상품
   const [products, setProducts] = useState<Product[]>([]);
@@ -259,7 +264,7 @@ const SignupApply = () => {
             gender,
             fitness_goal: goal.trim() || null,
             health_notes: health.trim() || null,
-            signup_agreements: { ...agree, version: AGREEMENT_VERSION },
+            signup_agreements: buildAgreementRecord({ agree, hash: policyHash, source: "signup" }),
             signup_agreed_at: new Date().toISOString(),
             gym_reg_date: new Date().toISOString().slice(0, 10),
           } as never)
@@ -320,7 +325,7 @@ const SignupApply = () => {
     if (!allAgreed) return setErr("필수 약관에 모두 동의해주세요");
     setErr("");
     setSubmitting(true);
-    const agreements = { ...agree, version: AGREEMENT_VERSION };
+    const agreements = buildAgreementRecord({ agree, hash: policyHash, source: "signup_existing" });
     try {
       if (loggedIn && user) {
         // 소셜 로그인 회원 — 전화번호로 기존 계정의 레벨·출석·수강권 기록을 이 계정에 합친다(기존 연동 경로).

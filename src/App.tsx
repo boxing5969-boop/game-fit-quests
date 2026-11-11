@@ -26,6 +26,7 @@ import TutorialDevPanel from "@/features/tutorial-camp/TutorialDevPanel";
 import TutorialCustomizer from "@/features/tutorial-camp/TutorialCustomizer";
 import PostActionReflectionSheet from "@/components/home/PostActionReflectionSheet";
 import CredentialChangePrompt from "@/components/CredentialChangePrompt";
+import TermsConsentPrompt from "@/components/TermsConsentPrompt";
 import GlobalMemberCard from "@/components/license/GlobalMemberCard";
 import InviteRewardBridge from "@/components/InviteRewardBridge";
 import OfficePresenceBridge from "@/components/office/OfficePresenceBridge";
@@ -427,6 +428,8 @@ const AppRoutes = () => {
       {user && splashDone && !signage && <PostActionReflectionSheet />}
       {/* 최초 로그인 아이디·비번 변경 권장(스킵 가능) — 일괄등록 회원 must_change_credentials */}
       {user && splashDone && !signage && <CredentialChangePrompt />}
+      {/* 이용약관(환불·지급 장비·홀딩) 동의 기록이 없는 선릉역점 회원 — 홈에서 한 번 묻는다(앱 사용은 막지 않음, 2026-11-11) */}
+      {user && splashDone && !signage && <TermsConsentPrompt />}
       {/* 회원 이름·카드를 누르면 어디서든 회원 카드 (좋아요·메시지·짝꿍 신청·응원) — openMemberCard(userId) */}
       {user && !signage && <GlobalMemberCard />}
       {/* 초대받아 처음 들어온 회원이면 초대한 사람에게 챔피언 머니 1,000 (2026-10-18) */}

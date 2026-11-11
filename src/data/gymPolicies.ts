@@ -9,6 +9,12 @@ export interface GymPolicy {
   required: boolean;
 }
 
+// ── 규정 판 번호 — 아래 GYM_POLICIES 문구를 바꾸면 반드시 올린다(그날 날짜).
+//    가입 신청서(SignupApply)와 앱 약관 동의 창(TermsConsentPrompt)이 동의 기록에 이 판 + 문구 지문(sha256)을 남기고,
+//    동의 기록이 옛 판인 선릉역점 회원에게는 앱이 다시 묻는다(lib/termsConsent).
+//    2026-10-14 = 지급 장비 금액 명시(10-13) · 양도 수수료 30,000원(10-14)까지 반영한 판. 그 전 기록은 '2026-06'.
+export const GYM_POLICY_VERSION = "2026-10-14";
+
 // ── 홀딩(일시정지) 규칙 — 회원 이용계약서 제3조와 같은 표. 153OS 셀프 홀딩(app_hold_policy)도 같은 표를 쓴다.
 //    바꾸면 아래 약관 문구·osamiFaq(mb-hold)·153OS 마이그레이션까지 함께.
 export interface HoldTier {

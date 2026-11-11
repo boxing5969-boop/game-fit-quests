@@ -487,6 +487,14 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 서버 [20261109213315_admin_grant_mileage.sql](supabase/migrations/20261109213315_admin_grant_mileage.sql): 전체관리자만 · 한 번에 1 ~ 100,000점 · 코치님 · 운영진(is_staff · 운영진 역할)과 합쳐진 옛 계정에는 안 줌 → 기존 `grant_mileage`(kind `adjust`, idem_key `admin-grant:<준 사람>:<요청 id>` — 두 번 눌려도 한 번) → 알림이면 `notifications`(link `/mypage`, 푸시 트리거) 한 통. 아낀 금액(`get_my_mileage_savings`)에는 섞이지 않는다. 화면 값(최대 · 사유 길이 · 기본 사유 · 확인 글)은 [src/lib/mileageGrant.ts](src/lib/mileageGrant.ts) 한 곳.
 - 챔피언 머니 지급(`admin_grant_gems` · 지점장도)과 달리 마일리지는 1점 = 1원 결제 할인이라 전체관리자만 — 지점장에게 열려면 대표님 확인 뒤 서버 권한 검사와 `canGrantMileage` 를 같이 바꾼다.
 
+### 이용약관 동의 다시 받기 — 데스크 등록 회원 (2026-11-11 대표님 「앱에서 동의 받기 (추천)」)
+
+- 왜: 데스크(브로제이)에서 등록한 회원은 가입 신청서(SignupApply)를 거치지 않아 환불 · 지급 장비(글러브 50,000원 · 붕대 10,000원) · 홀딩 규정에 동의한 기록이 앱에 없다(11/11 확인 — 선릉역점 이용 중 회원 대부분이 `profiles.signup_agreed_at` 없음). 중도 해지 때 장비 공제 근거가 종이 계약서뿐이었다 — 공정위 고시 「계속거래 등의 해지·해제에 따른 위약금 및 대금의 환급에 관한 산정기준」 6조: 부가상품(사은품) 가액 · 산정기준을 계약 때 알리고 서면(전자문서 포함) 동의, 다투면 사업자가 입증.
+- [TermsConsentPrompt](src/components/TermsConsentPrompt.tsx) · 규칙 [termsConsent.ts](src/lib/termsConsent.ts)(시험 termsConsent.test.ts): 승인된 일반 회원 · 선릉역점(`TERMS_CONSENT_BRANCH_WORDS` — 규정 글이 선릉 가격 기준) · 지금 판 동의 기록 없음 → 홈(/home · /myboxer)에서 다른 창이 없을 때 한 접속에 한 번(2.5초 뒤 · 창이 떠 있으면 4초마다 6번까지 기다림) · '나중에' = 3일 뒤(`153_terms_snooze_v1:<uid>`) · 아이디·비밀번호 변경 · 전화번호 연동이 남았으면 그 뒤에. 앱 사용은 막지 않는다. 운영진 미리 보기 `/home?terms=preview`(저장 안 함).
+- 저장: `profiles.signup_agreements` = 항목별 동의 + `version`(`GYM_POLICY_VERSION`) + `hash`(규정 글 sha256 — `policyText`) + `source`(signup · signup_existing · app_prompt) + 옛 기록 `history`(그때 시각과 함께 5개까지) · `signup_agreed_at` = 동의 시각. 가입 신청서도 같은 모양으로 남긴다(예전엔 'version: 2026-06' 고정이라 10-13 장비 금액 · 10-14 양도 수수료를 바꾼 뒤에도 어느 글에 동의했는지 판으로 가릴 수 없었다).
+- **규정 글(gymPolicies `GYM_POLICIES`)을 바꾸면 `GYM_POLICY_VERSION` 을 그날 날짜로 올린다** — 옛 판에 동의한 회원에게 앱이 다시 묻는다. 칠금점 등 다른 지점에 열려면 그 지점 규정(가격 · 장비)이 같은지 먼저 보고 `TERMS_CONSENT_BRANCH_WORDS` 에 더한다.
+- 새 DB 없음 — 회원이 자기 profiles 의 이 두 칸을 쓴다(가입 신청서와 같은 길 · `guard_profile_privileged_columns` 대상 아님).
+
 ### 앱 결제 장바구니 · 락카/운동복 남은 기간 (2026-10-27 대표님 보고서 「앱 결제 장바구니」 · "나머진 니추천대로")
 
 | 파일 | 역할 |
