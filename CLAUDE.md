@@ -226,7 +226,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 | [src/lib/opsWork.ts](src/lib/opsWork.ts) | 인정 시간 계산 한 곳(서버는 자료만) — `computeDay` · `computeStaffMonth` · `scheduleSummary` · `laborNotices`(주 15시간 · 월 60시간) · 최저시급 |
 | [src/services/opsService.ts](src/services/opsService.ts) · [src/components/ops/](src/components/ops/) | `OpsWorkTab`(관리: 합계 · 확인할 것 · 근무자 / 코치님: 내 근무 · 내 시간표 · 날짜별 · 내 요청) · `OpsStaffSheet`(이번 달 · 시간표 · 정보) · `OpsDaySheet`(인정 시간 · 쉰 날 · 수업 대타 · 연장 근무) · `OpsParts` |
 
-- 이름: 전체 메뉴 · 머리글 「지점 회의실」 → **「153운영본부」**. 탭 사무실 · 전략 회의 · **근무**(`/office?tab=work`, 알림 링크도 여기) · **일정**(`/office?tab=plan`, 2026-11-02 — 아래 「일정」 탭) · **매출**(`/office?tab=sales`, 2026-11-03 — 아래 「매출」 탭, 돈을 보는 분만). 근무 탭은 `ops_me` 가 정한다 — 관리하는 지점(manage)이 있거나 내 근무자 카드(mine)가 있는 분. DB 가 없거나 둘 다 비면 탭이 안 보인다.
+- 이름: 전체 메뉴 · 머리글 「지점 회의실」 → **「153운영본부」**. 탭 사무실 · 전략 회의 · **근무**(`/office?tab=work`, 알림 링크도 여기) · **일정**(`/office?tab=plan`, 2026-11-02 — 아래 「일정」 탭) · **매출**(`/office?tab=sales`, 2026-11-03 — 아래 「매출」 탭, 돈을 보는 분만) · **매뉴얼**(`/office?tab=manual`, 2026-11-11 — 아래 「매뉴얼」 탭, 코치진 모두). 근무 탭은 `ops_me` 가 정한다 — 관리하는 지점(manage)이 있거나 내 근무자 카드(mine)가 있는 분. DB 가 없거나 둘 다 비면 탭이 안 보인다.
 - 대표님 규칙(10-29): 출근 = 입구 얼굴 인식(`staff_duty_logs` — 앱 계정 또는 이름으로 맞춤), 안 찍은 날 0시간(누락) · 퇴근 = 시간표 끝 시각 자동 · 일찍 감 · 늦게 옴 = 지점장 · 대표님이 그날 인정 시간을 고침(지각은 표시만, 10분) · 연장 = 코치 신청 → 대표님만 승인 · 수업 대타 = 코치 요청 → 지점장 · 대표님 승인(PT 대타 없음) · 얼굴 출근 단말이 없는 지점은 근무자 카드 '시간표대로 자동'(`checkin_required=false`).
 - 보이는 범위 (2026-10-29 대표님 "코치님들이 다른 코치님들 일하는 시간이랑 버는 돈 못 보게, 본인 자료만" → 「지점장은 돈만 숨기기」 · 「본인 금액도 보여주기」, 20261029171500):
   - 일반 코치님: `ops_month` 가 **본인 카드만** 보낸다(다른 사람 근무 · 시간 · 돈 없음, 대타 고르기용 동료 이름만). 본인 시급 · 월급은 보낸다 → 코치 화면 '이번 달 예상(주휴 · 공제 전)' · PT 위탁 코치는 본인 PT 수당(`ops_pt_month` 가 본인에게만 수당표).
@@ -296,7 +296,20 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
   - **통장 내역서** (2026-11-04 대표님 "이게 선릉점 지금까지 거래내역서야" → 「진행」) — [20261104154931_ops_costs_bank_statement.sql](supabase/migrations/20261104154931_ops_costs_bank_statement.sql): `source` 에 `bank_statement` · `ops_costs_save` 가 `p_meta.source` 와 달마다 뺀 것 `p_months[].excluded` 를 받고 `ops_costs` 가 source 를 돌려줌 → 카드 아래 줄 '통장 내역 ○월 ○일 정리 · ○○ 뺌'(`costSourceLine`). 선릉역점 통장 내역서(PDF)는 클로드가 나눠 **달 · 항목 합계만** 대표님 계정으로 저장(2024-12 ~ 2026-10, 이번 달은 덜 차서 뺌) — 거래 · 파일 · 나누는 규칙(사람 이름이 들어 있음)은 저장소에 두지 않는다. 대표님이 정한 것: 카드 대금 · 관계사 송금 · 페이 충전 · 법무 = 사업과 상관없음(뺌) · 회원 아닌 분께 보낸 돈 = 오픈 때 인건비 · 시설(넣음, '인건비·시설(개인 송금)') · 다른 계좌로 옮긴 돈은 뺌. 클로드가 정한 것: 회원에게 통장으로 돌려준 돈은 브로제이 매출에 환불로 안 잡혀 '회원 환불(통장)'으로 넣음 · 개업 공사 · 종합소득세는 뺌(아래 줄에 표시) · 결제선생(페이민트) = 세무·수수료. 카드사 수수료는 통장에 안 찍혀 빠져 있다. 다음 달부터는 가계부 CSV 를 올리거나 새 통장 내역서를 클로드에게 — 같은 달을 다시 저장하면 통째로 바뀐다.
 - 점검: 앱 DB 에서 `net.http_post(…/functions/v1/ops-sales, headers: Authorization(anon) + x-auto-key = internal_sync_config.auto_sync_key)` → 합계 · 흐름 + `probe`(broj · dagym · dagym_error · app · app_added). 결과 숫자는 대화 · 작업판에만 남긴다.
 - **저장소는 공개(GitHub public)** — 실제 매출 · 비용 · 순이익 숫자는 문서 · 시험 파일 · 커밋 메시지에 쓰지 않는다(시험은 지어낸 숫자로, 점검 값은 DB 에서 바로). 근무자 실명 · 시급도 같다(10-29 규칙). 2026-11-03~04 에 지점 매출 합계를 이 문서 · 순이익 시험 · 커밋 메시지 하나에 적었다가 11-04 에 파일에서 지웠다(지난 커밋 기록에는 남아 있음).
-- 보는 사람: 돈을 보는 분만(대표님 · 회계매니저 — 10-29 규칙). 지점장 · 코치님에게는 탭이 없다(서버 `ops_sales_scope` · Edge Function 둘 다 막음). 탭이 다섯이면(사무실 · 전략 · 근무 · 일정 · 매출) '전략 회의'는 '전략'으로.
+- 보는 사람: 돈을 보는 분만(대표님 · 회계매니저 — 10-29 규칙). 지점장 · 코치님에게는 탭이 없다(서버 `ops_sales_scope` · Edge Function 둘 다 막음). 탭이 다섯 이상이면(사무실 · 전략 · 근무 · 일정 · 매출 · 매뉴얼 — 여섯이면 한 줄 6칸) '전략 회의'는 '전략'으로.
+
+#### 「매뉴얼」 탭 — 153 매뉴얼 1권 읽기 · 확인 문제 · 서명 (2026-11-11 대표님 「넘어가자」 · 보고서 「153 매뉴얼 책 · 운영본부 「153 매뉴얼」 탭 보고서」 https://claude.ai/artifact/NohTXPmYbxKD4j5vSkx4Hj)
+
+| 파일 | 역할 |
+|---|---|
+| [supabase/migrations/20261111131159_coach_manual.sql](supabase/migrations/20261111131159_coach_manual.sql) | 새 표 3 · 새 함수만: `coach_manual_books`(책 JSON — **책 글은 이 표에만**) · `coach_manual_reads`(장 · 판마다 서명 한 줄, 확인 문제를 몇 번 만에 맞혔는지 `quiz_tries`) · `coach_manual_nudges` · `coach_manual_book`(코치진만 · 책 줄이 없으면 null) · `coach_manual_me` · `coach_manual_sign`(책에 있는 장 · 지금 판 이하만, 같은 판 다시 눌러도 처음 시각) · `coach_manual_board`(대표님 · 지점장님 — 그 지점 코치진, 대표님 계정 빠짐) · `coach_manual_nudge`(사람마다 20시간에 한 번 '📘 153 매뉴얼을 읽어 주세요' → `/office?tab=manual`) |
+| [src/lib/coachManual/](src/lib/coachManual/) | `progress`(장 상태 signed · resign · open · locked — 필독 장은 앞 필독 장을 어느 판이든 서명해야 열림 · 부록은 늘 열림 · 대표님 · 지점장님은 검토용으로 모두 열림 · 진도 · 읽기 쪽 순서) · `normalize`(DB JSON → 화면 책, 모르는 블록 · 틀린 이름 · 정답 자리가 보기 밖인 문제는 버림) · `book1Sample`(앱 안 예시 — 프롤로그~9장만) — 테스트 progress.test.ts · normalize.test.ts |
+| [src/services/coachManualService.ts](src/services/coachManualService.ts) · [src/components/manual/](src/components/manual/) | `ManualTab`(서재 · 내 서명 n/필독 · 이어 읽기 · 이 책을 읽는 법 · 목차, 대표님 · 지점장님은 「책 읽기 · 읽음 현황」 · `?ch=<장>` 바로 열기) · `ManualReader`(한 장 전체 화면 — 넘기기 · ←/→ · 글씨 크게 · 표지 → 카드 → 오늘 한 가지 → 확인 문제(다 맞힐 때까지) → 「읽고 이해했어요 — 서명」) · `ManualBlocks`(글 · 인용 · 목록 · 표(줄마다 상자) · 그림 · 미션 영상 VideoOverlay) · `ManualBoard`(코치님마다 점 줄 · 장별 서명 날짜 · 읽어 주세요) |
+
+- 책 글은 **DB 에만** (2026-11-11 대표님 「DB에만 두기」): 저장소가 공개라 앞글 2편(「이 책을 쓴 사람」 — 대표님 이야기 · 지점 회원 숫자, 「153이 설계하는 행복한 복싱짐」)과 부록은 코드 · 문서 · 커밋에 넣지 않는다. 앱 코드에는 일반 지도법 장(프롤로그~9장)만 `book1Sample.ts` — 서버 함수가 없거나(옛 DB 미리보기) 책 줄이 비었을 때 안내 한 줄과 함께 보인다. 원고 = Claude Docs 「153 매뉴얼 1권: 첫 수업과 서비스 마인드 (원고)」 https://claude.ai/artifact/54TyMyWDtkt9c1jBUa6Mex · 책 넣기 SQL 은 저장소 밖.
+- 글 고치기 = SQL(클로드): `update coach_manual_books set data = …, updated_at = now()` — 글을 고친 장은 그 장의 `version` 을 올린다(그 장만 '새 판 · 다시 서명', 앞 판 서명이 남아 뒤 장은 잠기지 않음). 장 id(소문자 · 숫자 · _ 24자)는 서명 기록 이름이라 바꾸지 않는다. 그림 = `public/assets/manual/<이름>.webp`(목차용 `_s`) · 영상 블록 = 미션 id(`missions`). 앱은 10분마다 다시 받는다(다시 배포 필요 없음).
+- 보이는 범위: 탭 = 코치진(전략 회의와 같은 기준). 읽기 · 서명 = `_strategy_staff` · 현황 · 알림 = `_strategy_can_direct`(대표님은 지점 고르기 · 지점장님은 내 지점). 확인 문제 채점은 앱이 한다(서버는 몇 번 만에 맞혔는지만).
+- 미리보기(옛 DB · 함수 없음): 책 = 예시 · 서명 = 이 휴대폰에만(localStorage `153manual:<책>:reads`) · 현황 = '예시 코치 A/B/C' · 알림 안 감.
 
 ### 회원 화면 리디자인 — 글씨 6단계 · 화면 규칙 7가지 (2026-10-28 대표님 "위보고한 기준대로 전면 리 디자인하자 · 많이 바뀌어도 되니까 가장 이상적인 방향으로")
 

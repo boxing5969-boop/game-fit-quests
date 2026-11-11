@@ -27,8 +27,12 @@
  *   「일정」 탭 (2026-11-02 대표님 "직원 회의 관리 탭에 팀원들 스스로 스케줄 관리 … 내가 팀원들의 스케줄을 한눈에"):
  *   · ?tab=plan — OpsPlanTab: 코치님은 내 일정 넣기 · 고치기, 대표님 · 지점장은 한 주 팀 일정판 + 내 일정
  *   · 코치진(전략 회의와 같은 기준) 또는 근무자 카드가 있는 분에게 보인다 — 무엇을 보여 줄지는 서버 ops_plans_week 가 정한다
+ *
+ *   「매뉴얼」 탭 (2026-11-11 대표님 「넘어가자」 · 보고서 「153 매뉴얼 책 · 운영본부 「153 매뉴얼」 탭 보고서」):
+ *   · ?tab=manual — ManualTab: 153 매뉴얼 1권 서재 · 목차 · 한 장씩 읽기 · 확인 문제 · 서명(?ch=<장>), 대표님 · 지점장님은 읽음 현황
+ *   · 코치진 모두(전략 회의와 같은 기준) — 서명 · 현황 권한은 서버 coach_manual_* 가 정한다
  */
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Plus, Users } from "lucide-react";
 import { toast } from "sonner";
@@ -61,9 +65,12 @@ import {
   type OfficeStatus,
 } from "@/services/officeService";
 
+// 매뉴얼 탭은 따로 받는 조각 — 읽기 화면 · 앱 안 예시 책이 커서 (2026-11-11)
+const ManualTab = lazy(() => import("@/components/manual/ManualTab"));
+
 const STATUSES: OfficeStatus[] = ["on", "class", "away"];
 
-type OfficeTab = "office" | "strategy" | "work" | "plan" | "sales";
+type OfficeTab = "office" | "strategy" | "work" | "plan" | "sales" | "manual";
 
 const OfficePage = () => {
   const navigate = useNavigate();
@@ -106,18 +113,30 @@ const OfficePage = () => {
   }, [minutesParam]);
 
   // 탭 — ?tab=strategy 전략 회의 · ?tab=work 근무 · ?tab=plan 일정 · ?tab=sales 매출. 고른 탭이 없으면 사무실 → 전략 회의 → 근무 → 일정 순서로
-  // 매출(2026-11-03)은 돈을 보는 분(대표님 · 회계매니저)만 — 탭이 다섯이면 '전략 회의'는 '전략'으로 줄인다(390px 한 줄)
-  const fiveTabs = hasOffice && staff && hasWork && hasSales;
+  // 매출(2026-11-03)은 돈을 보는 분(대표님 · 회계매니저)만 · 매뉴얼(2026-11-11)은 코치진 모두
+  // 탭이 다섯 이상이면 '전략 회의'는 '전략'으로 줄인다(390px 한 줄)
+  const fiveTabs = [hasOffice, staff, hasWork, staff || hasWork, hasSales, staff].filter(Boolean).length >= 5;
   const tabs: Array<{ v: OfficeTab; label: string; badge: number }> = [
     ...(hasOffice ? [{ v: "office" as const, label: "사무실", badge: 0 }] : []),
     ...(staff ? [{ v: "strategy" as const, label: fiveTabs ? "전략" : "전략 회의", badge: strategyBadge }] : []),
     ...(hasWork ? [{ v: "work" as const, label: "근무", badge: 0 }] : []),
     ...(staff || hasWork ? [{ v: "plan" as const, label: "일정", badge: 0 }] : []),
     ...(hasSales ? [{ v: "sales" as const, label: "매출", badge: 0 }] : []),
+    ...(staff ? [{ v: "manual" as const, label: "매뉴얼", badge: 0 }] : []),
   ];
   const want = params.get("tab");
   const wanted: OfficeTab =
-    want === "strategy" ? "strategy" : want === "work" ? "work" : want === "plan" ? "plan" : want === "sales" ? "sales" : "office";
+    want === "strategy"
+      ? "strategy"
+      : want === "work"
+        ? "work"
+        : want === "plan"
+          ? "plan"
+          : want === "sales"
+            ? "sales"
+            : want === "manual"
+              ? "manual"
+              : "office";
   const tab: OfficeTab = tabs.some((t) => t.v === wanted) ? wanted : tabs[0]?.v ?? "strategy";
   const setTab = (t: OfficeTab) =>
     setParams(
@@ -126,6 +145,7 @@ const OfficePage = () => {
         else p.set("tab", t);
         p.delete("minutes");
         p.delete("contract");
+        p.delete("ch");
         return p;
       },
       { replace: true },
@@ -184,7 +204,9 @@ const OfficePage = () => {
                   ? "팀 일정 · 내 일정"
                   : tab === "sales"
                     ? "일반 수강권 · PT 매출"
-                    : "코치님 · 지점장님 · 대표님만"
+                    : tab === "manual"
+                      ? "153 매뉴얼 · 첫 수업과 서비스 마인드"
+                      : "코치님 · 지점장님 · 대표님만"
           }
           sticky
           leftAction={
@@ -219,7 +241,15 @@ const OfficePage = () => {
             aria-label="153운영본부"
             className={cn(
               "grid gap-1 rounded-2xl bg-secondary/70 p-1",
-              tabs.length >= 5 ? "grid-cols-5" : tabs.length === 4 ? "grid-cols-4" : tabs.length === 3 ? "grid-cols-3" : "grid-cols-2",
+              tabs.length >= 6
+                ? "grid-cols-6"
+                : tabs.length === 5
+                  ? "grid-cols-5"
+                  : tabs.length === 4
+                    ? "grid-cols-4"
+                    : tabs.length === 3
+                      ? "grid-cols-3"
+                      : "grid-cols-2",
             )}
           >
             {tabs.map((t) => (
@@ -255,6 +285,17 @@ const OfficePage = () => {
         <OpsSalesTab branches={salesBranches} />
       ) : tab === "plan" ? (
         <OpsPlanTab />
+      ) : tab === "manual" ? (
+        <Suspense
+          fallback={
+            <div className="space-y-3" aria-hidden>
+              <div className="h-48 animate-pulse rounded-3xl bg-card shadow-elev-1" />
+              <div className="h-72 animate-pulse rounded-3xl bg-card shadow-elev-1" />
+            </div>
+          }
+        >
+          <ManualTab reviewerFallback={adminRole} />
+        </Suspense>
       ) : tab === "strategy" ? (
         <StrategyRoom />
       ) : stateQ.isLoading ? (

@@ -1,0 +1,124 @@
+/**
+ * 📘 153 매뉴얼 — DB 책(coach_manual_books.data) → 화면용 책 (깨진 칸이 화면을 죽이지 않게)
+ *
+ *   책 글은 DB 에서 고친다(Claude 가 SQL 로 — 저장소에 글을 넣지 않는다). 손으로 고친 JSON 이 조금 틀려도
+ *   · 모르는 블록 · 빈 카드 · 정답 자리가 보기 밖인 문제는 버리고
+ *   · 장 id · 그림 이름 · 영상 id 가 규칙에 안 맞으면 그 항목을 버린다 (주소에 쓰이는 이름이라)
+ *   필독 장이 하나도 없거나 장이 비면 null → 화면은 앱 안 예시(book1Sample)를 쓴다. 테스트 normalize.test.ts
+ */
+import type { ManualBlock, ManualBook, ManualCard, ManualChapter, ManualQuiz } from "./types";
+
+const ID_RE = /^[a-z0-9_]{1,24}$/;
+const ASSET_RE = /^[a-z0-9-]{1,48}$/;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+type Obj = Record<string, unknown>;
+const isObj = (v: unknown): v is Obj => !!v && typeof v === "object" && !Array.isArray(v);
+const str = (v: unknown): string => (typeof v === "string" ? v.trim() : "");
+const strOrNull = (v: unknown): string | null => str(v) || null;
+const strList = (v: unknown): string[] => (Array.isArray(v) ? v.map(str).filter((s) => s.length > 0) : []);
+const int = (v: unknown, fallback: number): number =>
+  typeof v === "number" && Number.isFinite(v) ? Math.trunc(v) : fallback;
+
+export function normalizeBlock(raw: unknown): ManualBlock | null {
+  if (!isObj(raw)) return null;
+  switch (raw.t) {
+    case "p":
+    case "quote": {
+      const text = str(raw.text);
+      return text ? { t: raw.t, text } : null;
+    }
+    case "ul": {
+      const items = strList(raw.items);
+      return items.length ? { t: "ul", items } : null;
+    }
+    case "ol": {
+      const items = strList(raw.items);
+      if (!items.length) return null;
+      const start = int(raw.start, 0);
+      return start >= 1 ? { t: "ol", items, start } : { t: "ol", items };
+    }
+    case "table": {
+      const head = Array.isArray(raw.head) ? raw.head.map(str) : [];
+      const rows = Array.isArray(raw.rows)
+        ? raw.rows.filter(Array.isArray).map((r) => (r as unknown[]).map(str)).filter((r) => r.some((c) => c))
+        : [];
+      return rows.length ? { t: "table", head, rows } : null;
+    }
+    case "image": {
+      const src = str(raw.src);
+      return ASSET_RE.test(src) ? { t: "image", src, alt: str(raw.alt) } : null;
+    }
+    case "video": {
+      const missionId = str(raw.missionId);
+      const poster = str(raw.poster);
+      const title = str(raw.title);
+      if (!UUID_RE.test(missionId) || !ASSET_RE.test(poster) || !title) return null;
+      const caption = str(raw.caption);
+      return caption ? { t: "video", missionId, poster, title, caption } : { t: "video", missionId, poster, title };
+    }
+    default:
+      return null;
+  }
+}
+
+function normalizeCard(raw: unknown): ManualCard | null {
+  if (!isObj(raw)) return null;
+  const blocks = (Array.isArray(raw.blocks) ? raw.blocks : []).map(normalizeBlock).filter((b): b is ManualBlock => !!b);
+  return blocks.length ? { title: strOrNull(raw.title), blocks } : null;
+}
+
+function normalizeQuiz(raw: unknown): ManualQuiz | null {
+  if (!isObj(raw)) return null;
+  const q = str(raw.q);
+  const options = strList(raw.options);
+  const answer = int(raw.answer, -1);
+  if (!q || options.length < 2 || answer < 0 || answer >= options.length) return null;
+  return { q, options, answer, why: str(raw.why) };
+}
+
+function normalizeChapter(raw: unknown): ManualChapter | null {
+  if (!isObj(raw)) return null;
+  const id = str(raw.id);
+  const title = str(raw.title);
+  if (!ID_RE.test(id) || !title) return null;
+  const cards = (Array.isArray(raw.cards) ? raw.cards : []).map(normalizeCard).filter((c): c is ManualCard => !!c);
+  if (!cards.length) return null;
+  const image = str(raw.image);
+  return {
+    id,
+    no: str(raw.no) || title,
+    title,
+    gain: strOrNull(raw.gain),
+    minutes: Math.max(0, int(raw.minutes, 0)),
+    image: ASSET_RE.test(image) ? image : null,
+    version: Math.max(1, int(raw.version, 1)),
+    required: raw.required === true,
+    cards,
+    today: strOrNull(raw.today),
+    quiz: (Array.isArray(raw.quiz) ? raw.quiz : []).map(normalizeQuiz).filter((q): q is ManualQuiz => !!q),
+  };
+}
+
+export function normalizeBook(raw: unknown): ManualBook | null {
+  if (!isObj(raw)) return null;
+  const id = str(raw.id);
+  if (!ID_RE.test(id)) return null;
+  const seen = new Set<string>();
+  const chapters = (Array.isArray(raw.chapters) ? raw.chapters : [])
+    .map(normalizeChapter)
+    .filter((c): c is ManualChapter => !!c && !seen.has(c.id) && !!seen.add(c.id));
+  if (!chapters.some((c) => c.required)) return null;
+  const cover = str(raw.cover);
+  return {
+    id,
+    no: str(raw.no) || "1권",
+    title: str(raw.title) || "153 매뉴얼",
+    tagline: strOrNull(raw.tagline),
+    cover: ASSET_RE.test(cover) ? cover : "cover",
+    guide: strList(raw.guide),
+    signature: strOrNull(raw.signature),
+    source: str(raw.source),
+    chapters,
+  };
+}
