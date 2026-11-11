@@ -658,6 +658,18 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 12:19 「잘 읽히는 페이지 · 이미지와 글 · 출처와 영상」 — 편마다 맨 위 실제 수업 사진 `public/assets/title-teach/hero-1~3.webp`(홈페이지 사진, 지점 이름은 확인 못 해 '153복싱짐'만) · 이야기 · 단계마다 153 입체 아이콘(`icon3dSrc`) · 연구 · 이야기 출처 이름을 누르면 원문(아이폰 앱은 앱 안 사파리) · 편마다 '실험 자세히' · 3편 숫자 칸 막대 + 계산 한 줄 · 영상: 1편 = 그 리그 레벨 10 미션 영상 3개(`useTitleMatchVideos`), 2편 = TED 가완디 + 153 쇼츠(`short-XOhXvrtik6U.webp` 표지), 3편 = TED 칙센트미하이. **TED 는 표지가 강연자 얼굴 사진이라 그림 없이 글 카드**로 · 한국어 자막은 TED 페이지 링크(유튜브 한국어 자막은 확인 못 함 — 자막만 켜 둠) · 영상 창 '핵심 포인트'는 TED 한국어 자막에서 확인한 말만. 읽는 시간 = 빈칸 빼고 400자/분 올림.
 - MCP 적용 팁: 맨 위에 `drop trigger` · `cron.unschedule` 가 든 판은 확인 창이 0.8초 만에 저절로 취소됐다 → `create or replace trigger` · 같은 이름 `cron.schedule`(pg_cron 이 바꿈) · 설정 줄은 `on conflict do nothing` 으로 바꾸니 바로 들어갔다.
 
+### 영상 올리기 — 50MB 넘으면 휴대폰에서 자동으로 줄이기 (2026-11-12 대표님 「영상올릴때 자동으로 압축해서 50mb이하로줄여줘」)
+
+| 파일 | 역할 |
+|---|---|
+| [src/lib/videoCompress.ts](src/lib/videoCompress.ts) (+test) | `compressVideoToLimit(file, { maxBytes, signal, onProgress })` — WebCodecs(휴대폰 하드웨어 인코더) + `mediabunny`(1.62.1 고정 · MPL-2.0 · **dynamic import** — 줄일 때만 받는 따로 묶음, 약 190KB gzip). 계산 `planVideoCompression`(순수 함수): 목표 = 한도 × 0.85 · 길이로 비트레이트 → 크기 720p(1.4Mbps↑) · 540p(0.8↑) · 480p(0.45↑) · 360p, 원본보다 키우지 않음 · 30fps 넘으면 30 · 최대 2.5Mbps · 0.2Mbps 밑이면 '너무 길어요(○분 안으로)'. 소리는 AAC · MP3 복사, 그 밖은 AAC 로 다시(못 하면 뺌). 결과가 넘치면 비트레이트를 낮춰 다시 · 인코더 오류면 한 단계 작게(16의 배수) — 모두 3번까지. 출력 H.264 mp4(faststart) |
+| [src/components/titlematch/TitleMatchJudgePanel.tsx](src/components/titlematch/TitleMatchJudgePanel.tsx) | 지점장 심사 칸 — 찍어 둔 영상(또는 앱 촬영본)이 50MB 넘으면 버튼 자리에 '영상 줄이는 중 ○%' 막대 · 멈추기 → 끝나면 미리보기 '○MB (원래 ○MB)' + 알림. 50MB 이하는 손대지 않고 그대로 올린다 |
+
+- 실패 문구는 `videoCompressErrorMessage` 한 곳 — 함께 「'앱으로 촬영'을 쓰면 처음부터 작게 저장돼요」.
+- 못 줄이는 경우: WebCodecs 가 없는 기기(iOS 16.4 전 · 아주 옛 안드로이드) · 휴대폰이 못 푸는 형식(HEVC 를 못 푸는 기기 등). 다른 앱으로 가거나 화면이 꺼지면 휴대폰이 인코더를 거둘 수 있어 줄이는 동안 화면 켜 두기(Wake Lock)를 잡는다.
+- 2026-11-12 클라우드 크롬 시험(소프트웨어 인코더): 68.8MB 1080p60 45초 → 14.7MB 720p30(37초) · 세로 회전 MOV 72MB → 13.3MB 720×1280 · VP9+Opus WebM 68MB → 18.8MB(이 크롬은 AAC 인코더가 없어 소리 뺌) · 한도 8MB → 7.0MB 540p · HEVC → '형식' 문구 · 멈추기 · 50MB 아래 그대로.
+- 다른 50MB 올리기(전략 회의 영상 `StrategyVideos` · `strategyService`)는 아직 예전처럼 막기만 한다 — 같은 함수를 붙이면 된다.
+
 ### 로드맵 칸 (2026-10-30 대표님 "로드맵 메뉴가 안 보여" · "검색해도 안 나오고")
 - 랭크업(`/rank-up` — 40단계 길 · 리그별 레벨업 기준 · 타이틀매치 · 단증 도전)은 10-10 하단 '랭크업' 탭을 뺀 뒤 MY복서 라이센스 카드 승급 막대로만 들어갈 수 있었다.
 - 전체 메뉴(`src/lib/appMenu.ts`) 단독 칸 **「로드맵」**(글리프 `roadmap` = 접힌 지도 + 민트 점선 길 + 금 깃발) — 회원은 MY복서 다음 2번째, 코치진은 153운영본부 다음. 검색 `f:rankup` 이름 「로드맵 · 레벨업 기준」 · 관련어 로드맵 · 랭크업 로드맵 · 40단계 · 단증 도전 (테스트 appSearch.test.ts · officeLayout.test.ts).
