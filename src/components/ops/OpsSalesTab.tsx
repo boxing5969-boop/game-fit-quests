@@ -7,7 +7,9 @@
  *   ③ 매출 내역 — 전체 · 일반 수강권 · PT · 그 밖 · 환불 거르기, 날짜별
  *   자료: 브로제이(선릉) · 다짐(칠금) 매출 + 브로제이에 없는 앱 결제 — Edge Function ops-sales.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { FileSpreadsheet } from "lucide-react";
+import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { fmtWon } from "@/lib/opsWork";
@@ -60,6 +62,43 @@ const OpsSalesTab = ({ branches }: { branches: string[] }) => {
     setLimit(PAGE);
   }, [branch, ym]);
 
+  // 회계관리 엑셀 (2026-11-11 대표님 「이렇게 정리해서 엑셀로 다운받을수있는 기능」) — 그해 1월 ~ 고른 달, 달마다 시트
+  //   휴대폰은 만든 뒤 '저장'을 한 번 더 누르게 한다(공유 창은 손가락으로 누른 바로 그때만 열린다)
+  const [xls, setXls] = useState<{ done: number; total: number } | null>(null);
+  const [xlsReady, setXlsReady] = useState<{ key: string; bytes: Uint8Array; filename: string } | null>(null);
+  const xlsKey = `${branch}|${ym}`;
+  // 엑셀 만드는 코드는 누를 때만 받고, 받은 뒤엔 바로 부른다('저장'을 누른 그 순간에 공유 창이 열려야 한다)
+  const acctMod = useRef<typeof import("@/lib/acctExport") | null>(null);
+  const saveReady = async (f: { bytes: Uint8Array; filename: string }) => {
+    const mod = acctMod.current ?? (acctMod.current = await import("@/lib/acctExport"));
+    const how = await mod.saveXlsx(f.bytes, f.filename);
+    if (how !== "canceled") {
+      setXlsReady(null);
+      toast.success(how === "shared" ? "회계관리 엑셀을 보냈어요" : "회계관리 엑셀을 저장했어요");
+    }
+  };
+  const exportXlsx = async () => {
+    if (!branch || xls) return;
+    if (xlsReady?.key === xlsKey) return void saveReady(xlsReady);
+    setXlsReady(null);
+    setXls({ done: 0, total: Number(ym.slice(5, 7)) + 3 });
+    try {
+      const [{ collectOpsAcct }, mod] = await Promise.all([import("@/services/opsAcctService"), import("@/lib/acctExport")]);
+      acctMod.current = mod;
+      const d = await collectOpsAcct(branch, ym, (done, total) => setXls({ done, total }));
+      const f = mod.opsAcctWorkbook(d);
+      if (mod.isPhoneDevice()) {
+        setXlsReady({ key: xlsKey, ...f });
+        toast.success("엑셀이 준비됐어요 — '저장'을 눌러 주세요");
+      } else await saveReady(f);
+    } catch (e) {
+      toast.error((e as Error).message || "엑셀을 만들지 못했어요");
+    } finally {
+      setXls(null);
+    }
+  };
+  const ready = xlsReady?.key === xlsKey;
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -74,7 +113,24 @@ const OpsSalesTab = ({ branches }: { branches: string[] }) => {
         ) : (
           <p className="text-body font-black text-foreground">{branch ? shortBranch(branch) : ""}</p>
         )}
-        <MonthSwitcher month={month} onChange={setMonth} max={monthOf(today)} />
+        <div className="flex items-center gap-2">
+          <MonthSwitcher month={month} onChange={setMonth} max={monthOf(today)} />
+          {q.data && (
+            <button
+              type="button"
+              onClick={() => void exportXlsx()}
+              disabled={!!xls}
+              aria-label="회계관리 엑셀 받기"
+              className={cn(
+                "flex h-9 shrink-0 items-center gap-1 rounded-full px-3 text-label font-bold active:scale-95 disabled:opacity-70",
+                ready ? "bg-foreground text-background" : "bg-secondary text-foreground",
+              )}
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              {xls ? `${xls.done}/${xls.total}` : ready ? "저장" : "엑셀"}
+            </button>
+          )}
+        </div>
       </div>
 
       {q.isLoading ? (
