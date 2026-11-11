@@ -1,11 +1,11 @@
 -- 153 매뉴얼 — 153운영본부 「매뉴얼」 탭 (2026-11-11 대표님 「넘어가자」 · 보고서 「153 매뉴얼 책 · 운영본부 「153 매뉴얼」 탭 보고서」
 --   https://claude.ai/artifact/NohTXPmYbxKD4j5vSkx4Hj · 원고 https://claude.ai/artifact/54TyMyWDtkt9c1jBUa6Mex)
 --
---   · coach_manual_books — 책 내용(장 · 카드 · 확인 문제 · 판 번호) JSON. **책 글은 이 표에만** — 저장소가 공개라
+--   · coach_manual_books — 책 내용(장 · 카드 · 확인 문제 · 판 번호) JSON. **비공개 장(앞글 2편 · 부록)은 이 표에만** — 저장소가 공개라
 --       대표님 이야기 · 지점 운영 숫자가 든 글을 코드에 넣지 않는다(2026-11-11 대표님 「DB에만 두기」). 코치진만 coach_manual_book() 으로 받는다.
---       글을 고치면 그 장의 version 을 올린다(→ 그 장은 다시 서명) · 앱을 다시 올리지 않아도 바로 바뀐다 · 고치기는 SQL(클로드)
---       앱 코드에는 일반 장(프롤로그~9장) 예시만 — src/lib/coachManual/book1Sample.ts (이 표가 비었거나 함수가 없는 미리보기에서 보임)
---       화면은 받은 JSON 을 src/lib/coachManual/normalize.ts 로 거른다(모르는 블록 · 틀린 이름은 버림)
+--       일반 장(프롤로그~9장)은 앱 코드 src/lib/coachManual/book1Sample.ts 와 같은 글이라 표에는 {"id":"ch1","from":"app","version":1} 만
+--       (표에 장 전체를 넣으면 그 글이 앞선다). 글을 고치면 그 장의 version 을 올린다(→ 그 장은 다시 서명) · 고치기는 SQL(클로드)
+--       화면은 받은 JSON 을 src/lib/coachManual/normalize.ts 로 거른다(모르는 블록 · 틀린 이름은 버림). (이 머리말만 적용 뒤 고침 — 함수 본문은 그대로)
 --   · coach_manual_reads — 코치님이 장마다 남긴 「읽고 이해했어요」 서명. 판(version)마다 한 줄 — 내용을 고쳐 판이 오르면 그 장은 다시 서명
 --       확인 문제는 앱이 채점하고(3개 다 맞혀야 서명 단추가 열림) 몇 번 만에 맞혔는지(quiz_tries)만 남긴다
 --   · coach_manual_nudges — 안 읽은 코치님께 보내는 '읽어 주세요' 알림, 사람마다 · 책마다 20시간에 한 번

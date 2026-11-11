@@ -76,6 +76,30 @@ describe("153 매뉴얼 — DB 책 거르기", () => {
     expect(normalizeBook(raw([chapter("a", { version: "2" })]))?.chapters[0].version).toBe(1);
   });
 
+  it("일반 장은 DB 에 번호 · 판만 두면 앱 안 글을 쓴다 (판 · 필독은 DB 값)", () => {
+    const b = normalizeBook(
+      raw([
+        chapter("a"),
+        { id: "prologue", from: "app", version: 2 },
+        { id: "ch1", from: "app" },
+        { id: "ch2", from: "app", version: 1, required: false },
+        { id: "zz", from: "app", version: 1 },
+      ]),
+      BOOK1_SAMPLE,
+    );
+    expect(b?.chapters.map((c) => c.id)).toEqual(["a", "prologue", "ch1", "ch2"]);
+    expect(b?.chapters[1]).toEqual({ ...BOOK1_SAMPLE.chapters[0], version: 2 });
+    expect(b?.chapters[2]).toEqual(BOOK1_SAMPLE.chapters[1]);
+    expect(b?.chapters[3].required).toBe(false);
+    // 앱 안 책을 안 주면 그런 장은 버린다
+    expect(normalizeBook(raw([chapter("a"), { id: "ch1", from: "app" }]))?.chapters.map((c) => c.id)).toEqual(["a"]);
+  });
+
+  it("DB 에 장 전체가 있으면 그 글이 앞선다", () => {
+    const b = normalizeBook(raw([chapter("ch1", { title: "고친 1장" })]), BOOK1_SAMPLE);
+    expect(b?.chapters[0].title).toBe("고친 1장");
+  });
+
   it("확인 문제 — 보기 2개 미만 · 정답 자리가 보기 밖이면 그 문제만 버린다", () => {
     const b = normalizeBook(
       raw([

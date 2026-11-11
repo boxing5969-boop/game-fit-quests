@@ -2,7 +2,8 @@
  * 📘 153 매뉴얼 — 훅 · 뮤테이션 (["coach-manual", …] 캐시)
  *   서버: coach_manual_book · coach_manual_me · coach_manual_sign · coach_manual_board · coach_manual_nudge (20261111131159_coach_manual.sql)
  *
- *   책 글은 DB(coach_manual_books)에만 있다 — 코치진만 coach_manual_book 으로 받고 normalize.ts 로 거른다.
+ *   책은 DB(coach_manual_books) — 코치진만 coach_manual_book 으로 받고 normalize.ts 로 거른다. 비공개 장(앞글 2편 · 부록)은 DB 에만,
+ *   일반 장(프롤로그~9장)은 DB 에 번호 · 판만 두고 글은 앱 안 1권(book1Sample)에서 (DB 에 장 전체를 넣으면 그 글이 앞선다).
  *   서버에 함수가 아직 없을 때(PGRST202 — DB 적용 전 · 옛 DB 를 보는 preview-* 미리보기):
  *   · 책은 앱 안 예시(book1Sample — 프롤로그~9장)를 보인다 · DB 에 책 줄이 없을 때도 같은 예시('준비 중')
  *   · 읽기 · 확인 문제는 그대로 되고, 서명은 이 기기에만 남긴다(localStorage `153manual:<책>:reads`) — 화면에 '이 휴대폰에만 남아요'
@@ -74,7 +75,8 @@ export const useManualBook = (book: string, enabled = true) =>
         if (isMissingFunction(error)) return { book: BOOK1_SAMPLE, source: "offline" };
         throw new Error(translateError(error, "매뉴얼을 불러오지 못했어요"));
       }
-      const parsed = normalizeBook(data);
+      // 일반 장은 DB 에 번호 · 판만 — 글은 앱 안 1권(book1Sample)에서
+      const parsed = normalizeBook(data, book === BOOK1_SAMPLE.id ? BOOK1_SAMPLE : null);
       return parsed ? { book: parsed, source: "server" } : { book: BOOK1_SAMPLE, source: "empty" };
     },
   });
