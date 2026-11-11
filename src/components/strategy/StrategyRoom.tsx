@@ -19,7 +19,13 @@ import PushOptInCard from "@/components/notifications/PushOptInCard";
 import StrategyItemCard from "@/components/strategy/StrategyItemCard";
 import { ClassLogComposer, PostComposer, ProgramComposer } from "@/components/strategy/StrategyComposers";
 import ClassTemplateList from "@/components/strategy/ClassTemplates";
-import type { ClassTemplate } from "@/lib/classTemplates";
+import { templateVideoKey, templateVideoTitle, type ClassTemplate } from "@/lib/classTemplates";
+import {
+  classTemplateVideoUrl,
+  useAttachClassTemplateVideo,
+  useClassTemplateVideos,
+  useClearClassTemplateVideo,
+} from "@/services/classTemplateVideoService";
 import { VideoLibrary } from "@/components/strategy/StrategyVideos";
 import {
   strategyVideoUrl,
@@ -112,6 +118,11 @@ const StrategyRoom = () => {
   const videos = useMemo(() => videosQ.data ?? [], [videosQ.data]);
   const videoMap = useMemo(() => new Map(videos.map((v) => [v.id, v])), [videos]);
   const ack = useAckStrategy();
+  // 153 수업 템플릿 — 순서마다 참고 영상 (모든 지점 공통 · 넣기는 대표님만, 2026-11-12)
+  const tplVideosQ = useClassTemplateVideos(ok && section === "program");
+  const attachTpl = useAttachClassTemplateVideo();
+  const clearTpl = useClearClassTemplateVideo();
+  const [tplBusy, setTplBusy] = useState<string | null>(null);
 
   const [postOpen, setPostOpen] = useState(false);
   const [programOpen, setProgramOpen] = useState(false);
@@ -286,10 +297,38 @@ const StrategyRoom = () => {
           )}
           <ClassTemplateList
             canDirect={!!me.can_direct}
+            isHq={!!me.hq}
+            videos={tplVideosQ.data ?? []}
+            busy={tplBusy}
             onUse={(t) => {
               setProgramInit(null);
               setProgramTpl(t);
               setProgramOpen(true);
+            }}
+            onPlay={async (t, step, v) => {
+              try {
+                const url = await classTemplateVideoUrl(v.storage_path);
+                setOverlay({ url, title: templateVideoTitle(t, step) });
+              } catch (e) {
+                toast.error((e as Error).message);
+              }
+            }}
+            onAttach={(t, step, file) => {
+              setTplBusy(templateVideoKey(t.id, step));
+              attachTpl
+                .mutateAsync({ templateId: t.id, step, file })
+                .then(() => toast.success("참고 영상을 붙였어요 — 모든 지점 코치님께 보여요"))
+                .catch((e) => toast.error((e as Error).message))
+                .finally(() => setTplBusy(null));
+            }}
+            onClear={(t, step) => {
+              if (!window.confirm("이 순서의 참고 영상을 뺄까요? (파일은 남아 있어요)")) return;
+              setTplBusy(templateVideoKey(t.id, step));
+              clearTpl
+                .mutateAsync({ templateId: t.id, step })
+                .then(() => toast.success("참고 영상을 뺐어요"))
+                .catch((e) => toast.error((e as Error).message))
+                .finally(() => setTplBusy(null));
             }}
           />
           {programs.isLoading ? (
