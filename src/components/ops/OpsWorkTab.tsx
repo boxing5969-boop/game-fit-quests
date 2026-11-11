@@ -12,11 +12,13 @@
  *   PT (2026-10-29): 브로제이 PT 차감 → 코치별 이번 달 PT · 회원별 남은 횟수 · 수당 — OpsPtPanel · src/lib/opsPt.ts
  *   계약서 (2026-11-03): 돈을 보는 분은 근무자마다 '계약서 없음 · 서명 대기 · 사본 아직'(확인할 것 → 근무자 카드 계약서 탭),
  *     코치님은 서명할 계약서가 맨 위 · 서명한 계약서는 '내 계약서'. ?contract=<id> 로 한 장(알림 링크) — OpsContractSheet
+ *   PT 기록 (2026-11-11 1단계): 켠 지점만 — 코치님 화면 맨 위 「오늘 PT」 · 근무자 카드 'PT' 탭 위쪽 확인 필요 · 수업 기록,
+ *     '확인할 것'에 코치별 PT 기록 확인 필요. ?demo=1 은 예시 자료 — OpsPtRecord · src/lib/opsPtRecord.ts
  *   계산은 src/lib/opsWork.ts 한 곳 — 서버는 자료만.
  */
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { ChevronRight, FileSignature, Plus } from "lucide-react";
+import { ChevronRight, ClipboardCheck, FileSignature, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
@@ -55,9 +57,13 @@ import {
   type OpsMonthData,
 } from "@/services/opsService";
 import { computePtMonth, type OpsPtSummary } from "@/lib/opsPt";
+import { matchPtRecord, ptCounts } from "@/lib/opsPtRecord";
+import { PT_SAMPLE_COACH } from "@/lib/opsPtRecordSample";
+import { useOpsPtRecord } from "@/services/opsPtRecordService";
 import OpsContractSheet from "./OpsContractSheet";
 import OpsDaySheet from "./OpsDaySheet";
 import OpsPtPanel, { PtCheckItem } from "./OpsPtPanel";
+import OpsPtRecord from "./OpsPtRecord";
 import OpsStaffSheet, { type OpsStaffTab } from "./OpsStaffSheet";
 import { DayRow, MonthSwitcher, OpsChip, StatusPill, fmtDay, kstToday, monthOf } from "./OpsParts";
 
@@ -131,6 +137,8 @@ const OpsWorkTab = ({ me }: { me: OpsMe }) => {
   const [params, setParams] = useSearchParams();
   const contractParam = params.get("contract");
   const contractId = contractParam && /^[0-9a-f-]{36}$/i.test(contractParam) ? contractParam : null;
+  // PT 기록 예시 화면 — /office?tab=work&demo=1 (지어낸 자료, 서버를 부르지 않는다)
+  const ptDemo = params.get("demo") === "1";
   const openContract = (id: string) =>
     setParams(
       (p) => {
@@ -183,9 +191,9 @@ const OpsWorkTab = ({ me }: { me: OpsMe }) => {
           </button>
         </div>
       ) : q.data.manage ? (
-        <ManagerView data={q.data} />
+        <ManagerView data={q.data} ptDemo={ptDemo} />
       ) : (
-        <CoachView data={q.data} onOpenContract={openContract} />
+        <CoachView data={q.data} onOpenContract={openContract} ptDemo={ptDemo} />
       )}
       <OpsContractSheet id={contractId} onClose={closeContract} />
     </div>
@@ -193,7 +201,7 @@ const OpsWorkTab = ({ me }: { me: OpsMe }) => {
 };
 
 // ───────────────────────── 관리 (대표님 · 지점장 · 회계매니저) ─────────────────────────
-const ManagerView = ({ data }: { data: OpsMonthData }) => {
+const ManagerView = ({ data, ptDemo }: { data: OpsMonthData; ptDemo: boolean }) => {
   const decide = useOpsEntryDecide();
   const byId = useMemo(() => buildStaffById(data), [data]);
   const ctx = useMemo(
@@ -226,6 +234,12 @@ const ManagerView = ({ data }: { data: OpsMonthData }) => {
   }, [pt, data.staff, ptPay]);
   const ptGross = [...ptByCoach.values()].reduce((s, x) => s + (x.gross ?? 0), 0);
   const ptToCheck = pt ? pt.events.filter((e) => e.status === "check") : [];
+  // PT 기록(2026-11-11) — 켠 지점만: 코치별 확인 필요(사유 없는 차감 · 차감 대기 · 기록 없는 입장 · 늦은 기록)
+  const ptRecQ = useOpsPtRecord(data.branch, { enabled: ptCoaches.length > 0, demo: ptDemo, demoManage: true });
+  const ptRec = useMemo(() => (ptRecQ.data?.on ? matchPtRecord(ptRecQ.data) : null), [ptRecQ.data]);
+  const ptRecTodo = ptRec
+    ? ptCoaches.map((c) => ({ staff: c, n: ptCounts(ptRec, ptDemo ? PT_SAMPLE_COACH : c.id, true).total })).filter((x) => x.n > 0)
+    : [];
 
   // 계약서 — 돈을 보는 분(계약서에 시급이 있다)만: 근무자마다 '계약서 없음 · 서명 대기 · 사본 아직' (2026-11-03)
   const contractsQ = useOpsContractBranch(data.branch, canPay);
@@ -293,7 +307,7 @@ const ManagerView = ({ data }: { data: OpsMonthData }) => {
       </section>
 
       {/* 확인할 것 */}
-      {(pending.length > 0 || flags.length > 0 || ptToCheck.length > 0 || contractTodo.length > 0) && (
+      {(pending.length > 0 || flags.length > 0 || ptToCheck.length > 0 || contractTodo.length > 0 || ptRecTodo.length > 0) && (
         <section className={card}>
           <h2 className="text-heading font-black text-foreground">확인할 것</h2>
           {contractTodo.length > 0 && (
@@ -308,6 +322,25 @@ const ManagerView = ({ data }: { data: OpsMonthData }) => {
                     <FileSignature className="h-5 w-5 shrink-0 text-amber-700" />
                     <span className="min-w-0 flex-1 truncate text-body text-foreground">
                       <b className="font-black">{staff.name}</b> · {contractTodoText(st)}
+                    </span>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {ptRecTodo.length > 0 && (
+            <ul className="mt-3 divide-y divide-border/70 overflow-hidden rounded-xl border border-amber-200 bg-amber-50/60">
+              {ptRecTodo.map(({ staff, n }) => (
+                <li key={staff.id}>
+                  <button
+                    type="button"
+                    onClick={() => setStaffSheet({ staff, tab: "pt" })}
+                    className="flex w-full items-center gap-2 px-3 py-2.5 text-left active:bg-amber-100/70"
+                  >
+                    <ClipboardCheck className="h-5 w-5 shrink-0 text-amber-700" />
+                    <span className="min-w-0 flex-1 truncate text-body text-foreground">
+                      <b className="font-black">{staff.name}</b> · PT 기록 확인 필요 {n}건
                     </span>
                     <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                   </button>
@@ -495,12 +528,15 @@ const ManagerView = ({ data }: { data: OpsMonthData }) => {
         onPickDay={(d) => openStaff && setDaySheet({ staffId: openStaff.id, date: d.date })}
         ptPanel={
           openStaff?.pt_freelancer && pt && ptByCoach.get(openStaff.id) ? (
-            <OpsPtPanel
-              summary={ptByCoach.get(openStaff.id)!}
-              events={pt.events.filter((e) => e.coach_staff_id === openStaff.id)}
-              manage
-              showPay={ptPay}
-            />
+            <>
+              <OpsPtRecord branch={data.branch} manage payBelow coachId={ptDemo ? PT_SAMPLE_COACH : openStaff.id} month={data.month} demo={ptDemo} />
+              <OpsPtPanel
+                summary={ptByCoach.get(openStaff.id)!}
+                events={pt.events.filter((e) => e.coach_staff_id === openStaff.id)}
+                manage
+                showPay={ptPay}
+              />
+            </>
           ) : undefined
         }
       />
@@ -520,7 +556,7 @@ const ManagerView = ({ data }: { data: OpsMonthData }) => {
 };
 
 // ───────────────────────── 코치님 (내 근무) ─────────────────────────
-const CoachView = ({ data, onOpenContract }: { data: OpsMonthData; onOpenContract: (id: string) => void }) => {
+const CoachView = ({ data, onOpenContract, ptDemo }: { data: OpsMonthData; onOpenContract: (id: string) => void; ptDemo: boolean }) => {
   const cancel = useOpsEntryCancel();
   // 내 계약서 — 서명할 것은 맨 위, 서명한 것은 내 시간표 아래 (2026-11-03)
   const contractsQ = useOpsContractMine();
@@ -579,6 +615,9 @@ const CoachView = ({ data, onOpenContract }: { data: OpsMonthData; onOpenContrac
           <ChevronRight className="h-5 w-5 shrink-0" />
         </button>
       ))}
+
+      {/* PT 위탁 코치 — 오늘 PT · 확인 필요 (켠 지점만 그린다, 2026-11-11) */}
+      {(mine.pt_freelancer || ptDemo) && <OpsPtRecord branch={data.branch} coachId={ptDemo ? PT_SAMPLE_COACH : mine.id} demo={ptDemo} />}
 
       {/* 주인공 — 이번 달 내 근무 */}
       <section className={card}>
