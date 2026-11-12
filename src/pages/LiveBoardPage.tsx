@@ -1381,7 +1381,7 @@ const LiveBoardPage = () => {
         {/* ═══ Center: Main area — 명예의 전당 sticky bottom + 위쪽만 스크롤 ═══ */}
         <div className="flex flex-col min-w-0 overflow-hidden flex-1">
           {/* 2번 화면(TV2): 스포트라이트 대신 런칭 이벤트 보드 — ① 출석왕 ② 앱 활동왕 ③ 닉네임 좋아요왕 (2026-09-23 대표님 지시).
-              아래 띠(오늘 다녀간 회원·COACHING STAFF·명예의 전당)와 오른쪽 패널(활동 중)은 그대로 둔다 — 오른쪽 위 QR 카드는 2026-11-12 부터 플리스 안내(LiveBoardGoodsCard). */}
+              아래 띠(오늘 다녀간 회원·COACHING STAFF·명예의 전당)는 그대로 둔다. 오른쪽 패널은 2026-11-12 부터 플리스 안내 1/3(LiveBoardGoodsCard) — 활동 중 · QR 없음. */}
           {only2 && branchName && (
             <div className="flex-1 min-h-0 overflow-hidden">
               <LaunchEventBoard branchName={branchName} />
@@ -1848,13 +1848,15 @@ const LiveBoardPage = () => {
           )}
         </div>
 
+        {/* ═══ 2번 화면 오른쪽 1/3 = 플리스 사전예약 안내 (2026-11-12 대표님 「현재 활동중도 지워주고 … 런칭이벤트를 3분의2 · 153집업을 나머지」).
+             QR 출석 · 현재 활동 중 · 짐 레이드 패널은 2번 화면에 없다(QR 은 옆 사이니지 기본 화면에). 사전예약이 닫히면 이 칸도 없어져 런칭 이벤트가 화면 전체를 쓴다. */}
+        {only2 && <LiveBoardGoodsCard />}
+
         {/* ═══ Right panel ═══ */}
-        {!only1 && (
+        {!only1 && !only2 && (
         <div className="bg-gray-900/60 flex flex-col min-h-0 w-[26rem] border-l border-gray-800/60">
-          {/* QR 출석 — 항상 표시. 브로제이가 느릴 때 회원이 앱에서 찍으면 보드에 바로 올라온다 (2026-09-22)
-              2번 화면만 빼고 그 자리(패널 높이 1/3)에 플리스 사전예약 안내 — 옆 사이니지에 QR 이 있다 (2026-11-12 대표님) */}
-          {branchName && !only2 && <LiveBoardQrCard branchName={branchName} />}
-          {only2 && <LiveBoardGoodsCard className="h-1/3 shrink-0" />}
+          {/* QR 출석 — 항상 표시. 브로제이가 느릴 때 회원이 앱에서 찍으면 보드에 바로 올라온다 (2026-09-22) */}
+          {branchName && <LiveBoardQrCard branchName={branchName} />}
           {/* Active members — 인원수 많을 때 더 많이 보이게 flex-1 + 최소 보장 (QR 카드 232px 이 위에 생겨 40vh → 28vh) */}
           <div className="flex-1 border-b border-gray-800/60 flex flex-col min-h-[28vh]">
             <div className="px-5 py-4 flex items-center gap-3 flex-shrink-0">

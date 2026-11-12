@@ -1,22 +1,23 @@
 /**
- * 153 — 라이브보드 2번 화면 오른쪽 위 '153 플리스 집업 사전예약' 안내 (2026-11-12 대표님
- *   「라이브 보드2 큐알있는부분 빼자 왜냐면 반대쪽 사이니지에 QR이있어서 그거 빼고 3분의1정도는 플리스 안내하자」).
+ * 153 — 라이브보드 2번 화면 오른쪽 1/3 '153 플리스 집업 사전예약' 안내 (2026-11-12 대표님)
+ *   ① 「라이브 보드2 큐알있는부분 빼자 왜냐면 반대쪽 사이니지에 QR이있어서 그거 빼고 3분의1정도는 플리스 안내하자」
+ *   ② 「현재 활동중도 지워주고 지금은 너무 조금만 사용하는거같은데 런칭이벤트를 3분의2를 사용하고 153집업을 나머지 사용해줘」
  *
- *   · 2번 화면은 QR 출석 카드를 빼고 이 카드를 오른쪽 패널 높이의 1/3 로 둔다. QR 은 옆 사이니지(번호 없는 기본 화면 · 1번)에 그대로.
- *   · 사전예약이 열려 있을 때만(goods_campaign_info — anon). 마감이 지나거나 서버에 닿지 않으면 그리지 않는다(활동 중 칸이 그 자리를 쓴다).
- *   · 사진은 흰색 · 진회색 인쇄 모델 컷을 6초마다 번갈아. 글은 멀리서도 읽히게 크게 — 가격 · 인쇄 색 · 마감 · 신청하는 곳.
+ *   · 2번 화면은 오른쪽 패널(QR 출석 · 현재 활동 중 · 짐 레이드) 대신 이 패널 하나가 화면 너비 1/3 을 쓴다 — 런칭 이벤트 칸이 나머지 2/3.
+ *     QR 은 옆 사이니지(번호 없는 기본 화면)에 그대로 있다.
+ *   · 사전예약이 열려 있을 때만(goods_campaign_info — anon). 마감이 지나거나 서버에 닿지 않으면 그리지 않는다 → 런칭 이벤트 칸이 화면 전체를 쓴다.
+ *   · 흰색 · 진회색 인쇄 모델 컷을 나란히, 글은 멀리서도 읽히게 크게 — 가격 · 인쇄 색 · 사이즈 · 마감 · 결제 · 신청하는 곳.
  */
-import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { GOODS_FLEECE_SLUG, ddayLabel, deadlineLabel, won } from "@/lib/goodsPreorder";
 import { getGoodsCampaign } from "@/services/goodsService";
 
 const PHOTOS = [
-  { src: "/goods/fleece/img/model-back.webp", label: "흰색 인쇄" },
-  { src: "/goods/fleece/img/model-back-gray.webp", label: "진회색 인쇄" },
+  { src: "/goods/fleece/img/model-back.webp", label: "흰색 인쇄", dot: "#F2F2F0" },
+  { src: "/goods/fleece/img/model-back-gray.webp", label: "진회색 인쇄", dot: "#63666A" },
 ];
 
-const LiveBoardGoodsCard = ({ className = "" }: { className?: string }) => {
+const LiveBoardGoodsCard = () => {
   const { data: c } = useQuery({
     queryKey: ["goods-campaign", GOODS_FLEECE_SLUG, "tv"],
     queryFn: () => getGoodsCampaign(GOODS_FLEECE_SLUG),
@@ -24,46 +25,62 @@ const LiveBoardGoodsCard = ({ className = "" }: { className?: string }) => {
     refetchInterval: 30 * 60 * 1000,
     retry: 1,
   });
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    const t = window.setInterval(() => setI((v) => (v + 1) % PHOTOS.length), 6000);
-    return () => window.clearInterval(t);
-  }, []);
 
   if (!c?.ok || !c.open) return null;
 
+  const rows: [string, string][] = [
+    ["인쇄 색", "흰색 · 진회색 중 하나"],
+    ["사이즈", c.sizes.join(" · ")],
+    ["신청", `${deadlineLabel(c.closes_at)}까지`],
+    ["결제", "데스크 카드 결제 · 결제한 신청만 제작"],
+  ];
+
   return (
-    <div className={`flex flex-col border-b border-gray-800/60 bg-gradient-to-b from-gray-800/70 to-gray-900/40 px-5 py-4 ${className}`}>
-      <div className="flex min-h-0 flex-1 gap-4">
-        <div className="relative h-full min-h-0 w-[38%] shrink-0 overflow-hidden rounded-xl bg-[#E9E7E3]">
-          {PHOTOS.map((p, n) => (
+    <aside className="flex min-h-0 w-1/3 shrink-0 flex-col border-l border-gray-800/60 bg-gradient-to-b from-gray-900 via-gray-900/90 to-black px-8 pb-7 pt-6">
+      <div className="flex items-center gap-3">
+        <span className="rounded-full bg-emerald-400/15 px-3.5 py-1 text-xl font-black text-emerald-300">회원 사전예약</span>
+        <span className="text-xl font-black tracking-[0.2em] text-gray-500">153 GOODS</span>
+        <span className="ml-auto rounded-full bg-white px-4 py-1 text-2xl font-black tabular-nums text-gray-900">{ddayLabel(c)}</span>
+      </div>
+      <h2 className="mt-3 text-6xl font-black leading-tight text-white">153 플리스 집업</h2>
+      <p className="mt-1 text-2xl font-bold text-gray-400">등판 BOXER 153 BOXING GYM · 가슴 153 심볼</p>
+
+      <div className="mt-5 grid min-h-0 flex-1 grid-cols-2 gap-4">
+        {PHOTOS.map((p) => (
+          <figure key={p.src} className="relative m-0 min-h-0 overflow-hidden rounded-2xl bg-[#E9E7E3]">
             <img
-              key={p.src}
               src={p.src}
               alt={`153 플리스 집업 ${p.label}`}
               draggable={false}
-              className={`absolute inset-0 h-full w-full select-none object-cover object-top transition-opacity duration-1000 ${n === i ? "opacity-100" : "opacity-0"}`}
+              className="absolute inset-0 h-full w-full select-none object-cover object-top"
             />
-          ))}
-          <span className="absolute bottom-2 left-2 rounded-md bg-black/70 px-2 py-0.5 text-sm font-black text-white">{PHOTOS[i].label}</span>
-        </div>
-        <div className="flex min-w-0 flex-1 flex-col justify-center">
-          <span className="w-fit rounded-full bg-emerald-400/15 px-2.5 py-0.5 text-base font-black text-emerald-300">회원 사전예약</span>
-          <p className="mt-2 text-3xl font-black leading-tight text-white">153 플리스 집업</p>
-          <p className="mt-2 text-4xl font-black tabular-nums leading-none text-white">{won(c.price)}</p>
-          <p className="mt-3 flex items-center gap-2 text-lg font-bold text-gray-300">
-            <i className="inline-block h-4 w-4 rounded-full border border-white/30 bg-[#F2F2F0]" />흰색
-            <i className="ml-1 inline-block h-4 w-4 rounded-full border border-white/30 bg-[#63666A]" />진회색 인쇄
-          </p>
-          <p className="mt-1.5 text-lg font-bold text-gray-300">
-            {deadlineLabel(c.closes_at)}까지 · <span className="font-black text-emerald-300">{ddayLabel(c)}</span>
-          </p>
-        </div>
+            <figcaption className="absolute bottom-3 left-3 flex items-center gap-2 rounded-xl bg-black/75 px-3 py-1.5 text-2xl font-black text-white">
+              <i className="inline-block h-5 w-5 rounded-full border border-white/40" style={{ background: p.dot }} />
+              {p.label}
+            </figcaption>
+          </figure>
+        ))}
       </div>
-      <p className="mt-3 shrink-0 rounded-lg bg-white/5 px-3 py-2 text-center text-lg font-black text-white">
-        신청은 마이복서153 앱 홈 · 데스크에서
+
+      <div className="mt-5 flex items-end justify-between gap-4">
+        <p className="text-7xl font-black leading-none tabular-nums text-white">{won(c.price)}</p>
+        <p className="pb-1 text-2xl font-bold text-gray-400">앞뒤 인쇄 포함</p>
+      </div>
+
+      <dl className="mt-5 space-y-2.5">
+        {rows.map(([k, v]) => (
+          <div key={k} className="flex items-baseline gap-4">
+            <dt className="w-24 shrink-0 text-2xl font-bold text-gray-500">{k}</dt>
+            <dd className="m-0 text-2xl font-black text-white">{v}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <p className="mt-6 rounded-2xl bg-emerald-400/15 px-4 py-3.5 text-center text-3xl font-black text-emerald-200">
+        신청은 마이복서153 앱 홈에서
       </p>
-    </div>
+      <p className="mt-2 text-center text-xl font-bold text-gray-400">데스크에 말씀하셔도 돼요</p>
+    </aside>
   );
 };
 

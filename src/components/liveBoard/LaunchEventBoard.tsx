@@ -172,23 +172,25 @@ const LaunchEventBoard = ({ branchName }: Props) => {
           return (
             // 칸 밖으로 넘친 줄이 아래 글 위에 겹쳐 그려지지 않게 칸 안에서 자른다 (2026-10-19)
             <div key={cat} className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-yellow-600/30 bg-gradient-to-b from-yellow-950/40 via-gray-900/70 to-gray-900/80 p-5">
+              {/* 머리 두 줄 — 제목은 한 줄을 다 쓰고, 설명 · 참가 인원은 아랫줄 (2026-11-12 2번 화면이 너비 2/3 로 줄면서
+                  '마이복서153 앱 활동왕'이 참가 인원 칩에 밀려 잘렸다) */}
               <div className="flex items-center gap-3">
                 <span className="text-3xl font-black text-yellow-400">{col.no}</span>
-                <Icon className="h-7 w-7 text-yellow-400" />
-                <div className="min-w-0 flex-1">
-                  <h3 className="truncate text-2xl font-black text-white">{col.title}</h3>
-                  <p className="truncate text-base font-bold text-gray-400">{col.sub}</p>
-                </div>
-                {/* 참가 인원 — 칸 맨 아래 줄에 있던 것을 머리줄 오른쪽으로 (아래 줄이 칸 밖으로 넘쳐 '참여 방법'과 겹쳤다) */}
+                <Icon className="h-7 w-7 flex-shrink-0 text-yellow-400" />
+                <h3 className="min-w-0 flex-1 truncate text-2xl font-black text-white">{col.title}</h3>
+              </div>
+              <div className="mt-1 flex items-center gap-3">
+                <p className="min-w-0 flex-1 truncate text-base font-bold text-gray-400">{col.sub}</p>
+                {/* 참가 인원 — 칸 맨 아래 줄에 있던 것을 머리 쪽으로 (아래 줄이 칸 밖으로 넘쳐 '참여 방법'과 겹쳤다) */}
                 {item && !upcoming && (
-                  <span className="flex-shrink-0 self-start rounded-full bg-white/10 px-3 py-1 text-base font-bold tabular-nums text-gray-300">
+                  <span className="flex-shrink-0 rounded-full bg-white/10 px-3 py-0.5 text-base font-bold tabular-nums text-gray-300">
                     참가 {Number(item.total).toLocaleString("ko-KR")}명
                   </span>
                 )}
               </div>
 
               {/* 1위 */}
-              <div className="mt-4 rounded-2xl border border-yellow-500/40 bg-yellow-500/10 px-5 py-4">
+              <div className="mt-3 rounded-2xl border border-yellow-500/40 bg-yellow-500/10 px-5 py-3.5">
                 {!data ? (
                   <div className="h-12 animate-pulse rounded-lg bg-yellow-500/10" />
                 ) : upcoming ? (
@@ -219,7 +221,7 @@ const LaunchEventBoard = ({ branchName }: Props) => {
               </div>
 
               {/* 2~5위 */}
-              <ol className="mt-3 flex-1 space-y-1.5">
+              <ol className="mt-2.5 flex-1 space-y-1">
                 {rest.map((r) => (
                   <li key={`${cat}-${r.rank}`} className="flex items-center gap-3 rounded-xl bg-gray-800/50 px-4 py-2.5">
                     <span className="w-8 text-center text-2xl font-black tabular-nums text-gray-400">{r.rank}</span>
