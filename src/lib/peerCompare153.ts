@@ -30,7 +30,8 @@ export interface PeerMetricDef {
 
 export const PEER_METRICS: Record<PeerMetricKey, PeerMetricDef> = {
   bodyFat: { key: "bodyFat", label: "체지방률", unit: "%", gapUnit: "%p", better: "lower", table: NFA_BODY_FAT },
-  grip: { key: "grip", label: "악력", unit: "kg", gapUnit: "kg", better: "higher", table: NFA_GRIP_KG },
+  // 2026-11-13 대표님 「심폐지구력 근력 …」 — 근력을 재는 값이라는 것이 보이게 이름표에 (근력)
+  grip: { key: "grip", label: "악력(근력)", unit: "kg", gapUnit: "kg", better: "higher", table: NFA_GRIP_KG },
 };
 
 /** 보여 주는 순서 — 주인공이 아닌 줄도 이 순서 */
@@ -316,7 +317,10 @@ export function gainText(m: PeerMetricResult): string | null {
   return g ? `${g.main} · ${g.sub}` : null;
 }
 
-/** 비교 카드 아래 '넣으면 비교해요' 한 줄 — 넣을 것이 없으면 null */
+/**
+ * 비교 카드 아래 '넣으면 비교해요' 한 줄 — 넣을 것이 없으면 null.
+ *   2026-11-13 부터 카드는 lib/fitnessAge153 bodyInviteText(체력 나이를 먼저 권함)를 쓴다 — 이 글은 65세 이상 글과 같아 그대로 둔다.
+ */
 export function inviteText(c: PeerCompare): string | null {
   if (c.tooYoung) return null;
   if (!c.canCompare) {
