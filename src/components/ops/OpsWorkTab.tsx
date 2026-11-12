@@ -16,6 +16,9 @@
  *     '확인할 것'에 코치별 PT 기록 확인 필요. ?demo=1 은 예시 자료 — OpsPtRecord · src/lib/opsPtRecord.ts
  *   PT 기록 오류 신고 (2026-11-12): '확인할 것' 맨 위에 코치별 열린 신고 → 근무자 카드 'PT' 탭. 알림 링크 ?ptcoach=<근무자 카드> 로
  *     오면 그 코치의 'PT' 탭을 바로 연다 — OpsPtReport · src/lib/opsPtReport.ts
+ *   출근 확정 (2026-11-12 1단계 — 보고서 「코치 근무·PT 정직 체크 방법 보고서」): 코치님 화면 위쪽 "오늘 출근 기록이 아직 없어요" ·
+ *     출근 기록 없는 날 · 내 출근 신고, 하루 시트 「출근 신고」 → 관리자 '확인할 것' 맨 위 출근 신고(승인 · 반려) · 대표님 출근 알림 켜기.
+ *     알림 링크 ?duty=<날짜> 로 오면 그날 시트를 「출근 신고」로 연다 — OpsDuty · src/lib/opsDuty.ts
  *   계산은 src/lib/opsWork.ts 한 곳 — 서버는 자료만.
  */
 import { useEffect, useMemo, useState } from "react";
@@ -63,6 +66,9 @@ import { matchPtRecord, ptCounts } from "@/lib/opsPtRecord";
 import { PT_SAMPLE_COACH } from "@/lib/opsPtRecordSample";
 import { ptReportOpenCount } from "@/lib/opsPtReport";
 import { useOpsPtRecord } from "@/services/opsPtRecordService";
+import { dutyLiveFor, dutyOpen, type DutyKind } from "@/lib/opsDuty";
+import { useOpsDuty, useOpsDutyActions } from "@/services/opsDutyService";
+import { DutyCoachCards, DutyManagerList, DutyMyReports, DutySettingRow, OpsDutyDemo } from "./OpsDuty";
 import { useOpsPtReports } from "@/services/opsPtReportService";
 import OpsContractSheet from "./OpsContractSheet";
 import OpsDaySheet from "./OpsDaySheet";
@@ -162,7 +168,8 @@ const OpsWorkTab = ({ me }: { me: OpsMe }) => {
 
   return (
     <div className="space-y-4">
-      {/* PT 기록 예시(?demo=1) — 코치 · 관리자 화면을 맨 위에서 바로 눌러 본다(어느 계정으로 들어와도 보이게) */}
+      {/* 예시(?demo=1) — 출근 확정 · PT 기록의 코치 · 관리자 화면을 맨 위에서 바로 눌러 본다(어느 계정으로 들어와도 보이게) */}
+      {ptDemo && <OpsDutyDemo />}
       {ptDemo && <OpsPtRecordDemo />}
       <div className="flex flex-wrap items-center justify-between gap-2">
         {branches.length > 1 ? (
@@ -223,6 +230,11 @@ const ManagerView = ({ data, ptDemo }: { data: OpsMonthData; ptDemo: boolean }) 
   const [staffSheet, setStaffSheet] = useState<{ staff: OpsStaff | null; tab?: OpsStaffTab } | null>(null);
   const [daySheet, setDaySheet] = useState<{ staffId: string; date: string } | null>(null);
   const [showAll, setShowAll] = useState(false);
+  // 출근 확정(2026-11-12) — 코치 출근 신고 · 출근 알림 설정. 서버에 함수가 없으면 available=false(예전 화면)
+  const dutyQ = useOpsDuty(data.branch);
+  const dutyAct = useOpsDutyActions(data.branch);
+  const duty = dutyQ.data?.available ? dutyQ.data : null;
+  const dutyOpenList = duty ? dutyOpen(duty.reports) : [];
 
   // PT — 브로제이 차감 기록 → 코치별 수당 (2026-10-29). PT 위탁 코치가 있는 지점만 읽는다
   const ptCoaches = data.staff.filter((s) => s.pt_freelancer);
@@ -297,7 +309,12 @@ const ManagerView = ({ data, ptDemo }: { data: OpsMonthData; ptDemo: boolean }) 
   const pending = data.entries.filter((e) => e.status === "pending");
   const flags: Array<{ staff: OpsStaff; day: OpsDay }> = [];
   for (const s of data.staff) {
-    for (const d of months.get(s.id)?.days ?? []) if (d.status === "missing" || d.status === "extra") flags.push({ staff: s, day: d });
+    for (const d of months.get(s.id)?.days ?? []) {
+      if (d.status !== "missing" && d.status !== "extra") continue;
+      // 코치가 신고한 날은 '출근 신고'에서 본다
+      if (duty && dutyLiveFor(duty.reports, s.id, d.date).length > 0) continue;
+      flags.push({ staff: s, day: d });
+    }
   }
   flags.sort((a, b) => b.day.date.localeCompare(a.day.date));
   const shownFlags = showAll ? flags : flags.slice(0, 5);
@@ -339,10 +356,24 @@ const ManagerView = ({ data, ptDemo }: { data: OpsMonthData; ptDemo: boolean }) 
         )}
       </section>
 
+      {duty && <DutySettingRow data={duty} actions={dutyAct} />}
+
       {/* 확인할 것 */}
-      {(pending.length > 0 || flags.length > 0 || ptToCheck.length > 0 || contractTodo.length > 0 || ptRecTodo.length > 0 || ptRepTodo.length > 0) && (
+      {(pending.length > 0 || flags.length > 0 || ptToCheck.length > 0 || contractTodo.length > 0 || ptRecTodo.length > 0 || ptRepTodo.length > 0 || dutyOpenList.length > 0) && (
         <section className={card}>
           <h2 className="text-heading font-black text-foreground">확인할 것</h2>
+          {duty && (
+            <DutyManagerList
+              data={duty}
+              actions={dutyAct}
+              hq={data.hq}
+              scheduledOf={(r) => months.get(r.staff_id)?.days.find((d) => d.date === r.work_date)?.scheduledMin ?? null}
+              onOpenDay={(r) => {
+                if (months.get(r.staff_id)?.days.some((d) => d.date === r.work_date)) setDaySheet({ staffId: r.staff_id, date: r.work_date });
+                else toast(`${Number(r.work_date.slice(5, 7))}월로 넘겨서 열어 주세요`);
+              }}
+            />
+          )}
           {ptRepTodo.length > 0 && (
             <ul className="mt-3 divide-y divide-border/70 overflow-hidden rounded-xl border border-amber-200 bg-amber-50/60">
               {ptRepTodo.map(({ staff, n }) => (
@@ -602,6 +633,7 @@ const ManagerView = ({ data, ptDemo }: { data: OpsMonthData; ptDemo: boolean }) 
         colleagues={data.colleagues}
         staffById={byId}
         entries={data.entries}
+        duty={duty ? { data: duty, actions: dutyAct, today: data.today, nowHm: data.now_hm } : null}
       />
     </>
   );
@@ -622,7 +654,25 @@ const CoachView = ({ data, onOpenContract, ptDemo }: { data: OpsMonthData; onOpe
     [data, byId],
   );
   const month = useMemo(() => (mine ? computeStaffMonth(mine, data.month, ctx) : null), [mine, data.month, ctx]);
-  const [pick, setPick] = useState<string | null>(null);
+  const [pick, setPick] = useState<{ date: string; kind?: DutyKind } | null>(null);
+  // 출근 확정(2026-11-12) — 내 출근 신고. 서버에 함수가 없으면 예전 화면
+  const dutyQ = useOpsDuty(data.branch);
+  const dutyAct = useOpsDutyActions(data.branch);
+  const duty = dutyQ.data?.available ? dutyQ.data : null;
+  // 알림 링크 /office?tab=work&duty=<날짜> — 그날 시트를 「출근 신고」로 연다
+  const [params, setParams] = useSearchParams();
+  const dutyParam = params.get("duty");
+  useEffect(() => {
+    if (!dutyParam || !month || !duty) return;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dutyParam) && month.days.some((d) => d.date === dutyParam)) setPick({ date: dutyParam, kind: "here" });
+    setParams(
+      (p) => {
+        p.delete("duty");
+        return p;
+      },
+      { replace: true },
+    );
+  }, [dutyParam, month, duty, setParams]);
   // PT 위탁 코치 — 내 PT 회원 · 이번 달 차감 · 내 PT 수당(서버가 본인에게 수당표를 보낼 때만)
   const ptQ = useOpsPtMonth(data.branch, data.month, !!mine?.pt_freelancer);
   const ptPay = !!ptQ.data?.pay && (ptQ.data?.rates.length ?? 0) > 0;
@@ -644,7 +694,7 @@ const CoachView = ({ data, onOpenContract, ptDemo }: { data: OpsMonthData; onOpe
   const sched = scheduleSummary(mine, data.rules, ref);
   const days = month.days.filter((d) => d.status !== "none" || d.creditedMin > 0);
   const myRequests = data.entries.filter((e) => e.requested_by_me && (e.kind === "overtime" || e.kind === "cover"));
-  const dayObj = pick ? month.days.find((d) => d.date === pick) ?? null : null;
+  const dayObj = pick ? month.days.find((d) => d.date === pick.date) ?? null : null;
 
   return (
     <>
@@ -667,6 +717,18 @@ const CoachView = ({ data, onOpenContract, ptDemo }: { data: OpsMonthData; onOpe
           <ChevronRight className="h-5 w-5 shrink-0" />
         </button>
       ))}
+
+      {/* 출근 확정 — 오늘 출근 기록이 아직 없음 · 출근 기록 없는 날 (2026-11-12) */}
+      {duty && (
+        <DutyCoachCards
+          staff={mine}
+          days={month.days}
+          data={duty}
+          today={data.today}
+          nowHm={data.now_hm}
+          onOpenDay={(date, kind) => (month.days.some((d) => d.date === date) ? setPick({ date, kind }) : toast(`${Number(date.slice(5, 7))}월로 넘겨서 열어 주세요`))}
+        />
+      )}
 
       {/* PT 위탁 코치 — 오늘 PT · 확인 필요 (켠 지점만 그린다, 2026-11-11) */}
       {mine.pt_freelancer && !ptDemo && <OpsPtRecord branch={data.branch} coachId={mine.id} />}
@@ -696,7 +758,7 @@ const CoachView = ({ data, onOpenContract, ptDemo }: { data: OpsMonthData; onOpe
         )}
       </section>
 
-      {mine.checkin_required && (
+      {mine.checkin_required && !(duty && month.missing > 0) && (
         <div
           className={cn(
             "rounded-2xl px-4 py-3",
@@ -707,7 +769,11 @@ const CoachView = ({ data, onOpenContract, ptDemo }: { data: OpsMonthData; onOpe
             {month.missing > 0 ? `출근 기록이 없는 날 ${month.missing}일` : "출근할 때 입구 얼굴 인식을 꼭 찍어 주세요"}
           </p>
           <p className="mt-0.5 text-label">
-            {month.missing > 0 ? "안 찍은 날은 0시간이에요 — 일했다면 지점장님께 말씀해 주세요" : "안 찍은 날은 0시간 · 퇴근은 시간표대로 자동이에요"}
+            {month.missing > 0
+              ? "안 찍은 날은 0시간이에요 — 일했다면 지점장님께 말씀해 주세요"
+              : duty
+                ? "인식이 안 됐거나 일찍 갔으면 날짜를 눌러 알려 주세요 · 퇴근은 시간표대로 자동이에요"
+                : "안 찍은 날은 0시간 · 퇴근은 시간표대로 자동이에요"}
           </p>
         </div>
       )}
@@ -758,18 +824,22 @@ const CoachView = ({ data, onOpenContract, ptDemo }: { data: OpsMonthData; onOpe
       <section className="overflow-hidden rounded-2xl border border-border bg-card">
         <div className="px-5 pb-2 pt-5">
           <h2 className="text-heading font-black text-foreground">날짜별 근무</h2>
-          <p className="mt-0.5 text-label text-muted-foreground">날짜를 누르면 수업 대타 · 연장 근무를 신청해요</p>
+          <p className="mt-0.5 text-label text-muted-foreground">
+            {duty ? "날짜를 누르면 출근 신고 · 수업 대타 · 연장 근무를 신청해요" : "날짜를 누르면 수업 대타 · 연장 근무를 신청해요"}
+          </p>
         </div>
         {days.length === 0 ? (
           <p className="px-5 pb-5 text-body text-muted-foreground">이번 달 근무가 없어요</p>
         ) : (
           <ul className="divide-y divide-border/70 border-t border-border/70">
             {days.map((d) => (
-              <DayRow key={d.date} day={d} onClick={() => setPick(d.date)} />
+              <DayRow key={d.date} day={d} onClick={() => setPick({ date: d.date })} />
             ))}
           </ul>
         )}
       </section>
+
+      {duty && <DutyMyReports staffId={mine.id} data={duty} actions={dutyAct} />}
 
       {myRequests.length > 0 && (
         <section className={card}>
@@ -823,6 +893,8 @@ const CoachView = ({ data, onOpenContract, ptDemo }: { data: OpsMonthData; onOpe
         colleagues={data.colleagues}
         staffById={byId}
         entries={data.entries}
+        duty={duty ? { data: duty, actions: dutyAct, today: data.today, nowHm: data.now_hm } : null}
+        initialDutyKind={pick?.kind ?? null}
       />
     </>
   );

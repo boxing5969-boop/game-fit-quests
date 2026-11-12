@@ -20,7 +20,7 @@ import {
   type PtRecSession,
   type PtRecordData,
 } from "./opsPtRecord";
-import { PT_SAMPLE_COACH, buildPtSample } from "./opsPtRecordSample";
+import { PT_SAMPLE_COACH, applyPtDemo, buildPtSample } from "./opsPtRecordSample";
 
 // ───────── 지어낸 자료 ─────────
 const COACH = "coach-1";
@@ -381,5 +381,40 @@ describe("예시 자료", () => {
     expect(todo.map((i) => i.name)).toEqual(["한하늘"]);
     expect(res.rows.filter((r) => r.state === "pending")).toHaveLength(1);
     expect(res.rows.filter((r) => r.noEntry && !r.needReason)).toHaveLength(1);
+  });
+});
+
+describe("자동 기록 (2026-11-12 근무 1단계)", () => {
+  it("켠 지점은 이틀 안의 입장을 묻지 않는다 — 사흘째부터 「기록 없는 입장」", () => {
+    const attendance = [came("a", "2026-11-10"), came("b", "2026-11-09")];
+    const off = matchPtRecord(data("2026-11-12", { attendance }));
+    expect(off.auto).toBe(false);
+    expect(ptCounts(off, COACH, false).unrecorded).toBe(2);
+    const on = matchPtRecord(data("2026-11-12", { attendance, auto: true }));
+    expect(on.auto).toBe(true);
+    expect(on.unrecorded.find((u) => u.userId === "a")?.waiting).toBe(true); // 이틀 전 — 차감이 잡히면 저절로 적힘
+    expect(on.unrecorded.find((u) => u.userId === "b")?.waiting).toBe(false); // 사흘 전 — 묻는다
+    expect(ptCounts(on, COACH, false).unrecorded).toBe(1);
+  });
+
+  it("자동 기록은 사람이 적은 기록과 똑같이 짝짓는다", () => {
+    const s = ses("a", "2026-11-10", "lesson", { source: "auto", note: "자동 기록 — 브로제이 차감 + 그날 입장" });
+    const res = matchPtRecord(data("2026-11-12", { auto: true, sessions: [s], events: [ev("a", "2026-11-11")], attendance: [came("a", "2026-11-10")] }));
+    expect(rowOf(res, s.id).state).toBe("ok");
+    expect(rowOf(res, s.id).s.source).toBe("auto");
+    expect(ptCounts(res, COACH, false).total).toBe(0);
+  });
+
+  it("예시 — 자동 기록을 켠 지점 모습 · 관리자 예시에 켜기 · 끄기", () => {
+    const d = buildPtSample("2026-11-12", false, { auto: true });
+    const res = matchPtRecord(d);
+    expect(res.auto).toBe(true);
+    // 이틀 전 기록 없는 입장은 아직 묻지 않는다 → 사유 없는 차감 1 + 차감 대기 1
+    expect(ptCounts(res, PT_SAMPLE_COACH, false)).toMatchObject({ unrecorded: 0, extra: 1, wait: 1, total: 2 });
+    expect(res.rows.filter((r) => r.s.source === "auto").map((r) => r.state)).toEqual(["ok"]);
+    const m = buildPtSample("2026-11-12", true, { auto: true });
+    expect(m.can_set).toBe(true);
+    expect(buildPtSample("2026-11-12", true).can_set).toBe(false);
+    expect(applyPtDemo(m, { type: "auto", on: false }).auto).toBe(false);
   });
 });

@@ -1,10 +1,12 @@
 /**
  * 153운영본부 · PT 기록 — 서버 함수 감싸기 (2026-11-11, DB 20261111184433_ops_pt_record.sql)
  *   ops_pt_record · ops_pt_session_save · ops_pt_session_void · ops_pt_session_review · ops_pt_member_label_set · ops_pt_setting_set
+ *   + 자동 기록 켜기 · 끄기 ops_pt_auto_set (2026-11-12 근무 1단계, DB 20261112225136_ops_work_stage1.sql)
  *   짝짓기 · 판정은 src/lib/opsPtRecord.ts — 여기는 읽고 쓰기만.
  *
  *   서버에 함수가 아직 없으면(PGRST202 — DB 적용 전 · 옛 DB 를 보는 preview-* 미리보기) 꺼진 것으로 본다(화면에 아무것도 안 나온다).
  *   예시 화면(`?demo=1`)은 서버를 부르지 않는다 — 예시 자료(opsPtRecordSample)를 이 기기 안에서만 고친다.
+ *   예시는 자동 기록을 켠 지점 모습(근무 1단계) — 관리자 예시의 「자동 기록」 켜기 · 끄기는 코치 예시에도 같이 반영한다.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,7 +51,7 @@ export const useOpsPtRecord = (branch: string | null, { enabled = true, demo = f
     refetchInterval: demo ? false : 60_000,
     retry: false,
     queryFn: async (): Promise<PtRecordData> => {
-      if (demo) return buildPtSample(kstToday(), demoManage);
+      if (demo) return buildPtSample(kstToday(), demoManage, { auto: true });
       const { data, error } = await rpc("ops_pt_record", { p_branch: branch });
       if (error) {
         if (isMissingFn(error)) return { branch: branch ?? "", on: false, manage: false, me_staff: null };
@@ -114,5 +116,21 @@ export const useOpsPtRecordActions = (branch: string | null, { demo = false, dem
     },
     onSuccess: done,
   });
-  return { save, remove, review, label, setting };
+  /** 자동 기록 켜기 · 끄기 — 대표님만 · PT 기록을 켠 지점. 켜면 서버가 바로 한 번 돌아 넣은 수(made)를 돌려준다 */
+  const auto = useMutation({
+    mutationFn: async (on: boolean): Promise<{ made: number }> => {
+      if (demo) {
+        for (const k of [keyOf(branch, true, true), keyOf(branch, true, false)]) {
+          const cur = qc.getQueryData<PtRecordData>(k);
+          if (cur) qc.setQueryData(k, applyPtDemo(cur, { type: "auto", on }));
+        }
+        return { made: 0 };
+      }
+      const r = await call<{ made?: number } | null>("ops_pt_auto_set", { p_branch: branch, p_on: on }, "바꾸지 못했어요");
+      const made = Number(r?.made ?? 0);
+      return { made: made > 0 ? made : 0 }; // 서버 안에서 넣기가 실패하면 -1 — 켜기는 된 것이니 0 으로
+    },
+    onSuccess: done,
+  });
+  return { save, remove, review, label, setting, auto };
 };

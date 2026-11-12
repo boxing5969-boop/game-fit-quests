@@ -11,6 +11,9 @@
  *   오류 신고 (2026-11-12 대표님 「pt 선생님이 볼때 오류가 있으면 오류신고」): 코치 = 기록 시트 · 사유 없는 차감 · 차감 대기의
  *     「오류 신고」 + 「오늘 PT」 아래 단추 → 보낸 신고 목록 / 관리자 = 'PT' 탭 맨 위 받은 신고 → 신고대로 고치기(이 기록 시트) · 처리.
  *     사유 없는 차감은 출석으로 어림한 날(guess)을 먼저 묻는다 — 차감이 수업 다음 날 잡혀 기록 날짜가 틀어진 일. 화면 조각은 OpsPtReport.tsx.
+ *   자동 기록 (2026-11-12 근무 1단계 · 대표님 「추천대로하자」): 대표님이 켠 지점(data.auto)은 브로제이 차감 + 그날 입장이면
+ *     서버가 '수업' 기록을 넣는다(source 'auto' — 줄에 「자동」). 코치님은 수업이면 브로제이 차감만 · 「오늘 PT」에는 [개인 운동]만 ·
+ *     이틀 안의 입장은 묻지 않는다(waiting). 노쇼 · 당일취소 · 일정 변경 · 코치 사정은 지금처럼 직접 적는다.
  */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -134,8 +137,14 @@ const emptyDraft = (today: string, more: Partial<PtDraft> = {}): PtDraft => ({
 });
 
 // ───────────────────────── 기록 한 줄 ─────────────────────────
+/** 서버가 넣은 자동 기록(브로제이 차감 + 그날 입장) — 「자동」 표시가 같은 말을 하니 기본 메모는 줄에 다시 쓰지 않는다 */
+const isAutoRow = (r: PtRow) => r.s.source === "auto";
+const shownNote = (r: PtRow) => (isAutoRow(r) && r.s.note?.startsWith("자동 기록") ? null : r.s.note);
+const AUTO_HINT = "브로제이 차감 + 그날 입장으로 앱이 넣은 기록이에요 — 다르면 고치거나 지워 주세요";
+
 const RecordRow = ({ r, onClick }: { r: PtRow; onClick: () => void }) => {
   const st = ptRowStatus(r);
+  const note = shownNote(r);
   return (
     <li>
       <button type="button" onClick={onClick} className="flex w-full items-center gap-2 px-4 py-3 text-left active:bg-secondary/60">
@@ -146,11 +155,12 @@ const RecordRow = ({ r, onClick }: { r: PtRow; onClick: () => void }) => {
               {PT_KIND_LABEL[r.s.kind]}
               {r.s.uses > 1 ? ` ${r.s.uses}회` : ""}
             </span>
+            {isAutoRow(r) && <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-micro font-bold text-muted-foreground">자동</span>}
           </p>
           <p className="truncate text-label text-muted-foreground">
             {fmtDay(r.s.session_date)}
             {r.entryAt ? ` · 입장 ${hm(r.entryAt)}` : r.noEntry ? ` · 출석 없음${r.s.no_entry_reason ? ` · ${REASON_SHORT[r.s.no_entry_reason]}` : ""}` : ""}
-            {r.s.note ? ` · ${r.s.note}` : ""}
+            {note ? ` · ${note}` : ""}
           </p>
         </div>
         {st.text && <span className={cn("shrink-0 text-label font-bold", TONE[st.tone])}>{st.text}</span>}
@@ -528,7 +538,8 @@ const TodoList = ({
   /** 코치 — 오류 신고 시트 */
   onReport?: (init: PtReportInit) => void;
 }) => {
-  const past = res.unrecorded.filter((u) => !u.isToday);
+  // 오늘 입장은 아직 묻지 않는다 · 자동 기록을 켠 지점은 이틀 안의 입장도(차감이 잡히면 저절로 적힘 — ptCounts 와 같은 기준)
+  const past = res.unrecorded.filter((u) => !u.isToday && !u.waiting);
   const reviews = rows.filter((r) => r.needReview);
   return (
     <ul className="space-y-2">
@@ -604,7 +615,13 @@ const TodoList = ({
         );
       })}
       {past.map((u) => (
-        <TodoCard key={`in${u.userId}${u.date}`} two title={`기록 없는 입장 · ${fmtDay(u.date)} ${hm(u.at)}`} body={`${u.name} — PT 수업이었나요?`}>
+        <TodoCard
+          key={`in${u.userId}${u.date}`}
+          two
+          title={`기록 없는 입장 · ${fmtDay(u.date)} ${hm(u.at)}`}
+          body={res.auto ? `${u.name} — 이틀이 지나도 차감이 안 잡혔어요 · PT 수업이었나요?` : `${u.name} — PT 수업이었나요?`}
+          sub={res.auto ? "수업이었으면 [수업]을 누르고 브로제이에서 차감해 주세요" : undefined}
+        >
           <button type="button" disabled={busy} className={plainBtn} onClick={() => onQuick(u, "self")}>
             개인 운동
           </button>
@@ -768,6 +785,7 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
         no_entry_reason: r.s.no_entry_reason,
         note: r.s.note ?? "",
       },
+      hint: isAutoRow(r) ? AUTO_HINT : undefined,
     });
   const quick = (userId: string, name: string, kind: PtKind, date: string) =>
     actions.save.mutate(
@@ -894,6 +912,36 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
   const sampleNote = data.sample && (
     <p className="mb-3 rounded-xl bg-secondary/60 px-3 py-2 text-label font-bold text-muted-foreground">예시 화면이에요 — 지어낸 회원이고, 눌러도 저장되지 않아요</p>
   );
+  const auto = !!data.auto;
+
+  // 자동 기록 켜기 · 끄기 — 대표님만(근무 1단계). 켜면 서버가 바로 한 번 돌아 지난 차감을 맞춰 본다
+  const toggleAuto = () => {
+    const next = !auto;
+    actions.auto.mutate(next, {
+      onSuccess: (r) =>
+        toast.success(
+          next
+            ? r.made > 0
+              ? `자동 기록을 켰어요 — 지난 차감 ${r.made}건을 수업으로 적었어요`
+              : "자동 기록을 켰어요 — 이제 브로제이 차감만 하면 돼요"
+            : "자동 기록을 껐어요 — 넣어 둔 기록은 남아 있어요",
+        ),
+      onError: (e) => toast.error((e as Error).message),
+    });
+  };
+  const autoCard = data.can_set && (
+    <div className="mt-4 flex items-center gap-3 rounded-2xl border border-border p-4">
+      <div className="min-w-0 flex-1">
+        <p className="text-body font-black text-foreground">자동 기록 {auto ? "켜짐" : "꺼짐"}</p>
+        <p className="mt-0.5 text-label text-muted-foreground">
+          {auto ? "브로제이 차감 + 그날 입장이면 앱이 수업 기록을 넣어요" : "켜면 코치님은 브로제이 차감만 — 앱이 그날 입장과 맞춰 수업 기록을 넣어요"}
+        </p>
+      </div>
+      <button type="button" disabled={actions.auto.isPending} onClick={toggleAuto} className={cn(auto ? plainBtn : mainBtn, "shrink-0")}>
+        {auto ? "끄기" : "켜기"}
+      </button>
+    </div>
+  );
 
   // ── 관리자 화면 (근무자 카드 'PT' 탭)
   if (manage) {
@@ -954,6 +1002,7 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
             {more ? "접기" : `${monthRows.length - 8}건 더 보기`}
           </button>
         )}
+        {autoCard}
         {data.can_set && !demo && (
           <div className="mt-3 text-right">
             {offAsk ? (
@@ -1041,16 +1090,30 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
             return (
               <li key={i.key} className="px-4 py-3">
                 {info}
-                {i.userId && (
-                  <div className="mt-2 grid grid-cols-2 gap-2">
-                    <button type="button" disabled={busy} className={plainBtn} onClick={() => quick(i.userId!, i.member?.name ?? i.name, "self", today)}>
-                      개인 운동
-                    </button>
-                    <button type="button" disabled={busy} className={mainBtn} onClick={() => quick(i.userId!, i.member?.name ?? i.name, "lesson", today)}>
-                      수업 완료
-                    </button>
-                  </div>
-                )}
+                {i.userId &&
+                  (auto ? (
+                    // 자동 기록 — 수업이면 브로제이 차감만(앱이 적는다) · 수업이 아니면 [개인 운동]으로 닫아 두면 다시 안 묻는다
+                    <div className="mt-2 flex items-center gap-2">
+                      <p className="min-w-0 flex-1 text-label text-muted-foreground">수업이면 브로제이 차감만 — 차감이 잡히면 앱이 적어요</p>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        className={cn(plainBtn, "shrink-0")}
+                        onClick={() => quick(i.userId!, i.member?.name ?? i.name, "self", today)}
+                      >
+                        개인 운동
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      <button type="button" disabled={busy} className={plainBtn} onClick={() => quick(i.userId!, i.member?.name ?? i.name, "self", today)}>
+                        개인 운동
+                      </button>
+                      <button type="button" disabled={busy} className={mainBtn} onClick={() => quick(i.userId!, i.member?.name ?? i.name, "lesson", today)}>
+                        수업 완료
+                      </button>
+                    </div>
+                  ))}
               </li>
             );
           })}
@@ -1088,7 +1151,9 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
         </>
       )}
       <p className="mt-3 text-label text-muted-foreground">
-        수업권 차감은 지금처럼 브로제이에서 해 주세요 — 앱은 차감을 하루 이틀 안에 읽어 기록과 맞춰 봐요
+        {auto
+          ? "수업은 브로제이에서 차감만 — 앱이 하루 이틀 안에 그날 입장과 맞춰 적어요 · 노쇼 · 당일취소 · 일정 변경은 직접 적어 주세요"
+          : "수업권 차감은 지금처럼 브로제이에서 해 주세요 — 앱은 차감을 하루 이틀 안에 읽어 기록과 맞춰 봐요"}
       </p>
       {sheetEl}
       {reportSheets}

@@ -81,6 +81,8 @@ export interface PtRecSession {
   late: boolean;
   reviewed_at: string | null;
   created_at: string;
+  /** coach = 사람이 적음 · auto = 브로제이 차감 + 그날 입장으로 서버가 넣음(2026-11-12 자동 기록). 예전 서버는 없음 = coach */
+  source?: "coach" | "auto";
 }
 
 export interface PtRecAttendance {
@@ -101,6 +103,11 @@ export interface PtRecordData {
   manage: boolean;
   /** 켜고 끌 수 있는가(대표님) */
   can_set?: boolean;
+  /**
+   * 자동 기록을 켠 지점(2026-11-12 근무 1단계) — 차감이 잡히면 서버가 입장한 날 '수업'으로 적는다. 코치는 차감만 한다.
+   *   차감은 회원마다 하루~이틀에 한 번 읽히므로, 이틀 안의 입장은 「기록 없는 입장」으로 묻지 않는다(차감 기다림).
+   */
+  auto?: boolean;
   me_staff: string | null;
   /** 예시 자료(?demo=1) — 서버 자료가 아니다 */
   sample?: boolean;
@@ -183,7 +190,7 @@ export interface PtExtra {
   guess: PtGuess | null;
 }
 
-/** 기록 없는 입장 — PT 회원이 들어왔는데 그날 기록이 없음 */
+/** 기록 없는 입장 — PT 회원이 들어왔는데 그날 기록이 없음(자동 기록을 켠 지점은 이틀이 지나도 차감 · 기록이 없을 때 묻는다) */
 export interface PtUnrecorded {
   key: string;
   userId: string;
@@ -191,11 +198,15 @@ export interface PtUnrecorded {
   date: string;
   at: string;
   isToday: boolean;
+  /** 자동 기록을 켠 지점에서 이틀 안의 입장 — 차감이 잡히면 저절로 적힌다(묻지 않는다) */
+  waiting: boolean;
 }
 
 export interface PtMatchResult {
   today: string;
   startedOn: string;
+  /** 자동 기록을 켠 지점 */
+  auto: boolean;
   /** 기록(최근 먼저) */
   rows: PtRow[];
   extras: PtExtra[];
@@ -266,6 +277,7 @@ export const ptNearEntry = (
 export const matchPtRecord = (data: PtRecordData): PtMatchResult => {
   const today = data.today ?? new Date().toISOString().slice(0, 10);
   const startedOn = data.started_on ?? today;
+  const auto = !!data.auto;
   const members = data.members ?? [];
   const sessions = data.sessions ?? [];
   const nameById = new Map(members.map((m) => [m.user_id, ptMemberName(m)]));
@@ -402,12 +414,20 @@ export const matchPtRecord = (data: PtRecordData): PtMatchResult => {
     const [userId, date] = k.split("|");
     if (date < startedOn || date > today) continue;
     if (usedOn.has(`${userId}|${date}`) || guessed.has(`${userId}|${date}`)) continue;
-    unrecorded.push({ key: userId, userId, name: nameById.get(userId) ?? "회원", date, at, isToday: date === today });
+    unrecorded.push({
+      key: userId,
+      userId,
+      name: nameById.get(userId) ?? "회원",
+      date,
+      at,
+      isToday: date === today,
+      waiting: auto && dayDiff(date, today) <= PT_LAG_DAYS,
+    });
   }
   unrecorded.sort((a, b) => b.date.localeCompare(a.date) || a.at.localeCompare(b.at));
   extras.sort((a, b) => b.workDate.localeCompare(a.workDate));
   rows.sort((a, b) => b.s.session_date.localeCompare(a.s.session_date) || b.s.created_at.localeCompare(a.s.created_at));
-  return { today, startedOn, rows, extras, unrecorded };
+  return { today, startedOn, auto, rows, extras, unrecorded };
 };
 
 // ───────── 확인 필요 ─────────
@@ -437,7 +457,8 @@ export const ptCounts = (res: PtMatchResult, coachId: string | null, manage: boo
   const wait = rows
     .filter((r) => r.state === "wait" && !r.heldByCheck)
     .reduce((n, r) => n + Math.max(1, r.s.uses || 1) - r.deducts.length, 0);
-  const unrecorded = res.unrecorded.filter((u) => !u.isToday).length;
+  // 오늘 입장은 아직 묻지 않는다 · 자동 기록을 켠 지점은 이틀 안의 입장도(차감이 잡히면 저절로 적힘)
+  const unrecorded = res.unrecorded.filter((u) => !u.isToday && !u.waiting).length;
   const movedMissing = rows.filter((r) => r.movedMissing).length;
   const needReview = rows.filter((r) => r.needReview).length;
   return {
