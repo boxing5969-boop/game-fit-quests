@@ -1,5 +1,5 @@
 /**
- * 153플레이 「음악」 탭 — 체육관에서 틀기 좋은 인기곡 100곡 + 체육관 자동재생 (2026-11-11 대표님)
+ * 153플레이 「음악」 탭 — 운동 음악 모음집(한 편 30분 이상) + 체육관 자동재생 (2026-11-11 · 11-12 대표님)
  *
  *   · 곡 목록은 src/data/gymMusic.ts 한 곳 — DB(boxing_programs)에 넣지 않아 라이브러리 · AI 수업 영상과 섞이지 않는다.
  *   · 카테고리는 여러 개 고를 수 있다(아무것도 안 고르면 전체). 고른 것 · 빼 둔 곡 · 볼륨은 이 기기에만 기억한다.
@@ -8,7 +8,7 @@
  */
 import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { GYM_MUSIC, GYM_MUSIC_CATS, type GymMusicCat } from "@/data/gymMusic";
+import { GYM_MUSIC, GYM_MUSIC_CATS, gymMixLength, type GymMusicCat } from "@/data/gymMusic";
 import GymMusicPlayer from "./GymMusicPlayer";
 
 const HIDDEN_KEY = "153play_music_hidden";
@@ -129,7 +129,7 @@ const GymMusicSection = () => {
       <div className="navPad" />
       <div className="catHead">
         <h1>복싱 음악</h1>
-        <div className="cs">체육관에서 틀기 좋은 인기곡 {GYM_MUSIC.length}곡</div>
+        <div className="cs">운동할 때 트는 모음집 {GYM_MUSIC.length}편 · 한 편 30분 이상</div>
       </div>
       <div className="gm">
         <button type="button" className="gmStart" disabled={!playable.length}
@@ -137,7 +137,7 @@ const GymMusicSection = () => {
           <span className="ic"><PlayIco size={26} /></span>
           <span className="lb">
             <b>자동재생</b>
-            <span className="sm">{cats.length ? `고른 카테고리 ${playable.length}곡` : `전체 ${playable.length}곡`} · 섞어서 끝없이</span>
+            <span className="sm">{cats.length ? `고른 카테고리 ${playable.length}편` : `전체 ${playable.length}편`} · 섞어서 끝없이</span>
           </span>
         </button>
 
@@ -157,9 +157,9 @@ const GymMusicSection = () => {
             <h4>체육관에서 끊김 없이 틀려면</h4>
             <ol>
               <li><b>광고 없이</b> — 이 기기 크롬에 유튜브 프리미엄 계정으로 로그인해 두세요(유튜브 쿠키 차단은 끄기). 광고는 유튜브가 붙이는 거라 앱에서 끌 수 없어요.</li>
-              <li><b>처음 한 번만 화면을 누르면</b> 그다음부터는 끝없이 다음 곡으로 넘어가요. 못 트는 곡은 알아서 건너뛰고, 멈추면 다시 틀어요.</li>
+              <li><b>처음 한 번만 화면을 누르면</b> 그다음부터는 끝없이 다음 모음집으로 넘어가요. 못 트는 영상은 알아서 건너뛰고, 멈추면 다시 틀어요.</li>
               <li><b>화면이 꺼지면 소리도 멈춰요</b> — 재생 중엔 화면을 켜 둔 채로 잡아 두니, 기기는 충전기에 꽂아 두세요.</li>
-              <li><b>듣기 싫은 곡</b>은 재생 화면의 '이 곡 빼기' — 이 기기에서만 빠지고, 아래 '빼 둔 곡'에서 다시 넣을 수 있어요.</li>
+              <li><b>듣기 싫은 모음집</b>은 재생 화면의 '이 모음집 빼기' — 이 기기에서만 빠지고, 아래 '빼 둔 모음집'에서 다시 넣을 수 있어요.</li>
               <li><b>바로 여는 주소</b> — myboxer153.com/library?tab=music&amp;play=1 을 즐겨찾기에 두세요.</li>
             </ol>
           </div>
@@ -170,7 +170,7 @@ const GymMusicSection = () => {
           if (!list.length) return null;
           return (
             <section className="gmCat" key={c.key}>
-              <h3>{c.title} <span>{list.length}곡</span></h3>
+              <h3>{c.title} <span>{list.length}편</span></h3>
               <div className="sub">{c.sub}</div>
               <div className="gmList">
                 {list.map((t) => (
@@ -178,7 +178,7 @@ const GymMusicSection = () => {
                     <img src={thumb(t.id)} alt="" loading="lazy" />
                     <span className="tx">
                       <span className="t1" style={{ display: "block" }}>{t.t}</span>
-                      <span className="t2" style={{ display: "block" }}>{t.a}</span>
+                      <span className="t2" style={{ display: "block" }}>{t.a} · {gymMixLength(t.m)}</span>
                     </span>
                     <span className="go"><PlayIco /></span>
                   </button>
@@ -191,7 +191,7 @@ const GymMusicSection = () => {
         {hiddenList.length > 0 && (
           <div className="gmHid">
             <button type="button" onClick={() => setShowHidden((s) => !s)}>
-              빼 둔 곡 {hiddenList.length} {showHidden ? "접기" : "보기"}
+              빼 둔 모음집 {hiddenList.length} {showHidden ? "접기" : "보기"}
             </button>
             {showHidden && (
               <div className="gmList">

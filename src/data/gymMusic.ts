@@ -1,254 +1,160 @@
 /**
- * 153플레이 「복싱 음악」 — 체육관에서 틀기 좋은 인기곡 200곡
- *   · 2026-11-11 대표님 "복싱짐에서 음악으로 틀 수 있는 인기 있는 음악 100곡" → 레전드 · K-POP · 힙합 · EDM · 록 · 팝 100곡
- *   · 같은 날 "100곡 더 찾아줘 최신곡으로 — 최신곡 중에 인기 많은 음악" → 「최신」 100곡(2025~2026 발매 · 그날 유튜브 한국 인기곡 Top100 과
- *     레이블 · 가수 공식 채널의 최근 뮤직비디오에서 골랐다)
+ * 153플레이 「복싱 음악」 — 체육관에서 트는 운동 음악 모음집 (한 편 30분 이상)
+ *   · 2026-11-12 대표님 "뮤직비디오는 끄고 한 곡에 30분 넘는 모음집만 넣어줘 · 에너지 복싱 운동할 때 듣는 음악으로만 ·
+ *     뮤직비디오는 처음에 음악 소리 안 나오는 구간이 길어서 모두 빼" → 11-11 에 넣은 뮤직비디오 200곡을 모두 빼고
+ *     처음부터 음악이 이어지는 논스톱 믹스 · 모음집으로 통째로 바꿨다.
  *
  * 고른 기준
- *   · 공식 채널 영상만(가수 · 레이블 · VEVO · 공식 사운드트랙 · 방송사) — 153플레이 저작권 원칙 「공식 임베드만」과 같다.
- *   · 유튜브 퍼가기(oEmbed) 허용 확인 2026-11-11 — 그래도 나중에 막히는 곡은 플레이어가 알아서 건너뛴다.
- *   · 키즈 · 여성부 수업이 있는 체육관이라 욕설 · 선정성이 센 곡, 어둡거나 오컬트 분위기 곡은 뺐다(이름이 유명해도).
- *   · 곡을 바꾸려면 이 파일만 고치면 된다 — 유튜브 id(11자) · 제목 · 가수 · 카테고리. 시험(gymMusicQueue.test)이 곡 수 · id 형식 · 중복을 본다.
- *   · 「최신」은 철이 지나면 바꿔 준다 — 새 곡 id 는 가수 · 레이블 공식 채널에서(검색 결과 페이지 /results 는 유튜브 robots.txt 가 막는 경로라 쓰지 않는다).
+ *   · 한 편 30분 이상(m = 길이, 분) · 운동용으로 만든 것만(복싱 · 킥복싱 · 워크아웃 · 러닝 믹스, 레이블 베스트 믹스).
+ *   · 레이블 · 운동 음악 회사 · 채널 주인이 직접 올린 영상만(Spinnin' Records · NCS · Monstercat · UKF · Trap Nation ·
+ *     Power Music(Workout Music Source) · Hard EDM Workout · The Gym Beats · Epidemic Sound · 핏블리 · SomiFit · 미러볼 뮤직 …).
+ *   · 유튜브 퍼가기(oEmbed) 허용 확인 2026-11-12 — 그래도 나중에 막히는 영상은 플레이어가 알아서 건너뛴다.
+ *   · 체육관 화면에 영상이 그대로 보이므로 표지 그림도 봤다 — 노출이 심한 것, 해골 · 악마 같은 어두운 그림은 뺐다.
+ *   · 랩 위주 모음집(영어 욕설이 섞임)은 넣지 않았다 — 키즈 · 여성부 수업이 있는 체육관이라. 넣으려면 카테고리를 따로 만든다.
+ *   · 느린 것(요가 · 걷기 · 칠 · 딥하우스)은 넣지 않는다 — 에너지 있는 운동 음악만.
+ *   · 바꾸려면 이 파일만 고치면 된다 — 유튜브 id(11자) · 제목 · 올린 곳 · 카테고리 · 길이(분).
+ *     시험(gymMusicQueue.test)이 30분 이상 · id 형식 · 중복을 본다.
+ *   · 제목은 짧게(휴대폰 한 줄 — 한글 12자 안팎). 길이는 화면이 `m` 으로 따로 보여 주니 제목에 넣지 않는다.
+ *   · 새 모음집은 채널 페이지(/@채널/videos · /@채널/search?query=)에서 찾는다(길이 · 조회수가 같이 보인다).
+ *     유튜브 전체 검색 페이지(/results)는 robots.txt 가 막는 경로라 쓰지 않는다.
  *
  * 영상 위치 확인: https://www.youtube.com/watch?v=<id>
  */
 
-export type GymMusicCat = "new" | "legend" | "kpop" | "hiphop" | "edm" | "rock" | "pop";
+export type GymMusicCat = "box" | "edm" | "bass" | "cardio" | "rock" | "pop";
 
 export interface GymTrack {
   /** 유튜브 영상 id */
   id: string;
-  /** 곡 제목 */
+  /** 모음집 제목 */
   t: string;
-  /** 가수 */
+  /** 올린 곳(레이블 · 채널) — 같은 곳이 연달아 나오지 않게 섞는 데도 쓴다 */
   a: string;
   /** 카테고리 */
   c: GymMusicCat;
+  /** 길이(분) — 30 이상 */
+  m: number;
 }
 
 export const GYM_MUSIC_CATS: { key: GymMusicCat; label: string; title: string; sub: string }[] = [
-  { key: "new", label: "최신", title: "최신 인기곡", sub: "2025~2026 지금 뜨는 곡" },
-  { key: "legend", label: "레전드", title: "복싱 레전드", sub: "록키 OST · 챔피언 송" },
-  { key: "kpop", label: "K-POP", title: "K-POP 파워", sub: "체육관을 띄우는 케이팝" },
-  { key: "hiphop", label: "힙합", title: "힙합 · 댄스 클래식", sub: "리듬 타는 줄넘기 · 섀도" },
-  { key: "edm", label: "EDM", title: "EDM 하이텐션", sub: "드롭에 맞춰 스퍼트" },
-  { key: "rock", label: "록", title: "록 앤섬", sub: "마지막 라운드까지 버티게" },
-  { key: "pop", label: "팝", title: "팝 워크아웃", sub: "가볍고 신나게" },
+  { key: "box", label: "복싱", title: "복싱 · 킥복싱 믹스", sub: "복싱 · 킥복싱 수업용 논스톱 믹스 · 줄넘기" },
+  { key: "edm", label: "EDM", title: "EDM 하이에너지", sub: "쉬지 않고 달리는 워크아웃 믹스" },
+  { key: "bass", label: "베이스", title: "베이스 · 트랩 · 드럼앤베이스", sub: "묵직한 드롭 — 샌드백 · 미트 라운드" },
+  { key: "cardio", label: "논스톱", title: "논스톱 유산소 리믹스", sub: "130~180 BPM 한 박자로 끝까지 — 서킷 · 체력 훈련" },
+  { key: "rock", label: "록", title: "록 · 메탈", sub: "기타 리프로 밀어붙이는 라운드" },
+  { key: "pop", label: "팝", title: "신나는 팝 플레이리스트", sub: "가볍고 신나게 — 몸 풀 때" },
 ];
 
+/** 길이 글 — 59 → '59분' · 60 → '1시간' · 95 → '1시간 35분' */
+export const gymMixLength = (m: number): string => {
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  if (!h) return `${r}분`;
+  return r ? `${h}시간 ${r}분` : `${h}시간`;
+};
+
 export const GYM_MUSIC: GymTrack[] = [
-  // ── 최신 인기곡 (100) — 2025~2026 ──
-  { id: "b4iVv91Z6lY", t: "SWIM", a: "BTS", c: "new" },
-  { id: "_gyultVTesk", t: "2.0", a: "BTS", c: "new" },
-  { id: "diBO0gMuTXo", t: "Hooligan", a: "BTS", c: "new" },
-  { id: "2GJfWMYCWY0", t: "GO", a: "BLACKPINK", c: "new" },
-  { id: "PgOGYHPoPsE", t: "Champion", a: "BLACKPINK", c: "new" },
-  { id: "L8ZnXgbyUuc", t: "BiiiG", a: "BIGBANG", c: "new" },
-  { id: "x3eqqoZPV_E", t: "춤 (CHOOM)", a: "BABYMONSTER", c: "new" },
-  { id: "oC6brLXQe4I", t: "DESERVE", a: "BABYMONSTER", c: "new" },
-  { id: "9cS2wv6AfHk", t: "I LIKE IT", a: "BABYMONSTER", c: "new" },
-  { id: "wlHwjkYpSr0", t: "WE GO UP", a: "BABYMONSTER", c: "new" },
-  { id: "yd_uG3TtREs", t: "PSYCHO", a: "BABYMONSTER", c: "new" },
-  { id: "xn8mQqz2xmM", t: "HOT SAUCE", a: "BABYMONSTER", c: "new" },
-  { id: "bMhDJ0S0OBA", t: "It's Me", a: "ILLIT", c: "new" },
-  { id: "V2V9-9VhYJo", t: "체포하겠어 (You're Under Arrest)", a: "ILLIT", c: "new" },
-  { id: "negtrQu5mTA", t: "빌려온 고양이 (Do the Dance)", a: "ILLIT", c: "new" },
-  { id: "x_RYZsOfpKY", t: "NOT CUTE ANYMORE", a: "ILLIT", c: "new" },
-  { id: "27C4pfRsf9g", t: "ICONIC BY MISTAKE", a: "LE SSERAFIM x ILLIT x KATSEYE", c: "new" },
-  { id: "V1Lr-_AxeR8", t: "BOOMPALA", a: "LE SSERAFIM", c: "new" },
-  { id: "TvVtYaqCni8", t: "SPAGHETTI (feat. j-hope)", a: "LE SSERAFIM", c: "new" },
-  { id: "r9AEGPB6qIU", t: "HOT", a: "LE SSERAFIM", c: "new" },
-  { id: "F7sGJVUrkjQ", t: "RUDE!", a: "Hearts2Hearts", c: "new" },
-  { id: "n7kFRxFIPrI", t: "STYLE", a: "Hearts2Hearts", c: "new" },
-  { id: "Ur7aK4FvK-U", t: "FOCUS", a: "Hearts2Hearts", c: "new" },
-  { id: "m7k9UMcHbr0", t: "Animal", a: "KATSEYE", c: "new" },
-  { id: "is8UDe2PhKQ", t: "Hootie Frutti", a: "KATSEYE", c: "new" },
-  { id: "CjnB56tSCQI", t: "Gabriela", a: "KATSEYE", c: "new" },
-  { id: "BZ4UzthYTss", t: "This & That", a: "Stray Kids", c: "new" },
-  { id: "Q7IFjVUUb_E", t: "RUN IT", a: "Stray Kids", c: "new" },
-  { id: "P7vBoGWoReg", t: "CEREMONY", a: "Stray Kids", c: "new" },
-  { id: "NED7nev2ywQ", t: "Do It", a: "Stray Kids", c: "new" },
-  { id: "-q_S27LbNKU", t: "BAD", a: "ATEEZ", c: "new" },
-  { id: "iqQWCYMlMw0", t: "Drip", a: "ATEEZ", c: "new" },
-  { id: "vqkfEUqjl6Y", t: "Adrenaline", a: "ATEEZ", c: "new" },
-  { id: "83C3TZ4Zm_o", t: "LEMONADE", a: "aespa", c: "new" },
-  { id: "M2WTUoy4y6E", t: "Dirty Work", a: "aespa", c: "new" },
-  { id: "5oQVTnq-UKk", t: "Rich Man", a: "aespa", c: "new" },
-  { id: "U6BDbXIah-Y", t: "REDRED", a: "CORTIS", c: "new" },
-  { id: "WXS-o57VJ5w", t: "GO!", a: "CORTIS", c: "new" },
-  { id: "42wfEs7oIP8", t: "FaSHioN", a: "CORTIS", c: "new" },
-  { id: "rsNhWkC4neE", t: "Looks Can Kill", a: "IVE", c: "new" },
-  { id: "9qkpcLK422o", t: "BANG BANG", a: "IVE", c: "new" },
-  { id: "g36q0ZLvygQ", t: "REBEL HEART", a: "IVE", c: "new" },
-  { id: "B1ShLiq3EVc", t: "XOXZ", a: "IVE", c: "new" },
-  { id: "zhHB4dZTChw", t: "404 (New Era)", a: "KiiiKiii", c: "new" },
-  { id: "UsbRoaH6y-Q", t: "Pop Off Pop Off", a: "KiiiKiii", c: "new" },
-  { id: "8aKR2Ho--5k", t: "GO HARD", a: "MEOVV", c: "new" },
-  { id: "sL0pCS6K9bc", t: "HANDS UP", a: "MEOVV", c: "new" },
-  { id: "hlULtigNNao", t: "BURNING UP", a: "MEOVV", c: "new" },
-  { id: "lQ-w9M447w0", t: "CRASH", a: "ALLDAY PROJECT", c: "new" },
-  { id: "VjvzYjU1mY0", t: "FAMOUS", a: "ALLDAY PROJECT", c: "new" },
-  { id: "OgEwJ8a1OoY", t: "ONE MORE TIME", a: "ALLDAY PROJECT", c: "new" },
-  { id: "6Ycn9qZK09I", t: "Heavy Serenade", a: "NMIXX", c: "new" },
-  { id: "EmeW6li6bbo", t: "Blue Valentine", a: "NMIXX", c: "new" },
-  { id: "DYgE3SGPEqk", t: "Mono (feat. skaiwater)", a: "i-dle", c: "new" },
-  { id: "hAONx6nuEgI", t: "Good Thing", a: "i-dle", c: "new" },
-  { id: "BWfKkqo1Mk8", t: "Crown", a: "EXO", c: "new" },
-  { id: "RgkoXU4BlOE", t: "Insomnia", a: "RIIZE", c: "new" },
-  { id: "vLUtHODdLzk", t: "Fly Up", a: "RIIZE", c: "new" },
-  { id: "1jKnI_ib8c8", t: "Motto", a: "ITZY", c: "new" },
-  { id: "xIlFjHHUfI0", t: "I SPY", a: "NCT WISH", c: "new" },
-  { id: "BjFX1eugZ-Y", t: "Blingy", a: "NCT 127", c: "new" },
-  { id: "zGsj0fDHB_s", t: "VIRAL", a: "BOYNEXTDOOR", c: "new" },
-  { id: "B4mLKcVIERs", t: "오늘만 I LOVE YOU", a: "BOYNEXTDOOR", c: "new" },
-  { id: "3MPUCncZBR0", t: "내 이름을 불러줘", a: "TWS", c: "new" },
-  { id: "TzbGBkEh9ms", t: "OVERDRIVE", a: "TWS", c: "new" },
-  { id: "D968qfUZMUE", t: "NEON", a: "A2O LITE", c: "new" },
-  { id: "Pksr9T8m_aA", t: "ADDICTED", a: "JISOO", c: "new" },
-  { id: "2V6lvCUPT8I", t: "earthquake", a: "JISOO", c: "new" },
-  { id: "JSFG-IE8n_c", t: "like JENNIE", a: "JENNIE", c: "new" },
-  { id: "eWAdpUyzCkI", t: "ExtraL (feat. Doechii)", a: "JENNIE", c: "new" },
-  { id: "o9DhvbqYzns", t: "TOO BAD (feat. Anderson .Paak)", a: "G-DRAGON", c: "new" },
-  { id: "fLi0EJfi_vg", t: "HOME SWEET HOME (feat. 태양, 대성)", a: "G-DRAGON", c: "new" },
-  { id: "Mmw-PpWhKFg", t: "FIRESTARTER", a: "K/DA", c: "new" },
-  { id: "ItSKahBISg0", t: "캐치 캐치", a: "YENA", c: "new" },
-  { id: "oAwzFFEYm38", t: "Skibidi", a: "소녀시대-효리수", c: "new" },
-  { id: "u_hpZueWI9g", t: "SHOCK", a: "TREASURE", c: "new" },
-  { id: "drzWlrjQcRc", t: "CHOP!", a: "B THE HOOD", c: "new" },
-  { id: "9XttLI0oH0I", t: "LOVE ATTACK", a: "RESCENE", c: "new" },
-  { id: "pS57UX6s-xw", t: "THUNDER", a: "SEVENTEEN", c: "new" },
-  { id: "eHHQaoEW30Q", t: "THIS IS FOR", a: "TWICE", c: "new" },
-  { id: "a2Zqdo9RbNs", t: "Bad Desire (With or Without You)", a: "ENHYPEN", c: "new" },
-  { id: "-N-pmPKS-bE", t: "INSIDE OUT", a: "DAY6", c: "new" },
-  { id: "QGsevnbItdU", t: "How It's Done (케이팝 데몬 헌터스)", a: "HUNTR/X", c: "new" },
-  { id: "l8Dr7vzMSVE", t: "Takedown (케이팝 데몬 헌터스)", a: "HUNTR/X", c: "new" },
-  { id: "pzt6SmvGpXk", t: "Sacrifice (롤드컵 2025 주제가)", a: "G.E.M.", c: "new" },
-  { id: "mrV8kK5t0V8", t: "I Just Might", a: "Bruno Mars", c: "new" },
-  { id: "1l7wbZmdtys", t: "Dance With Me", a: "Bruno Mars", c: "new" },
-  { id: "ko70cExuzZM", t: "The Fate of Ophelia", a: "Taylor Swift", c: "new" },
-  { id: "JgDNFQ2RaLQ", t: "Sapphire", a: "Ed Sheeran", c: "new" },
-  { id: "MI9ZpIKgyf0", t: "Azizam", a: "Ed Sheeran", c: "new" },
-  { id: "Cf1hKtrA9lg", t: "Drive (F1 더 무비)", a: "Ed Sheeran", c: "new" },
-  { id: "dpvQqmX6SUI", t: "Just Keep Watching (F1 더 무비)", a: "Tate McRae", c: "new" },
-  { id: "WWEs82u37Mw", t: "Lose My Mind (feat. Doja Cat)", a: "Don Toliver", c: "new" },
-  { id: "U8QhB8_0t2g", t: "Mystical Magical", a: "Benson Boone", c: "new" },
-  { id: "8iT9DRe3cHE", t: "Gone Gone Gone", a: "David Guetta, Teddy Swims & Tones And I", c: "new" },
-  { id: "_AfmgOpoCHI", t: "Forever Young", a: "David Guetta, Alphaville & Ava Max", c: "new" },
-  { id: "OTMQJ656r-M", t: "Angels For Each Other", a: "Martin Garrix & Arijit Singh", c: "new" },
-  { id: "97Mj6pXYMd8", t: "Up From The Bottom", a: "Linkin Park", c: "new" },
-  { id: "5FrhtahQiRc", t: "Heavy Is the Crown (롤드컵 2024 주제가)", a: "Linkin Park", c: "new" },
-  { id: "QZfH7cFp3Ys", t: "The Contract", a: "twenty one pilots", c: "new" },
+  // ── 복싱 · 킥복싱 믹스 (15) ──
+  { id: "Il28QGNJ9iY", t: "복싱 비트 믹스 2021", a: "Spinnin' Records", c: "box", m: 53 },
+  { id: "_6Y3fWO1YEI", t: "카디오 복싱 · 135-145 BPM", a: "Power Music", c: "box", m: 59 },
+  { id: "hbOkKuELPjA", t: "킥복싱 32카운트 Vol.2", a: "Power Music", c: "box", m: 59 },
+  { id: "-MsTn5Uarc8", t: "킥복싱 2021 · 140 BPM", a: "Hard EDM Workout", c: "box", m: 61 },
+  { id: "Hj-EAysCb8Y", t: "킥복싱 2020 · 140 BPM", a: "Hard EDM Workout", c: "box", m: 59 },
+  { id: "nCN-s7wzaYk", t: "킥복싱 2019 · 140 BPM", a: "Hard EDM Workout", c: "box", m: 59 },
+  { id: "zzXjW4wO3x0", t: "킥복싱 2022 · 140 BPM", a: "Hard EDM Workout", c: "box", m: 59 },
+  { id: "s690yG0JrYY", t: "킥복싱 2024 · 140 BPM", a: "Hard EDM Workout", c: "box", m: 60 },
+  { id: "jHKVV4v8-DY", t: "킥복싱 스프링 히트 2024", a: "Workout Music Archive", c: "box", m: 59 },
+  { id: "1fgV5zffvmU", t: "빅 킥복싱 히트 2024", a: "Workout Music Archive", c: "box", m: 60 },
+  { id: "HKMYwzkvXV8", t: "울트라믹스 킥복싱 2025", a: "Workout Music Archive", c: "box", m: 60 },
+  { id: "BBzM0AT0pPo", t: "아이언 킥복싱 2025", a: "Workout Music Archive", c: "box", m: 59 },
+  { id: "idsvAF5y6C8", t: "킥복싱 머스트 해브 2025", a: "Workout Music Archive", c: "box", m: 60 },
+  { id: "tvswRmPI7_E", t: "줄넘기 60분 · 130 BPM", a: "Hard EDM Workout", c: "box", m: 60 },
+  { id: "2DhPH6YorU8", t: "줄넘기 2026 · 130 BPM", a: "Hard EDM Workout", c: "box", m: 60 },
 
-  // ── 복싱 레전드 (16) ──
-  { id: "btPJPFnesV4", t: "Eye of the Tiger", a: "Survivor", c: "legend" },
-  { id: "44Rb1XPLIKU", t: "Gonna Fly Now (록키 테마 · 오케스트라)", a: "Film Symphony Orchestra", c: "legend" },
-  { id: "Kc71KZG87X4", t: "Burning Heart", a: "Survivor", c: "legend" },
-  { id: "rOXaPE6gklI", t: "No Easy Way Out", a: "Robert Tepper", c: "legend" },
-  { id: "pbU0gfyYnRA", t: "Training Montage (록키 4)", a: "Vince DiCola", c: "legend" },
-  { id: "c5BL4RNFr58", t: "Living in America", a: "James Brown", c: "legend" },
-  { id: "9jK-NcRmVcw", t: "The Final Countdown", a: "Europe", c: "legend" },
-  { id: "vimZj8HW0Kg", t: "Mama Said Knock You Out", a: "LL Cool J", c: "legend" },
-  { id: "xFYQQPAOz7Y", t: "Lose Yourself", a: "Eminem", c: "legend" },
-  { id: "HgknAaKNaMM", t: "The Champion (feat. Ludacris)", a: "Carrie Underwood", c: "legend" },
-  { id: "-tJYN-eG1zk", t: "We Will Rock You", a: "Queen", c: "legend" },
-  { id: "rY0WxgSXdEE", t: "Another One Bites the Dust", a: "Queen", c: "legend" },
-  { id: "04854XqcfCY", t: "We Are the Champions", a: "Queen", c: "legend" },
-  { id: "VDvr08sCPOc", t: "Remember the Name", a: "Fort Minor", c: "legend" },
-  { id: "R1oY3eojua8", t: "질풍가도", a: "유정석", c: "legend" },
-  { id: "TWreIQTlU-M", t: "챔피언 (라이브)", a: "PSY", c: "legend" },
+  // ── EDM 하이에너지 (23) ──
+  { id: "T4N2DtBTfoA", t: "하이 인텐시티 워크아웃", a: "Spinnin' Records", c: "edm", m: 59 },
+  { id: "iQyO6hb6zkc", t: "HIIT 트레이닝 믹스", a: "Spinnin' Records", c: "edm", m: 60 },
+  { id: "XSNbAwGDC_o", t: "맥시멈 에너지 믹스", a: "Spinnin' Records", c: "edm", m: 56 },
+  { id: "JMDucgAu4MM", t: "퓨처 레이브 워크아웃", a: "Spinnin' Records", c: "edm", m: 60 },
+  { id: "FWilUwLjSQg", t: "워크아웃 믹스 2024", a: "Spinnin' Records", c: "edm", m: 59 },
+  { id: "Yir4WyDi8rU", t: "러닝 믹스 · 135-160 BPM", a: "Spinnin' Records", c: "edm", m: 60 },
+  { id: "9GGv9itgzyI", t: "2025 베스트 연말 믹스", a: "Spinnin' Records", c: "edm", m: 86 },
+  { id: "MEkaqZecpUQ", t: "EDM 1시간 믹스", a: "NCS", c: "edm", m: 61 },
+  { id: "JNl1_hRwpXE", t: "구독자 3천만 기념 믹스", a: "NCS", c: "edm", m: 95 },
+  { id: "yUXJjIvhZz8", t: "NCS 10주년 믹스", a: "NCS", c: "edm", m: 180 },
+  { id: "NLmt9yrqb0w", t: "100억 뷰 기념 믹스", a: "NCS", c: "edm", m: 39 },
+  { id: "KgO96U9HWl8", t: "NCS 13주년 믹스", a: "NCS", c: "edm", m: 59 },
+  { id: "34iRPHalw68", t: "베스트 일렉트로닉 믹스", a: "NCS", c: "edm", m: 50 },
+  { id: "BLO6LRPMUp8", t: "베스트 하우스 믹스", a: "NCS", c: "edm", m: 46 },
+  { id: "Ncu0A9dtieU", t: "EDM 워크아웃 모티베이션", a: "Epidemic Electronic", c: "edm", m: 92 },
+  { id: "ruTxmi65snM", t: "하드 일렉트로닉 워크아웃", a: "Epidemic Electronic", c: "edm", m: 59 },
+  { id: "-zYGbwg7E6E", t: "고강도 트레이닝 일렉트로닉", a: "Epidemic Electronic", c: "edm", m: 61 },
+  { id: "w-NFZ8LYiy8", t: "더 짐 비츠 Vol.4 메가믹스", a: "The Gym Beats", c: "edm", m: 59 },
+  { id: "hw-xiFZiMb8", t: "더 짐 비츠 Vol.4.3 숏컷", a: "The Gym Beats", c: "edm", m: 30 },
+  { id: "hAS6XNfI8EM", t: "더 짐 비츠 Vol.5 메가믹스", a: "The Gym Beats", c: "edm", m: 60 },
+  { id: "qnZ5gHAXIk0", t: "더 짐 비츠 Vol.4.2", a: "The Gym Beats", c: "edm", m: 54 },
+  { id: "xETEYG-az9E", t: "프로그레시브 하우스 1", a: "Proximity", c: "edm", m: 54 },
+  { id: "OVlayZ2LVYE", t: "프로그레시브 하우스 2", a: "Proximity", c: "edm", m: 56 },
 
-  // ── K-POP (28) ──
-  { id: "kTlv5_Bs8aw", t: "MIC Drop (Steve Aoki Remix)", a: "BTS", c: "kpop" },
-  { id: "4ujQOR2DMFM", t: "불타오르네 (FIRE)", a: "BTS", c: "kpop" },
-  { id: "pBuZEGYXA6E", t: "IDOL", a: "BTS", c: "kpop" },
-  { id: "IHNzOHi8sJs", t: "뚜두뚜두 (DDU-DU DDU-DU)", a: "BLACKPINK", c: "kpop" },
-  { id: "2S24-y0Ij3Y", t: "Kill This Love", a: "BLACKPINK", c: "kpop" },
-  { id: "ioNng23DkIM", t: "How You Like That", a: "BLACKPINK", c: "kpop" },
-  { id: "CgCVZdcKcqY", t: "뛰어 (JUMP)", a: "BLACKPINK", c: "kpop" },
-  { id: "TQTlCHxyuu8", t: "神메뉴 (God's Menu)", a: "Stray Kids", c: "kpop" },
-  { id: "OvioeS1ZZ7o", t: "MANIAC", a: "Stray Kids", c: "kpop" },
-  { id: "0P0aQreFs8w", t: "Chk Chk Boom", a: "Stray Kids", c: "kpop" },
-  { id: "2ips2mM7Zqw", t: "뱅뱅뱅 (BANG BANG BANG)", a: "BIGBANG", c: "kpop" },
-  { id: "AAbokV76tkU", t: "FANTASTIC BABY", a: "BIGBANG", c: "kpop" },
-  { id: "j7_lSP8Vc3o", t: "내가 제일 잘 나가", a: "2NE1", c: "kpop" },
-  { id: "9bZkp7q19f0", t: "강남스타일", a: "PSY", c: "kpop" },
-  { id: "8dJyRm2jJ-U", t: "That That (prod. & feat. SUGA)", a: "PSY", c: "kpop" },
-  { id: "fE2h3lGlOsk", t: "WANNABE", a: "ITZY", c: "kpop" },
-  { id: "phuiiNCxRMg", t: "Supernova", a: "aespa", c: "kpop" },
-  { id: "jWQx2f-CErU", t: "Whiplash", a: "aespa", c: "kpop" },
-  { id: "6ZUIwj3FgUY", t: "I AM", a: "IVE", c: "kpop" },
-  { id: "pyf8cbqyfPs", t: "ANTIFRAGILE", a: "LE SSERAFIM", c: "kpop" },
-  { id: "C3GouGa0noM", t: "GODS (롤드컵 2023 주제가)", a: "NewJeans", c: "kpop" },
-  { id: "-GQg25oP0S4", t: "손오공", a: "SEVENTEEN", c: "kpop" },
-  { id: "U0G5OA6ZH5w", t: "BOUNCY (K-HOT CHILLI PEPPERS)", a: "ATEEZ", c: "kpop" },
-  { id: "2wA_b6YHjqQ", t: "SHEESH", a: "BABYMONSTER", c: "kpop" },
-  { id: "ekr2nIex040", t: "APT.", a: "ROSÉ & Bruno Mars", c: "kpop" },
-  { id: "NMjhjrBIrG8", t: "POWER", a: "G-DRAGON", c: "kpop" },
-  { id: "yebNIHKAC4A", t: "Golden (케이팝 데몬 헌터스)", a: "HUNTR/X", c: "kpop" },
-  { id: "983bBbJx0Mk", t: "Soda Pop (케이팝 데몬 헌터스)", a: "Saja Boys", c: "kpop" },
+  // ── 베이스 · 트랩 · 드럼앤베이스 (14) ──
+  { id: "WFL__hxlfWw", t: "하디스트 히터스 믹스", a: "Trap Nation", c: "bass", m: 60 },
+  { id: "ObIdQa8waAU", t: "게이밍 뮤직 믹스 2020", a: "Trap Nation", c: "bass", m: 154 },
+  { id: "SsQCkHcEmjU", t: "2021 베스트 트랩", a: "Trap Nation", c: "bass", m: 129 },
+  { id: "RSzITs9f-SY", t: "트랩 네이션 베스트 2018", a: "Trap Nation", c: "bass", m: 59 },
+  { id: "qkojd3DmyvE", t: "파워풀 트랩 믹스 2022", a: "Trap City", c: "bass", m: 60 },
+  { id: "abhfer_BNoQ", t: "베스트 드럼앤베이스 2025", a: "UKF Drum & Bass", c: "bass", m: 62 },
+  { id: "cCtoa1U_1DE", t: "베스트 드럼앤베이스 2024", a: "UKF Drum & Bass", c: "bass", m: 60 },
+  { id: "LeMk0yiSoq4", t: "베스트 드럼앤베이스 2023", a: "UKF Drum & Bass", c: "bass", m: 77 },
+  { id: "m5J1HWZ4csU", t: "베스트 드럼앤베이스 2021", a: "UKF Drum & Bass", c: "bass", m: 61 },
+  { id: "T__q1htHmN4", t: "베스트 덥스텝 믹스", a: "NCS", c: "bass", m: 43 },
+  { id: "g9DiRMGOQVM", t: "베스트 트랩 믹스", a: "Monstercat", c: "bass", m: 38 },
+  { id: "JVYDN3PmOG4", t: "몬스터캣 베스트 2025", a: "Monstercat", c: "bass", m: 94 },
+  { id: "yrcOLbBjJS0", t: "몬스터캣 베스트 2024", a: "Monstercat", c: "bass", m: 93 },
+  { id: "qKtY7_GYBOk", t: "몬스터캣 베스트 2023", a: "Monstercat", c: "bass", m: 91 },
 
-  // ── 힙합 · 댄스 클래식 (10) ──
-  { id: "2zNSgSzhBfM", t: "Can't Hold Us (feat. Ray Dalton)", a: "Macklemore & Ryan Lewis", c: "hiphop" },
-  { id: "ZaI2IlHwmgQ", t: "Pump It", a: "Black Eyed Peas", c: "hiphop" },
-  { id: "LaTGrV58wec", t: "Gonna Make You Sweat (Everybody Dance Now)", a: "C+C Music Factory", c: "hiphop" },
-  { id: "otCpCn0l4Wo", t: "U Can't Touch This", a: "MC Hammer", c: "hiphop" },
-  { id: "010KyIQjkTk", t: "Jump", a: "Kris Kross", c: "hiphop" },
-  { id: "rog8ou-ZepE", t: "Ice Ice Baby", a: "Vanilla Ice", c: "hiphop" },
-  { id: "KQ6zr6kCPj8", t: "Party Rock Anthem", a: "LMFAO", c: "hiphop" },
-  { id: "UuV2BmJ1p_I", t: "아무노래", a: "ZICO", c: "hiphop" },
-  { id: "xfqBQ2XhBCg", t: "SPOT! (feat. JENNIE)", a: "ZICO", c: "hiphop" },
-  { id: "DmAHmYgdopw", t: "BAAAM (feat. Muzie)", a: "다이나믹 듀오", c: "hiphop" },
+  // ── 논스톱 유산소 리믹스 (19) ──
+  { id: "WDpGMsuQPWc", t: "올 카디오 · 140-150 BPM", a: "Power Music", c: "cardio", m: 60 },
+  { id: "9dH2DYjf8uQ", t: "익스트림 카디오 믹스", a: "Power Music", c: "cardio", m: 60 },
+  { id: "AnFOm96Y2C0", t: "익스트림 카디오 믹스 3", a: "Power Music", c: "cardio", m: 59 },
+  { id: "Oi6heJwXw8I", t: "익스트림 카디오 믹스 36", a: "Power Music", c: "cardio", m: 60 },
+  { id: "fycz410ewj8", t: "카디오 블라스트 믹스", a: "Power Music", c: "cardio", m: 60 },
+  { id: "Mnl2T-SNysc", t: "EDM 워크아웃 · 132 BPM", a: "Power Music", c: "cardio", m: 60 },
+  { id: "8z6GKCwHZuE", t: "러닝 믹스 Vol.2 · 180 BPM", a: "Power Music", c: "cardio", m: 60 },
+  { id: "xBJIUpZeW5o", t: "런 투 더 비트 2 · 160 BPM", a: "Power Music", c: "cardio", m: 58 },
+  { id: "EJuFbdAwORU", t: "톱 40 히트 리믹스 4", a: "Power Music", c: "cardio", m: 60 },
+  { id: "E__QbnBbUdI", t: "하드코어 워크아웃 Vol.12", a: "Power Music", c: "cardio", m: 87 },
+  { id: "TAqfqs0sFHE", t: "워크아웃 모티베이션 2026", a: "Power Music", c: "cardio", m: 90 },
+  { id: "waDogrZs-pE", t: "논스톱 모티베이션 2026", a: "Power Music", c: "cardio", m: 60 },
+  { id: "xq0D9yY_Rp0", t: "워크아웃 믹스 · 150 BPM", a: "Hard EDM Workout", c: "cardio", m: 59 },
+  { id: "n9JoOpshkSU", t: "HIIT 파워 앤섬 · 155 BPM", a: "Hard EDM Workout", c: "cardio", m: 59 },
+  { id: "E7ipkHQm8os", t: "에어로빅 익스트림 2025", a: "Hard EDM Workout", c: "cardio", m: 60 },
+  { id: "Bx2TG99pNVo", t: "러닝 60분 · 150 BPM", a: "Hard EDM Workout", c: "cardio", m: 58 },
+  { id: "1GntgYdEUYU", t: "러닝 60분 · 180 BPM", a: "Hard EDM Workout", c: "cardio", m: 58 },
+  { id: "DUAsYs-9szg", t: "팻 버닝 2024 · 150 BPM", a: "Hard EDM Workout", c: "cardio", m: 60 },
+  { id: "8EI5lOAJIDk", t: "1억 뷰 기념 스페셜", a: "Hard EDM Workout", c: "cardio", m: 60 },
 
-  // ── EDM 하이텐션 (16) ──
-  { id: "_ovdm2yX4MA", t: "Levels", a: "Avicii", c: "edm" },
-  { id: "IcrbM1l_BoI", t: "Wake Me Up", a: "Avicii", c: "edm" },
-  { id: "UtF6Jej8yb4", t: "The Nights", a: "Avicii", c: "edm" },
-  { id: "gCYcHz2k5x0", t: "Animals", a: "Martin Garrix", c: "edm" },
-  { id: "9vMh9f41pqE", t: "Tremor", a: "Dimitri Vegas & Like Mike, Martin Garrix", c: "edm" },
-  { id: "1y6smkh6c-0", t: "Don't You Worry Child", a: "Swedish House Mafia", c: "edm" },
-  { id: "JRfuAukYTKg", t: "Titanium (feat. Sia)", a: "David Guetta", c: "edm" },
-  { id: "90RLzVUuXe4", t: "I'm Good (Blue)", a: "David Guetta & Bebe Rexha", c: "edm" },
-  { id: "ebXbLfLACGM", t: "Summer", a: "Calvin Harris", c: "edm" },
-  { id: "961v0E3b01g", t: "Miracle", a: "Calvin Harris & Ellie Goulding", c: "edm" },
-  { id: "wJnBTPUQS5A", t: "The Spectre", a: "Alan Walker", c: "edm" },
-  { id: "YqeW9_5kURI", t: "Lean On (feat. MØ)", a: "Major Lazer & DJ Snake", c: "edm" },
-  { id: "gAjR4_CbPpQ", t: "Harder, Better, Faster, Stronger", a: "Daft Punk", c: "edm" },
-  { id: "y6120QOlsfU", t: "Sandstorm", a: "Darude", c: "edm" },
-  { id: "nCg3ufihKyU", t: "The Business", a: "Tiësto", c: "edm" },
-  { id: "QCyIY10KBnk", t: "Booyah", a: "Showtek", c: "edm" },
+  // ── 록 · 메탈 (8) ──
+  { id: "dVg0d4z2uss", t: "록 워크아웃 · 러닝", a: "Epidemic Rock", c: "rock", m: 60 },
+  { id: "PsY8dD90Luw", t: "하드 록 워크아웃", a: "Epidemic Rock", c: "rock", m: 60 },
+  { id: "ecZnud07afI", t: "헤비메탈 · 하드 록", a: "Epidemic Rock", c: "rock", m: 59 },
+  { id: "ZqfM3UunPd8", t: "메탈 워크아웃", a: "Epidemic Rock", c: "rock", m: 58 },
+  { id: "PXH5xHJQVNw", t: "하드 록 — Rock This Way", a: "Epidemic Rock", c: "rock", m: 65 },
+  { id: "SEeCK2TLoSk", t: "얼터너티브 록 · 기타 속주", a: "Epidemic Rock", c: "rock", m: 61 },
+  { id: "Rq4tB9nd7Sk", t: "록 워크아웃 30분", a: "Epidemic Rock", c: "rock", m: 31 },
+  { id: "1T2uOnmvoMc", t: "어그레시브 메탈 믹스", a: "Alec Koff", c: "rock", m: 60 },
 
-  // ── 록 앤섬 (16) ──
-  { id: "7wtfhZwyrcc", t: "Believer", a: "Imagine Dragons", c: "rock" },
-  { id: "fKopy74weus", t: "Thunder", a: "Imagine Dragons", c: "rock" },
-  { id: "ktvTqknDobU", t: "Radioactive", a: "Imagine Dragons", c: "rock" },
-  { id: "gOsM-DYAEhY", t: "Whatever It Takes", a: "Imagine Dragons", c: "rock" },
-  { id: "F5tSoaJ93ac", t: "Enemy (with JID · 아케인)", a: "Imagine Dragons", c: "rock" },
-  { id: "v2AC41dglnM", t: "Thunderstruck", a: "AC/DC", c: "rock" },
-  { id: "pAgnJDJN4VA", t: "Back In Black", a: "AC/DC", c: "rock" },
-  { id: "kXYiU_JCYtU", t: "Numb", a: "Linkin Park", c: "rock" },
-  { id: "SRXH9AbT280", t: "The Emptiness Machine", a: "Linkin Park", c: "rock" },
-  { id: "LBr7kECsjcQ", t: "Centuries", a: "Fall Out Boy", c: "rock" },
-  { id: "0J2QdDbelmY", t: "Seven Nation Army", a: "The White Stripes", c: "rock" },
-  { id: "8DyziWtkfBw", t: "Can't Stop", a: "Red Hot Chili Peppers", c: "rock" },
-  { id: "Qzw6A2WC5Qo", t: "Feel Invincible", a: "Skillet", c: "rock" },
-  { id: "vx2u5uUu3DE", t: "It's My Life", a: "Bon Jovi", c: "rock" },
-  { id: "4Q46xYqUwZQ", t: "Legends Never Die (롤드컵 2017 주제가)", a: "Against The Current", c: "rock" },
-  { id: "vnS_jn2uibs", t: "한 페이지가 될 수 있게", a: "DAY6", c: "rock" },
-
-  // ── 팝 워크아웃 (14) ──
-  { id: "OPf0YbXqDm0", t: "Uptown Funk (feat. Bruno Mars)", a: "Mark Ronson", c: "pop" },
-  { id: "ru0K8uYEZWw", t: "CAN'T STOP THE FEELING!", a: "Justin Timberlake", c: "pop" },
-  { id: "mk48xRzuNvA", t: "Hall of Fame (feat. will.i.am)", a: "The Script", c: "pop" },
-  { id: "CevxZvSJLk8", t: "Roar", a: "Katy Perry", c: "pop" },
-  { id: "Xn676-fLq7I", t: "Stronger (What Doesn't Kill You)", a: "Kelly Clarkson", c: "pop" },
-  { id: "cxjvTXo9WWM", t: "Unstoppable", a: "Sia", c: "pop" },
-  { id: "xo1VInw-SKc", t: "Fight Song", a: "Rachel Platten", c: "pop" },
-  { id: "9HDEHj2yzew", t: "Physical", a: "Dua Lipa", c: "pop" },
-  { id: "ZjBZ8MUnB0E", t: "Training Season", a: "Dua Lipa", c: "pop" },
-  { id: "oygrmJFKYZY", t: "Don't Start Now", a: "Dua Lipa", c: "pop" },
-  { id: "4NRXx6U8ABQ", t: "Blinding Lights", a: "The Weeknd", c: "pop" },
-  { id: "hT_nvWreIhg", t: "Counting Stars", a: "OneRepublic", c: "pop" },
-  { id: "uSD4vsh1zDA", t: "I Gotta Feeling", a: "Black Eyed Peas", c: "pop" },
-  { id: "3OnnDqH6Wj8", t: "Good Feeling", a: "Flo Rida", c: "pop" },
+  // ── 신나는 팝 플레이리스트 (13) ──
+  { id: "d8OL6m0ZblA", t: "팝 워크아웃 송", a: "Epidemic Pop", c: "pop", m: 61 },
+  { id: "hcysu-opqng", t: "팝 워크아웃 믹스", a: "Epidemic Pop", c: "pop", m: 62 },
+  { id: "p7gqjZY0jis", t: "팝 워크아웃 뮤직", a: "Epidemic Pop", c: "pop", m: 62 },
+  { id: "sd9Z_kyJOo4", t: "팝 워크아웃 · 근력 · 러닝", a: "Epidemic Pop", c: "pop", m: 61 },
+  { id: "Und8bE0LOVc", t: "팝 짐 모티베이션", a: "Epidemic Pop", c: "pop", m: 91 },
+  { id: "8ssfXnNgCuo", t: "빠른 팝 댄스", a: "Epidemic Pop", c: "pop", m: 63 },
+  { id: "F6MI5hkLNEk", t: "신나는 헬스장 음악", a: "SomiFit", c: "pop", m: 92 },
+  { id: "LyOifTAWAeE", t: "비트 믹스 · EDM · 바운스", a: "SomiFit", c: "pop", m: 91 },
+  { id: "5MACh6ylf8g", t: "레전드 운동 음악 모음", a: "핏블리 FITVELY", c: "pop", m: 68 },
+  { id: "_0pyGclSurg", t: "인생 운동 음악 베스트", a: "핏블리 FITVELY", c: "pop", m: 54 },
+  { id: "3eWN4Ebl83E", t: "베스트 워크아웃 뮤직", a: "핏블리 FITVELY", c: "pop", m: 55 },
+  { id: "f35UnFaFWVo", t: "운동할 때 듣는 신나는 음악", a: "미러볼 뮤직", c: "pop", m: 58 },
+  { id: "SYuGMOv6Zpg", t: "텐션 올리는 일렉트로닉", a: "미러볼 뮤직", c: "pop", m: 50 },
 ];

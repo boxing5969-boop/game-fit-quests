@@ -11,7 +11,7 @@
  *   · 영상 위를 눌러 실수로 멈추지 않게 플레이어는 누르기를 받지 않는다 — 조작은 아래 단추로만.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { GYM_MUSIC_CATS, type GymMusicCat, type GymTrack } from "@/data/gymMusic";
+import { GYM_MUSIC_CATS, gymMixLength, type GymMusicCat, type GymTrack } from "@/data/gymMusic";
 import { buildQueue, retryDelayMs, watchdogAction } from "@/lib/gymMusicQueue";
 import { loadYouTubeIframeApi, YT_STATE } from "@/lib/youtubeIframeApi";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
@@ -478,8 +478,8 @@ const GymMusicPlayer = ({ tracks, hidden, initialCats, startWith, onCatsChange, 
           </div>
           <div className="now">
             {now && <span className="cat">{catLabel(now.c)}</span>}
-            <h3>{now?.t ?? "곡을 고르는 중"}</h3>
-            {now && <p>{now.a}</p>}
+            <h3>{now?.t ?? "고르는 중"}</h3>
+            {now && <p>{now.a} · {gymMixLength(now.m)}</p>}
           </div>
           <div className="ctl">
             <button type="button" className="b" aria-label="이전 곡" onClick={() => manual(prev)}><Ico d={I_PREV} /></button>
@@ -492,16 +492,16 @@ const GymMusicPlayer = ({ tracks, hidden, initialCats, startWith, onCatsChange, 
               <input type="range" min={0} max={100} step={5} value={vol}
                 onChange={(e) => changeVol(Number(e.target.value))} aria-label="볼륨" />
             </label>
-            <button type="button" className="b" onClick={hideCurrent}>이 곡 빼기</button>
+            <button type="button" className="b" onClick={hideCurrent}>이 모음집 빼기</button>
           </div>
           <div className="st">
             <span className={`dot ${statusDot}`} />
             <span>{statusText}</span>
-            <i>· {played}곡째{skipped ? ` · 못 튼 곡 ${skipped}` : ""}{awake ? " · 화면 켜짐 유지" : ""}</i>
+            <i>· {played}편째{skipped ? ` · 못 튼 영상 ${skipped}` : ""}{awake ? " · 화면 켜짐 유지" : ""}</i>
           </div>
         </div>
         <div className="side">
-          <h4>카테고리 — 지금 곡은 그대로, 다음 곡부터 바뀌어요</h4>
+          <h4>카테고리 — 지금 것은 그대로, 다음부터 바뀌어요</h4>
           <div className="chips">
             <button type="button" className={cats.length === 0 ? "on" : ""} onClick={() => toggleCat("all")}>전체</button>
             {GYM_MUSIC_CATS.map((c) => (
@@ -509,7 +509,7 @@ const GymMusicPlayer = ({ tracks, hidden, initialCats, startWith, onCatsChange, 
                 onClick={() => toggleCat(c.key)}>{c.label}</button>
             ))}
           </div>
-          <h4 style={{ marginTop: 16 }}>다음 곡</h4>
+          <h4 style={{ marginTop: 16 }}>다음 모음집</h4>
           <div className="nx">
             {upNext.map((id, i) => {
               const t = byId.get(id);
@@ -519,7 +519,7 @@ const GymMusicPlayer = ({ tracks, hidden, initialCats, startWith, onCatsChange, 
                   <img src={thumb(id)} alt="" loading="lazy" />
                   <div className="tx">
                     <div className="t1">{t.t}</div>
-                    <div className="t2">{t.a}</div>
+                    <div className="t2">{t.a} · {gymMixLength(t.m)}</div>
                   </div>
                 </div>
               );

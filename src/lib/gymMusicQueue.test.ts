@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { GymTrack } from "@/data/gymMusic";
-import { GYM_MUSIC, GYM_MUSIC_CATS } from "@/data/gymMusic";
+import { GYM_MUSIC, GYM_MUSIC_CATS, gymMixLength } from "@/data/gymMusic";
 import { artistKey, buildQueue, retryDelayMs, watchdogAction, type WatchInput } from "./gymMusicQueue";
 import { YT_STATE } from "./youtubeIframeApi";
 
@@ -10,25 +10,32 @@ const seeded = (seed: number) => () => {
   return seed / 233280;
 };
 
-const T = (id: string, a: string): GymTrack => ({ id, t: id, a, c: "pop" });
+const T = (id: string, a: string): GymTrack => ({ id, t: id, a, c: "pop", m: 60 });
 
 describe("153플레이 복싱 음악 목록", () => {
-  it("200곡(최신 100 + 나머지 100) · 유튜브 id 형식 · 겹치는 곡 없음", () => {
-    expect(GYM_MUSIC).toHaveLength(200);
-    expect(GYM_MUSIC.filter((t) => t.c === "new")).toHaveLength(100);
+  it("모두 30분 이상인 모음집 · 유튜브 id 형식 · 겹치는 것 없음", () => {
+    expect(GYM_MUSIC.length).toBeGreaterThanOrEqual(40);
     const ids = new Set(GYM_MUSIC.map((t) => t.id));
-    expect(ids.size).toBe(200);
+    expect(ids.size).toBe(GYM_MUSIC.length);
     for (const t of GYM_MUSIC) {
       expect(t.id).toMatch(/^[A-Za-z0-9_-]{11}$/);
       expect(t.t.trim()).not.toBe("");
       expect(t.a.trim()).not.toBe("");
+      expect(Number.isInteger(t.m) && t.m >= 30).toBe(true);
     }
+  });
+
+  it("길이 글 — 분 · 시간", () => {
+    expect(gymMixLength(59)).toBe("59분");
+    expect(gymMixLength(60)).toBe("1시간");
+    expect(gymMixLength(95)).toBe("1시간 35분");
+    expect(gymMixLength(180)).toBe("3시간");
   });
 
   it("모든 곡이 정해진 카테고리에 들어 있고, 카테고리마다 곡이 있다", () => {
     const keys = new Set(GYM_MUSIC_CATS.map((c) => c.key));
     for (const t of GYM_MUSIC) expect(keys.has(t.c)).toBe(true);
-    for (const c of GYM_MUSIC_CATS) expect(GYM_MUSIC.filter((t) => t.c === c.key).length).toBeGreaterThan(5);
+    for (const c of GYM_MUSIC_CATS) expect(GYM_MUSIC.filter((t) => t.c === c.key).length).toBeGreaterThanOrEqual(3);
   });
 });
 
