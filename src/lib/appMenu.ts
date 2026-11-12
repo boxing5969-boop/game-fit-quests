@@ -8,6 +8,8 @@
 // 2026-09-29 대표님: 로그인하면 전체 메뉴만 — 예전 홈 화면(라이센스 카드·오늘의 할 일·순위)은 1번 메뉴 'MY복서'(/myboxer) 안으로.
 //
 // glyph = 153 글리프 이름 (components/icons/menuGlyphs.ts) — 이모지 대신 우리 스타일로 직접 그린 아이콘.
+// 2026-11-08: 사람마다 순서 · 폴더 · 이름을 고치고 바로가기를 더 넣는다 — lib/menuLayout.ts (여기는 기본 목록).
+//   여기에 새 칸을 넣으면 메뉴를 고친 사람에게도 끝(또는 그 묶음 끝)에 저절로 붙는다.
 import type { MenuGlyphName } from "@/components/icons/menuGlyphs";
 
 export interface AppMenuItem {

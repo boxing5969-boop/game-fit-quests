@@ -295,6 +295,11 @@ export default {
           "0%": { backgroundPosition: "0% 50%" },
           "100%": { backgroundPosition: "200% 50%" },
         },
+        // 전체 메뉴 편집 모드 — 칸이 살짝 흔들린다, 아이폰 홈 화면처럼 (2026-11-08)
+        "menu-jiggle": {
+          "0%, 100%": { transform: "rotate(-1.6deg)" },
+          "50%": { transform: "rotate(1.6deg)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -303,6 +308,7 @@ export default {
         "slide-up": "slide-up 0.35s ease-out",
         "bounce-in": "bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
         sheen: "sheen 4s linear infinite",
+        "menu-jiggle": "menu-jiggle 0.28s ease-in-out infinite",
       },
     },
   },

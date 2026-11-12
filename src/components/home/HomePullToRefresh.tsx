@@ -58,6 +58,12 @@ function insideScrolledBox(target: EventTarget | null): boolean {
   return false;
 }
 
+/** 전체 메뉴를 고치는 중 — 편집 모드 칸 위의 손짓이거나 칸을 끄는 중이면 당겨서 새로고침이 아니다 (2026-11-08) */
+function menuEditing(target: EventTarget | null): boolean {
+  if (document.body.hasAttribute("data-menu-dragging")) return true;
+  return target instanceof Element && !!target.closest("[data-no-pull-refresh]");
+}
+
 const pageAtTop = () => (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
 
 interface HomePullToRefreshProps {
@@ -112,7 +118,7 @@ export default function HomePullToRefresh({ onRefresh, enabled = true }: HomePul
 
     const onStart = (e: TouchEvent) => {
       if (phaseRef.current === "refreshing" || phaseRef.current === "done") return;
-      if (e.touches.length !== 1 || !pageAtTop() || modalOpen() || insideScrolledBox(e.target)) {
+      if (e.touches.length !== 1 || !pageAtTop() || modalOpen() || insideScrolledBox(e.target) || menuEditing(e.target)) {
         start = null;
         return;
       }
@@ -124,6 +130,11 @@ export default function HomePullToRefresh({ onRefresh, enabled = true }: HomePul
     const onMove = (e: TouchEvent) => {
       if (!start) return;
       if (e.touches.length !== 1) {
+        if (dragging) reset();
+        start = null;
+        return;
+      }
+      if (document.body.hasAttribute("data-menu-dragging")) {
         if (dragging) reset();
         start = null;
         return;

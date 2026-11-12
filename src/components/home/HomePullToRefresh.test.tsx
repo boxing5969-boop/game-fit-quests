@@ -63,6 +63,29 @@ describe("HomePullToRefresh — 홈 맨 위에서 한 번 더 당기면 새로�
     expect(onRefresh).not.toHaveBeenCalled();
   });
 
+  it("전체 메뉴 칸을 끄는 중이면 받지 않는다 (2026-11-08 메뉴 편집)", () => {
+    const onRefresh = vi.fn().mockResolvedValue(undefined);
+    render(<HomePullToRefresh onRefresh={onRefresh} />);
+    document.body.setAttribute("data-menu-dragging", "1");
+    pullDown(260);
+    document.body.removeAttribute("data-menu-dragging");
+    expect(onRefresh).not.toHaveBeenCalled();
+    expect(phase()).toBe("idle");
+  });
+
+  it("편집 중인 메뉴 위에서 시작한 손짓은 받지 않는다", () => {
+    const onRefresh = vi.fn().mockResolvedValue(undefined);
+    render(<HomePullToRefresh onRefresh={onRefresh} />);
+    const grid = document.createElement("div");
+    grid.setAttribute("data-no-pull-refresh", "");
+    document.body.appendChild(grid);
+    touch("touchstart", [[100, 100]], grid);
+    for (let i = 1; i <= 5; i += 1) touch("touchmove", [[100, 100 + (260 * i) / 5]], grid);
+    touch("touchend", [], grid);
+    grid.remove();
+    expect(onRefresh).not.toHaveBeenCalled();
+  });
+
   it("enabled=false 면 받지 않는다", () => {
     const onRefresh = vi.fn().mockResolvedValue(undefined);
     render(<HomePullToRefresh onRefresh={onRefresh} enabled={false} />);

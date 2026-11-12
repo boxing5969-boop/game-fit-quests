@@ -727,6 +727,25 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 랭크업(`/rank-up` — 40단계 길 · 리그별 레벨업 기준 · 타이틀매치 · 단증 도전)은 10-10 하단 '랭크업' 탭을 뺀 뒤 MY복서 라이센스 카드 승급 막대로만 들어갈 수 있었다.
 - 전체 메뉴(`src/lib/appMenu.ts`) 단독 칸 **「로드맵」**(글리프 `roadmap` = 접힌 지도 + 민트 점선 길 + 금 깃발) — 회원은 MY복서 다음 2번째, 코치진은 153운영본부 다음. 검색 `f:rankup` 이름 「로드맵 · 레벨업 기준」 · 관련어 로드맵 · 랭크업 로드맵 · 40단계 · 단증 도전 (테스트 appSearch.test.ts · officeLayout.test.ts).
 
+### 전체 메뉴 편집 · 내 바로가기 (2026-11-08 대표님 「바로가기 기능 만들어줘 … 라이브보드까지 가는 여정이 너무 길어 … 현재 있는 바로가기 메뉴들도 옮기고 빼고 수정할수있게해줘 회원님들도 나도 가능하게 아이폰이나 안드로이드 처럼」)
+
+전체 메뉴(홈 카드 · 아래 '전체' 시트 — 같은 `HomeMenuGrid`)를 사람마다 아이폰 홈 화면처럼 고친다. 새 페이지 없음. 고친 적이 없는 사람은 예전과 똑같이 보인다(시험이 지킨다).
+
+| 파일 | 역할 |
+|---|---|
+| [src/lib/menuLayout.ts](src/lib/menuLayout.ts) | 화면 없는 계산 — 바로가기 목록 `menuCatalog()`(기본 메뉴 → `SHORTCUT_EXTRAS` → 기능 검색 `FEATURES` 의 화면 이동 항목, 같은 곳은 하나) · 배치 `MenuLayout`(entries · known · updatedAt) · `resolveEntries`(저장 뒤 새로 생긴 기본 칸은 끝 · 그 묶음 끝에 저절로, 본인이 뺀 칸은 다시 안 생김) · `buildMenuView`(권한 · 편집 중 모양) · 고치기(`moveEntry` · `applyOrder` — 안 보이는 칸은 제자리 · `mergeEntries` · `removeEntry` · `dissolveFolder` · `renameEntry` · `addEntry`) · `parseLayout`(기기 · DB 값을 믿지 않고 다듬음 — 이름 12자 · 첫 화면 48칸 · 폴더 24칸) — 시험 menuLayout.test.ts |
+| [src/hooks/useMenuLayout.ts](src/hooks/useMenuLayout.ts) | 저장 — 이 기기 `localStorage['153menu:layout:<user id>']`에 바로 + DB `save_my_menu_layout` 에 0.7초 모아서(앱을 닫을 때 바로). 열 때 DB `get_my_menu_layout` 과 비교해 새것(updatedAt). DB 함수가 없으면(PGRST202) 이번 접속 동안 이 기기에만. React Query `["153menu","layout",uid]` — 홈 카드와 시트가 같이 바뀐다 |
+| [src/components/home/menuEdit/useMenuDrag.ts](src/components/home/menuEdit/useMenuDrag.ts) | 끌기 — 보통 화면 0.45초 길게 누름 = 편집 모드 + 그대로 끌기 · 편집 중 그림 칸(touch-action none)은 바로, 이름 쪽은 0.16초 눌러야(그 전에 움직이면 스크롤) · **손가락이 멈춘 자리에서만** 자리 바꾸기(0.11초) · 칸 한가운데 0.38초 = 합칠 칸(민트 테두리) → 놓으면 폴더에 넣기 / 메뉴끼리 새 폴더 · 폴더 칸을 폴더 상자 밖에 놓으면 첫 화면으로 · 위아래 끝 자동 스크롤 · 끄는 동안 body[data-menu-dragging] · Esc · pointercancel = 취소 |
+| [src/components/home/menuEdit/MenuEditSheets.tsx](src/components/home/menuEdit/MenuEditSheets.tsx) | 창 3개(document.body 로 띄움 z-120) — 메뉴 고치기(이름 · 넣을 곳 · 앞으로/뒤로 · 메뉴에서 빼기) · 폴더 고치기(이름 · 폴더 풀기 · 폴더째 빼기) · 바로가기 추가(검색 = 기능 검색과 같은 `scoreEntry` · '다시 넣기 · 뺀 메뉴' / '운영진' / '모든 화면' · 넣을 곳 칩 · 이미 있으면 '옮기기') |
+| [src/components/home/HomeMenuGrid.tsx](src/components/home/HomeMenuGrid.tsx) | 머리 '편집/완료' · 편집 중 칸 흔들림(`animate-menu-jiggle`, 움직임 줄이기 설정이면 멈춤) · '−' 빼기(토스트 '되돌리기') · 칸 누르면 고치기 창 · 첫 화면 끝 '+ 바로가기' 칸 · 편집 도구(새 폴더 · 처음대로)는 칸들 **아래**(길게 눌러 편집 모드가 켜질 때 칸이 손가락 아래에서 밀리지 않게) · '내 정보' 묶음은 보통 화면에도 '+ 추가' 칸 — 시험 HomeMenuGrid.test.tsx |
+| [supabase/migrations/20261108232425_user_menu_layout.sql](supabase/migrations/20261108232425_user_menu_layout.sql) | 새 표 `user_menu_layouts`(user_id · layout jsonb · updated_at, RLS 켬 · 직접 읽기쓰기 없음) · 새 함수 `get_my_menu_layout()` · `save_my_menu_layout(jsonb)`(본인 줄만 · 객체 · 32KB) — 기존 함수 · 표는 그대로 |
+
+- 칸 하나 = 가는 곳 하나(경로 + ?탭 — 예 `/manager/live-board` · `/office?tab=plan`). 보이는 조건 `MenuRequire`: diet · staff(코치진 — 홈 메뉴와 같은 기준) · office · dm(메시지를 쓸 수 있는 계정 — 예전 '메시지 숨기기'와 같음) · manager(앱 권한 코치 · 지점장 · 관리자 = `ManagerRoute` 를 지나는 분 — 관리자 화면 /manager … 은 이것) · admin(관리자 · 전체관리자). 배치에 있어도 권한이 없으면 안 보이고, 권한이 생기면 그 자리에 나타난다.
+- 운영진 바로가기(`SHORTCUT_EXTRAS`): 라이브보드 · 회원 관리 · 153 PB 측정 · 가입 승인 · 레벨 심사 · 오늘 운영 · 위험 회원(= `/manager?tab=…`, `MAIN_TABS` 이름과 같아야 한다) · 코치 화면 · 루틴 만들기 · 전략 회의 · 근무 · 팀 일정 · 매출(admin) · 전체 관리(admin). 회원도 하단 탭 화면(훈련 · 랭킹 · 알림)과 기능 검색의 화면(153 PB · 내 출석 기록 · 코치 소개 …)을 넣을 수 있다.
+- **새 메뉴를 만들 때**: 기본 메뉴(`APP_MENU`)에 넣으면 고친 사람에게도 끝에 저절로 붙는다(known). 운영진 화면 · 탭을 바로가기로 넣게 하려면 `SHORTCUT_EXTRAS` 에 한 줄(경로 = App.tsx 라우트, 권한 맞게). 기능 검색(`FEATURES`)의 화면 이동 항목은 따로 하지 않아도 바로가기 목록에 들어간다(이름은 ' · ' 앞까지).
+- DB 적용 전에도 앱은 이 기기에만 저장하며 그대로 돈다(순서 상관없음). 적용하면 다음에 열 때 이 기기 값이 DB 로 올라간다.
+- **적용 · 다시 얹기 (2026-11-12 · 클로드·boxing5969.menued2)**: 11-08 커밋 c19d720 은 푸시되지 않은 채 남아, 대표님이 붙여 준 패치로 최신 main 위에 다시 얹었다. 패치가 중간에 잘려 `menuLayout.ts` 227줄부터 · 위 SQL · tailwind `menu-jiggle`(±1.6° · 0.28초 — 값은 이때 정함)은 이 설명과 원래 시험(menuLayout.test.ts · HomeMenuGrid.test.tsx)대로 다시 썼고, 끝 경우 시험 [src/lib/menuLayoutEdge.test.ts](src/lib/menuLayoutEdge.test.ts) 23개를 더했다. 운영 DB 는 MCP 로 적용(기록 `20261112095756_user_menu_layout` — 파일 번호와 다르고 본문은 같다) · 되돌리는 시험 25/25(본인 줄만 · 객체만 · 32KB · 남의 줄 안 보임 · 로그인 없음 · anon 막힘 · 표 직접 읽기쓰기 막힘) · DB 함수 지문 = 이 파일.
+
 ### 창(모달·시트) 뒤 페이지 스크롤 잠금 (2026-10-19)
 
 - `useModalDismiss(open, onClose)` 또는 `lockBodyScroll()`([src/lib/scrollLock.ts](src/lib/scrollLock.ts))만 쓴다 — 잠금 개수를 세서 마지막 창이 닫힐 때만 푼다.
