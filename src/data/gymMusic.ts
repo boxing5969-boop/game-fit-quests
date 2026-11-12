@@ -10,7 +10,10 @@
  *     Power Music(Workout Music Source) · Hard EDM Workout · The Gym Beats · Epidemic Sound · 핏블리 · SomiFit · 미러볼 뮤직 …).
  *   · 유튜브 퍼가기(oEmbed) 허용 확인 2026-11-12 — 그래도 나중에 막히는 영상은 플레이어가 알아서 건너뛴다.
  *   · 체육관 화면에 영상이 그대로 보이므로 표지 그림도 봤다 — 노출이 심한 것, 해골 · 악마 같은 어두운 그림은 뺐다.
- *   · 랩 위주 모음집(영어 욕설이 섞임)은 넣지 않았다 — 키즈 · 여성부 수업이 있는 체육관이라. 넣으려면 카테고리를 따로 만든다.
+ *   · 랩 · 힙합 모음집은 「힙합」 카테고리에 따로 모았다 — 가사에 영어 욕설이 섞일 수 있어 키즈 · 여성부 수업 때는 그 칩을 빼고 튼다.
+ *   · 2026-11-12 2차 — 대표님이 보내 주신 유튜브 추천 화면 3장(36개) "이 채널에 있는 음악들 모두 집어넣어" → 30편 추가.
+ *     뺀 것: 퍼가기가 막힌 2편(우쭈 「쇠질하다 덤벨 던져버려도 난 몰라」 · Grind Vibe 「듣는 순간 도파민 폭발」),
+ *     운동 음악이 아닌 3개(동요 자동 믹스 · 크리스마스 재즈 · 재즈 힙합), 30분이 안 되는 1편(ADRENALINE GYM MUSIC 22분).
  *   · 느린 것(요가 · 걷기 · 칠 · 딥하우스)은 넣지 않는다 — 에너지 있는 운동 음악만.
  *   · 바꾸려면 이 파일만 고치면 된다 — 유튜브 id(11자) · 제목 · 올린 곳 · 카테고리 · 길이(분).
  *     시험(gymMusicQueue.test)이 30분 이상 · id 형식 · 중복을 본다.
@@ -21,7 +24,7 @@
  * 영상 위치 확인: https://www.youtube.com/watch?v=<id>
  */
 
-export type GymMusicCat = "box" | "edm" | "bass" | "cardio" | "rock" | "pop";
+export type GymMusicCat = "box" | "hiphop" | "edm" | "bass" | "cardio" | "rock" | "pop";
 
 export interface GymTrack {
   /** 유튜브 영상 id */
@@ -38,11 +41,12 @@ export interface GymTrack {
 
 export const GYM_MUSIC_CATS: { key: GymMusicCat; label: string; title: string; sub: string }[] = [
   { key: "box", label: "복싱", title: "복싱 · 킥복싱 믹스", sub: "복싱 · 킥복싱 수업용 논스톱 믹스 · 줄넘기" },
-  { key: "edm", label: "EDM", title: "EDM 하이에너지", sub: "쉬지 않고 달리는 워크아웃 믹스" },
+  { key: "hiphop", label: "힙합", title: "힙합 · 랩 워크아웃", sub: "랩 · 외힙 · R&B — 키즈 수업 땐 빼고 트세요" },
+  { key: "edm", label: "EDM", title: "EDM 하이에너지", sub: "워크아웃 · 클럽 믹스 — 쉬지 않고 달리게" },
   { key: "bass", label: "베이스", title: "베이스 · 트랩 · 드럼앤베이스", sub: "묵직한 드롭 — 샌드백 · 미트 라운드" },
   { key: "cardio", label: "논스톱", title: "논스톱 유산소 리믹스", sub: "130~180 BPM 한 박자로 끝까지 — 서킷 · 체력 훈련" },
   { key: "rock", label: "록", title: "록 · 메탈", sub: "기타 리프로 밀어붙이는 라운드" },
-  { key: "pop", label: "팝", title: "신나는 팝 플레이리스트", sub: "가볍고 신나게 — 몸 풀 때" },
+  { key: "pop", label: "팝", title: "신나는 팝 · K-POP", sub: "케이팝 · 팝 — 가볍고 신나게, 몸 풀 때" },
 ];
 
 /** 길이 글 — 59 → '59분' · 60 → '1시간' · 95 → '1시간 35분' */
@@ -54,7 +58,7 @@ export const gymMixLength = (m: number): string => {
 };
 
 export const GYM_MUSIC: GymTrack[] = [
-  // ── 복싱 · 킥복싱 믹스 (15) ──
+  // ── 복싱 · 킥복싱 믹스 (20) ──
   { id: "Il28QGNJ9iY", t: "복싱 비트 믹스 2021", a: "Spinnin' Records", c: "box", m: 53 },
   { id: "_6Y3fWO1YEI", t: "카디오 복싱 · 135-145 BPM", a: "Power Music", c: "box", m: 59 },
   { id: "hbOkKuELPjA", t: "킥복싱 32카운트 Vol.2", a: "Power Music", c: "box", m: 59 },
@@ -70,8 +74,24 @@ export const GYM_MUSIC: GymTrack[] = [
   { id: "idsvAF5y6C8", t: "킥복싱 머스트 해브 2025", a: "Workout Music Archive", c: "box", m: 60 },
   { id: "tvswRmPI7_E", t: "줄넘기 60분 · 130 BPM", a: "Hard EDM Workout", c: "box", m: 60 },
   { id: "2DhPH6YorU8", t: "줄넘기 2026 · 130 BPM", a: "Hard EDM Workout", c: "box", m: 60 },
+  // 11-12 대표님이 보내 주신 화면에서
+  { id: "IXZARIeR_lg", t: "타이슨 LEGEND CODE", a: "Elite Boxing", c: "box", m: 75 },
+  { id: "gVcoHht8UHI", t: "나 지금 타이슨인데", a: "라이스뮤직", c: "box", m: 57 },
+  { id: "ee2RG3fILbA", t: "복싱 플레이리스트 20곡", a: "비트 인 더 링", c: "box", m: 152 },
+  { id: "ELfU-gZIS2c", t: "김득구 · 복싱 음악", a: "Elite Boxing", c: "box", m: 131 },
+  { id: "3D0bNynJR_E", t: "복싱 트레이닝 BGM 2026", a: "Elite Boxing", c: "box", m: 79 },
 
-  // ── EDM 하이에너지 (23) ──
+  // ── 힙합 · 랩 워크아웃 (8) ── 11-12 대표님이 보내 주신 화면에서
+  { id: "AaBysEN3F2Q", t: "복싱할 때 트는 힙합", a: "PULSE LAB", c: "hiphop", m: 126 },
+  { id: "owX6p7UB4dg", t: "워크아웃 힙합 2시간", a: "PULSE LAB", c: "hiphop", m: 122 },
+  { id: "VizX31aDwcI", t: "비스트 모드 랩 믹스", a: "Hip Drop", c: "hiphop", m: 61 },
+  { id: "gAl7_hFHt2k", t: "박재훈 올라잇 플리", a: "쇠맛플레이", c: "hiphop", m: 70 },
+  { id: "7qgL1QZDQDk", t: "겁먹을 시간에 한 번 더", a: "Tetoply", c: "hiphop", m: 85 },
+  { id: "4Gs_eIjjR2A", t: "코치쌤 체육관 플리", a: "perli", c: "hiphop", m: 220 },
+  { id: "s167MHQv9o4", t: "주인공 힙합 · R&B", a: "KKIPOP", c: "hiphop", m: 87 },
+  { id: "DqsaSoy7cUI", t: "테토남 · 멈추지 않는다", a: "POMADE", c: "hiphop", m: 78 },
+
+  // ── EDM 하이에너지 (34) ──
   { id: "T4N2DtBTfoA", t: "하이 인텐시티 워크아웃", a: "Spinnin' Records", c: "edm", m: 59 },
   { id: "iQyO6hb6zkc", t: "HIIT 트레이닝 믹스", a: "Spinnin' Records", c: "edm", m: 60 },
   { id: "XSNbAwGDC_o", t: "맥시멈 에너지 믹스", a: "Spinnin' Records", c: "edm", m: 56 },
@@ -95,8 +115,20 @@ export const GYM_MUSIC: GymTrack[] = [
   { id: "qnZ5gHAXIk0", t: "더 짐 비츠 Vol.4.2", a: "The Gym Beats", c: "edm", m: 54 },
   { id: "xETEYG-az9E", t: "프로그레시브 하우스 1", a: "Proximity", c: "edm", m: 54 },
   { id: "OVlayZ2LVYE", t: "프로그레시브 하우스 2", a: "Proximity", c: "edm", m: 56 },
+  // 11-12 대표님이 보내 주신 화면에서
+  { id: "izT3D7jxZVw", t: "EDM 워크아웃 믹스 2026", a: "GRIDFIT", c: "edm", m: 58 },
+  { id: "nwJvgdx1Vhs", t: "하이록스 EDM Vol.10", a: "PULSE LAB", c: "edm", m: 123 },
+  { id: "-nw8AdClFQc", t: "피트니스 EDM 2026", a: "Endurance Beats", c: "edm", m: 183 },
+  { id: "AD7Mq3xLooE", t: "워크아웃 뮤직 2026", a: "Endurance Beats", c: "edm", m: 129 },
+  { id: "tqSM2lY1-Yc", t: "각성모드 200% 클럽 EDM", a: "DJ Corgi", c: "edm", m: 99 },
+  { id: "8zhw8doACik", t: "2026 클럽 유행곡 믹스", a: "ASTER MUSIC", c: "edm", m: 33 },
+  { id: "x0fraF20mRE", t: "2025 클럽 연말정산 믹스", a: "ASTER MUSIC", c: "edm", m: 70 },
+  { id: "dnRBwERSXXw", t: "홍대 축제 DJ 세트 2026", a: "ASTER MUSIC", c: "edm", m: 63 },
+  { id: "RYlkvj8lycE", t: "레드라인 도미넌스", a: "Motivation BPM", c: "edm", m: 52 },
+  { id: "M64KU_XVKoA", t: "YOU VS YOU 짐 모티베이션", a: "Gorilla Workout", c: "edm", m: 45 },
+  { id: "YQFuGy7L0jc", t: "짐 모티베이션 송 2026", a: "PULSE REP", c: "edm", m: 37 },
 
-  // ── 베이스 · 트랩 · 드럼앤베이스 (14) ──
+  // ── 베이스 · 트랩 · 드럼앤베이스 (15) ──
   { id: "WFL__hxlfWw", t: "하디스트 히터스 믹스", a: "Trap Nation", c: "bass", m: 60 },
   { id: "ObIdQa8waAU", t: "게이밍 뮤직 믹스 2020", a: "Trap Nation", c: "bass", m: 154 },
   { id: "SsQCkHcEmjU", t: "2021 베스트 트랩", a: "Trap Nation", c: "bass", m: 129 },
@@ -111,8 +143,10 @@ export const GYM_MUSIC: GymTrack[] = [
   { id: "JVYDN3PmOG4", t: "몬스터캣 베스트 2025", a: "Monstercat", c: "bass", m: 94 },
   { id: "yrcOLbBjJS0", t: "몬스터캣 베스트 2024", a: "Monstercat", c: "bass", m: 93 },
   { id: "qKtY7_GYBOk", t: "몬스터캣 베스트 2023", a: "Monstercat", c: "bass", m: 91 },
+  // 11-12 대표님이 보내 주신 화면에서
+  { id: "oNretrfa93k", t: "아이언 마인드 · 하드스타일", a: "Relentless Rise", c: "bass", m: 36 },
 
-  // ── 논스톱 유산소 리믹스 (19) ──
+  // ── 논스톱 유산소 리믹스 (21) ──
   { id: "WDpGMsuQPWc", t: "올 카디오 · 140-150 BPM", a: "Power Music", c: "cardio", m: 60 },
   { id: "9dH2DYjf8uQ", t: "익스트림 카디오 믹스", a: "Power Music", c: "cardio", m: 60 },
   { id: "AnFOm96Y2C0", t: "익스트림 카디오 믹스 3", a: "Power Music", c: "cardio", m: 59 },
@@ -132,8 +166,11 @@ export const GYM_MUSIC: GymTrack[] = [
   { id: "1GntgYdEUYU", t: "러닝 60분 · 180 BPM", a: "Hard EDM Workout", c: "cardio", m: 58 },
   { id: "DUAsYs-9szg", t: "팻 버닝 2024 · 150 BPM", a: "Hard EDM Workout", c: "cardio", m: 60 },
   { id: "8EI5lOAJIDk", t: "1억 뷰 기념 스페셜", a: "Hard EDM Workout", c: "cardio", m: 60 },
+  // 11-12 대표님이 보내 주신 화면에서
+  { id: "pFc7rpqUg9s", t: "러닝 뮤직 2026 · 아침 햇살", a: "Endurance Beats", c: "cardio", m: 84 },
+  { id: "MCoRcDdSW20", t: "175~185 BPM 케이던스", a: "달리런", c: "cardio", m: 202 },
 
-  // ── 록 · 메탈 (8) ──
+  // ── 록 · 메탈 (9) ──
   { id: "dVg0d4z2uss", t: "록 워크아웃 · 러닝", a: "Epidemic Rock", c: "rock", m: 60 },
   { id: "PsY8dD90Luw", t: "하드 록 워크아웃", a: "Epidemic Rock", c: "rock", m: 60 },
   { id: "ecZnud07afI", t: "헤비메탈 · 하드 록", a: "Epidemic Rock", c: "rock", m: 59 },
@@ -142,8 +179,10 @@ export const GYM_MUSIC: GymTrack[] = [
   { id: "SEeCK2TLoSk", t: "얼터너티브 록 · 기타 속주", a: "Epidemic Rock", c: "rock", m: 61 },
   { id: "Rq4tB9nd7Sk", t: "록 워크아웃 30분", a: "Epidemic Rock", c: "rock", m: 31 },
   { id: "1T2uOnmvoMc", t: "어그레시브 메탈 믹스", a: "Alec Koff", c: "rock", m: 60 },
+  // 11-12 대표님이 보내 주신 화면에서
+  { id: "GTzsi2ti1_A", t: "언스토퍼블 · 랩 록", a: "riffdose", c: "rock", m: 49 },
 
-  // ── 신나는 팝 플레이리스트 (13) ──
+  // ── 신나는 팝 · K-POP (15) ──
   { id: "d8OL6m0ZblA", t: "팝 워크아웃 송", a: "Epidemic Pop", c: "pop", m: 61 },
   { id: "hcysu-opqng", t: "팝 워크아웃 믹스", a: "Epidemic Pop", c: "pop", m: 62 },
   { id: "p7gqjZY0jis", t: "팝 워크아웃 뮤직", a: "Epidemic Pop", c: "pop", m: 62 },
@@ -157,4 +196,7 @@ export const GYM_MUSIC: GymTrack[] = [
   { id: "3eWN4Ebl83E", t: "베스트 워크아웃 뮤직", a: "핏블리 FITVELY", c: "pop", m: 55 },
   { id: "f35UnFaFWVo", t: "운동할 때 듣는 신나는 음악", a: "미러볼 뮤직", c: "pop", m: 58 },
   { id: "SYuGMOv6Zpg", t: "텐션 올리는 일렉트로닉", a: "미러볼 뮤직", c: "pop", m: 50 },
+  // 11-12 대표님이 보내 주신 화면에서
+  { id: "pxv7TVmtDeg", t: "1세대 걸그룹 빅매치", a: "오늘도 컴백", c: "pop", m: 174 },
+  { id: "qrgD7mKdlSg", t: "케이팝 러닝 · 전투력MAX", a: "폴스폴름", c: "pop", m: 52 },
 ];
