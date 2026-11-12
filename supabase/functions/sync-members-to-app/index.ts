@@ -24,6 +24,12 @@
 // 2026-09-23 수정 — 지도진(profiles.is_staff) 계정에는 수강권·결제 정보를 쓰지 않는다.
 //   코치님도 CRM 에 회원으로 등록돼 있으면(옛 회원권) 이 동기화가 만료된 membership_end 를
 //   계속 되살려 "만료 D+62" 로 보였다. 지도진 이용권은 무제한(sync-staff-to-app 가 관리).
+//
+// 2026-11-13 수정 — 성별을 앱으로 옮긴다(대표님 「추천대로 진행」 — 같은 나이와 비교의 체력 나이).
+//   예전에는 새 계정의 user_metadata 에만 넣었는데 handle_new_user 가 성별을 옮기지 않아
+//   153OS 에 성별(male/female)이 있어도 앱 profiles.gender 는 늘 비어 있었다.
+//   이제 앱 성별이 비어 있을 때만 '남' · '여'로 채운다 — 회원이 고른 성별(앱 값)은 덮지 않는다.
+//   (내 신체 정보에서 회원이 고른 값은 member_fitness_profile 에 따로 있고 get_my_fitness_extra 가 그것을 먼저 쓴다.)
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const cors = {
@@ -44,6 +50,15 @@ function toISODate(v: unknown): string | null {
   if (!isNaN(dt.getTime())) return dt.toISOString().slice(0, 10);
   return null;
 }
+
+// 153OS 성별(male/female) → 앱 성별('남' · '여'). 모르는 값은 null(쓰지 않음).
+function toAppGender(v: unknown): "남" | "여" | null {
+  const s = String(v ?? "").trim().toLowerCase();
+  if (s === "male" || s === "m" || s === "남" || s === "남자" || s === "남성") return "남";
+  if (s === "female" || s === "f" || s === "여" || s === "여자" || s === "여성") return "여";
+  return null;
+}
+const isBlank = (v: unknown) => String(v ?? "").trim() === "";
 
 // 지점명 매핑 — 153OS ↔ 앱 이름 불일치 보정(선릉점 = 선릉역점 동일 지점).
 const BRANCH_MAP: Record<string, string> = { "153복싱짐 선릉점": "153복싱짐 선릉역점" };
@@ -85,7 +100,7 @@ Deno.serve(async (req) => {
     if (rErr) return json({ error: "OS 조회 실패: " + rErr.message }, 502);
     const members = (rows || []) as Array<Record<string, unknown>>;
 
-    let created = 0, updated = 0, linked = 0, dupSkipped = 0;
+    let created = 0, updated = 0, linked = 0, dupSkipped = 0, genderFilled = 0;
     const failed: Array<{ member_id?: string; name: string; phone: string; reason: string }> = [];
 
     for (const m of members) {
@@ -106,14 +121,20 @@ Deno.serve(async (req) => {
       const cumulative = onlyDigits(m.cumulative_payment);
       if (cumulative) billing.payment_total = Number(cumulative);
 
-      const { data: dup } = await app.from("profiles").select("user_id, is_staff").eq("phone_number", phone).maybeSingle();
+      const gender = toAppGender(m.gender);
+
+      const { data: dup } = await app.from("profiles").select("user_id, is_staff, gender").eq("phone_number", phone).maybeSingle();
       let appUserId: string | null = null;
 
       if (dup) {
         // 반영할 값이 하나도 없으면 쓰기 자체를 건너뛴다(빈 update 로 updated_at 만 흔들지 않는다).
-        // 지도진 계정은 수강권·결제를 CRM 회원권으로 덮지 않는다(무제한).
-        if (Object.keys(billing).length > 0 && dup.is_staff !== true) {
-          await app.from("profiles").update(billing).eq("user_id", dup.user_id);
+        // 지도진 계정은 수강권·결제를 CRM 회원권으로 덮지 않는다(무제한). 성별은 지도진도 빈 칸이면 채운다.
+        const patch: Record<string, unknown> = dup.is_staff === true ? {} : { ...billing };
+        const fillGender = gender !== null && isBlank(dup.gender);
+        if (fillGender) patch.gender = gender;
+        if (Object.keys(patch).length > 0) {
+          const { error: pErr } = await app.from("profiles").update(patch).eq("user_id", dup.user_id);
+          if (!pErr && fillGender) genderFilled++;
         }
         appUserId = dup.user_id as string;
         updated++;
@@ -125,8 +146,9 @@ Deno.serve(async (req) => {
         });
         if (cErr || !cu?.user) { failed.push({ member_id: String(m.id), name, phone, reason: cErr?.message || "계정 생성 실패" }); continue; }
         appUserId = cu.user.id;
-        const { error: upErr } = await app.from("profiles").update({ ...billing, is_approved: true, must_change_credentials: true, gym_reg_date: toISODate(m.created_at) }).eq("user_id", appUserId);
+        const { error: upErr } = await app.from("profiles").update({ ...billing, ...(gender ? { gender } : {}), is_approved: true, must_change_credentials: true, gym_reg_date: toISODate(m.created_at) }).eq("user_id", appUserId);
         if (upErr) { failed.push({ member_id: String(m.id), name, phone, reason: "프로필 업데이트 실패" }); continue; }
+        if (gender) genderFilled++;
         created++;
       }
 
@@ -174,7 +196,7 @@ Deno.serve(async (req) => {
     // dup_skipped 는 정상 상황이므로 실패가 아니다. next_offset 은 호출자가 커서를 넘길 때 쓴다.
     return json({
       ok: true, scanned: members.length, created, updated, linked,
-      dup_skipped: dupSkipped, offset, limit,
+      dup_skipped: dupSkipped, gender_filled: genderFilled, offset, limit,
       next_offset: members.length < limit ? null : offset + members.length,
       failed,
     });
