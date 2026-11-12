@@ -14,11 +14,13 @@
  *     코치님은 서명할 계약서가 맨 위 · 서명한 계약서는 '내 계약서'. ?contract=<id> 로 한 장(알림 링크) — OpsContractSheet
  *   PT 기록 (2026-11-11 1단계): 켠 지점만 — 코치님 화면 맨 위 「오늘 PT」 · 근무자 카드 'PT' 탭 위쪽 확인 필요 · 수업 기록,
  *     '확인할 것'에 코치별 PT 기록 확인 필요. ?demo=1 은 예시 자료 — OpsPtRecord · src/lib/opsPtRecord.ts
+ *   PT 기록 오류 신고 (2026-11-12): '확인할 것' 맨 위에 코치별 열린 신고 → 근무자 카드 'PT' 탭. 알림 링크 ?ptcoach=<근무자 카드> 로
+ *     오면 그 코치의 'PT' 탭을 바로 연다 — OpsPtReport · src/lib/opsPtReport.ts
  *   계산은 src/lib/opsWork.ts 한 곳 — 서버는 자료만.
  */
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { ChevronRight, ClipboardCheck, FileSignature, Plus } from "lucide-react";
+import { ChevronRight, ClipboardCheck, FileSignature, Flag, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
@@ -59,7 +61,9 @@ import {
 import { computePtMonth, type OpsPtSummary } from "@/lib/opsPt";
 import { matchPtRecord, ptCounts } from "@/lib/opsPtRecord";
 import { PT_SAMPLE_COACH } from "@/lib/opsPtRecordSample";
+import { ptReportOpenCount } from "@/lib/opsPtReport";
 import { useOpsPtRecord } from "@/services/opsPtRecordService";
+import { useOpsPtReports } from "@/services/opsPtReportService";
 import OpsContractSheet from "./OpsContractSheet";
 import OpsDaySheet from "./OpsDaySheet";
 import OpsPtPanel, { PtCheckItem } from "./OpsPtPanel";
@@ -242,6 +246,33 @@ const ManagerView = ({ data, ptDemo }: { data: OpsMonthData; ptDemo: boolean }) 
   const ptRecTodo = ptRec
     ? ptCoaches.map((c) => ({ staff: c, n: ptCounts(ptRec, ptDemo ? PT_SAMPLE_COACH : c.id, true).total })).filter((x) => x.n > 0)
     : [];
+  // PT 기록 오류 신고(2026-11-12) — 코치별 열린 신고. 코치가 정해지지 않은 신고는 첫 PT 코치 줄에 더한다
+  const ptRepQ = useOpsPtReports(data.branch, { enabled: !!ptRec, demo: ptDemo, demoManage: true });
+  const ptRepTodo = ptRepQ.data?.available
+    ? ptCoaches
+        .map((c, i) => ({
+          staff: c,
+          n:
+            ptReportOpenCount(ptRepQ.data.reports, ptDemo ? PT_SAMPLE_COACH : c.id) +
+            (i === 0 ? ptRepQ.data.reports.filter((r) => r.status === "open" && !r.coach_staff_id).length : 0),
+        }))
+        .filter((x) => x.n > 0)
+    : [];
+  // 알림 링크 /office?tab=work&ptcoach=<근무자 카드> — 그 코치의 'PT' 탭을 연다(오류 신고 알림)
+  const [params, setParams] = useSearchParams();
+  const ptCoachParam = params.get("ptcoach");
+  useEffect(() => {
+    if (!ptCoachParam) return;
+    const s = data.staff.find((x) => x.id === ptCoachParam);
+    if (s) setStaffSheet({ staff: s, tab: "pt" });
+    setParams(
+      (p) => {
+        p.delete("ptcoach");
+        return p;
+      },
+      { replace: true },
+    );
+  }, [ptCoachParam, data.staff, setParams]);
 
   // 계약서 — 돈을 보는 분(계약서에 시급이 있다)만: 근무자마다 '계약서 없음 · 서명 대기 · 사본 아직' (2026-11-03)
   const contractsQ = useOpsContractBranch(data.branch, canPay);
@@ -309,9 +340,28 @@ const ManagerView = ({ data, ptDemo }: { data: OpsMonthData; ptDemo: boolean }) 
       </section>
 
       {/* 확인할 것 */}
-      {(pending.length > 0 || flags.length > 0 || ptToCheck.length > 0 || contractTodo.length > 0 || ptRecTodo.length > 0) && (
+      {(pending.length > 0 || flags.length > 0 || ptToCheck.length > 0 || contractTodo.length > 0 || ptRecTodo.length > 0 || ptRepTodo.length > 0) && (
         <section className={card}>
           <h2 className="text-heading font-black text-foreground">확인할 것</h2>
+          {ptRepTodo.length > 0 && (
+            <ul className="mt-3 divide-y divide-border/70 overflow-hidden rounded-xl border border-amber-200 bg-amber-50/60">
+              {ptRepTodo.map(({ staff, n }) => (
+                <li key={staff.id}>
+                  <button
+                    type="button"
+                    onClick={() => setStaffSheet({ staff, tab: "pt" })}
+                    className="flex w-full items-center gap-2 px-3 py-2.5 text-left active:bg-amber-100/70"
+                  >
+                    <Flag className="h-5 w-5 shrink-0 text-amber-700" />
+                    <span className="min-w-0 flex-1 truncate text-body text-foreground">
+                      <b className="font-black">{staff.name}</b> · PT 기록 오류 신고 {n}건
+                    </span>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
           {contractTodo.length > 0 && (
             <ul className="mt-3 divide-y divide-border/70 overflow-hidden rounded-xl border border-amber-200 bg-amber-50/60">
               {contractTodo.map(({ staff, st }) => (

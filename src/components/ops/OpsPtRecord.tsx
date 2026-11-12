@@ -8,10 +8,13 @@
  *     돈은 여기 없다(수당은 아래 OpsPtPanel — 기준은 그대로 차감 기록).
  *   짝짓기 · 판정은 src/lib/opsPtRecord.ts. 지점마다 대표님이 켠 곳만 보인다(꺼져 있으면 아무것도 안 그린다).
  *   `demo` = 예시 화면(?demo=1) — 지어낸 회원 · 이 기기 안에서만 바뀜.
+ *   오류 신고 (2026-11-12 대표님 「pt 선생님이 볼때 오류가 있으면 오류신고」): 코치 = 기록 시트 · 사유 없는 차감 · 차감 대기의
+ *     「오류 신고」 + 「오늘 PT」 아래 단추 → 보낸 신고 목록 / 관리자 = 'PT' 탭 맨 위 받은 신고 → 신고대로 고치기(이 기록 시트) · 처리.
+ *     사유 없는 차감은 출석으로 어림한 날(guess)을 먼저 묻는다 — 차감이 수업 다음 날 잡혀 기록 날짜가 틀어진 일. 화면 조각은 OpsPtReport.tsx.
  */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
-import { ChevronRight, Pencil, Plus } from "lucide-react";
+import { ChevronRight, Flag, Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
@@ -30,6 +33,7 @@ import {
   ptMemberName,
   ptMemberSub,
   ptMonthCompare,
+  ptNearEntry,
   ptRowStatus,
   ptTodayList,
   type PtDraft,
@@ -43,8 +47,11 @@ import {
   type PtUnrecorded,
 } from "@/lib/opsPtRecord";
 import { PT_SAMPLE_COACH } from "@/lib/opsPtRecordSample";
+import { PT_REPORT_KIND_LABEL, emptyPtReportDraft, ptReportFixReply, type PtReport, type PtReportFix } from "@/lib/opsPtReport";
 import { useOpsPtRecord, useOpsPtRecordActions } from "@/services/opsPtRecordService";
+import { useOpsPtReportActions, useOpsPtReports } from "@/services/opsPtReportService";
 import { ptTicketLabel } from "./OpsPtPanel";
+import { PtReportLink, PtReportList, PtReportResolveSheet, PtReportSheet, type PtReportInit, type PtResolveInit } from "./OpsPtReport";
 import { OpsButton, OpsChip, OpsLabel, OpsSheet, fmtDay, kstToday, monthOf, opsInput } from "./OpsParts";
 
 const KINDS: PtKind[] = ["lesson", "noshow", "late_cancel", "moved", "coach_cancel", "self"];
@@ -78,7 +85,41 @@ interface SheetInit {
   /** 회원을 바꾸지 못하게(알림 · 확인 필요에서 열었을 때) */
   lockMember?: boolean;
   hint?: string;
+  /** 지우기 화면으로 열기(오류 신고 「기록 지우기」) — 지우는 이유를 채워 둔다 */
+  startRemoving?: boolean;
+  removeReason?: string;
+  /** 저장 · 지우기가 끝난 뒤(오류 신고를 '고쳤어요'로 닫기) */
+  onSaved?: () => void;
 }
+
+const WD = ["일", "월", "화", "수", "목", "금", "토"];
+/** "11/11(수)" */
+const mdw = (date: string) => `${mdOf(date)}(${WD[new Date(`${date}T00:00:00Z`).getUTCDay()]})`;
+
+/** 기록 한 줄 → 오류 신고 시트 */
+const reportFromRow = (r: PtRow): PtReportInit => ({
+  draft: emptyPtReportDraft({
+    session_id: r.s.id,
+    member_user_id: r.s.member_user_id,
+    member_name: r.s.member_name,
+    about_date: r.s.session_date,
+  }),
+  context: `${r.name} · ${PT_KIND_LABEL[r.s.kind]}${r.s.uses > 1 ? ` ${r.s.uses}회` : ""} · ${fmtDay(r.s.session_date)}`,
+  lockMember: true,
+});
+
+/** 사유 없는 차감 → 오류 신고 시트 */
+const reportFromExtra = (x: PtExtra): PtReportInit => ({
+  draft: emptyPtReportDraft({
+    event_id: x.eventId,
+    member_user_id: x.userId,
+    member_name: x.name,
+    about_date: x.workDate,
+    right_date: x.guess?.date ?? null,
+  }),
+  context: `${x.name} · 차감 ${x.count}회 · ${fmtDay(x.workDate)}에 잡힘`,
+  lockMember: true,
+});
 
 const emptyDraft = (today: string, more: Partial<PtDraft> = {}): PtDraft => ({
   member_user_id: null,
@@ -128,6 +169,7 @@ const RecordSheet = ({
   manage,
   coachId,
   actions,
+  onReport,
 }: {
   init: SheetInit | null;
   onClose: () => void;
@@ -136,6 +178,8 @@ const RecordSheet = ({
   manage: boolean;
   coachId: string | null;
   actions: Actions;
+  /** 코치 — 고치는 기록이 이상하면 오류 신고 시트로 */
+  onReport?: (row: PtRow) => void;
 }) => {
   const today = data.today ?? kstToday();
   const members = useMemo(() => data.members ?? [], [data.members]);
@@ -149,8 +193,8 @@ const RecordSheet = ({
     if (!init) return;
     setDraft(init.draft);
     setTyping(!init.draft.member_user_id && !!init.draft.member_name);
-    setRemoving(false);
-    setReason("");
+    setRemoving(!!init.startRemoving);
+    setReason(init.removeReason ?? "");
     setLabelFor(null);
   }, [init]);
 
@@ -159,6 +203,12 @@ const RecordSheet = ({
   const picked = members.find((m) => m.user_id === draft.member_user_id) ?? null;
   const hasEntry = !!draft.member_user_id && (data.attendance ?? []).some((a) => a.user_id === draft.member_user_id && a.date === draft.session_date);
   const needReason = draft.kind === "lesson" && !!draft.member_user_id && !hasEntry;
+  // 고른 날 출석이 없는데 그 앞 이틀 안에 입장이 있으면 — 그날로 바꾸기를 먼저 권한다(2026-11-12 차감 날로 잘못 적은 일)
+  const near = needReason
+    ? ptNearEntry(data.attendance ?? [], draft.member_user_id, draft.session_date, (d) =>
+        (data.sessions ?? []).some((s) => s.id !== draft.id && s.member_user_id === draft.member_user_id && s.session_date === d && isUseKind(s.kind)),
+      )
+    : null;
   const lateNote = isUseKind(draft.kind) && draft.session_date < today && !manage;
   const set = (p: Partial<PtDraft>) => setDraft((d) => ({ ...d, ...p }));
   const busy = actions.save.isPending || actions.remove.isPending;
@@ -172,6 +222,7 @@ const RecordSheet = ({
     actions.save.mutate(ptDraftPayload(branch, { ...draft, no_entry_reason: needReason ? draft.no_entry_reason : null, coach_staff_id: manage ? coachId : undefined }), {
       onSuccess: () => {
         toast.success(editing ? "고쳤어요" : isUseKind(draft.kind) ? "기록했어요 — 브로제이 차감도 해 주세요" : "기록했어요");
+        init?.onSaved?.();
         onClose();
       },
       onError: (e) => toast.error((e as Error).message),
@@ -188,6 +239,7 @@ const RecordSheet = ({
       {
         onSuccess: () => {
           toast.success("기록을 지웠어요");
+          init?.onSaved?.();
           onClose();
         },
         onError: (e) => toast.error((e as Error).message),
@@ -356,6 +408,21 @@ const RecordSheet = ({
             </>
           )}
 
+          {near && (
+            <div className="mt-2 rounded-xl bg-amber-50 px-3 py-2.5">
+              <p className="text-label font-bold text-amber-800">
+                {mdw(draft.session_date)}에는 입장이 없어요 · {mdw(near.date)} {hm(near.at)}에 입장했어요
+              </p>
+              <button
+                type="button"
+                onClick={() => set({ session_date: near.date, no_entry_reason: null })}
+                className={cn(mainBtn, "mt-2 w-full")}
+              >
+                {mdw(near.date)} 수업으로 바꾸기
+              </button>
+            </div>
+          )}
+
           {needReason && (
             <>
               <OpsLabel>그날 출석 체크가 없어요 — 사유</OpsLabel>
@@ -397,6 +464,11 @@ const RecordSheet = ({
               이 기록 지우기
             </button>
           )}
+          {editing && onReport && init?.row && (
+            <div>
+              <PtReportLink onClick={() => onReport(init.row!)} label="기록이 이상해요 — 오류 신고" />
+            </div>
+          )}
         </>
       )}
     </OpsSheet>
@@ -404,12 +476,28 @@ const RecordSheet = ({
 };
 
 // ───────────────────────── 확인 필요 ─────────────────────────
-const TodoCard = ({ title, body, sub, two, children }: { title: string; body: string; sub?: string; two?: boolean; children?: ReactNode }) => (
+const TodoCard = ({
+  title,
+  body,
+  sub,
+  two,
+  children,
+  footer,
+}: {
+  title: string;
+  body: string;
+  sub?: string;
+  two?: boolean;
+  children?: ReactNode;
+  /** 카드 맨 아래(오류 신고 글 단추) */
+  footer?: ReactNode;
+}) => (
   <li className="rounded-xl bg-amber-50 p-3">
     <p className="text-label font-bold text-amber-800">{title}</p>
     <p className="mt-0.5 text-body text-foreground">{body}</p>
     {sub && <p className="text-label text-muted-foreground">{sub}</p>}
     {children && <div className={cn("mt-2 grid gap-2", two && "grid-cols-2")}>{children}</div>}
+    {footer}
   </li>
 );
 
@@ -422,7 +510,9 @@ const TodoList = ({
   onRecord,
   onEdit,
   onQuick,
+  onGuessLesson,
   onReview,
+  onReport,
 }: {
   res: PtMatchResult;
   rows: PtRow[];
@@ -432,7 +522,11 @@ const TodoList = ({
   onRecord: (init: SheetInit) => void;
   onEdit: (r: PtRow) => void;
   onQuick: (u: PtUnrecorded, kind: PtKind) => void;
+  /** 사유 없는 차감 — 출석으로 어림한 날을 수업으로 바로 기록 */
+  onGuessLesson: (x: PtExtra) => void;
   onReview: (r: PtRow) => void;
+  /** 코치 — 오류 신고 시트 */
+  onReport?: (init: PtReportInit) => void;
 }) => {
   const past = res.unrecorded.filter((u) => !u.isToday);
   const reviews = rows.filter((r) => r.needReview);
@@ -447,33 +541,68 @@ const TodoList = ({
             </button>
           </TodoCard>
         ))}
-      {extras.map((x) => (
-        <TodoCard
-          key={`extra${x.eventId}`}
-          title={`사유 없는 차감 · ${fmtDay(x.workDate)}`}
-          body={`${x.name} · ${x.count}회 — 어떤 수업이었는지 기록해 주세요`}
-          sub="기록이 없으면 과차감일 수 있어요 · 잘못 뺀 것이면 브로제이에서 되돌려 주세요"
-        >
-          <button
-            type="button"
-            className={mainBtn}
-            onClick={() =>
-              onRecord({
-                draft: emptyDraft(res.today, {
-                  member_user_id: x.userId,
-                  member_name: x.name,
-                  kind: "lesson",
-                  session_date: x.workDate > res.today ? res.today : x.workDate,
-                }),
-                lockMember: true,
-                hint: `차감이 잡힌 날은 ${mdOf(x.workDate)} — 실제 수업 날짜를 골라 주세요`,
-              })
-            }
+      {extras.map((x) => {
+        const report = onReport ? <PtReportLink onClick={() => onReport(reportFromExtra(x))} /> : undefined;
+        // 출석으로 어림한 날이 있으면 그날을 먼저 묻는다 — 차감은 수업 다음 날 잡힐 때가 많다(2026-11-12)
+        if (x.guess) {
+          const g = x.guess;
+          return (
+            <TodoCard
+              key={`extra${x.eventId}`}
+              two
+              title={`사유 없는 차감 · ${fmtDay(x.workDate)}`}
+              body={`${x.name} · ${x.count}회 — ${mdw(g.date)} ${hm(g.at)} 입장한 날 수업이었나요?`}
+              sub="차감은 수업 다음 날 잡힐 때가 많아요 · 다른 날이면 날짜를 골라 기록해 주세요"
+              footer={report}
+            >
+              <button
+                type="button"
+                className={plainBtn}
+                onClick={() =>
+                  onRecord({
+                    draft: emptyDraft(res.today, { member_user_id: x.userId, member_name: x.name, kind: "lesson", session_date: g.date }),
+                    lockMember: true,
+                    hint: `차감은 ${mdOf(x.workDate)}에 잡혔어요 · ${mdw(g.date)} ${hm(g.at)} 입장한 날로 넣어 두었어요 — 다르면 바꿔 주세요`,
+                  })
+                }
+              >
+                다른 날 · 기록
+              </button>
+              <button type="button" disabled={busy} className={mainBtn} onClick={() => onGuessLesson(x)}>
+                {mdOf(g.date)} 수업이에요
+              </button>
+            </TodoCard>
+          );
+        }
+        return (
+          <TodoCard
+            key={`extra${x.eventId}`}
+            title={`사유 없는 차감 · ${fmtDay(x.workDate)}`}
+            body={`${x.name} · ${x.count}회 — 어떤 수업이었는지 기록해 주세요`}
+            sub="기록이 없으면 과차감일 수 있어요 · 잘못 뺀 것이면 브로제이에서 되돌려 주세요"
+            footer={report}
           >
-            기록하기
-          </button>
-        </TodoCard>
-      ))}
+            <button
+              type="button"
+              className={mainBtn}
+              onClick={() =>
+                onRecord({
+                  draft: emptyDraft(res.today, {
+                    member_user_id: x.userId,
+                    member_name: x.name,
+                    kind: "lesson",
+                    session_date: x.workDate > res.today ? res.today : x.workDate,
+                  }),
+                  lockMember: true,
+                  hint: `차감이 잡힌 날은 ${mdOf(x.workDate)} — 실제 수업 날짜를 골라 주세요(차감은 수업 다음 날 잡힐 때가 많아요)`,
+                })
+              }
+            >
+              기록하기
+            </button>
+          </TodoCard>
+        );
+      })}
       {past.map((u) => (
         <TodoCard key={`in${u.userId}${u.date}`} two title={`기록 없는 입장 · ${fmtDay(u.date)} ${hm(u.at)}`} body={`${u.name} — PT 수업이었나요?`}>
           <button type="button" disabled={busy} className={plainBtn} onClick={() => onQuick(u, "self")}>
@@ -496,6 +625,7 @@ const TodoList = ({
                 : `${r.name} · ${PT_KIND_LABEL[r.s.kind]} — 브로제이에서 차감해 주세요`
             }
             sub={r.untracked ? "지점장님이 브로제이를 확인하고 차감을 직접 넣어요" : "차감하면 하루 이틀 안에 여기서 사라져요"}
+            footer={onReport ? <PtReportLink onClick={() => onReport(reportFromRow(r))} /> : undefined}
           />
         ))}
       {rows
@@ -572,6 +702,12 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
   const [sheet, setSheet] = useState<SheetInit | null>(null);
   const [more, setMore] = useState(false);
   const [offAsk, setOffAsk] = useState(false);
+  // 오류 신고 (2026-11-12) — 서버에 함수가 없으면(DB 적용 전 · 옛 DB 미리보기) 단추 · 목록 모두 숨긴다
+  const rq = useOpsPtReports(branch, { enabled: !!data?.on, demo, demoManage: manage });
+  const ractions = useOpsPtReportActions(branch, { demo, demoManage: manage });
+  const [reportInit, setReportInit] = useState<PtReportInit | null>(null);
+  const [resolveInit, setResolveInit] = useState<PtResolveInit | null>(null);
+  const canReport = !!rq.data?.available;
 
   // 알림을 누르고 왔을 때(/office?tab=work&pt=today) — 오늘 PT 로 내려온다
   const [params] = useSearchParams();
@@ -643,6 +779,80 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
     );
   const review = (r: PtRow) =>
     actions.review.mutate(r.s.id, { onSuccess: () => toast.success("확인했어요"), onError: (e) => toast.error((e as Error).message) });
+  // 사유 없는 차감 → 출석으로 어림한 날을 수업으로(차감은 이미 잡혀 있으니 그 차감과 바로 맞는다)
+  const guessLesson = (x: PtExtra) => {
+    if (!x.guess || !x.userId) return;
+    actions.save.mutate(
+      ptDraftPayload(branch, emptyDraft(today, { member_user_id: x.userId, member_name: x.name, kind: "lesson", session_date: x.guess.date, coach_staff_id: manage ? coachId : undefined })),
+      {
+        onSuccess: () => toast.success(manage ? `${mdOf(x.guess!.date)} 수업으로 기록했어요` : `${mdOf(x.guess!.date)} 수업으로 기록했어요 — 지난 날 기록이라 지점장님이 확인해요`),
+        onError: (e) => toast.error((e as Error).message),
+      },
+    );
+  };
+
+  // ── 오류 신고 — 코치는 보내고, 관리자는 고치거나 처리한다
+  const reports: PtReport[] = canReport
+    ? (rq.data?.reports ?? []).filter((r) => !manage || !coachId || r.coach_staff_id === coachId || !r.coach_staff_id)
+    : [];
+  const openReport = canReport && !manage ? (init: PtReportInit) => setReportInit(init) : undefined;
+  const resolveAfterFix = (r: PtReport, fix: PtReportFix) =>
+    ractions.resolve.mutate(
+      { id: r.id, status: "fixed", reply: ptReportFixReply(fix) },
+      { onSuccess: () => toast.success("고치고 코치님께 알렸어요"), onError: (e) => toast.error((e as Error).message) },
+    );
+  const fixReport = (r: PtReport, fix: PtReportFix) => {
+    const from = `오류 신고 · ${r.reporter_name ?? "코치"} — ${PT_REPORT_KIND_LABEL[r.kind]}${r.note ? ` · ${r.note}` : ""}`;
+    if (fix.type === "edit") {
+      setSheet({
+        row: fix.row,
+        draft: {
+          id: fix.row.s.id,
+          member_user_id: fix.row.s.member_user_id,
+          member_name: fix.row.s.member_name,
+          kind: fix.row.s.kind,
+          session_date: fix.date,
+          uses: fix.row.s.uses || 1,
+          moved_to: fix.row.s.moved_to,
+          no_entry_reason: null,
+          note: fix.row.s.note ?? "",
+        },
+        hint: `${from} · 날짜를 ${mdOf(fix.date)}로 바꿔 두었어요`,
+        onSaved: () => resolveAfterFix(r, fix),
+      });
+    } else if (fix.type === "new") {
+      setSheet({
+        draft: emptyDraft(today, { member_user_id: fix.member_user_id, member_name: fix.member_name, kind: "lesson", session_date: fix.date }),
+        lockMember: !!fix.member_user_id,
+        hint: `${from} · ${mdOf(fix.date)} 수업 기록을 넣어요`,
+        onSaved: () => resolveAfterFix(r, fix),
+      });
+    } else if (fix.type === "void") {
+      setSheet({
+        row: fix.row,
+        draft: {
+          id: fix.row.s.id,
+          member_user_id: fix.row.s.member_user_id,
+          member_name: fix.row.s.member_name,
+          kind: fix.row.s.kind,
+          session_date: fix.row.s.session_date,
+          uses: fix.row.s.uses || 1,
+          moved_to: fix.row.s.moved_to,
+          no_entry_reason: fix.row.s.no_entry_reason,
+          note: fix.row.s.note ?? "",
+        },
+        startRemoving: true,
+        removeReason: `오류 신고 — ${PT_REPORT_KIND_LABEL[r.kind]}${r.note ? ` · ${r.note}` : ""}`.slice(0, 100),
+        onSaved: () => resolveAfterFix(r, fix),
+      });
+    }
+  };
+  const reportSheets = canReport && (
+    <>
+      <PtReportSheet init={reportInit} onClose={() => setReportInit(null)} branch={branch} data={data} actions={ractions} />
+      <PtReportResolveSheet init={resolveInit} onClose={() => setResolveInit(null)} actions={ractions} />
+    </>
+  );
 
   const todo = showTodo && (
     <>
@@ -656,11 +866,31 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
         onRecord={setSheet}
         onEdit={editRow}
         onQuick={(u, kind) => quick(u.userId, u.name, kind, u.date)}
+        onGuessLesson={guessLesson}
         onReview={review}
+        onReport={openReport}
       />
     </>
   );
-  const sheetEl = <RecordSheet init={sheet} onClose={() => setSheet(null)} branch={branch} data={data} manage={manage} coachId={coachId} actions={actions} />;
+  const sheetEl = (
+    <RecordSheet
+      init={sheet}
+      onClose={() => setSheet(null)}
+      branch={branch}
+      data={data}
+      manage={manage}
+      coachId={coachId}
+      actions={actions}
+      onReport={
+        openReport
+          ? (row) => {
+              setSheet(null);
+              openReport(reportFromRow(row));
+            }
+          : undefined
+      }
+    />
+  );
   const sampleNote = data.sample && (
     <p className="mb-3 rounded-xl bg-secondary/60 px-3 py-2 text-label font-bold text-muted-foreground">예시 화면이에요 — 지어낸 회원이고, 눌러도 저장되지 않아요</p>
   );
@@ -674,6 +904,14 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
     return (
       <div className="mb-5">
         {sampleNote}
+        <PtReportList
+          reports={reports}
+          manage
+          res={res}
+          busy={ractions.resolve.isPending || actions.save.isPending}
+          onFix={fixReport}
+          onResolve={setResolveInit}
+        />
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-2xl border border-border p-4">
             <p className="text-label text-muted-foreground">{Number(ym.slice(5, 7))}월 차감 기준</p>
@@ -747,6 +985,7 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
         )}
         {payBelow && <p className="mb-1 mt-5 border-t border-border pt-4 text-label font-bold text-muted-foreground">수당 (차감 기록 기준)</p>}
         {sheetEl}
+        {reportSheets}
       </div>
     );
   }
@@ -833,10 +1072,26 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
           )}
         </>
       )}
+      {canReport && (
+        <>
+          <PtReportList reports={reports} manage={false} res={res} />
+          <div className="mt-4 flex items-center justify-between gap-2 rounded-xl border border-border px-3 py-2.5">
+            <p className="min-w-0 text-label text-muted-foreground">기록 · 차감 · 날짜가 이상하면</p>
+            <button
+              type="button"
+              onClick={() => setReportInit({ draft: emptyPtReportDraft() })}
+              className={cn(plainBtn, "flex shrink-0 items-center gap-1")}
+            >
+              <Flag className="h-4 w-4" /> 오류 신고
+            </button>
+          </div>
+        </>
+      )}
       <p className="mt-3 text-label text-muted-foreground">
         수업권 차감은 지금처럼 브로제이에서 해 주세요 — 앱은 차감을 하루 이틀 안에 읽어 기록과 맞춰 봐요
       </p>
       {sheetEl}
+      {reportSheets}
     </section>
   );
 };

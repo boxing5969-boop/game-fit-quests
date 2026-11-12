@@ -11,6 +11,8 @@
  *     ① 그날에서 이틀 앞까지의 기록 중 가장 이른 것(차감은 회원마다 하루~이틀에 한 번 읽는다)
  *     ② 없으면 더 오래된 기록 중 가장 이른 것 = 늦은 차감(보정)
  *     ③ 그래도 없으면 「사유 없는 차감」. 기록보다 앞선 차감은 그 기록과 짝짓지 않는다.
+ *   사유 없는 차감에는 출석으로 어림한 실제 수업 날(guess — 알아채기 전 이틀 안의 입장)을 붙인다(2026-11-12 — 저녁 수업 차감이
+ *     다음 날 잡혀 [기록하기]가 차감 날로 저장된 일). 기록 시트는 고른 날 입장이 없으면 앞 이틀의 입장을 알려 준다(ptNearEntry).
  */
 import { countsForPay, type OpsPtEvent } from "./opsPt";
 
@@ -159,6 +161,12 @@ export interface PtRow {
   heldByCheck: boolean;
 }
 
+/** 출석으로 어림한 실제 수업 날 — 그날 첫 입장 */
+export interface PtGuess {
+  date: string;
+  at: string;
+}
+
 /** 사유 없는 차감 — 짝지을 기록이 없는 차감 */
 export interface PtExtra {
   key: string;
@@ -166,9 +174,13 @@ export interface PtExtra {
   name: string;
   eventId: string;
   workDate: string;
+  /** 앱이 차감을 알아챈 시각 */
+  detectedAt: string;
   count: number;
   ticket: string | null;
   coachId: string | null;
+  /** 이 차감의 수업이었을 법한 입장(차감이 잡힌 날에서 이틀 앞까지 · 알아채기 전 · 그날 기록 없음) — 없으면 null */
+  guess: PtGuess | null;
 }
 
 /** 기록 없는 입장 — PT 회원이 들어왔는데 그날 기록이 없음 */
@@ -195,6 +207,60 @@ interface Slot {
   date: string;
   taken: boolean;
 }
+
+/** 시각 글 → ms (못 읽으면 NaN) — 서버(+00:00) · 예시(+09:00)가 섞여도 바르게 견준다 */
+const msOf = (iso: string) => Date.parse(iso);
+
+/** 회원|날짜 → 첫 입장 지도에서 한 회원의 입장(날짜 순) */
+const entriesOf = (entry: Map<string, string>, userId: string): PtGuess[] => {
+  const out: PtGuess[] = [];
+  for (const [k, at] of entry) {
+    const bar = k.lastIndexOf("|");
+    if (k.slice(0, bar) === userId) out.push({ date: k.slice(bar + 1), at });
+  }
+  return out.sort((a, b) => a.date.localeCompare(b.date));
+};
+
+/**
+ * 차감의 실제 수업 날 어림 — 차감이 잡힌 날(workDate)에서 이틀 앞까지의 입장 중, 앱이 차감을 알아채기 전(detectedAt)이고
+ *   skip(그날 기록이 이미 있음 등)이 아닌 가장 늦은 것. 차감은 회원마다 하루~이틀에 한 번 읽혀 저녁 수업이 다음 날로 잡힌다.
+ */
+export const ptGuessClassDay = (
+  entries: PtGuess[],
+  workDate: string,
+  detectedAt: string | null | undefined,
+  skip: (date: string) => boolean = () => false,
+): PtGuess | null => {
+  const until = msOf(detectedAt ?? "");
+  const limit = Number.isNaN(until) ? msOf(`${addDays(workDate, 1)}T00:00:00+09:00`) : until;
+  let best: PtGuess | null = null;
+  for (const e of entries) {
+    if (e.date > workDate || dayDiff(e.date, workDate) > PT_LAG_DAYS) continue;
+    const t = msOf(e.at);
+    if (Number.isNaN(t) || t >= limit || skip(e.date)) continue;
+    if (!best || e.date > best.date) best = e;
+  }
+  return best;
+};
+
+/**
+ * 고른 날 출석이 없을 때 — 그 앞 이틀 안의 입장(그날 기록이 없는 것) 중 가장 늦은 것.
+ *   기록 시트가 "11/11(수) 11:52 입장이 있어요 · 그날로 바꾸기"를 띄운다(날짜를 잘못 고르는 일 막기).
+ */
+export const ptNearEntry = (
+  attendance: PtRecAttendance[],
+  userId: string | null,
+  date: string,
+  hasRecord: (date: string) => boolean = () => false,
+): PtGuess | null => {
+  if (!userId || !date) return null;
+  let best: PtGuess | null = null;
+  for (const a of attendance) {
+    if (a.user_id !== userId || a.date >= date || dayDiff(a.date, date) > PT_LAG_DAYS || hasRecord(a.date)) continue;
+    if (!best || a.date > best.date || (a.date === best.date && a.at < best.at)) best = { date: a.date, at: a.at };
+  }
+  return best;
+};
 
 /** 기록 · 출석 · 차감을 맞춰 본다 */
 export const matchPtRecord = (data: PtRecordData): PtMatchResult => {
@@ -276,9 +342,11 @@ export const matchPtRecord = (data: PtRecordData): PtMatchResult => {
         name: (u.e.member_user_id && nameById.get(u.e.member_user_id)) || u.e.member_name,
         eventId: u.e.id,
         workDate: u.e.work_date,
+        detectedAt: u.e.detected_at,
         count: u.left,
         ticket: u.e.ticket_name,
         coachId: u.e.coach_staff_id,
+        guess: null,
       });
     }
   }
@@ -286,6 +354,24 @@ export const matchPtRecord = (data: PtRecordData): PtMatchResult => {
   // 줄 상태
   const usedOn = new Set<string>(); // 회원|날짜 — 그날 어떤 기록이든 있음
   for (const r of rows) usedOn.add(`${r.key}|${r.s.session_date}`);
+
+  // 사유 없는 차감 — 출석으로 실제 수업 날을 어림한다(2026-11-12: 저녁 수업의 차감이 다음 날 잡혀
+  //   [기록하기]가 차감 날로 채워진 채 저장된 일). 이른 차감부터, 한 입장은 한 차감에만.
+  const minDay = addDays(startedOn, -14);
+  const guessed = new Set<string>();
+  for (const x of [...extras].sort((a, b) => a.workDate.localeCompare(b.workDate) || a.detectedAt.localeCompare(b.detectedAt))) {
+    if (!x.userId) continue;
+    const g = ptGuessClassDay(
+      entriesOf(entry, x.userId),
+      x.workDate,
+      x.detectedAt,
+      (d) => d < minDay || usedOn.has(`${x.key}|${d}`) || guessed.has(`${x.key}|${d}`),
+    );
+    if (g) {
+      x.guess = g;
+      guessed.add(`${x.key}|${g.date}`);
+    }
+  }
   // 수업권이 끝나 지점장 확인을 기다리는 차감(회원 → 가장 늦은 날)
   const checkOn = new Map<string, string>();
   for (const e of data.events ?? []) {
@@ -310,12 +396,12 @@ export const matchPtRecord = (data: PtRecordData): PtMatchResult => {
     }
   }
 
-  // 기록 없는 입장
+  // 기록 없는 입장 — 사유 없는 차감이 이미 그날을 묻고 있으면(어림한 날) 한 번만 묻는다
   const unrecorded: PtUnrecorded[] = [];
   for (const [k, at] of entry) {
     const [userId, date] = k.split("|");
     if (date < startedOn || date > today) continue;
-    if (usedOn.has(`${userId}|${date}`)) continue;
+    if (usedOn.has(`${userId}|${date}`) || guessed.has(`${userId}|${date}`)) continue;
     unrecorded.push({ key: userId, userId, name: nameById.get(userId) ?? "회원", date, at, isToday: date === today });
   }
   unrecorded.sort((a, b) => b.date.localeCompare(a.date) || a.at.localeCompare(b.at));
