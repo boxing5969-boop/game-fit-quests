@@ -6,7 +6,7 @@
  *   대표님 · 지점장님: 「이 템플릿으로 오늘 프로그램 만들기」 → 오늘 프로그램 시트가 템플릿으로 채워져 열린다
  *   대표님: 순서마다 「참고 영상 넣기 · 바꾸기 · 빼기」(영상은 모든 지점 공통 — class_template_videos)
  */
-import { Fragment, useMemo, useRef, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { ChevronDown, Loader2, Play, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BLOCK_LABEL } from "@/services/strategyService";
@@ -60,29 +60,10 @@ interface Props {
 
 export default function ClassTemplateList({ canDirect, isHq = false, videos = [], busy = null, onUse, onPlay, onAttach, onClear, initialOpenId = null }: Props) {
   const [openId, setOpenId] = useState<string | null>(initialOpenId);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const pending = useRef<{ t: ClassTemplate; step: number } | null>(null);
   const byKey = useMemo(() => new Map(videos.map((v) => [templateVideoKey(v.template_id, v.step), v])), [videos]);
-
-  const pick = (t: ClassTemplate, step: number) => {
-    pending.current = { t, step };
-    fileRef.current?.click();
-  };
 
   return (
     <div className="space-y-3">
-      <input
-        ref={fileRef}
-        type="file"
-        accept="video/*"
-        className="hidden"
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          const p = pending.current;
-          e.target.value = "";
-          if (f && p && onAttach) onAttach(p.t, p.step, f);
-        }}
-      />
       {CLASS_TEMPLATES.map((t) => {
         const open = openId === t.id;
         const nVideos = [TEMPLATE_OVERVIEW_STEP, ...t.blocks.map((_, i) => i + 1)].filter((s) => byKey.has(templateVideoKey(t.id, s))).length;
@@ -123,7 +104,7 @@ export default function ClassTemplateList({ canDirect, isHq = false, videos = []
                   isHq={isHq}
                   busy={busy === templateVideoKey(t.id, TEMPLATE_OVERVIEW_STEP)}
                   onPlay={onPlay}
-                  onPick={() => pick(t, TEMPLATE_OVERVIEW_STEP)}
+                  onFile={(f) => onAttach?.(t, TEMPLATE_OVERVIEW_STEP, f)}
                   onClear={onClear}
                 />
 
@@ -158,11 +139,12 @@ export default function ClassTemplateList({ canDirect, isHq = false, videos = []
                             </p>
                           )}
                           <StepVideo
+                            step={step}
                             video={v}
                             isHq={isHq}
                             busy={busy === key}
                             onPlay={onPlay ? (x) => onPlay(t, step, x) : undefined}
-                            onPick={() => pick(t, step)}
+                            onFile={(f) => onAttach?.(t, step, f)}
                             onClear={onClear ? () => onClear(t, step) : undefined}
                           />
                         </div>
@@ -231,6 +213,37 @@ const MetaChip = ({ children, tone = "gray" }: { children: React.ReactNode; tone
   </span>
 );
 
+/** 영상 고르기 칸 — 자리마다 input 하나(label 안). 누르면 그 자리 파일 고르기, 자동화 도구는 input 에 바로 파일을 넣는다 */
+const FilePick = ({
+  busy,
+  onFile,
+  label,
+  className,
+  children,
+}: {
+  busy: boolean;
+  onFile: (f: File) => void;
+  label: string;
+  className: string;
+  children: React.ReactNode;
+}) => (
+  <label className={cn(className, busy ? "pointer-events-none opacity-60" : "cursor-pointer")}>
+    <input
+      type="file"
+      accept="video/*"
+      aria-label={label}
+      disabled={busy}
+      className="sr-only"
+      onChange={(e) => {
+        const f = e.target.files?.[0];
+        e.target.value = "";
+        if (f) onFile(f);
+      }}
+    />
+    {children}
+  </label>
+);
+
 /** 맨 위 — 이 템플릿으로 한 실제 수업 요약 영상 */
 const OverviewTile = ({
   t,
@@ -238,7 +251,7 @@ const OverviewTile = ({
   isHq,
   busy,
   onPlay,
-  onPick,
+  onFile,
   onClear,
 }: {
   t: ClassTemplate;
@@ -246,21 +259,21 @@ const OverviewTile = ({
   isHq: boolean;
   busy: boolean;
   onPlay?: (t: ClassTemplate, step: number, v: ClassTemplateVideo) => void;
-  onPick: () => void;
+  onFile: (f: File) => void;
   onClear?: (t: ClassTemplate, step: number) => void;
 }) => {
   if (!video && !isHq) return null;
   if (!video) {
     return (
-      <button
-        type="button"
-        disabled={busy}
-        onClick={onPick}
-        className="mt-4 flex h-16 w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border text-body font-bold text-muted-foreground active:scale-[0.99] disabled:opacity-60"
+      <FilePick
+        busy={busy}
+        onFile={onFile}
+        label="수업 요약 영상 넣기"
+        className="mt-4 flex h-16 w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border text-body font-bold text-muted-foreground active:scale-[0.99]"
       >
         {busy ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <Plus className="h-5 w-5" aria-hidden />}
         {busy ? "영상 올리는 중…" : "수업 요약 영상 넣기"}
-      </button>
+      </FilePick>
     );
   }
   const len = formatClipLength(video.seconds);
@@ -279,39 +292,48 @@ const OverviewTile = ({
           <span className="mt-0.5 block text-label font-semibold opacity-75">{video.title || "이 템플릿으로 한 실제 수업 — 순서를 한 번에"}</span>
         </span>
       </button>
-      {isHq && <HqLinks busy={busy} onPick={onPick} onClear={onClear ? () => onClear(t, TEMPLATE_OVERVIEW_STEP) : undefined} />}
+      {isHq && (
+        <HqLinks
+          busy={busy}
+          onFile={onFile}
+          pickLabel="수업 요약 영상 바꾸기"
+          onClear={onClear ? () => onClear(t, TEMPLATE_OVERVIEW_STEP) : undefined}
+        />
+      )}
     </div>
   );
 };
 
 /** 순서마다 — 참고 영상 단추 (대표님은 넣기 · 바꾸기 · 빼기) */
 const StepVideo = ({
+  step,
   video,
   isHq,
   busy,
   onPlay,
-  onPick,
+  onFile,
   onClear,
 }: {
+  step: number;
   video: ClassTemplateVideo | null;
   isHq: boolean;
   busy: boolean;
   onPlay?: (v: ClassTemplateVideo) => void;
-  onPick: () => void;
+  onFile: (f: File) => void;
   onClear?: () => void;
 }) => {
   if (!video) {
     if (!isHq) return null;
     return (
-      <button
-        type="button"
-        disabled={busy}
-        onClick={onPick}
-        className="mt-3 inline-flex h-11 items-center gap-1.5 rounded-full border-2 border-dashed border-border px-4 text-body font-bold text-muted-foreground active:scale-[0.98] disabled:opacity-60"
+      <FilePick
+        busy={busy}
+        onFile={onFile}
+        label={`${step}번 순서 참고 영상 넣기`}
+        className="mt-3 inline-flex h-11 items-center gap-1.5 rounded-full border-2 border-dashed border-border px-4 text-body font-bold text-muted-foreground active:scale-[0.98]"
       >
         {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Plus className="h-4 w-4" aria-hidden />}
         {busy ? "올리는 중…" : "참고 영상 넣기"}
-      </button>
+      </FilePick>
     );
   }
   const len = formatClipLength(video.seconds);
@@ -325,12 +347,22 @@ const StepVideo = ({
         <Play className="h-4 w-4 fill-current" aria-hidden />
         참고 영상{len ? ` · ${len}` : ""}
       </button>
-      {isHq && <HqLinks busy={busy} onPick={onPick} onClear={onClear} />}
+      {isHq && <HqLinks busy={busy} onFile={onFile} pickLabel={`${step}번 순서 참고 영상 바꾸기`} onClear={onClear} />}
     </div>
   );
 };
 
-const HqLinks = ({ busy, onPick, onClear }: { busy: boolean; onPick: () => void; onClear?: () => void }) => (
+const HqLinks = ({
+  busy,
+  onFile,
+  pickLabel,
+  onClear,
+}: {
+  busy: boolean;
+  onFile: (f: File) => void;
+  pickLabel: string;
+  onClear?: () => void;
+}) => (
   <span className="mt-2 flex items-center gap-3 text-label font-bold text-muted-foreground">
     {busy ? (
       <span className="inline-flex items-center gap-1">
@@ -338,9 +370,9 @@ const HqLinks = ({ busy, onPick, onClear }: { busy: boolean; onPick: () => void;
       </span>
     ) : (
       <>
-        <button type="button" onClick={onPick} className="underline underline-offset-2 active:opacity-60">
+        <FilePick busy={busy} onFile={onFile} label={pickLabel} className="underline underline-offset-2 active:opacity-60">
           영상 바꾸기
-        </button>
+        </FilePick>
         {onClear && (
           <button type="button" onClick={onClear} className="underline underline-offset-2 active:opacity-60">
             빼기

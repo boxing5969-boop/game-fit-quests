@@ -8,7 +8,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { translateError } from "@/lib/errorMessages";
-import { templateVideoPath } from "@/lib/classTemplates";
+import { templateVideoPath, videoTitleFromFileName } from "@/lib/classTemplates";
 import { STRATEGY_VIDEO_BUCKET, STRATEGY_VIDEO_MAX_BYTES, videoContentType } from "@/services/strategyService";
 
 export interface ClassTemplateVideo {
@@ -106,7 +106,7 @@ export const useAttachClassTemplateVideo = () => {
         p_template: templateId,
         p_step: step,
         p_storage_path: path,
-        p_title: title ?? null,
+        p_title: title ?? videoTitleFromFileName(file.name),
         p_seconds: seconds ? Math.round(seconds) : null,
       });
       if (error) throw new Error(translateError(error, "영상을 붙이지 못했어요 — 다시 눌러 주세요"));

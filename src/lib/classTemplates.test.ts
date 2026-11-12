@@ -9,6 +9,7 @@ import {
   templateVideoKey,
   templateVideoPath,
   templateVideoTitle,
+  videoTitleFromFileName,
 } from "./classTemplates";
 
 // strategyService 의 BlockKind 와 같게 (서비스를 불러오면 Supabase 연결이 필요해서 여기 적어 둔다)
@@ -85,6 +86,16 @@ describe("순서마다 참고 영상", () => {
     expect(formatClipLength(60)).toBe("1:00");
     expect(formatClipLength(null)).toBe("");
     expect(formatClipLength(0)).toBe("");
+  });
+
+  it("올린 파일 이름 → 영상 제목 (카메라 이름은 빼기)", () => {
+    expect(videoTitleFromFileName("11월 11일 낮 1시 수업 — 3분 요약.mp4")).toBe("11월 11일 낮 1시 수업 — 3분 요약");
+    expect(videoTitleFromFileName("미트_두_콤보.mov")).toBe("미트 두 콤보");
+    expect(videoTitleFromFileName("dji_mimo_20261111_130102_0520_video.mp4")).toBeNull();
+    expect(videoTitleFromFileName("IMG_1234.MOV")).toBeNull();
+    expect(videoTitleFromFileName("20261111.mp4")).toBeNull();
+    expect(videoTitleFromFileName("")).toBeNull();
+    expect((videoTitleFromFileName(`${"가".repeat(100)}.mp4`) ?? "").length).toBe(80);
   });
 
   it("영상 창 제목 — 전체 흐름 · 블록 · 없는 블록", () => {

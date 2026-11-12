@@ -107,6 +107,16 @@ export function formatClipLength(seconds: number | null | undefined): string {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
+/** 올린 파일 이름 → 영상 제목 (확장자 · 밑줄 정리, 80자). 카메라가 붙인 이름(dji_ · IMG_ · 숫자뿐)이면 제목 없음 */
+export function videoTitleFromFileName(name: string | null | undefined): string | null {
+  const base = (name ?? "").replace(/\.[a-z0-9]{2,4}$/i, "").replace(/[_]+/g, " ").replace(/\s+/g, " ").trim();
+  if (!base) return null;
+  if (/^(dji|img|vid|mov|pxl|gopr|gh\d|dsc|kakaotalk|screen ?recording|video|clip)\b.*\d{3,}/i.test(base)) return null;
+  if (!/[가-힣]/.test(base) && /\d{6,}/.test(base)) return null;
+  if (!/[가-힣a-z]/i.test(base)) return null;
+  return base.slice(0, 80);
+}
+
 /** 영상 창 제목 — 전체 흐름이면 '템플릿 이름 · 수업 요약', 블록이면 그 블록 이름 */
 export function templateVideoTitle(t: ClassTemplate, step: number): string {
   if (step === TEMPLATE_OVERVIEW_STEP) return `${t.title} · 수업 요약`;
