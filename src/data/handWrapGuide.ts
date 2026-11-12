@@ -10,8 +10,19 @@
  *       붕대가 차례로 감기는 960x720 애니메이션(H.264) — 시작(초록 점) · 끝(주황 점) · 바퀴 수 · 손바닥 쪽으로 지나가는 길(남색 점선)
  *       · '손가락 사이로 넣어요' · '손바닥 쪽' 같은 표시가 그림 안에 들어 있다 (앱이 위에 따로 그리지 않는다).
  *     → 오른손(기본) · 왼손 영상을 따로 만들었다 (stepNN.mp4 · stepNN_l.mp4) — 거울로 뒤집지 않아 글자가 바르게 보인다.
- *     → 위 큰 영상(대표님 10-20 영상 '영상으로 보기')은 화면에서 내렸다. 파일(public/handwrap/front · side)은 되살리기 쉽게 남겨 둠.
+ *     → 위 큰 영상(대표님 10-20 영상 '영상으로 보기')은 화면에서 내렸다 (2026-11-12 원본에서 다시 만들어 되살림 — 아래).
  *     만든 도구: 손 그림 SVG + 단계별 붕대 길(Playwright로 한 장씩 찍어 ffmpeg) — 다시 만들면 STEP_MEDIA_VERSION 을 올린다.
+ *
+ *   2026-11-12 대표님: "붕대 감는 거 연습하는 거 내가 찍어 논 영상 있잖아 — 영상도 나오게 해 주고 현재 있는 메뉴얼도 있게 해 주고,
+ *     회원님들이 최대한 쉽게 붕대 감는 것을 학습할 수 있도록 글과 영상 이미지 활용해서 디자인해 줘"
+ *     → 10-20 원본(1080p)에서 다시 만든 '실제 영상'을 되살렸다 (public/handwrap/real · scripts/make-handwrap-real.py):
+ *       · 전체 영상 2편 — '내 눈으로'(앞에서 찍은 영상을 180도 = 내 손을 내려다보는 방향, 44초) · '옆에서'(40초)
+ *       · 단계별 13편 — 전체 영상을 12단계 + 완성으로 자른 짧은 반복 영상 (끝 모습에서 잠깐 멈춤) + 끝 장면 사진
+ *       · 큰 흐름 사진 4장(손목 3바퀴 → 정권 3바퀴 → 손가락 사이 3번 → 마무리) · 완성 확인 사진 2장
+ *       영상에는 왼손을 감는 모습이 찍혀 있다 — 오른손을 고르면 화면에서 좌우를 뒤집는다(영상 안에 글자가 없다).
+ *       영상을 한 장씩 확인: 손목 3번 · 정권 3번 · 손가락 사이 3칸(칸마다 대각선으로 내려와 손목 한 바퀴) — 12단계 설명서와 같은 순서 · 같은 방향.
+ *     → 12단계 그림 설명서는 그대로 — 단계 상세에서 '실제 영상 | 그림'을 바꿔 본다(처음은 실제 영상, 절반 속도).
+ *     → 예전 public/handwrap/front · side(720p 전체 화면)는 지웠다 (새 파일이 같은 원본으로 만든 더 선명한 판).
  *
  *   설명서 속 방법(오른손 손등을 내려다보면 엄지가 왼쪽): 엄지에 걸기 → 손목 감기 → 손등을 ↗ 대각선으로 지나 정권(주먹 마디) →
  *     정권 감기 → ↘ 대각선으로 다시 손목(손등 X자) → 손목 한 바퀴 → 새끼 쪽 손가락 사이로 넣어 손바닥을 건너 엄지·검지 사이로 →
@@ -52,7 +63,16 @@ export interface HandWrapStep {
   dir: string;
   /** 손마다 애니메이션 · 끝 장면(포스터 — 움직임 줄이기면 이것만) · 작은 그림(360px, 위 글 띠 없이) */
   media: Record<HandSide, { clip: string; image: string; thumb: string }>;
+  /** 큰 흐름 — 1 손목 · 2 정권 · 3 손가락 사이 · 4 마무리 (HANDWRAP_STAGES) */
+  stage: 1 | 2 | 3 | 4;
+  /** 전체 영상('내 눈으로')에서 이 단계가 시작하는 초 */
+  at: number;
+  /** 실제 영상 — 이 단계만 자른 반복 영상 · 끝 장면 (왼손이 찍혀 있다 — 오른손은 화면에서 좌우 뒤집기) */
+  real: { clip: string; image: string };
 }
+
+/** 글 · 그림만 적는 칸 — 큰 흐름 · 영상 초 · 실제 영상 주소는 아래 표에서 붙인다 */
+type HandWrapStepText = Omit<HandWrapStep, "stage" | "at" | "real">;
 
 /** 단계 그림 고친 판 — 다시 만들면 올린다. 폰이 예전 파일을 그대로 쓰지 않게 (2026-10-30 12단계 그림으로 다시) */
 export const STEP_MEDIA_VERSION = "20261030-12";
@@ -66,6 +86,28 @@ const stepMedia = (n: number): HandWrapStep["media"] => {
   };
   return { right: one(""), left: one("_l") };
 };
+
+// ── 실제 영상 (2026-11-12) — 대표님 10-20 촬영 원본에서 다시 만든 판 ─────────────────────────────
+
+/** 실제 영상 고친 판 — 다시 만들면 올린다 (scripts/make-handwrap-real.py) */
+export const REAL_MEDIA_VERSION = "20261112-1";
+
+const realUrl = (file: string) => `/handwrap/real/${file}?v=${REAL_MEDIA_VERSION}`;
+
+/** 단계별 실제 영상 주소 — public/handwrap/real/stepNN(.mp4 · .webp) */
+const stepReal = (n: number): HandWrapStep["real"] => {
+  const id = `step${String(n).padStart(2, "0")}`;
+  return { clip: realUrl(`${id}.mp4`), image: realUrl(`${id}.webp`) };
+};
+
+/** 실제 영상에 찍힌 손 — 다른 손을 고르면 화면에서 좌우를 뒤집어 보여 준다 */
+export const HANDWRAP_REAL_HAND: HandSide = "left";
+export const handWrapRealFlip = (hand: HandSide): boolean => hand !== HANDWRAP_REAL_HAND;
+
+/** 단계 상세에서 보는 방법 — 실제 영상 · 그림 */
+export type HandWrapView = "real" | "draw";
+export const HANDWRAP_DEFAULT_VIEW: HandWrapView = "real";
+export const HANDWRAP_VIEW_LABEL: Record<HandWrapView, string> = { real: "실제 영상", draw: "그림" };
 
 /** 그림을 보는 방향 — 내 손등을 내려다본 모습 */
 export const HANDWRAP_VIEW_NOTE: Record<HandSide, string> = {
@@ -84,8 +126,10 @@ export const HANDWRAP_STEP_SPEEDS: ReadonlyArray<{ rate: number; label: string }
   { rate: 1, label: "보통" },
 ];
 export const HANDWRAP_DEFAULT_STEP_RATE = 1;
+/** 실제 영상은 손이 빨라서 처음엔 절반 속도 (2026-11-12) */
+export const HANDWRAP_DEFAULT_REAL_RATE = 0.5;
 
-export const HANDWRAP_STEPS: readonly HandWrapStep[] = [
+const STEP_TEXTS: readonly HandWrapStepText[] = [
   {
     title: "엄지에 걸기",
     sheet: "엄지손가락에 걸어주세요",
@@ -272,6 +316,18 @@ export const HANDWRAP_STEPS: readonly HandWrapStep[] = [
   },
 ];
 
+/** 단계마다 큰 흐름 — 1~2 손목 · 3~6 정권 · 7~12 손가락 사이 · 완성 = 마무리 */
+const STEP_STAGE: ReadonlyArray<HandWrapStep["stage"]> = [1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4];
+/** 단계마다 전체 영상('내 눈으로')에서 시작하는 초 — 영상을 0.1초씩 넘겨 보며 잡았다. 영상을 다시 만들면 같이 고친다 */
+const STEP_AT: readonly number[] = [0, 2.75, 7.05, 8, 12.72, 15.2, 17.45, 19.15, 20.62, 24.52, 27.12, 30.62, 41.35];
+
+export const HANDWRAP_STEPS: readonly HandWrapStep[] = STEP_TEXTS.map((s, i) => ({
+  ...s,
+  stage: STEP_STAGE[i],
+  at: STEP_AT[i],
+  real: stepReal(i + 1),
+}));
+
 /** 번호 칸 이름 — 완성은 번호 대신 '완성' */
 export const handWrapStepLabel = (i: number): string => (HANDWRAP_STEPS[i]?.final ? "완성" : `${i + 1}단계`);
 
@@ -283,15 +339,17 @@ export const HANDWRAP_NUMBERED_STEPS = HANDWRAP_STEPS.filter((s) => !s.final).le
 export interface HandWrapMistake {
   wrong: string;
   fix: string;
+  /** 바르게 하는 모습이 나오는 단계 (0부터) — 있으면 '○단계 보기'로 그 단계 영상을 연다 (2026-11-12) */
+  step?: number;
 }
 
 export const HANDWRAP_MISTAKES: readonly HandWrapMistake[] = [
-  { wrong: "고리를 엄지에 안 걸고 시작해요", fix: "고리를 엄지에 걸어야 감는 동안 붕대가 빠지지 않고 처음 자리가 잡혀요." },
-  { wrong: "손가락을 오므리고 정권을 감아요", fix: "손가락을 쫙 펴고 감아야 주먹을 쥐었을 때 너무 조이지 않아요." },
-  { wrong: "손가락 사이를 지나고 손목을 안 감아요", fix: "손가락 사이를 하나 지날 때마다 손목을 한 바퀴 감아야 붕대가 밀리지 않아요." },
+  { wrong: "고리를 엄지에 안 걸고 시작해요", fix: "고리를 엄지에 걸어야 감는 동안 붕대가 빠지지 않고 처음 자리가 잡혀요.", step: 0 },
+  { wrong: "손가락을 오므리고 정권을 감아요", fix: "손가락을 쫙 펴고 감아야 주먹을 쥐었을 때 너무 조이지 않아요.", step: 3 },
+  { wrong: "손가락 사이를 지나고 손목을 안 감아요", fix: "손가락 사이를 하나 지날 때마다 손목을 한 바퀴 감아야 붕대가 밀리지 않아요.", step: 8 },
   { wrong: "있는 힘껏 세게 감아요", fix: "손끝이 저리거나 하얘지면 바로 풀고 다시 — 너무 느슨하지도, 너무 꽉 조이지도 않게." },
-  { wrong: "벨크로를 손목 안쪽(손바닥 쪽)에 붙여요", fix: "벨크로는 손목 바깥쪽(손등 쪽)에 붙여야 장갑 안에서 쓸리지 않아요." },
-  { wrong: "붕대가 꼬이거나 주름진 채로 감아요", fix: "붕대를 평평하게 펴면서 감고, 손가락 사이로 넣을 때도 펴서 넣어요." },
+  { wrong: "벨크로를 손목 안쪽(손바닥 쪽)에 붙여요", fix: "벨크로는 손목 바깥쪽(손등 쪽)에 붙여야 장갑 안에서 쓸리지 않아요.", step: 11 },
+  { wrong: "붕대가 꼬이거나 주름진 채로 감아요", fix: "붕대를 평평하게 펴면서 감고, 손가락 사이로 넣을 때도 펴서 넣어요.", step: 6 },
 ];
 
 /** 코치 영상 플레이어 아래 '핵심 포인트' — 12단계 설명서와 같은 순서 */
@@ -308,3 +366,105 @@ export const handWrapStepParam = (raw: string | null): number | null => {
   const n = Number(raw);
   return Number.isInteger(n) && n >= 1 && n <= HANDWRAP_STEPS.length ? n - 1 : null;
 };
+
+// ── 큰 흐름 3 · 3 · 3 (2026-11-12) — 12단계를 네 덩이로 묶어 외우기 쉽게 ─────────────────────────────
+
+export interface HandWrapStage {
+  /** 한 줄 이름 — '손목 3바퀴' */
+  name: string;
+  /** 칸 밑 두 줄 — 무엇을 */
+  title: string;
+  /** 칸 밑 두 줄 — 몇 번 */
+  count: string;
+  /** 왜 하는지 한 줄 */
+  why: string;
+  /** 실제 사진 (정사각형 400px · 왼손 — 오른손은 좌우 뒤집기) */
+  photo: string;
+}
+
+export const HANDWRAP_STAGES: readonly HandWrapStage[] = [
+  { name: "손목 3바퀴", title: "손목", count: "3바퀴", why: "손목을 단단히 잡아 줘요", photo: realUrl("stage1.webp") },
+  { name: "정권 3바퀴", title: "정권", count: "3바퀴", why: "주먹 마디(정권)를 두툼하게 덮어요", photo: realUrl("stage2.webp") },
+  { name: "손가락 사이 3번", title: "손가락 사이", count: "3번", why: "붕대가 밀리지 않게 잡아 줘요", photo: realUrl("stage3.webp") },
+  { name: "손목에서 마무리", title: "마무리", count: "손목에서", why: "남은 붕대는 손목에 다 감고 벨크로는 손등 쪽에 붙여요", photo: realUrl("stage4.webp") },
+];
+
+/** 큰 흐름을 한 줄로 — 영상을 틀기 전 (왜 이 순서인지) */
+export const HANDWRAP_STAGES_LINE = "손목을 잡고 → 주먹 마디(정권)를 덮고 → 손가락 사이로 고정해요";
+
+/** 큰 흐름 한 줄 이름 — '손목 3바퀴' */
+export const handWrapStageName = (i: number): string => HANDWRAP_STAGES[i]?.name ?? "";
+
+/** 동그라미 숫자 ① ~ ④ */
+export const handWrapStageMark = (i: number): string => ["①", "②", "③", "④"][i] ?? "";
+
+// ── 전체 영상 (2026-11-12) ─────────────────────────────
+
+export type HandWrapAngle = "mine" | "side";
+
+export interface HandWrapFullVideo {
+  label: string;
+  /** 다른 각도에서 이 각도로 바꾸는 단추 글 */
+  switchLabel: string;
+  src: string;
+  poster: string;
+  /** 영상 길이(초) — 끝 모습에서 멈춘 시간까지 */
+  duration: number;
+  /** 화면에 적는 길이 (감는 데 걸린 시간) */
+  seconds: number;
+  /** 큰 흐름 4개가 시작하는 초 */
+  stageAt: readonly number[];
+  /** 단계별 초를 아는 영상인가 — '내 눈으로'만 (단계 영상을 여기서 잘랐다) */
+  steps: boolean;
+}
+
+export const HANDWRAP_FULL: Record<HandWrapAngle, HandWrapFullVideo> = {
+  mine: {
+    label: "내 눈으로",
+    switchLabel: "내 눈으로 보기",
+    src: realUrl("full.mp4"),
+    poster: realUrl("full.webp"),
+    duration: 45.1,
+    seconds: 44,
+    stageAt: [0, 7.05, 17.45, 36.6],
+    steps: true,
+  },
+  side: {
+    label: "옆에서",
+    switchLabel: "옆에서 보기",
+    src: realUrl("side.mp4"),
+    poster: realUrl("side.webp"),
+    duration: 40.8,
+    seconds: 40,
+    stageAt: [0, 2.7, 12.9, 35.3],
+    steps: false,
+  },
+};
+
+/** 시작 초 목록에서 t초가 몇 번째 칸인가 (0부터 · 맨 앞보다 이르면 0) */
+export const handWrapIndexAt = (starts: readonly number[], t: number): number => {
+  let idx = 0;
+  for (let i = 0; i < starts.length; i += 1) {
+    if (t >= starts[i]) idx = i;
+    else break;
+  }
+  return idx;
+};
+
+/** 전체 영상('내 눈으로') t초에 나오는 단계 (0부터) */
+export const handWrapStepAt = (t: number): number => handWrapIndexAt(STEP_AT, t);
+
+// ── 완성 확인 (2026-11-12) — 다 감은 뒤 스스로 보는 다섯 가지 ─────────────────────────────
+
+export const HANDWRAP_DONE_CHECKS: readonly string[] = [
+  "정권(주먹 마디)이 두툼하게 덮였어요",
+  "손등에 X자가 보여요",
+  "손가락 사이로 붕대 세 줄이 지나가요",
+  "벨크로가 손목 바깥쪽(손등 쪽)에 있어요",
+  "주먹을 쥐었다 펴도 손끝이 저리지 않아요",
+];
+
+export const HANDWRAP_DONE_PHOTOS: ReadonlyArray<{ src: string; label: string }> = [
+  { src: realUrl("done_back.webp"), label: "손등 쪽" },
+  { src: realUrl("done_fist.webp"), label: "주먹 쥔 모습" },
+];
