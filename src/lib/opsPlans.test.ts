@@ -8,8 +8,14 @@ import {
   draftError,
   draftFromPlan,
   draftPayload,
+  dayMarks,
+  marksLine,
+  mergeWeeks,
   mondayOf,
+  monthMondays,
   newDraft,
+  planMonthLabel,
+  presentMarks,
   occursOn,
   planWhenLabel,
   recentLine,
@@ -246,5 +252,92 @@ describe("최근 바뀐 일정", () => {
     expect(agoLabel("2026-11-02T04:48:00Z", now)).toBe("12분 전");
     expect(agoLabel("2026-11-02T02:00:00Z", now)).toBe("3시간 전");
     expect(agoLabel("2026-10-31T05:00:00Z", now)).toBe("2일 전");
+  });
+});
+
+describe("한 달 달력", () => {
+  it("달력에 보이는 주 — 11월은 6주, 월요일에 시작하는 28일 2월은 4주", () => {
+    expect(monthMondays("2026-11")).toEqual(["2026-10-26", "2026-11-02", "2026-11-09", "2026-11-16", "2026-11-23", "2026-11-30"]);
+    expect(monthMondays("2027-02")).toEqual(["2027-02-01", "2027-02-08", "2027-02-15", "2027-02-22"]);
+    expect(monthMondays("2026-12")[0]).toBe("2026-11-30");
+    expect(monthMondays("잘못")).toEqual([]);
+  });
+
+  it("달 이름 — 올해는 달만, 다른 해는 해까지", () => {
+    expect(planMonthLabel("2026-11", "2026-11-12")).toBe("11월");
+    expect(planMonthLabel("2027-01", "2026-11-12")).toBe("2027년 1월");
+  });
+
+  const base = {
+    branch: SL,
+    branches: [{ branch: SL, manage: true, mine: true }],
+    manage: true,
+    hq: true,
+    me: "u1",
+    today: "2026-11-12",
+    now_hm: "10:00",
+    recent: [],
+  };
+  const repeat = plan({ id: "rep", user_id: "u1", kind: "class", start_on: "2026-11-02", repeat_weekdays: [1, 3] });
+  const w1: PlansWeek = {
+    ...base,
+    from: "2026-11-09",
+    to: "2026-11-15",
+    members: [
+      { key: "u1", user_id: "u1", name: "가", title: "대표", me: true },
+      { key: "u2", user_id: "u2", name: "나", title: "코치", me: false },
+    ],
+    plans: [repeat, plan({ id: "off1", user_id: "u2", kind: "off", start_on: "2026-11-13", all_day: true })],
+    shifts: [shift({ key: "u2", weekday: 5 })],
+    offs: [{ key: "u2", branch: SL, date: "2026-11-13" }],
+  };
+  const w0: PlansWeek = {
+    ...base,
+    from: "2026-11-02",
+    to: "2026-11-08",
+    members: [
+      { key: "u1", user_id: "u1", name: "가", title: "대표", me: true },
+      { key: "u3", user_id: "u3", name: "다", title: "코치", me: false },
+    ],
+    plans: [repeat, plan({ id: "out1", user_id: "u3", kind: "out", start_on: "2026-11-06", all_day: true })],
+    shifts: [shift({ key: "u2", weekday: 5 })],
+    offs: [],
+  };
+
+  it("주를 합치기 — 반복 일정 · 시간표는 하나만, 사람은 앞 주 순서부터, 기간은 처음 ~ 끝", () => {
+    const m = mergeWeeks([w1, w0]);
+    expect(m?.from).toBe("2026-11-02");
+    expect(m?.to).toBe("2026-11-15");
+    expect(m?.members.map((x) => x.key)).toEqual(["u1", "u3", "u2"]);
+    expect(m?.plans.map((p) => p.id).sort()).toEqual(["off1", "out1", "rep"]);
+    expect(m?.shifts).toHaveLength(1);
+    expect(m?.offs).toHaveLength(1);
+    expect(mergeWeeks([])).toBeNull();
+  });
+
+  it("칸 표시 — 팀은 근무 시간을 빼고 종류마다 몇 명, 휴무(승인된 쉰 날 포함)가 맨 앞", () => {
+    const m = mergeWeeks([w0, w1]) as PlansWeek;
+    const per = (d: string) => m.members.map((mem) => dayItems(m, mem, d));
+    // 11/13(금) — 나(u2): 휴무 일정 + 승인된 쉰 날(시간표 대신) → 휴무 1명으로 한 번
+    const fri = dayMarks(per("2026-11-13"), false);
+    expect(fri.map((x) => [x.key, x.people])).toEqual([["off", 1]]);
+    expect(marksLine(fri, true)).toBe("휴무 1명");
+    // 11/11(수) — 가(u1) 매주 수업
+    expect(dayMarks(per("2026-11-11"), false).map((x) => x.key)).toEqual(["class"]);
+    // 11/6(금) — 다(u3) 외부 + 나(u2) 근무 시간(팀은 뺌 · 내 달력이면 넣음)
+    expect(dayMarks(per("2026-11-06"), false).map((x) => x.key)).toEqual(["out"]);
+    expect(dayMarks(per("2026-11-06"), true).map((x) => x.key)).toEqual(["out", "shift"]);
+    expect(marksLine(dayMarks([dayItems(m, { key: "u2", user_id: "u2" }, "2026-11-06")], true), false)).toBe("근무 시간");
+    expect(dayMarks(per("2026-11-10"), false)).toEqual([]);
+  });
+
+  it("색 이름표는 그 달에 쓰인 것만 (앞뒤 달 칸은 빼고)", () => {
+    const byDay = new Map([
+      ["2026-10-31", dayMarks([[{ type: "shiftOff", id: "x", date: "2026-10-31", allDay: true, start: null, end: null, branch: SL }]], false)],
+      ["2026-11-06", [{ key: "out" as const, label: "외부", dot: "bg-amber-500", people: 1 }]],
+      ["2026-11-11", [{ key: "class" as const, label: "수업", dot: "bg-primary", people: 1 }]],
+    ]);
+    expect(presentMarks(byDay, "2026-11")).toEqual(["out", "class"]);
+    expect(presentMarks(new Map(), "2026-11")).toEqual([]);
   });
 });

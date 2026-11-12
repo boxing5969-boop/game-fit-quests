@@ -451,3 +451,94 @@ export const recentLine = (r: PlanRecent): string =>
     r.repeat_weekdays.length ? repeatLabel(r.repeat_weekdays) : spanLabel(r.start_on, r.end_on),
     timeLabel(r.all_day, r.start_time, r.end_time),
   ].join(" · ");
+
+// ───────────────────────── 한 달 달력 (2026-11-12 대표님 「운동 달력처럼 운영탭에 스케줄관리도 달력처럼」) ─────────────────────────
+//   서버는 그대로 한 주씩(ops_plans_week) — 달력에 보이는 주(4~6주)를 받아 mergeWeeks 로 합친다(주 보기와 같은 캐시).
+
+/** 달력에 보이는 주의 월요일들 — 그 달 1일이 든 주부터 말일이 든 주까지 (4~6개) */
+export const monthMondays = (ym: string): string[] => {
+  if (!/^\d{4}-\d{2}$/.test(ym)) return [];
+  const [y, m] = ym.split("-").map(Number);
+  const last = new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10);
+  const out: string[] = [];
+  for (let d = mondayOf(`${ym}-01`); d <= last; d = addDays(d, 7)) out.push(d);
+  return out;
+};
+
+/** "11월" · 올해가 아니면 "2027년 1월" */
+export const planMonthLabel = (ym: string, today: string): string => {
+  const [y, m] = ym.split("-").map(Number);
+  return ym.slice(0, 4) === today.slice(0, 4) ? `${m}월` : `${y}년 ${m}월`;
+};
+
+/** 여러 주를 하나로 — 반복 일정 · 시간표는 주마다 같은 줄이 오므로 하나만, 사람은 처음 나온 순서 그대로 */
+export const mergeWeeks = (weeks: readonly PlansWeek[]): PlansWeek | null => {
+  if (weeks.length === 0) return null;
+  const sorted = [...weeks].sort((a, b) => a.from.localeCompare(b.from));
+  const uniq = <T>(rows: T[], key: (r: T) => string): T[] => {
+    const seen = new Set<string>();
+    return rows.filter((r) => {
+      const k = key(r);
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+  };
+  return {
+    ...sorted[0],
+    to: sorted[sorted.length - 1].to,
+    members: uniq(sorted.flatMap((w) => w.members), (m) => m.key),
+    plans: uniq(sorted.flatMap((w) => w.plans), (p) => p.id),
+    shifts: uniq(sorted.flatMap((w) => w.shifts), (s) => [s.key, s.branch, s.weekday, s.start_time, s.end_time, s.valid_from].join("|")),
+    offs: uniq(sorted.flatMap((w) => w.offs), (o) => `${o.key}|${o.branch}|${o.date}`),
+  };
+};
+
+/** 달력 칸 표시 — 휴무(승인된 쉰 날 포함) → 외부 → 수업 → PT → 업무 → 개인 → 근무 시간 */
+export type MarkKey = PlanKind | "shift";
+export const MARK_ORDER: readonly MarkKey[] = ["off", "out", "class", "pt", "work", "personal", "shift"];
+export const MARK_META: Record<MarkKey, { label: string; dot: string }> = {
+  off: { label: PLAN_KIND_META.off.label, dot: PLAN_KIND_META.off.dot },
+  out: { label: PLAN_KIND_META.out.label, dot: PLAN_KIND_META.out.dot },
+  class: { label: PLAN_KIND_META.class.label, dot: PLAN_KIND_META.class.dot },
+  pt: { label: PLAN_KIND_META.pt.label, dot: PLAN_KIND_META.pt.dot },
+  work: { label: PLAN_KIND_META.work.label, dot: PLAN_KIND_META.work.dot },
+  personal: { label: PLAN_KIND_META.personal.label, dot: PLAN_KIND_META.personal.dot },
+  shift: { label: SHIFT_META.label, dot: SHIFT_META.dot },
+};
+
+const markOf = (i: DayItem): MarkKey => (i.type === "shift" ? "shift" : i.type === "shiftOff" ? "off" : i.kind);
+
+export interface DayMark {
+  key: MarkKey;
+  label: string;
+  dot: string;
+  /** 그 표시가 있는 사람 수 (내 달력은 1) */
+  people: number;
+}
+
+/**
+ * 하루 칸 표시 — 사람마다 그날 일정(dayItems)을 받아 종류마다 몇 분인지.
+ * 근무 시간은 withShift 일 때만 — 팀 달력은 평일마다 있어 뺀다(내 달력은 '일하는 날'이라 넣는다).
+ */
+export const dayMarks = (perMember: readonly (readonly DayItem[])[], withShift: boolean): DayMark[] => {
+  const count = new Map<MarkKey, number>();
+  for (const items of perMember) {
+    for (const k of new Set(items.map(markOf))) {
+      if (k === "shift" && !withShift) continue;
+      count.set(k, (count.get(k) ?? 0) + 1);
+    }
+  }
+  return MARK_ORDER.filter((k) => count.has(k)).map((k) => ({ key: k, ...MARK_META[k], people: count.get(k) ?? 0 }));
+};
+
+/** 달력 칸 읽어 주기 · 팀 — "휴무 1명 · 외부 1명", 내 달력 — "근무 시간 · 수업" */
+export const marksLine = (marks: readonly DayMark[], team: boolean): string =>
+  marks.map((m) => (team ? `${m.label} ${m.people}명` : m.label)).join(" · ");
+
+/** 그 달(앞뒤 달 칸 빼고)에 한 번이라도 나온 표시만 — 색 이름표는 쓰인 것만 그린다 */
+export const presentMarks = (byDay: ReadonlyMap<string, readonly DayMark[]>, ym: string): MarkKey[] => {
+  const seen = new Set<MarkKey>();
+  for (const [day, marks] of byDay) if (day.startsWith(`${ym}-`)) for (const m of marks) seen.add(m.key);
+  return MARK_ORDER.filter((k) => seen.has(k));
+};
