@@ -71,6 +71,7 @@ talktalk 변경은 별도 commit 으로 처리하고 prefix 는 `chore(talktalk)
 - **DB 어긋남 점검** (`node scripts/check-db-drift.mjs` · GitHub 「DB 어긋남 점검」 매일 07:40 KST + 마이그레이션이 main 에 올라올 때): 운영 DB 함수 본문 지문(`public.repo_drift_fingerprints()`)과 저장소 정의를 비교한다. 기준선(`scripts/db-drift-baseline.json`)에 없는 **새** 어긋남이면 빨간불 — DB 함수를 고친 세션은 푸시 전에 한 번 돌린다. 어긋남을 고쳤으면 `--write-baseline` 으로 기준선을 다시 저장해 같은 커밋에 넣는다. (DO 블록 replace 덧대기는 '덧대기'로 알리기만 한다 — 그런 함수는 저장소 전체 본문이 옛것이니 고칠 때 DB 지금 정의 위에.)
 - **큰 기능은 미리보기 먼저**: `preview/<이름>` 브랜치로 올리면 Cloudflare 가 `https://preview-<이름>.game-fit-quests.pages.dev` 를 만든다(자동 검사도 돈다) → 대표님 확인 → main 에 합친다. 미리보기도 **운영 DB · Edge Function 을 같이 쓴다** — 미리보기 단계의 DB 변경은 새 함수·새 칸 추가만(기존 함수 동작 바꾸기 금지) · 실회원 데이터로 쓰기 시험 금지 · 카카오 로그인은 미리보기 주소에서 안 될 수 있다(아이디 로그인으로 확인). 작은 수정·급한 고침은 지금처럼 main 으로.
   - **2026-11-08 확인 — 지금 미리보기는 옛 DB 를 본다**: Cloudflare Pages 「미리보기(Preview)」 환경 변수가 이사 전 Supabase `raoqefkwdpovwlgbibis` 그대로라(운영 = `whnczhxyjmyywhlfbgsd`) 모든 `preview-*.game-fit-quests.pages.dev` 가 옛 DB 로 붙는다 — 미리보기에서는 실데이터 · 새 DB 함수가 안 보인다(404). 고치기 전까지는 화면은 `?demo=1` 같은 예시로 보고, 실데이터는 로컬에서 운영 키(`.env.local`, 커밋 금지)로 확인한다. 고치려면 Cloudflare › game-fit-quests › 설정 › 환경 변수(미리보기)의 `VITE_SUPABASE_URL` · `VITE_SUPABASE_PUBLISHABLE_KEY` · `VITE_SUPABASE_PROJECT_ID` 를 운영 값으로(대표님 확인 뒤).
+  - **2026-11-12 확인 — 미리보기 주소는 영상 범위 요청에 206 을 안 준다**: `*.pages.dev`(미리보기 · 기본 주소 모두)는 `Range` 요청에 200(파일 통째)으로 답하고, 운영 주소 `myboxer153.com` 은 206(캐시에 없을 때도)으로 답한다. 아이폰 사파리 · 아이폰 앱은 범위 요청이 안 되면 `<video>` 를 못 튼다 → 영상이 든 화면의 미리보기는 아이폰에서 영상이 안 나올 수 있다(안드로이드 · PC 크롬은 나온다). 운영에서는 나온다 — 미리보기에서 안 나온다고 영상 파일을 고치지 않는다. 확인법: `curl -s -o /dev/null -D - -H "Range: bytes=0-1023" <영상 주소>`.
 - **PC 폴더**(`C:\Users\82104\game-fit-quests`)는 bat 으로 푸시하는 통로다. 거기서 파일을 고쳤으면 그날 커밋·푸시까지 끝내고, 커밋 안 된 수정을 남겨 두지 않는다(10/14 수정 10개가 남아 GitHub 과 엇갈렸다 → 2026-10-20 `_backup/pc-wip-20261014/pc-wip.patch` + `git stash`(pc-wip-20261014) 로 보관하고 main 을 최신으로 맞춤).
 - 같은 요청을 두 창에 함께 하면 먼저 잡은 계정만 한다. 다른 계정은 "이미 하는 중"이라고 알리고 나눌 수 있는 다른 부분을 제안한다.
 
@@ -664,6 +665,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 예전 `public/handwrap/front · side`(720p 전체 화면)는 지웠다. 훈련 라이브러리에 코치가 영상 주소를 넣으면 '코치 영상 보기' 단추가 붙는 것은 그대로.
 - 훈련 라이브러리 '복싱 붕대 감기' 글(DB)은 아직 '9단계 설명서'이고 손등 방향이 '새끼 → 엄지'로 적혀 있다(영상 · 설명서는 엄지 → 새끼) — 대표님 승인 뒤 고친다.
 - `preview/handwrap-photo`(10-30 사진 설명서 시안 · main 에 안 들어감)는 대표님 새 사진을 기다리던 가지 — 이제 단계마다 실제 영상 · 끝 장면이 있으니 이어 갈 때는 이 화면 위에서 한다.
+- 올림 (2026-11-12 대표님 「올려」): 미리보기 `preview/handwrap-learn` 뒤 대표님께 1분 둘러보기 영상 · 화면 6장으로 확인받고 main 에 합침 — DB 변경 없음. 미리보기 주소는 아이폰에서 영상이 안 나오므로(아래 「큰 기능은 미리보기 먼저」) 영상이 든 화면은 둘러보기 영상으로 확인받는다.
 
 ### 만족도 조사 답변 (2026-10-30 대표님 "만족도 조사 설문조사에도 답변을 달 수 있도록" · 누가 보나요? "쓴 사람이 확인할 수 있게")
 - 응답은 예전처럼 153OS 에 익명 저장(본사 받은 설문함도 계속 익명). `submit_survey_response` 가 돌려주는 `response_id` 를 앱이 `record_my_survey_receipt` 로 남긴다(`survey_receipts` = 응답 번호 + 보낸 회원 · 답한 내용은 안 남김).
