@@ -1850,7 +1850,7 @@ const LiveBoardPage = () => {
 
         {/* ═══ 2번 화면 오른쪽 1/3 = 플리스 사전예약 안내 (2026-11-12 대표님 「현재 활동중도 지워주고 … 런칭이벤트를 3분의2 · 153집업을 나머지」).
              QR 출석 · 현재 활동 중 · 짐 레이드 패널은 2번 화면에 없다(QR 은 옆 사이니지 기본 화면에). 사전예약이 닫히면 이 칸도 없어져 런칭 이벤트가 화면 전체를 쓴다. */}
-        {only2 && <LiveBoardGoodsCard />}
+        {only2 && <LiveBoardGoodsCard branchName={branchName} />}
 
         {/* ═══ Right panel ═══ */}
         {!only1 && !only2 && (

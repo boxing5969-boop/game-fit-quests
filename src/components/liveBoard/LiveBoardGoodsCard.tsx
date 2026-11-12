@@ -9,9 +9,11 @@
  *   · 흰색 · 진회색 인쇄 모델 컷을 나란히, 글은 멀리서도 읽히게 크게 — 가격 · 인쇄 색 · 사이즈 · 마감 · 결제 · 신청하는 곳.
  *   ③ 11/12 23시 「2만5천원 … 원가 3만5천원짜리 물건인데 연말 세일로 1만원 할인해서 2만5천원 … 50장 선착순」
  *     → 정상가(있을 때만) 줄 긋고 25,000원 · 원가 그대로 한 줄 · 선착순 남은 벌 수. 다 차면 그리지 않는다(런칭 이벤트가 화면 전체).
+ *   ④ 11/13 「체육관에 사이즈별 샘플도 있어서 직접 보고 입어볼수있다고 이야기하자」 → 샘플이 있는 지점 TV 만 '샘플' 줄
+ *     (hasGoodsSample — 지금 선릉역점. 다른 지점 TV 에는 없는 샘플을 말하지 않는다).
  */
 import { useQuery } from "@tanstack/react-query";
-import { GOODS_FLEECE_SLUG, ddayLabel, deadlineLabel, isAccepting, listPriceOf, stockLabel, won } from "@/lib/goodsPreorder";
+import { GOODS_FLEECE_SLUG, ddayLabel, deadlineLabel, hasGoodsSample, isAccepting, listPriceOf, stockLabel, won } from "@/lib/goodsPreorder";
 import { getGoodsCampaign } from "@/services/goodsService";
 
 const PHOTOS = [
@@ -19,7 +21,7 @@ const PHOTOS = [
   { src: "/goods/fleece/img/model-back-gray.webp", label: "진회색 인쇄", dot: "#63666A" },
 ];
 
-const LiveBoardGoodsCard = () => {
+const LiveBoardGoodsCard = ({ branchName }: { branchName?: string }) => {
   const { data: c } = useQuery({
     queryKey: ["goods-campaign", GOODS_FLEECE_SLUG, "tv"],
     queryFn: () => getGoodsCampaign(GOODS_FLEECE_SLUG),
@@ -36,6 +38,7 @@ const LiveBoardGoodsCard = () => {
     ...(stock ? ([["수량", stock]] as [string, string][]) : []),
     ["인쇄 색", "흰색 · 진회색 중 하나"],
     ["사이즈", c.sizes.join(" · ")],
+    ...(hasGoodsSample(branchName) ? ([["샘플", "사이즈별로 입어 볼 수 있어요"]] as [string, string][]) : []),
     ["신청", `${deadlineLabel(c.closes_at)}까지`],
     ["결제", "데스크에서 카드 · 계좌이체"],
   ];

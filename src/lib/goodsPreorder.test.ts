@@ -6,6 +6,7 @@ import {
   ddayLabel,
   deadlineLabel,
   formatPhone,
+  hasGoodsSample,
   isAccepting,
   isSoldOut,
   listPriceOf,
@@ -143,6 +144,14 @@ describe("goodsPreorder", () => {
     expect(isAccepting({ ok: true, open: true, stock_limit: 50, stock_left: 3, sold_out: false })).toBe(true);
     expect(isAccepting({ ok: true, open: true, stock_limit: 50, stock_left: 0, sold_out: true })).toBe(false);
     expect(isAccepting({ ok: true, open: false, stock_limit: 50, stock_left: 9, sold_out: false })).toBe(false);
+  });
+
+  it("size samples only where they are", () => {
+    expect(hasGoodsSample("153복싱짐 선릉역점")).toBe(true);
+    expect(hasGoodsSample(" 153복싱짐 선릉역점 ")).toBe(true);
+    expect(hasGoodsSample("153복싱짐 칠금점")).toBe(false); // 샘플이 없는 지점 TV 에는 말하지 않는다
+    expect(hasGoodsSample("")).toBe(false);
+    expect(hasGoodsSample(undefined)).toBe(false);
   });
 
   it("searches by name, phone digits and order number", () => {

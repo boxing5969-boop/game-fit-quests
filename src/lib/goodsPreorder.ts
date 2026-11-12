@@ -123,6 +123,15 @@ export function stockLabel(c: Pick<GoodsCampaign, "stock_limit" | "stock_left" |
   return left >= c.stock_limit ? `선착순 ${c.stock_limit}벌` : `선착순 ${c.stock_limit}벌 · 남은 ${left}벌`;
 }
 
+/**
+ * 사이즈별 샘플이 있는 지점 — 입어 보고 고를 수 있다 (2026-11-13 대표님 「체육관에 사이즈별 샘플도 있어서 직접 보고 입어볼수있다고 이야기하자」).
+ * 상세페이지(public/goods/fleece/index.html)는 모든 지점이 보니 '선릉역점에' 로 적는다 — 샘플을 둔 지점이 늘면 여기와 그 글을 같이.
+ */
+export const GOODS_SAMPLE_BRANCHES: readonly string[] = ["153복싱짐 선릉역점"];
+
+export const hasGoodsSample = (branch: string | null | undefined): boolean =>
+  !!branch && GOODS_SAMPLE_BRANCHES.includes(branch.trim());
+
 export const shortBranch = (b: string | null | undefined): string =>
   (b || "").replace(/^153복싱짐\s*/, "").trim() || "지점";
 

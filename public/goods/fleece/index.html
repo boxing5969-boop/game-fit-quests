@@ -142,6 +142,7 @@ section.block{padding:34px 0;border-bottom:8px solid var(--bg)}
 .field{margin-top:22px}
 .label{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;font-size:15px;font-weight:800}
 .label small{font-size:13px;font-weight:600;color:var(--ink3)}
+.size-note{margin:8px 0 0;font-size:13px;font-weight:600;color:var(--ink3)}
 .opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .opt{position:relative;display:flex;align-items:center;gap:10px;padding:10px;border:1.5px solid var(--line2);border-radius:16px;
   background:var(--panel);text-align:left;cursor:pointer}
@@ -266,6 +267,7 @@ details p{margin:6px 0 0}
     <p class="sub">153이 남기는 이익 0원 · 앞뒤 인쇄 포함 · 인쇄 색 2가지 중 선택</p>
     <dl class="meta">
       <div data-stock-row><dt>수량</dt><dd data-stock-text>선착순 50벌</dd></div>
+      <div><dt>샘플</dt><dd>선릉역점에서 사이즈별로 입어 보기</dd></div>
       <div><dt>신청</dt><dd><span data-deadline>11월 26일(목)</span>까지</dd></div>
       <div><dt>결제</dt><dd>다니는 지점 데스크에서 카드 · 계좌이체</dd></div>
       <div><dt>받기</dt><dd>완성되면 지점 데스크에서</dd></div>
@@ -347,7 +349,7 @@ details p{margin:6px 0 0}
       <div data-stock-row><dt>수량</dt><dd data-stock-text>선착순 50벌</dd></div>
       <div><dt>신청</dt><dd><span data-deadline>11월 26일(목)</span>까지</dd></div>
     </dl>
-    <p class="tip"><b>사이즈 고르기</b> · 평소 입는 상의 사이즈로 고르세요. 넉넉하게 입고 싶다면 한 치수 크게 고르면 돼요.</p>
+    <p class="tip"><b>사이즈 고르기</b> · 선릉역점에 사이즈별 샘플이 있어 직접 보고 입어 볼 수 있어요. 평소 입는 상의 사이즈로 고르고, 넉넉하게 입고 싶다면 한 치수 크게 고르면 돼요.</p>
   </section>
 
   <section class="block">
@@ -380,6 +382,7 @@ details p{margin:6px 0 0}
       <div class="field">
         <div class="label">사이즈 <small>평소 입는 상의 사이즈</small></div>
         <div class="sizes" id="sizeOpts" role="group" aria-label="사이즈"></div>
+        <p class="size-note">사이즈가 고민되면 선릉역점에서 샘플을 입어 보세요</p>
       </div>
       <div class="field">
         <div class="label">수량 <small id="qtyHint">한 번에 3벌까지</small></div>
