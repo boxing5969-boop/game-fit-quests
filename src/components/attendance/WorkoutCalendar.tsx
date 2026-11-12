@@ -7,11 +7,15 @@
  *   · 대표님 규칙을 따른다: 출석 '횟수'를 주인공 숫자로 두지 않는다(10-22 「몇 번 말고 몇 시간」) — 도장 줄이 주인공이고
  *     칩은 잘한 것(n주 연속 · 이번 주 n번)만 · 빠진 날 표시는 없다 · 카드 맨 아래 한 줄 단추(h-14 border-t).
  *   · 날짜를 누르면(출석한 날만) 그날 들어온 시각 · 운동 시간 한 줄.
+ *   · 감정 설계판 (2026-11-12 대표님 「달력 기능도 목표는 회원님들의 감정을 설계하는 거야」 — CLAUDE.md 「회원 감정 설계 기준」):
+ *     기념일 = 금색 도장(첫 도장 · 출석 축하를 채운 날) · 고른 날 아래 '그날의 의미' 한 줄(다시 시작한 날 · 가장 길게 운동한 날) ·
+ *     지난 달을 넘겨 보면 '10월 · 14시간 12분 운동했어요' · 새 달 첫 7일엔 지난달 한 줄(recap — 홈만).
+ *     '이번 주 n번 왔어요' 칩은 뺐다 — 도장 줄이 이미 말하고, 숫자는 횟수보다 시간(10-22). 계산은 lib/calendarMoments.ts.
  *   · 다음 단계가 이 칸에 얹힌다: 2단계 운동 약속(약속한 날 테두리) · 3단계 오늘의 체크(다 채운 날 금색 별).
  *   날짜 계산은 lib/attendanceCalendar.ts (주는 월요일 시작).
  */
 import { useMemo, useState, type ReactNode } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Star } from "lucide-react";
 import {
   WEEKDAY_KO,
   dayLabel,
@@ -23,6 +27,7 @@ import {
 } from "@/lib/attendanceHistory";
 import { attendanceByDay, monthBounds, monthOf, monthWeeks, shiftMonth, weekOf } from "@/lib/attendanceCalendar";
 import { kstToday } from "@/lib/attendanceCheer";
+import { dayMoments, freshStartLine, monthRecap, type DayMoment } from "@/lib/calendarMoments";
 import { cn } from "@/lib/utils";
 
 const n = (v: number) => v.toLocaleString("ko-KR");
@@ -48,16 +53,19 @@ interface CellProps {
   on: boolean;
   today: string;
   faint?: boolean;
+  /** 기념일 — 금색 도장 */
+  moment?: DayMoment;
   picked: boolean;
   onPick: (day: string) => void;
 }
 
-/** 날짜 한 칸 — 출석한 날 = 민트 도장(누르면 그날 한 줄) · 오늘 = 테두리 · 앞뒤 달 = 흐리게 */
-const DayCell = ({ day, on, today, faint = false, picked, onPick }: CellProps) => {
+/** 날짜 한 칸 — 출석한 날 = 민트 도장(누르면 그날 한 줄) · 기념일 = 금색 도장 · 오늘 = 테두리 · 앞뒤 달 = 흐리게 */
+const DayCell = ({ day, on, today, faint = false, moment, picked, onPick }: CellProps) => {
   const isToday = day === today;
   const num = Number(day.slice(8));
   const base = "flex h-10 w-10 items-center justify-center rounded-full text-label tabular-nums";
-  const label = `${dayLabel(day)}${on ? " 출석" : ""}${isToday ? " · 오늘" : ""}`;
+  const gold = on && !!moment?.gold;
+  const label = `${dayLabel(day)}${on ? " 출석" : ""}${on && moment ? ` · ${moment.text}` : ""}${isToday ? " · 오늘" : ""}`;
   if (faint) {
     return (
       <span className={cn(base, "text-muted-foreground/40")} aria-hidden>
@@ -86,7 +94,8 @@ const DayCell = ({ day, on, today, faint = false, picked, onPick }: CellProps) =
       aria-label={label}
       className={cn(
         base,
-        "bg-primary font-extrabold text-primary-foreground transition-transform active:scale-95",
+        "font-extrabold transition-transform active:scale-95",
+        gold ? "bg-reward text-reward-foreground" : "bg-primary text-primary-foreground",
         picked && "ring-2 ring-foreground ring-offset-2 ring-offset-card",
       )}
     >
@@ -95,14 +104,22 @@ const DayCell = ({ day, on, today, faint = false, picked, onPick }: CellProps) =
   );
 };
 
-/** 고른 날 한 줄 — 들어온 시각 · 운동 시간 */
-const DayLine = ({ d }: { d: AttendanceDay }) => (
-  <p className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-muted/60 px-4 py-3">
-    <span className="min-w-0 text-body font-bold tabular-nums text-foreground">
-      {dayLabel(d.day)} <span className="text-label font-medium text-muted-foreground">{kstTime(d.at)} 들어옴</span>
-    </span>
-    <span className="shrink-0 text-body font-bold tabular-nums text-foreground">{durationLabel(d.minutes)}</span>
-  </p>
+/** 고른 날 — 들어온 시각 · 운동 시간 + 그날의 의미 한 줄(있을 때만) */
+const DayLine = ({ d, moment }: { d: AttendanceDay; moment?: DayMoment }) => (
+  <div className="mt-3 rounded-xl bg-muted/60 px-4 py-3">
+    <p className="flex items-center justify-between gap-3">
+      <span className="min-w-0 text-body font-bold tabular-nums text-foreground">
+        {dayLabel(d.day)} <span className="text-label font-medium text-muted-foreground">{kstTime(d.at)} 들어옴</span>
+      </span>
+      <span className="shrink-0 text-body font-bold tabular-nums text-foreground">{durationLabel(d.minutes)}</span>
+    </p>
+    {moment && (
+      <p className={cn("mt-1 flex items-center gap-1 text-label font-bold", moment.gold ? "text-reward" : "text-primary")}>
+        <Star className="h-4 w-4 shrink-0" fill="currentColor" aria-hidden />
+        {moment.text}
+      </p>
+    )}
+  </div>
 );
 
 export interface WorkoutCalendarCardProps {
@@ -117,18 +134,24 @@ export interface WorkoutCalendarCardProps {
   footer?: ReactNode;
   /** 제목 바로 아래(접힘 · 펼침 모두) — 첫 4주 8번 칸(StarterProgress, 2026-11-12 동기부여 1단계) */
   header?: ReactNode;
+  /** 새 달 첫 7일에 지난달 한 줄을 보여 주나 — 홈만 (내 운동 기록에는 월별 그래프가 있다) */
+  recap?: boolean;
 }
 
-const WorkoutCalendarCard = ({ data, title, openTitle, storageKey, footer, header }: WorkoutCalendarCardProps) => {
+const WorkoutCalendarCard = ({ data, title, openTitle, storageKey, footer, header, recap = false }: WorkoutCalendarCardProps) => {
   const today = kstToday();
   const [open, setOpen] = useState(() => readOpen(storageKey));
   const [month, setMonth] = useState(() => monthOf(today));
   const [picked, setPicked] = useState<string | null>(null);
   const byDay = useMemo(() => attendanceByDay(data.list), [data.list]);
+  const moments = useMemo(() => dayMoments(data, today), [data, today]);
   const bounds = monthBounds(data.firstDay, today);
   const week = weekOf(today);
   const weekCount = week.filter((d) => byDay.has(d)).length;
   const pickedDay = picked ? byDay.get(picked) ?? null : null;
+  // 지난 달을 넘겨 보면 그 달 한 줄 · 새 달 첫 7일엔 지난달 한 줄 (이번 달 숫자는 홈 '내 운동'이 주인공 — 다시 쓰지 않는다)
+  const pastRecap = open && month < monthOf(today) ? monthRecap(data, month) : null;
+  const freshLine = recap && !pastRecap ? freshStartLine(data, today) : null;
   const heading = open ? openTitle ?? title : title;
 
   const toggle = () => {
@@ -151,11 +174,9 @@ const WorkoutCalendarCard = ({ data, title, openTitle, storageKey, footer, heade
       <div className="p-5">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-heading text-foreground">{heading}</h3>
-          {data.weekStreak >= 2 ? (
+          {data.weekStreak >= 2 && (
             <span className="rounded-full bg-primary/10 px-3 py-1 text-label font-bold text-primary">{n(data.weekStreak)}주 연속</span>
-          ) : !open && weekCount > 0 ? (
-            <span className="text-label font-bold text-foreground">{n(weekCount)}번 왔어요</span>
-          ) : null}
+          )}
         </div>
 
         {header}
@@ -198,6 +219,7 @@ const WorkoutCalendarCard = ({ data, title, openTitle, storageKey, footer, heade
                       on={c.inMonth && byDay.has(c.day)}
                       today={today}
                       faint={!c.inMonth}
+                      moment={moments.get(c.day)}
                       picked={picked === c.day}
                       onPick={pick}
                     />
@@ -210,13 +232,22 @@ const WorkoutCalendarCard = ({ data, title, openTitle, storageKey, footer, heade
             {week.map((d, i) => (
               <li key={d} className="flex flex-col items-center gap-1.5">
                 <span className={cn("text-micro", d === today ? "font-black text-foreground" : "text-muted-foreground")}>{WEEKDAY_KO[i]}</span>
-                <DayCell day={d} on={byDay.has(d)} today={today} picked={picked === d} onPick={pick} />
+                <DayCell day={d} on={byDay.has(d)} today={today} moment={moments.get(d)} picked={picked === d} onPick={pick} />
               </li>
             ))}
           </ol>
         )}
 
-        {pickedDay && <DayLine d={pickedDay} />}
+        {pickedDay && <DayLine d={pickedDay} moment={moments.get(pickedDay.day)} />}
+        {pastRecap && (
+          <p className="mt-3 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-t border-border pt-3">
+            <span className="text-label font-bold tabular-nums text-foreground">{pastRecap.text}</span>
+            {pastRecap.gain && (
+              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-micro font-bold tabular-nums text-primary">{pastRecap.gain}</span>
+            )}
+          </p>
+        )}
+        {freshLine && <p className="mt-3 border-t border-border pt-3 text-label font-bold tabular-nums text-foreground">{freshLine}</p>}
         {!open && footer}
       </div>
       <button

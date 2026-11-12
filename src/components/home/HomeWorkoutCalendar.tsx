@@ -13,7 +13,7 @@ import StarterProgress from "@/components/attendance/StarterProgress";
 const HomeWorkoutCalendar = () => {
   const { data } = useAttendanceHistory(null);
   if (!data || data.total === 0) return null;
-  return <WorkoutCalendarCard data={data} title="운동 달력" storageKey="153cal:home:open" header={<StarterProgress />} />;
+  return <WorkoutCalendarCard data={data} title="운동 달력" storageKey="153cal:home:open" header={<StarterProgress />} recap />;
 };
 
 export default HomeWorkoutCalendar;
