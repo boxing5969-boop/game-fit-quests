@@ -51,6 +51,19 @@ describe("153 수업 템플릿", () => {
     expect(t!.blocks[3].note).toMatch(/30초/);
   });
 
+  it("위빙 수업 — 50분 · 11/12 촬영 순서(워밍업 → 위빙 세 단계 → 미트 → 2인 1조 → 샌드백 구령 → 자율 운동)", () => {
+    const t = CLASS_TEMPLATES.find((x) => x.id === "weave-hook-call");
+    expect(t).toBeTruthy();
+    expect(classTemplateMinutes(t!)).toBe(50);
+    expect(t!.blocks.map((b) => b.kind)).toEqual(["warmup", "skill", "skill", "skill", "mitt", "defense", "conditioning", "etc"]);
+    // 샌드백 구령 두 가지 (0545 영상 — 대표님 결정: 지금 템플릿 구령은 그대로, 이건 구령 하나 더)
+    expect(t!.blocks[6].note).toMatch(/어이/);
+    expect(t!.blocks[6].note).toMatch(/대시/);
+    // 순서 영상 자리 = 블록 8개 + 수업 요약
+    expect(templateVideoTitle(t!, 0)).toBe(`${t!.title} · 수업 요약`);
+    expect(templateVideoTitle(t!, 8)).toBe("자율 운동");
+  });
+
   it("블록은 복사본 — 고쳐도 템플릿 원본은 그대로", () => {
     const t = CLASS_TEMPLATES[0];
     const copy = classTemplateBlocks(t);
