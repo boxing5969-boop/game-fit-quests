@@ -663,7 +663,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 글 · 그림 · 영상 주소는 [handWrapGuide.ts](src/data/handWrapGuide.ts) 한 곳(`HANDWRAP_STEPS` · `HANDWRAP_STAGES` · `HANDWRAP_FULL` · `HANDWRAP_DONE_CHECKS` · `HANDWRAP_MISTAKES`). 화면 글을 바꾸면 오삼코치 안내(osamiFaq `tr-handwrap`) · 검색(appSearch `handwrap`)도 같이.
 - 전체 영상은 누를 때 받는다(`preload="none"` — 표지 그림만) · 단계 상세가 열리거나 화면 밖으로 밀려나면 멈춘다. 단계 영상은 다음 단계 것을 `<link rel="prefetch">` 로 알려 둔다(아이폰 사파리는 무시 — `fetch` 로 직접 받으면 재생기가 그 사본을 못 써 두 번 받는다).
 - 예전 `public/handwrap/front · side`(720p 전체 화면)는 지웠다. 훈련 라이브러리에 코치가 영상 주소를 넣으면 '코치 영상 보기' 단추가 붙는 것은 그대로.
-- 훈련 라이브러리 '복싱 붕대 감기' 글(DB)은 아직 '9단계 설명서'이고 손등 방향이 '새끼 → 엄지'로 적혀 있다(영상 · 설명서는 엄지 → 새끼) — 대표님 승인 뒤 고친다.
+- 훈련 라이브러리 '복싱 붕대 감기' 글(DB `training_exercises` 한 줄 — 요약 · 방법 · 코치 포인트 · 흔한 실수)도 12단계 · 엄지 → 새끼 · 3 · 3 · 3 으로 맞췄다 (2026-11-12 대표님 「적용해」 · [20261112195119_handwrap_library_12steps.sql](supabase/migrations/20261112195119_handwrap_library_12steps.sql) MCP 적용 — 예전 9단계 · '새끼 → 엄지' · '패드' 말 뺌, 코치가 그사이 고친 글이면 안 바꾸는 조건). 화면 단계 글을 바꾸면 이 글도 같이 — 다음 판도 지금 글이 그대로일 때만 바꾸게 조건을 건다.
 - `preview/handwrap-photo`(10-30 사진 설명서 시안 · main 에 안 들어감)는 대표님 새 사진을 기다리던 가지 — 이제 단계마다 실제 영상 · 끝 장면이 있으니 이어 갈 때는 이 화면 위에서 한다.
 - 올림 (2026-11-12 대표님 「올려」): 미리보기 `preview/handwrap-learn` 뒤 대표님께 1분 둘러보기 영상 · 화면 6장으로 확인받고 main 에 합침 — DB 변경 없음. 미리보기 주소는 아이폰에서 영상이 안 나오므로(아래 「큰 기능은 미리보기 먼저」) 영상이 든 화면은 둘러보기 영상으로 확인받는다.
 
