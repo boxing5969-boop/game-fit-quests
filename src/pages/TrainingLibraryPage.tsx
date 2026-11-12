@@ -1,5 +1,8 @@
-// 훈련 라이브러리 — 복싱 훈련을 카테고리별로 글·영상·이미지로 설명(회원 열람).
-// 데이터: training_exercises (RLS: 공개 읽기 / 코치·관장 쓰기). 관리 UI는 이 화면에 통합(스태프만).
+// 훈련 라이브러리 — 153 콘텐츠 카드(training_exercises) 보기 · 고치기 · 영상 넣기.
+// 2026-11-13 대표님 「추천대로 진행」: 회원은 훈련 탭 「영상으로 배우기」로 옮겼다(이 주소는 App 에서 그리로 넘긴다) — 이 화면은 코치진.
+//   · 카드 보기 = 카드 시트(TrainingDrillSheet) 그대로 · 고치기 · 추가 · 삭제 · 영상 넣기 = 대표님 · 운영진(admin · super_admin, 결정 6번)
+//   · 영상 칸(회원용 · 코치용 · 첫 장면 · 분 · 준비물)은 마이그레이션 20261113…_training_cards 를 적용한 DB 에서만 보인다(줄에 칸이 있으면)
+// 데이터: training_exercises (RLS: 켜진 카드 공개 읽기 / 쓰기는 마이그레이션 뒤 대표님 · 운영진). 영상 = 비공개 저장소 training-videos.
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,16 +10,27 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { isManagerRole } from "@/lib/rankLabels";
 import { toast } from "sonner";
-import { ArrowLeft, X, Target, AlertTriangle, CheckCircle2, PlayCircle, Plus, Pencil, Trash2, ChevronRight } from "lucide-react";
-import { strictYoutubeId } from "@/lib/videoUrl";
+import { ArrowLeft, X, Target, PlayCircle, Plus, Pencil, Trash2, ChevronRight } from "lucide-react";
 import { HANDWRAP_EXERCISE_NAME } from "@/data/handWrapGuide";
+import TrainingDrillSheet from "@/components/TrainingDrillSheet";
+import { normalizeCard, type TrainingCard } from "@/lib/trainingCards";
+import { clearCardVideo, uploadCardVideo, type CardVideoKind } from "@/services/trainingCardService";
 
 interface Ex {
   id: string; category: string; name: string; summary: string; description: string;
   benefits: string; target: string; difficulty: string;
   video_url: string | null; image_url: string | null;
   cues: string[]; mistakes: string[]; level_min: number | null; sort_order: number; is_active: boolean;
+  /** 마이그레이션 뒤 생기는 칸 (없을 수 있음) */
+  video_path?: string | null; coach_video_path?: string | null; poster_path?: string | null;
+  minutes?: number | null; equipment?: string | null;
 }
+
+const VIDEO_SLOTS: Array<{ kind: CardVideoKind; col: "video_path" | "coach_video_path" | "poster_path"; label: string; accept: string }> = [
+  { kind: "member", col: "video_path", label: "회원용 영상", accept: "video/mp4" },
+  { kind: "coach", col: "coach_video_path", label: "코치용 영상", accept: "video/mp4" },
+  { kind: "poster", col: "poster_path", label: "첫 장면 그림", accept: "image/webp,image/jpeg,image/png" },
+];
 
 const DIFF_COLOR: Record<string, string> = {
   "초급": "bg-status-complete/10 text-status-complete",
@@ -27,13 +41,17 @@ const DIFF_COLOR: Record<string, string> = {
 const blankForm = {
   category: "기본기", name: "", summary: "", description: "", benefits: "", target: "",
   difficulty: "초급", video_url: "", image_url: "", cues: "", mistakes: "", sort_order: "0",
+  minutes: "", equipment: "",
 };
 
 const TrainingLibraryPage = () => {
   const navigate = useNavigate();
   const { role } = useAuth();
   const isStaff = isManagerRole(role);
+  // 카드 글 · 영상 고치기는 모든 지점이 같이 보는 것이라 대표님 · 운영진만 (결정 6번 — 서버 쓰기 권한도 같게 좁힌다)
+  const canEdit = role === "admin" || role === "super_admin";
   const qc = useQueryClient();
+  const [videoBusy, setVideoBusy] = useState<CardVideoKind | null>(null);
   const [cat, setCat] = useState<string>("전체");
   const [sel, setSel] = useState<Ex | null>(null);
   const [editing, setEditing] = useState<Ex | "new" | null>(null);
@@ -57,6 +75,8 @@ const TrainingLibraryPage = () => {
 
   const cats = useMemo(() => ["전체", ...Array.from(new Set(rows.map((r) => r.category)))], [rows]);
   const list = cat === "전체" ? rows : rows.filter((r) => r.category === cat);
+  // 영상 칸이 있는 DB 인가 (마이그레이션 적용 뒤) — 없으면 영상 넣기 · 분 · 준비물 칸을 숨긴다
+  const hasVideoCols = rows.length > 0 && "video_path" in rows[0];
 
   const openEdit = (ex: Ex | "new") => {
     if (ex === "new") setForm(blankForm);
@@ -65,6 +85,7 @@ const TrainingLibraryPage = () => {
       benefits: ex.benefits, target: ex.target, difficulty: ex.difficulty,
       video_url: ex.video_url || "", image_url: ex.image_url || "",
       cues: (ex.cues || []).join("\n"), mistakes: (ex.mistakes || []).join("\n"), sort_order: String(ex.sort_order ?? 0),
+      minutes: ex.minutes ? String(ex.minutes) : "", equipment: ex.equipment || "",
     });
     setEditing(ex);
   };
@@ -80,6 +101,12 @@ const TrainingLibraryPage = () => {
       cues: form.cues.split("\n").map((s) => s.trim()).filter(Boolean),
       mistakes: form.mistakes.split("\n").map((s) => s.trim()).filter(Boolean),
       sort_order: Number(form.sort_order) || 0,
+      ...(hasVideoCols
+        ? {
+            minutes: form.minutes.trim() ? Math.max(1, Math.min(120, Math.round(Number(form.minutes) || 0))) || null : null,
+            equipment: form.equipment.trim().slice(0, 60) || null,
+          }
+        : {}),
     };
     try {
       if (editing === "new") {
@@ -100,6 +127,37 @@ const TrainingLibraryPage = () => {
     }
   };
 
+  // 영상 넣기 · 빼기 — 고치는 카드에 바로 붙인다 (새 카드는 저장한 뒤에)
+  const putVideo = async (ex: Ex, kind: CardVideoKind, file: File | undefined) => {
+    if (!file) return;
+    setVideoBusy(kind);
+    try {
+      const path = await uploadCardVideo(ex, kind, file);
+      const col = VIDEO_SLOTS.find((v) => v.kind === kind)!.col;
+      setEditing((cur) => (cur && cur !== "new" && cur.id === ex.id ? { ...cur, [col]: path } : cur));
+      toast.success(`${VIDEO_SLOTS.find((v) => v.kind === kind)!.label}을 붙였어요`);
+      qc.invalidateQueries({ queryKey: ["training-library"] });
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setVideoBusy(null);
+    }
+  };
+  const dropVideo = async (ex: Ex, kind: CardVideoKind) => {
+    const slot = VIDEO_SLOTS.find((v) => v.kind === kind)!;
+    if (!confirm(`'${ex.name}' 카드에서 ${slot.label}을 뺄까요? (파일은 저장소에 남아요)`)) return;
+    setVideoBusy(kind);
+    try {
+      await clearCardVideo(ex, kind);
+      setEditing((cur) => (cur && cur !== "new" && cur.id === ex.id ? { ...cur, [slot.col]: null } : cur));
+      qc.invalidateQueries({ queryKey: ["training-library"] });
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setVideoBusy(null);
+    }
+  };
+
   const remove = async (ex: Ex) => {
     if (!confirm(`'${ex.name}' 훈련을 삭제할까요?`)) return;
     const { error } = await (supabase as any).from("training_exercises").delete().eq("id", ex.id);
@@ -113,7 +171,7 @@ const TrainingLibraryPage = () => {
       <div className="mb-2 flex items-center gap-2">
         <button onClick={() => navigate(-1)} className="rounded-lg p-1.5 active:scale-95"><ArrowLeft className="h-5 w-5" /></button>
         <h1 className="text-heading font-black">훈련 라이브러리</h1>
-        {isStaff && (
+        {canEdit && (
           <div className="ml-auto flex items-center gap-1.5">
             <button onClick={() => navigate("/routine-builder")} className="rounded-lg bg-muted px-2.5 py-1.5 text-label font-bold text-foreground active:scale-95">
               🥊 루틴 빌더
@@ -124,7 +182,10 @@ const TrainingLibraryPage = () => {
           </div>
         )}
       </div>
-      <p className="mb-3 text-label leading-relaxed text-muted-foreground">복싱 훈련을 카테고리별로 모았어요. 각 훈련의 방법과 무엇이 좋아지는지 확인하고 수업에 활용하세요.</p>
+      <p className="mb-3 text-label leading-relaxed text-muted-foreground">
+        153 콘텐츠 카드예요. 회원님은 훈련 탭 「영상으로 배우기」에서, 코치님은 전략 회의 영상 칸에서 같은 카드를 봐요.
+        {canEdit ? " 카드 글 · 영상은 여기서 고쳐요." : " 카드 글 · 영상 고치기는 대표님 · 운영진이 해요."}
+      </p>
 
       <div className="mb-3 flex gap-1.5 overflow-x-auto pb-1">
         {cats.map((c) => (
@@ -149,10 +210,11 @@ const TrainingLibraryPage = () => {
                 <div className="mt-2 flex items-center gap-2 text-label text-muted-foreground">
                   <span className="rounded bg-muted px-1.5 py-0.5">{ex.category}</span>
                   {ex.target && <span className="flex items-center gap-0.5"><Target className="h-3 w-3" />{ex.target}</span>}
-                  {ex.video_url && <span className="flex items-center gap-0.5 text-primary"><PlayCircle className="h-3 w-3" />영상</span>}
+                  {(ex.video_url || ex.video_path) && <span className="flex items-center gap-0.5 text-primary"><PlayCircle className="h-3 w-3" />영상</span>}
+                  {ex.coach_video_path && <span className="text-primary">코치용</span>}
                 </div>
               </button>
-              {isStaff && (
+              {canEdit && (
                 <div className="mt-2 flex gap-1.5 border-t border-border pt-2">
                   <button onClick={() => openEdit(ex)} className="flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-micro font-bold text-foreground active:scale-95"><Pencil className="h-3 w-3" />수정</button>
                   <button onClick={() => remove(ex)} className="flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-micro font-bold text-destructive active:scale-95"><Trash2 className="h-3 w-3" />삭제</button>
@@ -163,68 +225,24 @@ const TrainingLibraryPage = () => {
         </div>
       )}
 
-      {/* 상세 보기 */}
-      {sel && (
-        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 sm:items-center" onClick={() => setSel(null)}>
-          <div className="max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-card p-5 sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-2 flex items-center justify-between">
-              <h2 className="text-heading font-black text-foreground">{sel.name}</h2>
-              <button onClick={() => setSel(null)} className="rounded-lg p-1 active:scale-95"><X className="h-5 w-5" /></button>
-            </div>
-            <div className="mb-3 flex items-center gap-2 text-micro">
-              <span className="rounded bg-muted px-2 py-0.5 font-semibold text-foreground">{sel.category}</span>
-              <span className={`rounded-full px-2 py-0.5 font-bold ${DIFF_COLOR[sel.difficulty] || "bg-muted text-muted-foreground"}`}>{sel.difficulty}</span>
-              {sel.target && <span className="text-muted-foreground">{sel.target}</span>}
-            </div>
-            {sel.image_url && <img src={sel.image_url} alt={sel.name} className="mb-3 max-h-64 w-full rounded-xl object-cover" />}
-            {/* 영상 URL 이 유튜브 주소면 유튜브 플레이어로, 아니면 바로 재생 (2026-10-13 — 코치가 유튜브 링크를 넣어도 나오게) */}
-            {sel.video_url &&
-              (strictYoutubeId(sel.video_url) ? (
-                <div className="mb-3 aspect-video w-full overflow-hidden rounded-xl bg-black">
-                  <iframe
-                    src={`https://www.youtube.com/embed/${strictYoutubeId(sel.video_url)}`}
-                    title={sel.name}
-                    className="h-full w-full"
-                    allow="encrypted-media; fullscreen; picture-in-picture"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                    allowFullScreen
-                  />
-                </div>
-              ) : (
-                <video src={sel.video_url} controls playsInline className="mb-3 w-full rounded-xl bg-black" />
-              ))}
-            {/* 붕대 감기는 전용 화면(영상·집 연습 미션)으로 */}
-            {sel.name === HANDWRAP_EXERCISE_NAME && (
-              <button
-                onClick={() => navigate("/handwrap")}
-                className="mb-3 flex w-full items-center justify-between rounded-xl bg-primary/10 px-3.5 py-3 text-left text-body font-bold text-primary transition-all active:scale-[0.99]"
-              >
-                붕대 감기 영상 · 사진 · 집 연습 미션
-                <ChevronRight className="h-4 w-4 shrink-0" />
-              </button>
-            )}
-            <p className="whitespace-pre-line text-body leading-relaxed text-foreground">{sel.description}</p>
-            {sel.benefits && (
-              <div className="mt-3 rounded-xl bg-status-complete/10 p-3">
-                <p className="text-label font-bold text-status-complete">이런 게 좋아져요</p>
-                <p className="mt-1 text-body text-foreground">{sel.benefits}</p>
-              </div>
-            )}
-            {sel.cues.length > 0 && (
-              <div className="mt-3">
-                <p className="mb-1 flex items-center gap-1 text-label font-bold text-foreground"><CheckCircle2 className="h-3.5 w-3.5 text-primary" />코치 포인트</p>
-                <ul className="space-y-1">{sel.cues.map((c, i) => <li key={i} className="flex gap-1.5 text-body text-foreground"><span className="text-primary">·</span>{c}</li>)}</ul>
-              </div>
-            )}
-            {sel.mistakes.length > 0 && (
-              <div className="mt-3">
-                <p className="mb-1 flex items-center gap-1 text-label font-bold text-foreground"><AlertTriangle className="h-3.5 w-3.5 text-status-pending" />흔한 실수</p>
-                <ul className="space-y-1">{sel.mistakes.map((c, i) => <li key={i} className="flex gap-1.5 text-body text-muted-foreground"><span className="text-status-pending">·</span>{c}</li>)}</ul>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* 상세 보기 — 회원 · 코치 화면과 같은 카드 시트 (붕대 감기는 맨 아래 전용 화면 단추) */}
+      <TrainingDrillSheet
+        exercise={sel ? normalizeCard(sel as unknown as Record<string, unknown>) : null}
+        list={list.map((r) => normalizeCard(r as unknown as Record<string, unknown>))}
+        onChange={(c: TrainingCard) => setSel(rows.find((r) => r.id === c.id) ?? null)}
+        onClose={() => setSel(null)}
+        footer={(c) =>
+          c.name === HANDWRAP_EXERCISE_NAME ? (
+            <button
+              onClick={() => navigate("/handwrap")}
+              className="mt-4 flex w-full items-center justify-between rounded-xl bg-primary/10 px-3.5 py-3 text-left text-body font-bold text-primary transition-all active:scale-[0.99]"
+            >
+              붕대 감기 영상 · 사진 · 집 연습 미션
+              <ChevronRight className="h-4 w-4 shrink-0" />
+            </button>
+          ) : null
+        }
+      />
 
       {/* 관리자 편집 */}
       {editing && (
@@ -260,6 +278,48 @@ const TrainingLibraryPage = () => {
                 className="w-full rounded-xl border border-border bg-background px-3 py-2 text-body text-foreground placeholder:text-muted-foreground" />
               <input value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: e.target.value })} placeholder="정렬 순서 (숫자)" type="number"
                 className="w-full rounded-xl border border-border bg-background px-3 py-2 text-body text-foreground placeholder:text-muted-foreground" />
+              {hasVideoCols && (
+                <div className="grid grid-cols-2 gap-2">
+                  <input value={form.minutes} onChange={(e) => setForm({ ...form, minutes: e.target.value })} placeholder="기본 몇 분 (예: 5)" type="number" inputMode="numeric"
+                    className="w-full rounded-xl border border-border bg-background px-3 py-2 text-body text-foreground placeholder:text-muted-foreground" />
+                  <input value={form.equipment} onChange={(e) => setForm({ ...form, equipment: e.target.value })} placeholder="준비물 (예: 아령 0.5~1kg)" maxLength={60}
+                    className="w-full rounded-xl border border-border bg-background px-3 py-2 text-body text-foreground placeholder:text-muted-foreground" />
+                </div>
+              )}
+              {/* 영상 넣기 — 비공개 저장소 training-videos (회원용 = 로그인한 사람 누구나 · 코치용 = 코치진만). 크롬으로 넣을 땐 10MB 안 */}
+              {hasVideoCols && editing !== "new" && editing && (
+                <div className="space-y-2 rounded-xl border border-border bg-background p-3">
+                  <p className="text-label font-bold text-foreground">영상 · 첫 장면 <span className="font-medium text-muted-foreground">mp4 · 10MB 안 · 회원용은 코치님 동의 뒤</span></p>
+                  {VIDEO_SLOTS.map((slot) => {
+                    const path = editing[slot.col] ?? null;
+                    return (
+                      <div key={slot.kind} className="flex items-center gap-2">
+                        <span className="w-24 shrink-0 text-label font-bold text-foreground">{slot.label}</span>
+                        <span className="min-w-0 flex-1 truncate text-label text-muted-foreground">{path ?? "없음"}</span>
+                        <label className={`shrink-0 cursor-pointer rounded-lg px-2.5 py-1.5 text-label font-bold ${videoBusy ? "pointer-events-none opacity-50" : "bg-primary text-primary-foreground"}`}>
+                          {videoBusy === slot.kind ? "올리는 중…" : path ? "바꾸기" : "넣기"}
+                          <input
+                            type="file"
+                            accept={slot.accept}
+                            className="sr-only"
+                            aria-label={`${slot.label} 넣기`}
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              e.target.value = "";
+                              void putVideo(editing, slot.kind, f);
+                            }}
+                          />
+                        </label>
+                        {path && (
+                          <button type="button" onClick={() => void dropVideo(editing, slot.kind)} className="shrink-0 rounded-lg bg-muted px-2 py-1.5 text-label font-bold text-destructive">
+                            빼기
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
             <button onClick={save} disabled={saving} className="mt-4 w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground transition-all active:scale-[0.98] disabled:opacity-50">
               {saving ? "저장 중..." : "저장"}

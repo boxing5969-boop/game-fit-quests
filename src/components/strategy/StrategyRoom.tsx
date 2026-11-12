@@ -2,6 +2,7 @@
  * 🧠 전략 회의 — 지점 회의실(/office) '전략 회의' 탭 (2026-10-16 대표님 · 2026-10-29 메시지 '전략' 탭에서 지점 회의실로 옮김)
  *   코치진(지도진 · 관리 권한)만 — 회원에게는 입구가 없고 서버도 막는다. 새 페이지가 아니라 지점 회의실의 탭.
  *   하위 탭: 지시·전략(운영 원칙 고정) · 오늘 프로그램 · 수업 기록 · 영상
+ *   2026-11-13 세 칸(오늘 프로그램 · 수업 기록 · 영상)이 153 콘텐츠 카드로 이어진다 — 카드 서랍(CardDrawer) · 영상 칸 맨 위 카드 선반
  *   기획안: claude.ai 문서 '전략 회의실 기획안' · DB: 20261016030000_strategy_room.sql
  */
 import { useMemo, useState } from "react";
@@ -27,6 +28,13 @@ import {
   useClearClassTemplateVideo,
 } from "@/services/classTemplateVideoService";
 import { VideoLibrary } from "@/components/strategy/StrategyVideos";
+import { missionsForDrawer } from "@/components/strategy/CardDrawer";
+import TrainingShelf from "@/components/training/TrainingShelf";
+import TrainingDrillSheet from "@/components/TrainingDrillSheet";
+import { useMissions } from "@/hooks/useMissionData";
+import { primaryMissionVideo } from "@/lib/missionVideos";
+import { cardMedia, type TrainingCard } from "@/lib/trainingCards";
+import { trainingVideoUrl, useTrainingCards } from "@/services/trainingCardService";
 import {
   strategyVideoUrl,
   useAckStrategy,
@@ -128,10 +136,43 @@ const StrategyRoom = () => {
   const [programOpen, setProgramOpen] = useState(false);
   const [programInit, setProgramInit] = useState<StrategyItem | null>(null);
   const [programTpl, setProgramTpl] = useState<ClassTemplate | null>(null);
+  const [programCard, setProgramCard] = useState<TrainingCard | null>(null);
+  // 받은 프로그램 · 수업 기록의 카드를 눌렀는데 영상이 아직 없으면 카드 시트(포인트 · 실수)
+  const [sheetCard, setSheetCard] = useState<TrainingCard | null>(null);
   const [logOpen, setLogOpen] = useState(false);
   const [logProgram, setLogProgram] = useState<StrategyItem | null>(null);
   const [overlay, setOverlay] = useState<OverlayVideo | null>(null);
   const [managePrinciples, setManagePrinciples] = useState(false);
+
+  // 153 콘텐츠 카드 · 레벨 미션 (2026-11-13) — 블록 · 칩 이름, 카드 서랍의 「레벨 미션」 칸
+  const cardsQ = useTrainingCards(ok);
+  const cardMap = useMemo(() => new Map((cardsQ.data ?? []).map((c) => [c.id, c])), [cardsQ.data]);
+  const missionsQ = useMissions();
+  const drawerMissions = useMemo(() => missionsForDrawer(missionsQ.data as Parameters<typeof missionsForDrawer>[0]), [missionsQ.data]);
+  const missionMap = useMemo(() => new Map(drawerMissions.map((m) => [m.id, m])), [drawerMissions]);
+
+  const openCard = async (card: TrainingCard) => {
+    const media = cardMedia(card, "coach");
+    if (!media) {
+      setSheetCard(card);
+      return;
+    }
+    try {
+      const url = media.kind === "storage" ? await trainingVideoUrl(media.path) : media.url;
+      setOverlay({ url, title: card.coach_video_path ? `${card.name} · 코치용` : card.name });
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+  const playMission = (missionId: string) => {
+    const row = (missionsQ.data ?? []).find((m) => m.id === missionId);
+    const v = row ? primaryMissionVideo(row.mission_videos) : null;
+    if (!row || !v?.video_url) {
+      toast.error("영상이 아직 등록되지 않았어요");
+      return;
+    }
+    setOverlay({ url: v.video_url, title: row.title });
+  };
 
   const play = async (v: StrategyVideo) => {
     try {
@@ -289,6 +330,7 @@ const StrategyRoom = () => {
               onClick={() => {
                 setProgramInit(null);
                 setProgramTpl(null);
+                setProgramCard(null);
                 setProgramOpen(true);
               }}
             >
@@ -303,6 +345,7 @@ const StrategyRoom = () => {
             onUse={(t) => {
               setProgramInit(null);
               setProgramTpl(t);
+              setProgramCard(null);
               setProgramOpen(true);
             }}
             onPlay={async (t, step, v) => {
@@ -337,7 +380,7 @@ const StrategyRoom = () => {
             <Empty
               emoji="🥊"
               title="아직 받은 프로그램이 없어요"
-              body={me.can_direct ? "영상 탭에 드릴 영상을 올리고, 영상을 골라 오늘 프로그램을 보내 보세요." : "대표님·지점장님이 보낸 오늘 프로그램이 여기에 와요.\n영상을 보고 준비한 뒤 '확인했어요'를 눌러 주세요."}
+              body={me.can_direct ? "'오늘 프로그램 만들기'에서 블록마다 카드를 골라 보내 보세요." : "대표님·지점장님이 보낸 오늘 프로그램이 여기에 와요.\n블록을 눌러 영상을 보고 준비한 뒤 '확인했어요'를 눌러 주세요."}
             />
           ) : (
             <div className="space-y-2.5">
@@ -348,6 +391,10 @@ const StrategyRoom = () => {
                   me={me}
                   videos={videoMap}
                   onPlay={play}
+                  cards={cardMap}
+                  missions={missionMap}
+                  onOpenCard={openCard}
+                  onPlayMission={playMission}
                   onApplied={(p) => {
                     setLogProgram(p);
                     setLogOpen(true);
@@ -355,6 +402,7 @@ const StrategyRoom = () => {
                   onReuse={(p) => {
                     setProgramInit(p);
                     setProgramTpl(null);
+                    setProgramCard(null);
                     setProgramOpen(true);
                   }}
                 />
@@ -381,7 +429,7 @@ const StrategyRoom = () => {
           ) : (
             <div className="space-y-2.5">
               {(logs.data ?? []).map((i) => (
-                <StrategyItemCard key={i.id} item={i} me={me} />
+                <StrategyItemCard key={i.id} item={i} me={me} cards={cardMap} onOpenCard={openCard} />
               ))}
             </div>
           )}
@@ -398,7 +446,38 @@ const StrategyRoom = () => {
         />
       )}
 
-      {section === "video" && <VideoLibrary me={me} branch={b} videos={videos} loading={videosQ.isLoading} onPlay={play} />}
+      {section === "video" && (
+        <div className="space-y-5">
+          {/* 153 콘텐츠 카드 — 모든 지점이 같이 보는 카드(코치용 영상 · 포인트 · 실수) · 「이 카드로 오늘 프로그램 만들기」 */}
+          <TrainingShelf
+            audience="staff"
+            sheetFooter={
+              me.can_direct
+                ? (card, close) => (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        close();
+                        setProgramInit(null);
+                        setProgramTpl(null);
+                        setProgramCard(card);
+                        setProgramOpen(true);
+                      }}
+                      className="mt-4 flex h-12 w-full items-center justify-center rounded-2xl bg-foreground text-body font-black text-background active:scale-[0.99]"
+                    >
+                      이 카드로 오늘 프로그램 만들기
+                    </button>
+                  )
+                : undefined
+            }
+          />
+          {/* 우리 지점 영상 — 지금 그대로(올리기 · 지우기 · 코치진만) */}
+          <div className="space-y-3">
+            <h2 className="px-1 text-[17px] font-black text-foreground">우리 지점 영상</h2>
+            <VideoLibrary me={me} branch={b} videos={videos} loading={videosQ.isLoading} onPlay={play} />
+          </div>
+        </div>
+      )}
 
       <PostComposer open={postOpen} onClose={() => setPostOpen(false)} me={me} branch={b} />
       <ProgramComposer
@@ -410,6 +489,8 @@ const StrategyRoom = () => {
         templates={templates}
         initial={programInit}
         initialTemplate={programTpl}
+        initialCard={programCard}
+        missions={drawerMissions}
       />
       <ClassLogComposer
         open={logOpen}
@@ -423,6 +504,7 @@ const StrategyRoom = () => {
         standards={growth.data?.standards}
       />
       <VideoOverlay video={overlay} onClose={() => setOverlay(null)} />
+      <TrainingDrillSheet exercise={sheetCard} onClose={() => setSheetCard(null)} />
     </div>
   );
 };

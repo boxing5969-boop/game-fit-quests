@@ -24,6 +24,7 @@ import TrainingDrillSheet from "@/components/TrainingDrillSheet";
 import LevelVideoMaster from "@/components/LevelVideoMaster";
 import CoachTodayCard from "@/components/CoachTodayCard";
 import LessonTodayCard from "@/components/lesson/LessonTodayCard";
+import TrainingShelf, { type ShelfWarmup } from "@/components/training/TrainingShelf";
 import LessonDayList from "@/components/lesson/LessonDayList";
 import LessonDaySheet from "@/components/lesson/LessonDaySheet";
 import { useLessonDays, useLessonToday } from "@/hooks/useLessonDays";
@@ -69,7 +70,20 @@ const LEAGUE_CONFIG = [
   { id: "black", label: "블랙 리그", emoji: "⚫", levels: 10 },
 ];
 
-const WhiteLeagueTab = () => {
+/** 훈련 탭 세 칸의 제목 (2026-11-13 대표님 「추천대로 진행」 — 토글 없이 한 화면: 오늘 할 것 · 내 레벨 · 영상으로 배우기) */
+const TrainingSectionTitle = ({ children }: { children: React.ReactNode }) => (
+  <h2 className="px-1 pt-2 text-heading font-black text-foreground first:pt-0">{children}</h2>
+);
+
+interface WhiteLeagueTabProps {
+  /** 「레벨 미션 영상 전체 ›」 — 예전 '레벨 미션 영상' 보기(완료 n/m · 워밍업 영상 · 리그별 · 관리자 추가/고치기)를 연다 */
+  onOpenMissionVideos?: () => void;
+  /** 「영상으로 배우기」 워밍업 칸 맨 앞에 보일 레벨 미션 워밍업 영상 */
+  warmups?: ShelfWarmup[];
+  onOpenWarmup?: (id: string) => void;
+}
+
+const WhiteLeagueTab = ({ onOpenMissionVideos, warmups, onOpenWarmup }: WhiteLeagueTabProps = {}) => {
   const { progress } = useAuth();
   const [detailView, setDetailView] = useState<DetailView>(null);
   // 🥊 내 레벨 연습하기 (오늘의 코스 3번) — 탭 안에서 화면을 바꿔 연다
@@ -120,7 +134,8 @@ const WhiteLeagueTab = () => {
 
   return (
     <div className="space-y-4">
-      {/* ═══ 오삼 코치 오늘 지시 — 훈련탭 첫 화면. 회원은 이 버튼 하나만 보면 된다 ═══ */}
+      {/* ═══ ① 오늘 할 것 — 오삼 코치 오늘의 코스 + 오늘 수업. 회원은 이 버튼 하나만 보면 된다 ═══ */}
+      <TrainingSectionTitle>오늘 할 것</TrainingSectionTitle>
       <CoachTodayCard
         league={currentRank}
         levelNumber={currentLevel}
@@ -130,7 +145,21 @@ const WhiteLeagueTab = () => {
         onOpenVideos={() => setDetailView({ league: currentRank, level: currentLevel, detail: true })}
         // 📋 오늘(다음) 수업 — 대표님 일차별 매뉴얼 (2026-09-30). 수업이 없는 레벨이면 저절로 숨는다
         extra={<LessonTodayCard />}
+        // ② 내 레벨 — 레벨업까지 카드 · 레벨 n 훈련 자세히 보기 (코치 카드 안) → 아래 레벨 미션 영상 전체 · 전체 레벨 지도
+        levelHeading={<TrainingSectionTitle>내 레벨</TrainingSectionTitle>}
       />
+
+      {/* 예전 토글 「레벨 미션 영상」 보기 — 지우지 않고 한 줄 안으로 접었다 (2026-11-13 결정 2번) */}
+      {onOpenMissionVideos && (
+        <button
+          type="button"
+          onClick={onOpenMissionVideos}
+          className="flex h-14 w-full items-center justify-between rounded-2xl border border-border bg-card px-5 text-left transition-all active:scale-[0.99]"
+        >
+          <span className="text-body font-bold text-foreground">레벨 미션 영상 전체</span>
+          <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+        </button>
+      )}
 
       {/* 리그 전체 목록 — 접어두고, 보고 싶은 회원만 펼친다 */}
       <button
@@ -246,6 +275,11 @@ const WhiteLeagueTab = () => {
         );
       })}
       </>)}
+
+      {/* ═══ ③ 영상으로 배우기 — 153 콘텐츠 카드 (메뉴 '훈련 라이브러리'를 여기로 옮김) ═══ */}
+      <div className="pt-2">
+        <TrainingShelf warmups={warmups} onOpenWarmup={onOpenWarmup} />
+      </div>
     </div>
   );
 };
@@ -620,7 +654,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack, initialDetail = fals
           </div>
         </section>
       )}
-      <TrainingDrillSheet exercise={drillSheet} onClose={() => setDrillSheet(null)} />
+      <TrainingDrillSheet exercise={drillSheet} list={priorityDrills} onChange={setDrillSheet} onClose={() => setDrillSheet(null)} />
 
       {/* 레벨 교육 다이어그램 — public/assets/curriculum/L{n}.png(히어로) + L{n}-A/B/C.png(세부).
           하단 썸네일을 탭하면 큰 사진과 자리를 바꿔 크게 볼 수 있다.

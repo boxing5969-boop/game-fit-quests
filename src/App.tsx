@@ -203,6 +203,14 @@ const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// 훈련 라이브러리 — 코치진만 이 화면, 회원은 훈련 탭 「영상으로 배우기」로 (2026-11-13)
+const TrainingLibraryRoute = () => {
+  const { role, loading } = useAuth();
+  if (loading) return <RouteLoader />;
+  if (!isManagerRole(role)) return <Navigate to="/missions?learn=1" replace />;
+  return <TrainingLibraryPage />;
+};
+
 // 153 스토리 RPG 미공개 — admin/super_admin 만 진입 (회원 직접 URL 접근 차단)
 const AdminOnlyRoute = ({ children }: { children: React.ReactNode }) => {
   const { role, loading } = useAuth();
@@ -360,7 +368,8 @@ const AppRoutes = () => {
         <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
         <Route path="/messages/to/:userId" element={<ProtectedRoute><MessageThreadPage /></ProtectedRoute>} />
         <Route path="/messages/:threadId" element={<ProtectedRoute><MessageThreadPage /></ProtectedRoute>} />
-        <Route path="/training-library" element={<ProtectedRoute><TrainingLibraryPage /></ProtectedRoute>} />
+        {/* 훈련 라이브러리 — 2026-11-13 회원 화면은 훈련 탭 「영상으로 배우기」로 옮겼다(내 바로가기 · 옛 링크는 그리로). 코치진은 카드 보기 · 고치기 화면 */}
+        <Route path="/training-library" element={<ProtectedRoute><TrainingLibraryRoute /></ProtectedRoute>} />
         <Route path="/routine-builder" element={<ProtectedRoute><ManagerRoute><RoutineBuilderPage /></ManagerRoute></ProtectedRoute>} />
         <Route path="/routines" element={<ProtectedRoute><RoutinesPage /></ProtectedRoute>} />
         <Route path="/search" element={<ProtectedRoute><SearchPage /></ProtectedRoute>} />

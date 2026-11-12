@@ -35,7 +35,10 @@ export interface ProgramBlock {
   kind: BlockKind;
   title: string;
   minutes: number;
+  /** 블록에 붙인 것은 셋 중 하나 (2026-11-13 카드 서랍): 우리 지점 영상 · 153 콘텐츠 카드(training_exercises) · 레벨 미션(missions) */
   video_id?: string | null;
+  card_id?: string | null;
+  mission_id?: string | null;
   note?: string;
 }
 
@@ -61,6 +64,8 @@ export interface ClassLogData {
   went_well?: string;
   issues?: string;
   next_focus?: string;
+  /** 오늘 가르친 153 콘텐츠 카드 id (2026-11-13 — 프로그램 카드 칩에서 안 한 것만 끄고 저장) */
+  cards?: string[];
 }
 
 export interface StrategyAck {

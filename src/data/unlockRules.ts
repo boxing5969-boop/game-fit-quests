@@ -376,14 +376,14 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     order: 3,
     label: "3단계 — 훈련 미션 둘러보기",
     description:
-      "훈련 화면에서 화이트 리그(매일 50분 수업)와 전체 미션(공식 단계별 미션) 두 탭을 한 번씩 살펴보세요. 5초만 머물러도 자동 완료.",
-    hint: "훈련 페이지의 위쪽 토글에서 '🤍 화이트 리그' / '🥊 전체 미션' 을 한 번씩 눌러보면 어떤 자리인지 감이 와요.",
+      "훈련 화면은 세 칸이에요 — 오늘 할 것 · 내 레벨 · 영상으로 배우기. 한 번 살펴보세요. 5초만 머물러도 자동 완료.",
+    hint: "훈련 화면 아래 「영상으로 배우기」에서 칸(워밍업 · 스텝 · 기술 …)을 한 번 눌러보면 어떤 자리인지 감이 와요.",
     ctaLabel: "훈련 화면 보기",
     navTarget: "/missions",
     detector: "viewed_missions",
     icon: "⚡",
     spotlightSelector: '[data-tour="missions-tab-control"]',
-    spotlightHint: "두 탭을 잠깐 둘러보면 자동으로 완료돼요.",
+    spotlightHint: "세 칸을 잠깐 둘러보면 자동으로 완료돼요.",
   },
   {
     key: "first_checkin",

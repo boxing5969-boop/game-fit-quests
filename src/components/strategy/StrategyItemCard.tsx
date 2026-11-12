@@ -6,11 +6,13 @@
  */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, ChevronDown, ChevronUp, FileText, MessageCircle, Play, Star, Trash2 } from "lucide-react";
+import { BookOpen, Check, ChevronDown, ChevronUp, FileText, MessageCircle, Play, Star, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { DmSheet } from "@/components/dm/DmParts";
+import { cardShelf, hasCardVideo, type TrainingCard } from "@/lib/trainingCards";
+import type { DrawerMission } from "@/components/strategy/CardDrawer";
 import {
   BLOCK_LABEL,
   KIND_LABEL,
@@ -64,9 +66,15 @@ interface Props {
   onApplied?: (item: StrategyItem) => void;
   /** 프로그램을 복사해 새로 만들기 (지시권자) */
   onReuse?: (item: StrategyItem) => void;
+  /** 2026-11-13 153 콘텐츠 카드 · 레벨 미션 — 블록 · 수업 기록 칩 이름과 영상 */
+  cards?: Map<string, TrainingCard>;
+  missions?: Map<string, DrawerMission>;
+  /** 카드 블록을 누르면 — 코치용 영상(없으면 회원용), 영상이 없으면 카드 시트 */
+  onOpenCard?: (card: TrainingCard) => void;
+  onPlayMission?: (missionId: string) => void;
 }
 
-const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse }: Props) => {
+const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse, cards, missions, onOpenCard, onPlayMission }: Props) => {
   const [openComments, setOpenComments] = useState(false);
   const [ackSheet, setAckSheet] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -178,6 +186,27 @@ const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse }: Prop
         {item.kind === "class_log" && (
           <>
             <Row label="프로그램" text={d.program_title} />
+            {Array.isArray(d.cards) && d.cards.length > 0 && (
+              <div className="grid grid-cols-[3.6rem_1fr] gap-2 text-[13.5px] leading-relaxed">
+                <span className="font-bold text-muted-foreground">카드</span>
+                <span className="flex flex-wrap gap-1">
+                  {d.cards.map((id) => {
+                    const c = cards?.get(id);
+                    return c ? (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => onOpenCard?.(c)}
+                        className="rounded-full px-2 py-0.5 text-[12px] font-bold active:scale-95"
+                        style={{ color: cardShelf(c).color, backgroundColor: `${cardShelf(c).color}1A` }}
+                      >
+                        {c.name}
+                      </button>
+                    ) : null;
+                  })}
+                </span>
+              </div>
+            )}
             <Row label="잘된 점" text={d.went_well} />
             <Row label="어려움" text={d.issues} />
             <Row label="다음에" text={d.next_focus} />
@@ -187,13 +216,15 @@ const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse }: Prop
           <ol className="space-y-1.5">
             {(d.blocks ?? []).map((b, i) => {
               const v = b.video_id ? videos?.get(b.video_id) : undefined;
+              const c = b.card_id ? cards?.get(b.card_id) : undefined;
+              const m = b.mission_id ? missions?.get(b.mission_id) : undefined;
               return (
                 <li key={i} className="flex items-start gap-2 rounded-2xl bg-secondary/60 px-3 py-2">
                   <span className="mt-0.5 w-5 shrink-0 text-center text-[12px] font-black text-muted-foreground">{i + 1}</span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-[13.5px] font-bold text-foreground">
                       <span className="mr-1 text-[11.5px] font-black text-emerald-700 dark:text-emerald-300">{BLOCK_LABEL[b.kind] ?? b.kind}</span>
-                      {b.title || v?.title || "—"}
+                      {b.title || c?.name || m?.title || v?.title || "—"}
                     </span>
                     {b.note && <span className="block whitespace-pre-wrap text-[12.5px] text-muted-foreground">{b.note}</span>}
                   </span>
@@ -203,6 +234,27 @@ const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse }: Prop
                       type="button"
                       onClick={() => onPlay(v)}
                       aria-label={`${v.title} 영상 보기`}
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-foreground text-background active:scale-95"
+                    >
+                      <Play className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                  {c && onOpenCard && (
+                    <button
+                      type="button"
+                      onClick={() => onOpenCard(c)}
+                      aria-label={`${c.name} ${hasCardVideo(c) ? "영상 보기" : "카드 보기"}`}
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white active:scale-95"
+                      style={{ backgroundColor: cardShelf(c).color }}
+                    >
+                      {hasCardVideo(c) ? <Play className="h-3.5 w-3.5" /> : <BookOpen className="h-3.5 w-3.5" />}
+                    </button>
+                  )}
+                  {m?.hasVideo && onPlayMission && (
+                    <button
+                      type="button"
+                      onClick={() => onPlayMission(m.id)}
+                      aria-label={`${m.title} 영상 보기`}
                       className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-foreground text-background active:scale-95"
                     >
                       <Play className="h-3.5 w-3.5" />

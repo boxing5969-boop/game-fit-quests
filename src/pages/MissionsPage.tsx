@@ -1,5 +1,5 @@
 import { Fragment, useState, useRef, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { invalidateMissionVideoQueries } from "@/lib/missionVideoQueries";
 import { toast } from "sonner";
@@ -15,12 +15,12 @@ import {
   Clock,
   CheckCircle2,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { MasterProgressCard } from "@/components/master/MasterProgressCard";
-import { useTutorialState } from "@/hooks/useTutorialState";
 import {
   useMissions,
   useMyMissionSubmissions,
@@ -48,7 +48,6 @@ import { parseVideoTitle } from "@/hooks/useLevelVideos";
 import {
   AppPage,
   PageHeader,
-  SegmentedControl,
 } from "@/components/ui/rankingup";
 
 type MissionTab = "white" | "missions";
@@ -137,17 +136,32 @@ const emptyMissionForm: MissionForm = {
 const MissionsPage = () => {
   const navigate = useNavigate();
   const { progress, role, user, refreshProgress } = useAuth();
-  // 64-N: 오삼 가이드 step 3 진행 — 올리그(SegmentedControl) 강조
-  const tutorial = useTutorialState();
-  const isTutorialStep3 =
-    tutorial.isEligible && tutorial.currentStep?.key === "first_mission";
   const { data: missions, isLoading } = useMissions();
   const { data: submissions } = useMyMissionSubmissions();
   const submitMission = useSubmitMission();
   const { data: levels } = useLevels();
   const qc = useQueryClient();
   const [adminClearing, setAdminClearing] = useState(false);
-  const [missionTab, setMissionTab] = useState<MissionTab>("white");
+  // 2026-11-13 대표님 「추천대로 진행」 — 토글(올리그 / 레벨 미션 영상)을 없애고 한 화면 세 칸(WhiteLeagueTab).
+  //   예전 '레벨 미션 영상' 보기는 지우지 않고 「레벨 미션 영상 전체 ›」 한 줄 안으로 — 주소 ?v=videos (뒤로 가기로 돌아온다)
+  const [params, setParams] = useSearchParams();
+  const location = useLocation();
+  const missionTab: MissionTab = params.get("v") === "videos" ? "missions" : "white";
+  const openMissionVideos = () => {
+    const next = new URLSearchParams(params);
+    next.set("v", "videos");
+    setParams(next);
+    window.scrollTo({ top: 0 });
+  };
+  const closeMissionVideos = () => {
+    // 이 앱 안에서 들어왔으면 뒤로, 주소로 바로 열었으면 첫 화면으로
+    if (location.key !== "default") navigate(-1);
+    else {
+      const next = new URLSearchParams(params);
+      next.delete("v");
+      setParams(next, { replace: true });
+    }
+  };
   const isAdmin = role === "admin" || role === "super_admin";
 
   // Admin form state
@@ -476,7 +490,19 @@ const MissionsPage = () => {
     <AppPage
       header={
         <PageHeader
-          title="훈련 미션"
+          title={missionTab === "missions" ? "레벨 미션 영상" : "훈련"}
+          leftAction={
+            missionTab === "missions" ? (
+              <button
+                type="button"
+                onClick={closeMissionVideos}
+                aria-label="훈련으로 돌아가기"
+                className="-ml-2 flex h-9 w-9 items-center justify-center rounded-full active:bg-secondary"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+            ) : undefined
+          }
           // 내 정보는 아래 탭에 있다 — 머리글 단추는 관리자 '추가'만 (2026-10-28 리디자인)
           rightAction={
             isAdmin ? (
@@ -506,33 +532,20 @@ const MissionsPage = () => {
           />
         )}
 
-        <div
-          data-tour="missions-tab-control"
-          className={
-            isTutorialStep3 && missionTab !== "white"
-              ? "rounded-pill ring-2 ring-amber-400 ring-offset-1 ring-offset-background animate-pulse"
-              : ""
-          }
-        >
-          <SegmentedControl<MissionTab>
-            value={missionTab}
-            onChange={(v) => setMissionTab(v)}
-            segments={[
-              {
-                value: "white",
-                label:
-                  isTutorialStep3 && missionTab !== "white"
-                    ? "👆 🤍 올리그"
-                    : "🤍 올리그",
-              },
-              { value: "missions", label: "🥊 레벨 미션 영상" },
-            ]}
-            fullWidth
-          />
-        </div>
-
+        {/* 토글(올리그 / 레벨 미션 영상)은 없앴다 — 튜토리얼 표시 missions-tab-control 은 「영상으로 배우기」 칩 줄로 옮겼다 */}
         {missionTab === "white" ? (
-          <WhiteLeagueTab />
+          <WhiteLeagueTab
+            onOpenMissionVideos={openMissionVideos}
+            warmups={warmupMissions.map((m) => ({
+              id: m.id,
+              title: m.title,
+              poster: primaryMissionVideo(m.mission_videos)?.poster_url ?? null,
+            }))}
+            onOpenWarmup={(id) => {
+              const m = warmupMissions.find((x) => x.id === id);
+              if (m) openWarmup(m);
+            }}
+          />
         ) : (
           <>
             {/* ─── Global progress card — 주인공 '몇 개 완료' 하나 (같은 숫자를 % 로 또 쓰지 않는다) ─── */}
