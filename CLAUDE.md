@@ -802,6 +802,25 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 끄기 = 홈 커스터마이즈(MY복서 화면) 맨 위 '첫 화면' 칸 — `HomeWidgetMeta.firstScreen`(켜고 끄기만 · 순서 단추 없음 · MY복서 슬롯에는 그리지 않음, renderers 는 null).
 - **감정 설계판** (2026-11-12 대표님 「달력 기능도 목표는 회원님들의 감정을 설계하는 거야」 · DB 변경 없음): 기념일 = 금색 도장(첫 도장 · 출석 축하를 채운 날 — 서버 `milestones.reachedOn`) · 고른 날 아래 '그날의 의미' 한 줄(다시 시작한 날 = 14일 넘게 쉬고 온 날, 쉰 기간은 말하지 않는다 · 그 달 가장 길게 운동한 날 = 운동 시간을 실제로 잰 날 하나가 뚜렷이 길 때 · 3번 이상 온 달) · 지난 달을 넘겨 보면 '10월 · 8시간 36분 운동했어요'(앞 달보다 늘었을 때만 '9월보다 +N' 칩) · 새 달 첫 7일엔 '지난달 … 운동했어요 · 11월도 이어 가요'(홈만 — `recap`, 이번 달 숫자는 '내 운동'이 주인공이라 다시 쓰지 않는다) · **'이번 주 n번 왔어요' 칩은 뺐다**(도장 줄이 이미 말한다). 계산 [calendarMoments.ts](src/lib/calendarMoments.ts)(시험 — 글에 빠진 · 쉰 · 줄어든 · 밖에가 없는지도 본다). '153에서의 첫날'이라고 쓰지 않는다(기록은 2026-02 부터라 오래 다닌 회원에게는 사실이 아니다 → '첫 도장을 찍은 날').
 - 다음 단계(보고서 순서): 2단계 운동 약속(`myboxer:ops-schedule` 설계 — 약속한 날 = 민트 테두리 → 출석하면 채워짐 · 빠지면 회색 점) · 3단계 오늘의 체크(다 채운 날 금색 별) · 4단계 153OS 공지 '일정 날짜' · 한 줄 템플릿 칩. 모두 이 카드의 날짜 칸에 얹는다.
+  - → 운동 약속은 11/12 저녁 따로 올림(아래 「153 운동 약속 1단계」) · 오늘의 체크는 아래 2-1단계.
+
+#### 2-1단계 — 오늘의 체크 · 나만의 체크 · 한 줄 · 기분 스티커 · 금색 별 (2026-11-12 대표님 「추천대로」 · 「운동 달력 2단계 보고서」 https://claude.ai/artifact/H8kmEW8aUrsLG92MRWB68b)
+
+봄 회원님 11/11 제안의 남은 것 — 앱 활동을 하면 저절로 체크(퀘스트 깨는 기분) · 내가 고르는 체크리스트(잽 연습 몇 번) · 오늘 운동 간단히 기록. 보고서의 네이버 캘린더 대응: 다이어리 → 한 줄 · 스티커 → 기분 스티커 · 할 일/습관 → 나만의 체크 · 듀얼 보기 → 그날 카드 · 습관 독려 알림은 2-2(알림 설정과 같이)로 옮김.
+
+| 파일 | 역할 |
+|---|---|
+| [supabase/migrations/20261112211833_calendar_checks_stage21.sql](supabase/migrations/20261112211833_calendar_checks_stage21.sql) | 새 표 2 — `member_check_items`(나만의 체크 · 3개까지 · 이름 20자 · 목표 1~9,999 + 단위 번/분/라운드/세트/km/개 · weekdays null = 매일 · 빼기 = `archived_at`) · `member_check_days`(회원 · 날짜마다 한 줄: 한 체크 `done` uuid[] · 기분 스티커 strong/fire/proud/mitt/sweat/tired/hurt/rest). 함수 `get_my_calendar(p_from, p_to)`(63일까지 — 항목(그 범위에 있던 것, 뺀 것 포함) + 날마다 응원(boxing_cheers 보낸 것) · 153(community_reactions) · 한 줄(champion_journal_entries kind journal, 그날 마지막 글) · done · 스티커) · `set_my_check_item` · `remove_my_check_item` · `set_my_check_done`(오늘부터 6일 전까지 · 그날 있던 항목 · 그 요일만) · `set_my_day_sticker`(같은 창) · 안쪽 `_my_check_items`. 쓰는 사람 = `_is_active_member`(승인 전 계정은 {on:false}) |
+| [src/lib/calendarChecks.ts](src/lib/calendarChecks.ts) | 서버 값 읽기 · 그날의 체크(`dayChecks` — 저절로 3개 체육관 · 응원(응원 또는 153) · 한 줄 + 그날의 나만의 체크) · 금색 별(`isStarDay` = 다 채운 날) · 한 줄(`checkProgress` — 채운 것과 다음 한 걸음만, 지난 날 0개는 말 없음) · 스티커 표 · 만들기 검사(서버와 같은 말) · 캐시 고치기 — 시험 calendarChecks.test.ts |
+| [src/services/calendarCheckService.ts](src/services/calendarCheckService.ts) | `["153cal2", 회원, from, to]` — 보이는 날짜(이번 주 또는 한 달 4~6주)만 · 했어요 · 스티커는 누르는 순간 바뀌고 실패하면 되돌림 · 함수 없음(적용 전 · 옛 DB 미리보기) · 승인 전 = 꺼짐(달력은 예전 그대로) |
+| [CalendarChecks.tsx](src/components/attendance/CalendarChecks.tsx) · [CheckItemsSheet.tsx](src/components/attendance/CheckItemsSheet.tsx) | 그날 카드 `DayChecksPanel` — 아무 날도 안 고르면 '오늘의 체크' 한 줄(칩 + 한 줄 + 오른쪽 위 '나만의 체크 ›'), 날짜를 누르면 들어온 시각 · 운동 시간 · 그날의 의미 + 체크 + 쓴 한 줄(공개 범위 · 사진) + 기분 스티커 8개(오늘부터 6일 전까지). 저절로 체크는 누를 수 없고 오늘 아직이면 그 일을 하는 창(한 줄 쓰기 = 기존 '오늘 운동 한 줄' · 응원 보내기 = 기존 응원 창). 나만의 체크 시트 = 지금 항목(고치기 · 두 번 눌러 빼기) + 예시 4개 + 이름 · 숫자 · 단위 · 요일 |
+| [WorkoutCalendar.tsx](src/components/attendance/WorkoutCalendar.tsx) `withChecks` | 홈 · 내 운동 기록(내 기록일 때만) — 칸 오른쪽 위 금색 별(흰 동그라미) · 오른쪽 아래 기분 스티커 · 오늘까지는 출석 안 한 날도 눌러 그날 카드 · 체크를 켜면 한 달 줄 간격을 넓힘(별 · 스티커가 겹치지 않게) · 한 줄 · 응원 · 나만의 체크 창은 누를 때 받는 조각(lazy) · 창을 닫으면 체크를 다시 읽음 |
+
+- 한 줄 기록은 새 표 없이 기존 `champion_journal_entries`('오늘 운동 한 줄' — 기분 · 사진 · 공개 범위 · 첫 글 퀘스트 보상 그대로). 달력에서 열면 처음 공개 범위 = **나만 보기**(대표님 결정 · `ChampionJournalSheet defaultVisibility="private" rememberKey="cal"` — 커뮤니티 글쓰기의 기억과 따로). 지난 날 한 줄은 쓸 수 없다(그날의 글만).
+- 금색 별 = 보상 없음 · 별만(대표님 결정). 체육관에 온 날만 다 채울 수 있다(체육관도 체크 하나).
+- 오삼코치 브리핑은 읽은 기록이 어디에도 남지 않아 저절로 체크에 넣지 않았다. 넣으려면 읽음 기록부터.
+- '홈의 오늘 운동 한 줄 입구를 달력으로 옮기기(접기)'는 할 것이 없었다 — 그 입구는 이미 홈이 아니라 퀘스트 메뉴(`/myboxer/quest` HomeEngagementSection)에 있고, 튜토리얼이 그 카드(`data-tour="champion-journal-card"`)를 짚는다. 홈 카드 수는 그대로(달력 카드 안에 한 줄).
+- 시험: 로컬 Postgres 16 뼈대(`_is_active_member` 는 운영 본문 그대로) + 마이그레이션 두 번 → 14묶음(로그인 없음 · 승인 전 · 코치 · 지난 활동 읽기(자정 경계 · 남의 글 · 다른 종류 빼기) · 만들기 · 잘못된 값 6가지 · 했어요/취소/두 번 · 고칠 수 있는 날 · 요일 · 스티커 · 빼기(지난 기록 그대로 · 다시 3개) · 범위 · 다른 회원 · 권한) ALL_OK / vitest calendarChecks 10 · CalendarChecks 2.
 
 ### 153 운동 약속 1단계 · 코치 「오늘 만날 회원」 (2026-11-12 대표님 「추천하는대로 진행할게」 · 선릉역점만 · 문서 https://claude.ai/artifact/LK88UcbCHRvQNx6T8kaxu2 · 11/08 계획 3단계 중 약속 부분)
 

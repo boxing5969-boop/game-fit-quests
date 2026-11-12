@@ -51,6 +51,10 @@ import ChampionJournalPromptList, {
 interface Props {
   open: boolean;
   onClose: () => void;
+  /** 처음 고를 공개 범위 — 운동 달력에서 열면 '나만 보기'(2026-11-12 대표님 「추천대로」 · 2-1단계). 없으면 전체 공개 */
+  defaultVisibility?: JournalVisibility;
+  /** 공개 범위 기억 칸 — 운동 달력은 'cal'(커뮤니티 글쓰기와 따로 기억) */
+  rememberKey?: string;
 }
 
 function conditionToMoodLabel(c: BoxingConditionType | null): string | null {
@@ -83,26 +87,26 @@ function tidyContent(s: string): string {
 const VIS_ICON: Record<JournalVisibility, LucideIcon> = { branch: Users, partners: Handshake, private: Lock };
 
 // 마지막으로 고른 공개 범위를 기억한다 — 나만 보기로 쓰는 회원이 매번 바꾸지 않게 (이 기기에서만, 못 읽으면 전체 공개)
-const visKey = (uid: string) => `journal-visibility:${uid}`;
-function readLastVisibility(uid?: string): JournalVisibility {
-  if (!uid) return "branch";
+const visKey = (uid: string, slot?: string) => (slot ? `journal-visibility:${slot}:${uid}` : `journal-visibility:${uid}`);
+function readLastVisibility(uid?: string, slot?: string, fallback: JournalVisibility = "branch"): JournalVisibility {
+  if (!uid) return fallback;
   try {
-    const v = localStorage.getItem(visKey(uid));
-    return v === "partners" || v === "private" ? v : "branch";
+    const v = localStorage.getItem(visKey(uid, slot));
+    return v === "partners" || v === "private" || v === "branch" ? v : fallback;
   } catch {
-    return "branch";
+    return fallback;
   }
 }
-function saveLastVisibility(uid: string | undefined, v: JournalVisibility) {
+function saveLastVisibility(uid: string | undefined, v: JournalVisibility, slot?: string) {
   if (!uid) return;
   try {
-    localStorage.setItem(visKey(uid), v);
+    localStorage.setItem(visKey(uid, slot), v);
   } catch {
     /* 저장 못 해도 글쓰기는 그대로 */
   }
 }
 
-const ChampionJournalSheet = ({ open, onClose }: Props) => {
+const ChampionJournalSheet = ({ open, onClose, defaultVisibility = "branch", rememberKey }: Props) => {
   const submit = useSubmitChampionJournalEntry();
   const submitCondition = useSubmitBoxingCondition();
   // open=false 일 때는 SELECT 가 발사되지 않도록 enabled gate.
@@ -135,10 +139,10 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
       setPainArea(todayCondition?.pain_area ?? []);
       setResult(null);
       setPending(false);
-      setVisibility(readLastVisibility(user?.id));
+      setVisibility(readLastVisibility(user?.id, rememberKey, defaultVisibility));
       setPhoto(null);
     }
-  }, [open, todayCondition?.condition_type, todayCondition?.pain_area, user?.id]);
+  }, [open, todayCondition?.condition_type, todayCondition?.pain_area, user?.id, rememberKey, defaultVisibility]);
 
   const showPainArea = condition === "pain";
   const alreadyHasTodayCondition = !!todayCondition?.has_today;
@@ -171,7 +175,7 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
         mood: conditionToMoodLabel(condition),
         visibility,
       });
-      saveLastVisibility(user?.id, visibility);
+      saveLastVisibility(user?.id, visibility, rememberKey);
       if (photoUrl) {
         try {
           await setJournalEntryOptions(data.entry_id, visibility, photoUrl);
@@ -180,6 +184,8 @@ const ChampionJournalSheet = ({ open, onClose }: Props) => {
         }
       }
       qc.invalidateQueries({ queryKey: ["community-feed"] });
+      // 운동 달력 '한 줄' 체크 · 그날 카드 (services/calendarCheckService CAL2_KEY)
+      qc.invalidateQueries({ queryKey: ["153cal2"] });
       if (condition && !alreadyHasTodayCondition) {
         try {
           await submitCondition.mutateAsync({

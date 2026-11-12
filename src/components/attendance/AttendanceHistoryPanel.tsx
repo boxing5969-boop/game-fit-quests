@@ -210,6 +210,7 @@ const WeekCard = ({ data, header, mine = false }: { data: AttendanceHistory; hea
       storageKey="153cal:record:open"
       header={header}
       withPromise={mine}
+      withChecks={mine}
       footer={
         data.total > 0 ? (
           <p className="mt-4 flex items-start gap-2 text-body leading-snug text-foreground">

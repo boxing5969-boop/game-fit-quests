@@ -14,10 +14,16 @@
  *   · 운동 약속 (2026-11-12 대표님 「추천하는대로 진행할게」 · withPromise — 내 기록에서만): 약속한 날(오늘 · 앞으로)은 점선 테두리 →
  *     출석하면 그대로 민트 도장 · 놓친 약속은 표시하지 않는다 · 카드 안 한 줄(잘한 것 · 다음 약속) + 걸기 · 고치기 시트(PromiseSheet).
  *     계산 · 글은 lib/promise153.ts, 자료는 services/promiseService.ts(켠 지점 회원이 아니면 아무것도 안 그림).
- *   · 다음 단계: 오늘의 체크(다 채운 날 금색 별).
+ *   · 2-1단계 (2026-11-12 대표님 「추천대로」 · withChecks — 내 기록에서만 · 보고서 https://claude.ai/artifact/H8kmEW8aUrsLG92MRWB68b):
+ *     오늘의 체크(저절로 — 체육관 · 응원 · 한 줄) + 나만의 체크(3개까지) → 다 채운 날 칸 오른쪽 위 금색 별 · 그날 기분 스티커는 칸 오른쪽 아래.
+ *     오늘까지는 출석 안 한 날도 눌러 그날 카드(CalendarChecks DayChecksPanel)를 연다 · 아무 날도 안 고르면 '오늘의 체크' 한 줄.
+ *     한 줄 쓰기 = 기존 '오늘 운동 한 줄'(처음엔 나만 보기) · 응원 보내기 = 기존 응원 창 · 나만의 체크 = CheckItemsSheet (모두 누를 때 받는 조각).
+ *     계산 · 글은 lib/calendarChecks.ts, 자료는 services/calendarCheckService.ts(함수가 없거나 승인 전 계정이면 지금 그대로).
  *   날짜 계산은 lib/attendanceCalendar.ts (주는 월요일 시작).
  */
-import { useMemo, useState, type ReactNode } from "react";
+import { Suspense, lazy, useMemo, useState, type ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { ChevronDown, ChevronLeft, ChevronRight, Handshake, Star } from "lucide-react";
 import {
   WEEKDAY_KO,
@@ -32,9 +38,17 @@ import { attendanceByDay, monthBounds, monthOf, monthWeeks, shiftMonth, weekOf }
 import { kstToday } from "@/lib/attendanceCheer";
 import { dayMoments, freshStartLine, monthRecap, type DayMoment } from "@/lib/calendarMoments";
 import { isPromisedDay, promiseSentence, promiseStatus, type Promise153 } from "@/lib/promise153";
+import { calendarRange, dayChecks, isStarDay, stickerOf, type StickerKey } from "@/lib/calendarChecks";
 import { useMyPromise } from "@/services/promiseService";
+import { CAL2_KEY, useMyCalendar, useSetCheckDone, useSetDaySticker } from "@/services/calendarCheckService";
 import PromiseSheet from "@/components/attendance/PromiseSheet";
+import DayChecksPanel from "@/components/attendance/CalendarChecks";
 import { cn } from "@/lib/utils";
+
+// 그날 카드에서 누를 때만 받는 창 (홈 첫 화면 묶음을 키우지 않게)
+const CheckItemsSheet = lazy(() => import("@/components/attendance/CheckItemsSheet"));
+const ChampionJournalSheet = lazy(() => import("@/components/engagement/ChampionJournalSheet"));
+const SecondCheerSheet = lazy(() => import("@/components/engagement/SecondCheerSheet"));
 
 const n = (v: number) => v.toLocaleString("ko-KR");
 
@@ -63,17 +77,25 @@ interface CellProps {
   moment?: DayMoment;
   /** 약속한 날(오늘 · 앞으로, 아직 안 온 날) — 점선 테두리 */
   promised?: boolean;
+  /** 금색 별 — 그날 체크를 다 채운 날 (2-1단계) */
+  star?: boolean;
+  /** 그날 기분 스티커(이모지 — 그릴 때 153 입체 아이콘) */
+  sticker?: string | null;
+  /** 출석하지 않은 날도 누를 수 있나 — 체크를 켠 달력의 오늘까지 */
+  pickable?: boolean;
   picked: boolean;
   onPick: (day: string) => void;
 }
 
-/** 날짜 한 칸 — 출석한 날 = 민트 도장(누르면 그날 한 줄) · 기념일 = 금색 도장 · 오늘 = 테두리 · 앞뒤 달 = 흐리게 */
-const DayCell = ({ day, on, today, faint = false, moment, promised = false, picked, onPick }: CellProps) => {
+/** 날짜 한 칸 — 출석한 날 = 민트 도장(누르면 그날 한 줄) · 기념일 = 금색 도장 · 오늘 = 테두리 · 앞뒤 달 = 흐리게 ·
+ *  금색 별(다 채운 날)은 오른쪽 위 · 기분 스티커는 오른쪽 아래 */
+const DayCell = ({ day, on, today, faint = false, moment, promised = false, star = false, sticker = null, pickable = false, picked, onPick }: CellProps) => {
   const isToday = day === today;
   const num = Number(day.slice(8));
   const base = "flex h-10 w-10 items-center justify-center rounded-full text-label tabular-nums";
   const gold = on && !!moment?.gold;
-  const label = `${dayLabel(day)}${on ? " 출석" : ""}${on && moment ? ` · ${moment.text}` : ""}${!on && promised ? " · 약속한 날" : ""}${isToday ? " · 오늘" : ""}`;
+  const label = `${dayLabel(day)}${on ? " 출석" : ""}${on && moment ? ` · ${moment.text}` : ""}${!on && promised ? " · 약속한 날" : ""}${star ? " · 금색 별" : ""}${isToday ? " · 오늘" : ""}`;
+  const pickedRing = picked && "ring-2 ring-foreground ring-offset-2 ring-offset-card";
   if (faint) {
     return (
       <span className={cn(base, "text-muted-foreground/40")} aria-hidden>
@@ -81,40 +103,65 @@ const DayCell = ({ day, on, today, faint = false, moment, promised = false, pick
       </span>
     );
   }
+  const marks = (
+    <>
+      {star && (
+        <span className="pointer-events-none absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-card shadow-elev-1" aria-hidden>
+          <Star className="h-3.5 w-3.5 text-reward" fill="currentColor" />
+        </span>
+      )}
+      {sticker && (
+        <span className="pointer-events-none absolute -bottom-1.5 -right-1.5 text-micro leading-none" aria-hidden>
+          {sticker}
+        </span>
+      )}
+    </>
+  );
   if (!on) {
+    const cls = cn(
+      base,
+      promised && day >= today
+        ? "border-2 border-dashed border-primary font-bold text-primary"
+        : isToday
+          ? "font-bold text-foreground ring-2 ring-primary/60"
+          : day > today
+            ? "text-muted-foreground/60"
+            : "text-foreground",
+      pickable && pickedRing,
+    );
     return (
-      <span
-        className={cn(
-          base,
-          promised && day >= today
-            ? "border-2 border-dashed border-primary font-bold text-primary"
-            : isToday
-              ? "font-bold text-foreground ring-2 ring-primary/60"
-              : day > today
-                ? "text-muted-foreground/60"
-                : "text-foreground",
+      <span className="relative inline-flex">
+        {pickable ? (
+          <button type="button" onClick={() => onPick(day)} aria-pressed={picked} aria-label={label} className={cn(cls, "transition-transform active:scale-95")}>
+            {num}
+          </button>
+        ) : (
+          <span className={cls} aria-label={label}>
+            {num}
+          </span>
         )}
-        aria-label={label}
-      >
-        {num}
+        {marks}
       </span>
     );
   }
   return (
-    <button
-      type="button"
-      onClick={() => onPick(day)}
-      aria-pressed={picked}
-      aria-label={label}
-      className={cn(
-        base,
-        "font-extrabold transition-transform active:scale-95",
-        gold ? "bg-reward text-reward-foreground" : "bg-primary text-primary-foreground",
-        picked && "ring-2 ring-foreground ring-offset-2 ring-offset-card",
-      )}
-    >
-      {num}
-    </button>
+    <span className="relative inline-flex">
+      <button
+        type="button"
+        onClick={() => onPick(day)}
+        aria-pressed={picked}
+        aria-label={label}
+        className={cn(
+          base,
+          "font-extrabold transition-transform active:scale-95",
+          gold ? "bg-reward text-reward-foreground" : "bg-primary text-primary-foreground",
+          pickedRing,
+        )}
+      >
+        {num}
+      </button>
+      {marks}
+    </span>
   );
 };
 
@@ -204,9 +251,23 @@ export interface WorkoutCalendarCardProps {
   recap?: boolean;
   /** 운동 약속(내 기록에서만) — 약속한 날 점선 · 한 줄 · 걸기/고치기 */
   withPromise?: boolean;
+  /** 2-1단계 체크(내 기록에서만) — 오늘의 체크 · 나만의 체크 · 한 줄 · 기분 스티커 · 금색 별 */
+  withChecks?: boolean;
 }
 
-const WorkoutCalendarCard = ({ data, title, openTitle, storageKey, footer, header, recap = false, withPromise = false }: WorkoutCalendarCardProps) => {
+type SheetKey = "items" | "line" | "cheer";
+
+const WorkoutCalendarCard = ({
+  data,
+  title,
+  openTitle,
+  storageKey,
+  footer,
+  header,
+  recap = false,
+  withPromise = false,
+  withChecks = false,
+}: WorkoutCalendarCardProps) => {
   const today = kstToday();
   const [open, setOpen] = useState(() => readOpen(storageKey));
   const [month, setMonth] = useState(() => monthOf(today));
@@ -219,9 +280,49 @@ const WorkoutCalendarCard = ({ data, title, openTitle, storageKey, footer, heade
   const [promiseOpen, setPromiseOpen] = useState(false);
   const promisedFor = (d: string) => !byDay.has(d) && d >= today && isPromisedDay(promise, d);
   const bounds = monthBounds(data.firstDay, today);
-  const week = weekOf(today);
+  const week = useMemo(() => weekOf(today), [today]);
   const weekCount = week.filter((d) => byDay.has(d)).length;
   const pickedDay = picked ? byDay.get(picked) ?? null : null;
+
+  // 2-1단계 체크 — 보이는 날짜(이번 주 또는 한 달)만 서버에 묻는다
+  const visibleDays = useMemo(() => (open ? monthWeeks(month).flat().map((c) => c.day) : week), [open, month, week]);
+  const range = withChecks ? calendarRange(visibleDays) : null;
+  const calQ = useMyCalendar(range?.from ?? null, range?.to ?? null, withChecks);
+  const cal = withChecks && calQ.data?.on ? calQ.data : null;
+  const qc = useQueryClient();
+  const doneM = useSetCheckDone();
+  const stickerM = useSetDaySticker();
+  const [sheet, setSheet] = useState<SheetKey | null>(null);
+  const [mounted, setMounted] = useState<Record<SheetKey, boolean>>({ items: false, line: false, cheer: false });
+  const openSheet = (k: SheetKey) => {
+    setMounted((m) => (m[k] ? m : { ...m, [k]: true }));
+    setSheet(k);
+  };
+  const closeSheet = () => {
+    setSheet(null);
+    void qc.invalidateQueries({ queryKey: CAL2_KEY }); // 한 줄 · 응원을 마쳤으면 체크가 채워진다
+  };
+  const starOf = (d: string) => !!cal && d <= today && isStarDay(dayChecks(d, byDay.has(d), cal.days.get(d), cal.items));
+  const stickerFor = (d: string) => (cal ? stickerOf(cal.days.get(d)?.sticker)?.emoji ?? null : null);
+  const pickableFor = (d: string) => !!cal && d <= today;
+  const showToday = !!cal && !picked && (!open || month === monthOf(today));
+  const panelFor = (day: string, compact: boolean) =>
+    cal ? (
+      <DayChecksPanel
+        day={day}
+        today={today}
+        attended={byDay.get(day) ?? null}
+        moment={moments.get(day)}
+        cal={cal}
+        compact={compact}
+        busy={doneM.isPending}
+        onToggle={(itemId, done) => doneM.mutate({ day, itemId, done }, { onError: (e) => toast.error((e as Error).message) })}
+        onSticker={(key: StickerKey | null) => stickerM.mutate({ day, sticker: key }, { onError: (e) => toast.error((e as Error).message) })}
+        onWriteLine={() => openSheet("line")}
+        onCheer={() => openSheet("cheer")}
+        onManage={() => openSheet("items")}
+      />
+    ) : null;
   // 지난 달을 넘겨 보면 그 달 한 줄 · 새 달 첫 7일엔 지난달 한 줄 (이번 달 숫자는 홈 '내 운동'이 주인공 — 다시 쓰지 않는다)
   const pastRecap = open && month < monthOf(today) ? monthRecap(data, month) : null;
   const freshLine = recap && !pastRecap ? freshStartLine(data, today) : null;
@@ -277,7 +378,11 @@ const WorkoutCalendarCard = ({ data, title, openTitle, storageKey, footer, heade
                 <ChevronRight className="h-5 w-5" aria-hidden />
               </button>
             </div>
-            <div className="mt-2 grid grid-cols-7 gap-y-1" role="group" aria-label={`${monthLabel(month)} 출석 달력`}>
+            <div
+              className={cn("mt-2 grid grid-cols-7", cal ? "gap-y-3" : "gap-y-1")}
+              role="group"
+              aria-label={`${monthLabel(month)} 출석 달력`}
+            >
               {WEEKDAY_KO.map((w) => (
                 <span key={w} className="pb-1 text-center text-micro text-muted-foreground">
                   {w}
@@ -294,6 +399,9 @@ const WorkoutCalendarCard = ({ data, title, openTitle, storageKey, footer, heade
                       faint={!c.inMonth}
                       moment={moments.get(c.day)}
                       promised={c.inMonth && promisedFor(c.day)}
+                      star={c.inMonth && starOf(c.day)}
+                      sticker={c.inMonth ? stickerFor(c.day) : null}
+                      pickable={c.inMonth && pickableFor(c.day)}
                       picked={picked === c.day}
                       onPick={pick}
                     />
@@ -312,6 +420,9 @@ const WorkoutCalendarCard = ({ data, title, openTitle, storageKey, footer, heade
                   today={today}
                   moment={moments.get(d)}
                   promised={promisedFor(d)}
+                  star={starOf(d)}
+                  sticker={stickerFor(d)}
+                  pickable={pickableFor(d)}
                   picked={picked === d}
                   onPick={pick}
                 />
@@ -320,7 +431,11 @@ const WorkoutCalendarCard = ({ data, title, openTitle, storageKey, footer, heade
           </ol>
         )}
 
-        {pickedDay && <DayLine d={pickedDay} moment={moments.get(pickedDay.day)} />}
+        {cal
+          ? picked
+            ? panelFor(picked, false)
+            : showToday && panelFor(today, true)
+          : pickedDay && <DayLine d={pickedDay} moment={moments.get(pickedDay.day)} />}
         {promiseState && (
           <PromiseLine promise={promise} today={today} attended={byDay} branch={promiseState.branch} onOpen={() => setPromiseOpen(true)} />
         )}
@@ -352,6 +467,25 @@ const WorkoutCalendarCard = ({ data, title, openTitle, storageKey, footer, heade
           branchShort={shortBranchName(promiseState.branch)}
           returnBonus={promiseState.returnBonus}
         />
+      )}
+      {cal && mounted.items && (
+        <Suspense fallback={null}>
+          <CheckItemsSheet
+            open={sheet === "items"}
+            onOpenChange={(v) => (v ? setSheet("items") : closeSheet())}
+            items={cal.items.filter((i) => i.archivedOn == null)}
+          />
+        </Suspense>
+      )}
+      {withChecks && mounted.line && (
+        <Suspense fallback={null}>
+          <ChampionJournalSheet open={sheet === "line"} onClose={closeSheet} defaultVisibility="private" rememberKey="cal" />
+        </Suspense>
+      )}
+      {withChecks && mounted.cheer && (
+        <Suspense fallback={null}>
+          <SecondCheerSheet open={sheet === "cheer"} onClose={closeSheet} />
+        </Suspense>
       )}
     </section>
   );
