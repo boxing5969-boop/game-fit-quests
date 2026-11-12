@@ -14,11 +14,17 @@
  *   · 2026-11-12 2차 — 대표님이 보내 주신 유튜브 추천 화면 3장(36개) "이 채널에 있는 음악들 모두 집어넣어" → 30편 추가.
  *     뺀 것: 퍼가기가 막힌 2편(우쭈 「쇠질하다 덤벨 던져버려도 난 몰라」 · Grind Vibe 「듣는 순간 도파민 폭발」),
  *     운동 음악이 아닌 3개(동요 자동 믹스 · 크리스마스 재즈 · 재즈 힙합), 30분이 안 되는 1편(ADRENALINE GYM MUSIC 22분).
+ *   · 2026-11-12 3차 — "캡처해 준 채널들 안에 인기 음악 모음 1위부터 5위까지 모두 집어넣자" → 그 채널 25곳의 인기순 목록에서
+ *     30분 넘는 운동 모음집 1~5위를 넣었다(95편 추가). 1~5위 중 못 넣는 것은 그 채널 10위 안에서 다음 순위로 채웠다 —
+ *     퍼가기 막힘(Grind Vibe 1·2·4·5·6위, 우쭈 1위) · 표지에 가리지 않은 욕설 글자(쇠맛플레이) · 담배 피우는 그림(Tetoply) ·
+ *     악마 · 지옥 그림(riffdose) · 수영복 · 속옷 노출 · 저승(VALHALLA) 그림 · 원래 제목에 욕설(플레이어 위에 잠깐 보인다) · 발라드 모음.
+ *     동요 · 재즈 채널은 넣지 않았다. KKIPOP 은 모음집이 1편뿐이다.
  *   · 느린 것(요가 · 걷기 · 칠 · 딥하우스)은 넣지 않는다 — 에너지 있는 운동 음악만.
  *   · 바꾸려면 이 파일만 고치면 된다 — 유튜브 id(11자) · 제목 · 올린 곳 · 카테고리 · 길이(분).
  *     시험(gymMusicQueue.test)이 30분 이상 · id 형식 · 중복을 본다.
  *   · 제목은 짧게(휴대폰 한 줄 — 한글 12자 안팎). 길이는 화면이 `m` 으로 따로 보여 주니 제목에 넣지 않는다.
  *   · 새 모음집은 채널 페이지(/@채널/videos · /@채널/search?query=)에서 찾는다(길이 · 조회수가 같이 보인다).
+ *     채널 인기순은 /playlist?list=UULP<채널 id(UC…)에서 UC 뒤 22자> — 유튜브가 만든 '인기 동영상' 목록(쇼츠 제외)이다.
  *     유튜브 전체 검색 페이지(/results)는 robots.txt 가 막는 경로라 쓰지 않는다.
  *
  * 영상 위치 확인: https://www.youtube.com/watch?v=<id>
@@ -58,7 +64,7 @@ export const gymMixLength = (m: number): string => {
 };
 
 export const GYM_MUSIC: GymTrack[] = [
-  // ── 복싱 · 킥복싱 믹스 (20) ──
+  // ── 복싱 · 킥복싱 믹스 (26) ──
   { id: "Il28QGNJ9iY", t: "복싱 비트 믹스 2021", a: "Spinnin' Records", c: "box", m: 53 },
   { id: "_6Y3fWO1YEI", t: "카디오 복싱 · 135-145 BPM", a: "Power Music", c: "box", m: 59 },
   { id: "hbOkKuELPjA", t: "킥복싱 32카운트 Vol.2", a: "Power Music", c: "box", m: 59 },
@@ -80,8 +86,16 @@ export const GYM_MUSIC: GymTrack[] = [
   { id: "ee2RG3fILbA", t: "복싱 플레이리스트 20곡", a: "비트 인 더 링", c: "box", m: 152 },
   { id: "ELfU-gZIS2c", t: "김득구 · 복싱 음악", a: "Elite Boxing", c: "box", m: 131 },
   { id: "3D0bNynJR_E", t: "복싱 트레이닝 BGM 2026", a: "Elite Boxing", c: "box", m: 79 },
+  // 11-12 3차 — 대표님이 캡처한 채널의 인기 모음집 1~5위
+  { id: "wuimihotpDs", t: "카넬로 · 복싱 BGM", a: "Elite Boxing", c: "box", m: 77 },
+  { id: "8ZUKAG8BgfA", t: "복싱 짐 BGM 논스톱", a: "Elite Boxing", c: "box", m: 151 },
+  { id: "KdJXFYSj2os", t: "무하마드 알리 · 펑크 소울", a: "Elite Boxing", c: "box", m: 82 },
+  { id: "hZJlBu3-HMM", t: "펀치 속도 2배 복싱 플리", a: "비트 인 더 링", c: "box", m: 132 },
+  { id: "S_Kb--C578M", t: "운동러 복싱 20곡", a: "비트 인 더 링", c: "box", m: 69 },
+  { id: "JyWAC0YWkKM", t: "광고 없는 짐 워크아웃", a: "비트 인 더 링", c: "box", m: 125 },
 
-  // ── 힙합 · 랩 워크아웃 (8) ── 11-12 대표님이 보내 주신 화면에서
+  // ── 힙합 · 랩 워크아웃 (53) ──
+  // 11-12 대표님이 보내 주신 화면에서
   { id: "AaBysEN3F2Q", t: "복싱할 때 트는 힙합", a: "PULSE LAB", c: "hiphop", m: 126 },
   { id: "owX6p7UB4dg", t: "워크아웃 힙합 2시간", a: "PULSE LAB", c: "hiphop", m: 122 },
   { id: "VizX31aDwcI", t: "비스트 모드 랩 믹스", a: "Hip Drop", c: "hiphop", m: 61 },
@@ -90,8 +104,54 @@ export const GYM_MUSIC: GymTrack[] = [
   { id: "4Gs_eIjjR2A", t: "코치쌤 체육관 플리", a: "perli", c: "hiphop", m: 220 },
   { id: "s167MHQv9o4", t: "주인공 힙합 · R&B", a: "KKIPOP", c: "hiphop", m: 87 },
   { id: "DqsaSoy7cUI", t: "테토남 · 멈추지 않는다", a: "POMADE", c: "hiphop", m: 78 },
+  // 11-12 3차 — 대표님이 캡처한 채널의 인기 모음집 1~5위
+  { id: "BSHzFhortwE", t: "운동하기 싫은 날 플리", a: "라이스뮤직", c: "hiphop", m: 59 },
+  { id: "2LjVbL04V1E", t: "파이팅 넣어 주는 힙합", a: "라이스뮤직", c: "hiphop", m: 89 },
+  { id: "PVhiaQbxhk8", t: "헤비급 스파링 힙합", a: "라이스뮤직", c: "hiphop", m: 66 },
+  { id: "dkiodZEATqU", t: "지치지 않는 힙합 트랩", a: "라이스뮤직", c: "hiphop", m: 76 },
+  { id: "e_--EmZfnXw", t: "복싱 훈련 강렬한 힙합", a: "비트 인 더 링", c: "hiphop", m: 119 },
+  { id: "UFy66MX4Y8A", t: "복싱 · 운동 텐션 힙합", a: "PULSE LAB", c: "hiphop", m: 128 },
+  { id: "mF4KWf4Kc1k", t: "비스트 모드 · 스파르탄", a: "Hip Drop", c: "hiphop", m: 61 },
+  { id: "qcalRy-jcyo", t: "비스트 모드 · 노 페인", a: "Hip Drop", c: "hiphop", m: 60 },
+  { id: "pPzlxwx_SCA", t: "비스트 모드 · 언브로큰", a: "Hip Drop", c: "hiphop", m: 60 },
+  { id: "ZIEqGHdyMdU", t: "비스트 모드 · 라이즈 업", a: "Hip Drop", c: "hiphop", m: 59 },
+  { id: "N2WZgQ-2hQI", t: "비스트 모드 · 스트롱", a: "Hip Drop", c: "hiphop", m: 56 },
+  { id: "iytSjCJAReA", t: "10개라도 한 너, 대단해", a: "쇠맛플레이", c: "hiphop", m: 77 },
+  { id: "LCl_VS2nSVA", t: "이거 틀고 중량 올려", a: "쇠맛플레이", c: "hiphop", m: 89 },
+  { id: "VNARCjXr3SU", t: "무게 앞에 변명은 없다", a: "쇠맛플레이", c: "hiphop", m: 66 },
+  { id: "EskhY5ajLxA", t: "중량 전에 텐션부터", a: "쇠맛플레이", c: "hiphop", m: 63 },
+  { id: "HzdFkupzuiY", t: "하루 종일 할 수 있어", a: "Tetoply", c: "hiphop", m: 77 },
+  { id: "NoK4vyOuG9Q", t: "정상에 서려는 거지", a: "Tetoply", c: "hiphop", m: 62 },
+  { id: "7FBGJf4S6TM", t: "나약함은 강함에 죽었다", a: "Tetoply", c: "hiphop", m: 71 },
+  { id: "E7iKn8XIzqo", t: "그 정도론 부족할 텐데", a: "Tetoply", c: "hiphop", m: 67 },
+  { id: "wVu_JIAjvxw", t: "피티쌤 쌈뽕 플리 2", a: "perli", c: "hiphop", m: 156 },
+  { id: "kAQ0b2BWPWQ", t: "피티쌤 쌈뽕 플리", a: "perli", c: "hiphop", m: 65 },
+  { id: "LUPt5BvDp8Y", t: "헬스장 힙디엠 노동요", a: "perli", c: "hiphop", m: 624 },
+  { id: "BbFn54gEOuU", t: "테토남 · 박살 내기로", a: "POMADE", c: "hiphop", m: 88 },
+  { id: "L_o2u1Dx4zs", t: "테토남 · 전투를 위한 차", a: "POMADE", c: "hiphop", m: 75 },
+  { id: "lUm8FLKaDGo", t: "테토남 · 지는 게 무섭다", a: "POMADE", c: "hiphop", m: 75 },
+  { id: "Kl7QDFdV3NQ", t: "테토남 · 외로움을 들고", a: "POMADE", c: "hiphop", m: 83 },
+  { id: "OtHZgvobP1o", t: "하드 랩 · 노 페인", a: "Gorilla Workout", c: "hiphop", m: 30 },
+  { id: "gZWRKo5aXlg", t: "어그레시브 랩 플리", a: "Gorilla Workout", c: "hiphop", m: 30 },
+  { id: "VLnNLqITHQA", t: "하드 랩 · 페인 이즈 퓨얼", a: "Gorilla Workout", c: "hiphop", m: 30 },
+  { id: "yclrH590JLs", t: "랩 · 힙합 짐 모티베이션", a: "PULSE REP", c: "hiphop", m: 32 },
+  { id: "kXX4fQ4tE5s", t: "아이언 마인드셋", a: "Relentless Rise", c: "hiphop", m: 47 },
+  { id: "QY7-66VTE8M", t: "아이언 멘탈리티", a: "Relentless Rise", c: "hiphop", m: 39 },
+  { id: "SMt-TG77Gv4", t: "비트 빵빵 도파민 플리", a: "Grind Vibe", c: "hiphop", m: 125 },
+  { id: "h-Bp4Fu-_30", t: "주인장 최애곡 모음", a: "Grind Vibe", c: "hiphop", m: 86 },
+  { id: "p9u4AzlSvrw", t: "퇴근 후 러닝 플리", a: "Grind Vibe", c: "hiphop", m: 83 },
+  { id: "gw0XqojnAcI", t: "귀로 듣는 천연 부스터", a: "우쭈", c: "hiphop", m: 61 },
+  { id: "3lhAp9PtpPA", t: "쇠질 조지기 · 1만 기념", a: "우쭈", c: "hiphop", m: 121 },
+  { id: "v-PNsB0-A5k", t: "무슨 일이 있어도 2개 더", a: "우쭈", c: "hiphop", m: 55 },
+  { id: "Lgh8Ji3ST3k", t: "어서 쇠질하러 가야지", a: "우쭈", c: "hiphop", m: 58 },
+  { id: "EbbNknaL1e8", t: "쇠질용 부스터 플리", a: "우쭈", c: "hiphop", m: 62 },
+  { id: "F1BborLDQG4", t: "베이스 파이트 모드 · 랩", a: "Adrenaline Gym", c: "hiphop", m: 30 },
+  { id: "-l_hD8FUn0g", t: "아드레날린 짐 뮤직", a: "Adrenaline Gym", c: "hiphop", m: 30 },
+  { id: "gm6Sgz2bLfE", t: "파워 언더 프레셔", a: "Adrenaline Gym", c: "hiphop", m: 30 },
+  { id: "cu7FhPvU9LU", t: "짐 파이트 모드 · 힙합", a: "Adrenaline Gym", c: "hiphop", m: 32 },
+  { id: "myGZn68HLQw", t: "아드레날린 짐 뮤직 2", a: "Adrenaline Gym", c: "hiphop", m: 30 },
 
-  // ── EDM 하이에너지 (34) ──
+  // ── EDM 하이에너지 (57) ──
   { id: "T4N2DtBTfoA", t: "하이 인텐시티 워크아웃", a: "Spinnin' Records", c: "edm", m: 59 },
   { id: "iQyO6hb6zkc", t: "HIIT 트레이닝 믹스", a: "Spinnin' Records", c: "edm", m: 60 },
   { id: "XSNbAwGDC_o", t: "맥시멈 에너지 믹스", a: "Spinnin' Records", c: "edm", m: 56 },
@@ -127,8 +187,32 @@ export const GYM_MUSIC: GymTrack[] = [
   { id: "RYlkvj8lycE", t: "레드라인 도미넌스", a: "Motivation BPM", c: "edm", m: 52 },
   { id: "M64KU_XVKoA", t: "YOU VS YOU 짐 모티베이션", a: "Gorilla Workout", c: "edm", m: 45 },
   { id: "YQFuGy7L0jc", t: "짐 모티베이션 송 2026", a: "PULSE REP", c: "edm", m: 37 },
+  // 11-12 3차 — 대표님이 캡처한 채널의 인기 모음집 1~5위
+  { id: "0CN4llvl5BA", t: "하이록스 EDM 플리", a: "PULSE LAB", c: "edm", m: 125 },
+  { id: "gZsK2sDCwqk", t: "텐션 끝까지 EDM", a: "PULSE LAB", c: "edm", m: 121 },
+  { id: "gw7vvY_nmXE", t: "2026 클럽 믹스 EDM", a: "perli", c: "edm", m: 433 },
+  { id: "PJDZXliTw7Y", t: "노 익스큐즈 EDM", a: "GRIDFIT", c: "edm", m: 64 },
+  { id: "GEtIRnoaV84", t: "얼티밋 EDM 워크아웃", a: "GRIDFIT", c: "edm", m: 180 },
+  { id: "isentEGc058", t: "레이브 워크아웃", a: "GRIDFIT", c: "edm", m: 121 },
+  { id: "aXiXbqgco9s", t: "EDM 아드레날린 레이브", a: "GRIDFIT", c: "edm", m: 63 },
+  { id: "CS0OM7u752s", t: "피트니스 모티베이션 EDM", a: "Endurance Beats", c: "edm", m: 68 },
+  { id: "51VNBLh5GLk", t: "도파민 터지는 신나는 노래", a: "DJ Corgi", c: "edm", m: 220 },
+  { id: "Tr5-cBvP22g", t: "기분전환 EDM 뱅어", a: "DJ Corgi", c: "edm", m: 150 },
+  { id: "Md3J10_vtFM", t: "도파민 빵빵 클럽 EDM", a: "DJ Corgi", c: "edm", m: 142 },
+  { id: "kfz4srjd_eo", t: "시간 순삭 신나는 노래", a: "DJ Corgi", c: "edm", m: 102 },
+  { id: "SyIXnTlLn5E", t: "리듬 타다 뜨거워지는 노래", a: "DJ Corgi", c: "edm", m: 74 },
+  { id: "B3GJ3EFSmng", t: "2023 클럽 유행곡 #1", a: "ASTER MUSIC", c: "edm", m: 33 },
+  { id: "eQr75KSiMJQ", t: "2022 클럽 페스티벌 믹스", a: "ASTER MUSIC", c: "edm", m: 189 },
+  { id: "fjX7Y3DKzAA", t: "2025 강남 클럽 믹스 2", a: "ASTER MUSIC", c: "edm", m: 32 },
+  { id: "TxJzr51-27s", t: "2025 클럽 오픈 믹스", a: "ASTER MUSIC", c: "edm", m: 57 },
+  { id: "XQWHwAe4dyE", t: "2023 클럽 레전드 총결산", a: "ASTER MUSIC", c: "edm", m: 43 },
+  { id: "YXsMNdMaulc", t: "이그니션 오버드라이브", a: "Motivation BPM", c: "edm", m: 55 },
+  { id: "YsQYbQHpejs", t: "얼티밋 짐 모티베이션", a: "Gorilla Workout", c: "edm", m: 45 },
+  { id: "MNCc-CM2pww", t: "베스트 짐 모티베이션 믹스", a: "PULSE REP", c: "edm", m: 30 },
+  { id: "fqnLrpLq4DA", t: "짐 모티베이션 송 믹스", a: "PULSE REP", c: "edm", m: 31 },
+  { id: "F7nOih5hJ5k", t: "빌트 프롬 프레셔", a: "PULSE REP", c: "edm", m: 51 },
 
-  // ── 베이스 · 트랩 · 드럼앤베이스 (15) ──
+  // ── 베이스 · 트랩 · 드럼앤베이스 (20) ──
   { id: "WFL__hxlfWw", t: "하디스트 히터스 믹스", a: "Trap Nation", c: "bass", m: 60 },
   { id: "ObIdQa8waAU", t: "게이밍 뮤직 믹스 2020", a: "Trap Nation", c: "bass", m: 154 },
   { id: "SsQCkHcEmjU", t: "2021 베스트 트랩", a: "Trap Nation", c: "bass", m: 129 },
@@ -145,8 +229,14 @@ export const GYM_MUSIC: GymTrack[] = [
   { id: "qKtY7_GYBOk", t: "몬스터캣 베스트 2023", a: "Monstercat", c: "bass", m: 91 },
   // 11-12 대표님이 보내 주신 화면에서
   { id: "oNretrfa93k", t: "아이언 마인드 · 하드스타일", a: "Relentless Rise", c: "bass", m: 36 },
+  // 11-12 3차 — 대표님이 캡처한 채널의 인기 모음집 1~5위
+  { id: "cah6ZVjjLLU", t: "아이언 어센트 · 하드 트랩", a: "Motivation BPM", c: "bass", m: 59 },
+  { id: "qPG6ynrouWs", t: "언더 프레셔 · 하드 트랩", a: "Motivation BPM", c: "bass", m: 61 },
+  { id: "sATvIBMzDlQ", t: "NCS × NEFFEX 짐 믹스", a: "Motivation BPM", c: "bass", m: 44 },
+  { id: "qCsPaZJOvZ4", t: "폰크 · 헤비 808", a: "Relentless Rise", c: "bass", m: 36 },
+  { id: "O7o26KttK_8", t: "렐렌틀리스 퍼포즈", a: "Relentless Rise", c: "bass", m: 44 },
 
-  // ── 논스톱 유산소 리믹스 (21) ──
+  // ── 논스톱 유산소 리믹스 (27) ──
   { id: "WDpGMsuQPWc", t: "올 카디오 · 140-150 BPM", a: "Power Music", c: "cardio", m: 60 },
   { id: "9dH2DYjf8uQ", t: "익스트림 카디오 믹스", a: "Power Music", c: "cardio", m: 60 },
   { id: "AnFOm96Y2C0", t: "익스트림 카디오 믹스 3", a: "Power Music", c: "cardio", m: 59 },
@@ -169,8 +259,15 @@ export const GYM_MUSIC: GymTrack[] = [
   // 11-12 대표님이 보내 주신 화면에서
   { id: "pFc7rpqUg9s", t: "러닝 뮤직 2026 · 아침 햇살", a: "Endurance Beats", c: "cardio", m: 84 },
   { id: "MCoRcDdSW20", t: "175~185 BPM 케이던스", a: "달리런", c: "cardio", m: 202 },
+  // 11-12 3차 — 대표님이 캡처한 채널의 인기 모음집 1~5위
+  { id: "aeCAJ2mO7ms", t: "러닝 뮤직 · 선라이즈 2", a: "Endurance Beats", c: "cardio", m: 128 },
+  { id: "fMnfAwJmgNA", t: "가을 러닝 뮤직", a: "Endurance Beats", c: "cardio", m: 183 },
+  { id: "yp_R0ZKc32w", t: "180~190 BPM 케이던스", a: "달리런", c: "cardio", m: 205 },
+  { id: "GfIUhPHsQts", t: "180 BPM 커버곡 앵콜", a: "달리런", c: "cardio", m: 234 },
+  { id: "FAfRIShAl_8", t: "180~185 BPM 밴드 음악", a: "달리런", c: "cardio", m: 92 },
+  { id: "u2eyM-tS6QI", t: "180 BPM 클럽 베이스", a: "달리런", c: "cardio", m: 121 },
 
-  // ── 록 · 메탈 (9) ──
+  // ── 록 · 메탈 (11) ──
   { id: "dVg0d4z2uss", t: "록 워크아웃 · 러닝", a: "Epidemic Rock", c: "rock", m: 60 },
   { id: "PsY8dD90Luw", t: "하드 록 워크아웃", a: "Epidemic Rock", c: "rock", m: 60 },
   { id: "ecZnud07afI", t: "헤비메탈 · 하드 록", a: "Epidemic Rock", c: "rock", m: 59 },
@@ -181,8 +278,11 @@ export const GYM_MUSIC: GymTrack[] = [
   { id: "1T2uOnmvoMc", t: "어그레시브 메탈 믹스", a: "Alec Koff", c: "rock", m: 60 },
   // 11-12 대표님이 보내 주신 화면에서
   { id: "GTzsi2ti1_A", t: "언스토퍼블 · 랩 록", a: "riffdose", c: "rock", m: 49 },
+  // 11-12 3차 — 대표님이 캡처한 채널의 인기 모음집 1~5위
+  { id: "CH3GYEUkUiM", t: "스틸 아이 파이트 · 랩 록", a: "riffdose", c: "rock", m: 48 },
+  { id: "g-KCFBgJ0gk", t: "다크 스타 · 랩 록", a: "riffdose", c: "rock", m: 49 },
 
-  // ── 신나는 팝 · K-POP (15) ──
+  // ── 신나는 팝 · K-POP (23) ──
   { id: "d8OL6m0ZblA", t: "팝 워크아웃 송", a: "Epidemic Pop", c: "pop", m: 61 },
   { id: "hcysu-opqng", t: "팝 워크아웃 믹스", a: "Epidemic Pop", c: "pop", m: 62 },
   { id: "p7gqjZY0jis", t: "팝 워크아웃 뮤직", a: "Epidemic Pop", c: "pop", m: 62 },
@@ -199,4 +299,13 @@ export const GYM_MUSIC: GymTrack[] = [
   // 11-12 대표님이 보내 주신 화면에서
   { id: "pxv7TVmtDeg", t: "1세대 걸그룹 빅매치", a: "오늘도 컴백", c: "pop", m: 174 },
   { id: "qrgD7mKdlSg", t: "케이팝 러닝 · 전투력MAX", a: "폴스폴름", c: "pop", m: 52 },
+  // 11-12 3차 — 대표님이 캡처한 채널의 인기 모음집 1~5위
+  { id: "zHCXTt9aVAQ", t: "숨듣명 플리", a: "오늘도 컴백", c: "pop", m: 112 },
+  { id: "0YTG1PTWwc4", t: "레전드 걸그룹 · 여가수", a: "오늘도 컴백", c: "pop", m: 87 },
+  { id: "bdHnMIHbyyY", t: "뽕끼 한 스푼 케이팝", a: "오늘도 컴백", c: "pop", m: 69 },
+  { id: "jwxifFlcVGo", t: "숨듣명 플리 2탄", a: "오늘도 컴백", c: "pop", m: 155 },
+  { id: "kx7ke8zopxI", t: "비트 맛집 노동요", a: "폴스폴름", c: "pop", m: 242 },
+  { id: "R6UJhszHX2U", t: "독기 가득 쇠맛 여돌", a: "폴스폴름", c: "pop", m: 49 },
+  { id: "0qcL4m-THDo", t: "마라맛 케이팝 노동요", a: "폴스폴름", c: "pop", m: 61 },
+  { id: "OhDpUKAWJaY", t: "독기 폭발 쇠맛 케이팝", a: "폴스폴름", c: "pop", m: 42 },
 ];
