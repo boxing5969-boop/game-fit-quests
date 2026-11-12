@@ -18,12 +18,14 @@ import {
   weekKept,
   weekdayOfYmd,
   weekdaysLabel,
+  remindLabel,
+  draftChanged,
   type MeetRow,
   type Promise153,
 } from "./promise153";
 
 // 2026-11-12 = 목요일
-const P: Promise153 = { weekdays: [2, 4], timeSlot: "evening", planB: null, notify: true, startedOn: "2026-11-02" };
+const P: Promise153 = { weekdays: [2, 4], timeSlot: "evening", planB: null, notify: true, remind: null, startedOn: "2026-11-02" };
 
 describe("운동 약속 — 서버 값 읽기", () => {
   it("켜지 않은 지점은 꺼짐 · 약속 정리(요일 겹침 · 잘못된 값 빼기)", () => {
@@ -38,7 +40,7 @@ describe("운동 약속 — 서버 값 읽기", () => {
     });
     expect(s.on).toBe(true);
     expect(s.returnBonus).toBe(5000);
-    expect(s.promise).toEqual({ weekdays: [2, 4], timeSlot: "evening", planB: "늦게 끝나면 30분만", notify: true, startedOn: "2026-11-02" });
+    expect(s.promise).toEqual({ weekdays: [2, 4], timeSlot: "evening", planB: "늦게 끝나면 30분만", notify: true, remind: null, startedOn: "2026-11-02" });
     expect(normalizePromiseState({ on: true, promise: null }).promise).toBeNull();
     expect(normalizePromiseState({ on: true, promise: { weekdays: [], started_on: "2026-11-02" } }).promise).toBeNull();
     expect(normalizePromiseState({ on: true, promise: { weekdays: [1], time_slot: "x", started_on: "2026-11-02" } }).promise?.timeSlot).toBeNull();
@@ -105,14 +107,15 @@ describe("운동 약속 — 걸기 · 고치기", () => {
     expect(promiseDraftError({ ...d, weekdays: [7] })).toBe("요일을 다시 골라 주세요");
     expect(promiseDraftError({ ...d, weekdays: [2], planB: "가".repeat(61) })).toBe("대비책은 60자 안으로 적어 주세요");
     expect(promiseDraftError({ ...d, weekdays: [2, 4] })).toBeNull();
-    expect(promisePayload({ weekdays: [4, 2, 4], timeSlot: "evening", planB: "  늦게   끝나면  ", notify: false })).toEqual({
+    expect(promisePayload({ weekdays: [4, 2, 4], timeSlot: "evening", planB: "  늦게   끝나면  ", notify: false, remind: "eve" })).toEqual({
       p_weekdays: [2, 4],
       p_time_slot: "evening",
       p_plan_b: "늦게 끝나면",
       p_notify: false,
+      p_remind: "eve",
     });
-    expect(promisePayload({ weekdays: [1], timeSlot: null, planB: "  ", notify: true }).p_plan_b).toBeNull();
-    expect(draftFromPromise(P)).toEqual({ weekdays: [2, 4], timeSlot: "evening", planB: "", notify: true });
+    expect(promisePayload({ weekdays: [1], timeSlot: null, planB: "  ", notify: true, remind: "08:30" }).p_plan_b).toBeNull();
+    expect(draftFromPromise(P)).toEqual({ weekdays: [2, 4], timeSlot: "evening", planB: "", notify: true, remind: "08:30" });
   });
 
   it("요일 넣고 빼기 · 횟수 안내(못한다는 말 없이)", () => {
@@ -184,5 +187,43 @@ describe("코치 — 오늘 만날 회원", () => {
     expect(meetSummary([])).toBe("");
     expect(kstHm("2026-11-12T10:04:00Z")).toBe("19:04");
     expect(kstHm(null)).toBeNull();
+  });
+});
+
+describe("운동 약속 — (2-2) 알림 시각 · 휴관일", () => {
+  it("알림 시각 읽기 · 이름", () => {
+    const s = normalizePromiseState({
+      on: true,
+      today: "2026-11-13",
+      eve_at: "20:00",
+      promise: { weekdays: [5], remind: "eve", started_on: "2026-11-01" },
+    });
+    expect(s.eveAt).toBe("20:00");
+    expect(s.promise?.remind).toBe("eve");
+    expect(normalizePromiseState({ on: true, promise: { weekdays: [5], remind: "09:00", started_on: "2026-11-01" } }).promise?.remind).toBeNull();
+    expect(normalizePromiseState({ on: true }).eveAt).toBe("20:00");
+    expect(remindLabel("eve", "20:00")).toBe("전날 저녁 8시");
+    expect(remindLabel("07:00")).toBe("아침 7시");
+    expect(remindLabel(null)).toBe("아침 8시 30분");
+    expect(remindLabel("12:00")).toBe("낮 12시");
+    expect(remindLabel("17:00")).toBe("오후 5시");
+  });
+
+  it("휴관일은 약속한 날로 치지 않는다 (온 날은 센다)", () => {
+    // 2026-11-12 목 · 화 · 목 약속
+    const skip = new Set(["2026-11-12"]);
+    expect(promiseStatus(P, "2026-11-12", new Set(), skip)).toEqual({ text: "다음 약속 화요일 저녁", tone: "next" });
+    expect(promiseStatus(P, "2026-11-12", new Set(["2026-11-12"]), skip)?.tone).toBe("done");
+    expect(nextPromisedDay(P, "2026-11-16", new Set(["2026-11-17"]))).toBe("2026-11-19");
+    expect(nextPromisedDay(P, "2026-11-16")).toBe("2026-11-17");
+  });
+
+  it("고친 것이 있나", () => {
+    const d = draftFromPromise(P);
+    expect(draftChanged(d, P)).toBe(false);
+    expect(draftChanged({ ...d, remind: "eve" }, P)).toBe(true);
+    expect(draftChanged({ ...d, weekdays: [4, 2] }, P)).toBe(false);
+    expect(draftChanged({ ...d, planB: "  " }, P)).toBe(false);
+    expect(draftChanged(d, null)).toBe(true);
   });
 });

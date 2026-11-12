@@ -2,11 +2,15 @@
  * ✅ 나만의 체크 만들기 · 고치기 시트 (2026-11-12 대표님 「추천대로」 — 봄 회원님 「유저가 체크리스트를 선택해서 자신에 맞게 · 잽연습 몇번」)
  *   이름(20자) · 목표 숫자(선택) + 단위 · 요일(안 고르면 매일) · 예시 4개 · 3개까지. 빼기는 지우지 않고(지난 날 기록은 그대로) 두 번 눌러.
  *   검사 · 보낼 값은 lib/calendarChecks.ts, 저장은 services/calendarCheckService.ts. 달력(WorkoutCalendar)이 처음 열 때 받아 온다.
+ *   (2-2 · 2026-11-13) 맨 아래 「저녁 체크 알림」 — 켠 회원만 저녁 8시 한 번, 채운 것이 있고 아직 남았을 때만
+ *   '오늘 2개 채웠어요 · 하나 더 채우면 금색 별' (하나도 안 채운 날 · 다 채운 날은 안 보냄 — set_my_calendar_prefs).
  */
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { Switch } from "@/components/ui/switch";
+import { hmLabel } from "@/lib/calendarEvents";
 import {
   CHECK_EXAMPLES,
   CHECK_ITEM_MAX,
@@ -21,22 +25,25 @@ import {
 } from "@/lib/calendarChecks";
 import { PROMISE_WEEK, toggleDay, weekdaysLabel } from "@/lib/promise153";
 import { cn } from "@/lib/utils";
-import { useRemoveCheckItem, useSaveCheckItem } from "@/services/calendarCheckService";
+import { useRemoveCheckItem, useSaveCheckItem, useSetCalendarNudge } from "@/services/calendarCheckService";
 
 export interface CheckItemsSheetProps {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   /** 지금 있는 나만의 체크 (뺀 것 빼고) */
   items: readonly CheckItem[];
+  /** (2-2) 저녁 체크 알림 — 켰나 · 몇 시 */
+  nudge?: { on: boolean; at: string };
 }
 
-const CheckItemsSheet = ({ open, onOpenChange, items }: CheckItemsSheetProps) => {
+const CheckItemsSheet = ({ open, onOpenChange, items, nudge }: CheckItemsSheetProps) => {
   const [draft, setDraft] = useState<CheckItemDraft>(emptyCheckDraft);
   const [editId, setEditId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const save = useSaveCheckItem();
   const remove = useRemoveCheckItem();
+  const nudgeM = useSetCalendarNudge();
   const full = items.length >= CHECK_ITEM_MAX;
   const showForm = editId != null || !full;
 
@@ -258,6 +265,27 @@ const CheckItemsSheet = ({ open, onOpenChange, items }: CheckItemsSheetProps) =>
                 </button>
               </div>
             </section>
+          )}
+
+          {/* 저녁 체크 알림 — 잘한 것만 (2-2) */}
+          {nudge && (
+            <label className="flex items-center justify-between gap-3 rounded-xl bg-muted/60 px-4 py-3">
+              <span className="min-w-0">
+                <span className="block text-body font-bold text-foreground">{hmLabel(nudge.at)} 체크 알림</span>
+                <span className="block text-label text-muted-foreground">오늘 채운 만큼 알려 드려요 · 하나도 안 채운 날엔 보내지 않아요</span>
+              </span>
+              <Switch
+                checked={nudge.on}
+                disabled={nudgeM.isPending}
+                onCheckedChange={(v) =>
+                  nudgeM.mutate(v, {
+                    onSuccess: () => toast.success(v ? `${hmLabel(nudge.at)}에 오늘 체크를 알려 드릴게요` : "저녁 체크 알림을 껐어요"),
+                    onError: (e) => toast.error((e as Error).message),
+                  })
+                }
+                aria-label="저녁 체크 알림"
+              />
+            </label>
           )}
         </div>
       </DrawerContent>

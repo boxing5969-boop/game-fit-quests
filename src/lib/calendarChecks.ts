@@ -8,6 +8,7 @@
  *     자료는 services/calendarCheckService.ts, 화면은 components/attendance/CalendarChecks.tsx · CheckItemsSheet.tsx.
  */
 import { weekdayOfYmd } from "@/lib/promise153";
+import { normalizeCalls, normalizeEvents, type CalCall, type CalEvent } from "@/lib/calendarEvents";
 
 const YMD = /^\d{4}-\d{2}-\d{2}$/;
 const n = (v: number) => v.toLocaleString("ko-KR");
@@ -82,9 +83,15 @@ export interface CalState {
   today: string | null;
   items: CheckItem[];
   days: Map<string, CalDay>;
+  /** (2-2) 내 지점 153 일정 — 보이는 날짜에 걸친 것 */
+  events: CalEvent[];
+  /** (2-2) 내가 올렸거나 저요 한 운동 모집 */
+  calls: CalCall[];
+  /** (2-2) 저녁 독려 — 켠 회원만 저녁 8시 한 번 */
+  nudge: { on: boolean; at: string };
 }
 
-export const CAL_OFF: CalState = { on: false, today: null, items: [], days: new Map() };
+export const CAL_OFF: CalState = { on: false, today: null, items: [], days: new Map(), events: [], calls: [], nudge: { on: false, at: "20:00" } };
 
 type Raw = Record<string, unknown>;
 const obj = (v: unknown): Raw | null => (v && typeof v === "object" && !Array.isArray(v) ? (v as Raw) : null);
@@ -154,7 +161,17 @@ export function normalizeCalendar(raw: unknown): CalState {
       sticker: st ? st.key : null,
     });
   }
-  return { on: true, today: ymd(r.today), items, days };
+  const nudge = obj(r.nudge);
+  const at = str(nudge?.at);
+  return {
+    on: true,
+    today: ymd(r.today),
+    items,
+    days,
+    events: normalizeEvents(r.events),
+    calls: normalizeCalls(r.calls),
+    nudge: { on: nudge?.on === true, at: at && /^\d{2}:\d{2}$/.test(at) ? at : "20:00" },
+  };
 }
 
 // ───────────────────────── 날짜 ─────────────────────────
@@ -197,11 +214,18 @@ export interface DayCheck {
   itemId?: string;
 }
 
-/** 그날의 체크 — 저절로 3개(체육관 · 응원 · 한 줄) + 그날의 나만의 체크 */
-export function dayChecks(day: string, attended: boolean, cal: CalDay | undefined, items: readonly CheckItem[]): DayCheck[] {
+/** 그날의 체크 — 저절로 3개(체육관 · 응원 · 한 줄) + 그날의 나만의 체크
+ *  (2-2) 휴관일(closed)에 안 왔으면 체육관은 빼고 센다 — 쉬는 날도 금색 별을 받을 수 있게 (서버 _cal_check_count 와 같은 식) */
+export function dayChecks(
+  day: string,
+  attended: boolean,
+  cal: CalDay | undefined,
+  items: readonly CheckItem[],
+  closed = false,
+): DayCheck[] {
   const done = new Set(cal?.done ?? []);
   return [
-    { key: "gym", kind: "gym", label: "체육관", done: attended },
+    ...(closed && !attended ? [] : [{ key: "gym", kind: "gym" as const, label: "체육관", done: attended }]),
     { key: "cheer", kind: "cheer", label: "응원", done: !!cal && (cal.cheer || cal.give153) },
     { key: "line", kind: "line", label: "한 줄", done: !!cal?.journal },
     ...itemsForDay(items, day).map(

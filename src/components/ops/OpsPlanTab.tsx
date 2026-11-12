@@ -15,6 +15,8 @@
  *   코치님끼리는 서로 일정이 안 보인다(10/29 근무 시간 비공개와 같은 결). 일정은 근무 시간 · 급여와 따로 — 쉰 날 인정 · 대타 · 연장은 「근무」 탭.
  *   계산(반복 펼치기 · 하루 정리 · 달력 표시)은 src/lib/opsPlans.ts 한 곳.
  *   맨 위 「오늘 만날 회원」(2026-11-12 대표님 「추천하는대로 진행할게」 — 스케줄러는 회원을 맞이하는 도구): OpsMeetToday.
+ *   맨 아래 「회원 달력」(2026-11-13 운동 달력 2-2단계 · 대표님 「다음」 → 153 일정은 「앱 운영본부에서」): OpsCalEvents —
+ *     지점장님 · 대표님이 휴관 · 단축 운영 · 이벤트 · 대회 · 특강을 올리면 그 지점 회원 운동 달력에 바로 + 알림. 코치님은 보기만.
  */
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, Rows3 } from "lucide-react";
@@ -57,6 +59,7 @@ import { useOpsPlansMonth, useOpsPlansWeek } from "@/services/opsPlanService";
 import OpsPlanSheet, { type PlanSheetTarget } from "./OpsPlanSheet";
 import { MarkLegend, MonthSwitcher, PlanMonthGrid } from "./OpsPlanMonth";
 import OpsMeetToday from "./OpsMeetToday";
+import OpsCalEvents from "./OpsCalEvents";
 import { OpsChip, kstToday } from "./OpsParts";
 
 const card = "rounded-2xl border border-border bg-card p-5";
@@ -219,6 +222,9 @@ const OpsPlanTab = () => {
           <MyView data={data} nav={nav} onAdd={openNew} onOpenPlan={openPlan} />
         )}
       </div>
+
+      {/* 회원 달력 153 일정 — 올릴 수 있는 분(대표님 · 지점장님)은 늘, 코치님은 올라간 일정이 있을 때만 */}
+      <OpsCalEvents branch={data.branch} date={day} />
 
       <OpsPlanSheet target={sheet} today={data.today} onClose={() => setSheet(null)} />
     </div>

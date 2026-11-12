@@ -6,8 +6,11 @@
  *     · 줄 글은 잘한 것과 다음 한 걸음만 — '오늘 약속 지켰어요' · '오늘이 약속한 날이에요' · '이번 주 약속 n번 지켰어요 · 다음 약속 목요일'.
  *     · 지킴 = 약속한 날 출석(시간대 무관) — 회원이 직접 체크하지 않는다.
  *   요일 번호는 서버와 같다: 0 = 일요일 … 6 = 토요일 (화면 칸은 월요일부터).
+ *   (2-2 · 2026-11-13) 알림 시각 고르기(remind — 전날 저녁 · 아침 7시 · 8시 30분 · 낮 12시 · 오후 5시) ·
+ *   153 휴관일은 약속한 날로 치지 않는다(skip — 운동 달력이 보이는 범위의 휴관일을 넘긴다).
  *   시험 promise153.test.ts
  */
+import { hmLabel } from "@/lib/calendarEvents";
 
 export type TimeSlot = "dawn" | "morning" | "noon" | "afternoon" | "evening" | "night";
 
@@ -46,11 +49,23 @@ export const PLAN_B_MAX = 60;
 /** 처음 고를 때 권하는 횟수 — 첫 4주 8번(주 2회)과 같은 숫자 */
 export const SUGGESTED_DAYS = 2;
 
+/** 약속 알림 시각 — eve = 전날 저녁(서버 calendar_notice.promise_eve) · 그 밖 = 그날 그 시각 (서버와 같은 값) */
+export type RemindKey = "eve" | "07:00" | "08:30" | "12:00" | "17:00";
+export const REMIND_KEYS: readonly RemindKey[] = ["eve", "07:00", "08:30", "12:00", "17:00"];
+export const DEFAULT_REMIND: RemindKey = "08:30";
+const isRemind = (v: unknown): v is RemindKey => typeof v === "string" && (REMIND_KEYS as readonly string[]).includes(v);
+
+/** '전날 저녁 8시' · '아침 7시' · '아침 8시 30분' · '낮 12시' · '오후 5시' */
+export const remindLabel = (k: RemindKey | null | undefined, eveAt = "20:00"): string =>
+  (k ?? DEFAULT_REMIND) === "eve" ? `전날 ${hmLabel(eveAt)}` : hmLabel(k ?? DEFAULT_REMIND);
+
 export interface Promise153 {
   weekdays: number[];
   timeSlot: TimeSlot | null;
   planB: string | null;
   notify: boolean;
+  /** 알림 시각 (null = 기본 8시 30분) */
+  remind: RemindKey | null;
   startedOn: string;
 }
 
@@ -60,10 +75,20 @@ export interface PromiseState {
   today: string | null;
   returnBonus: number;
   remindAt: string;
+  /** '전날 저녁' 알림 시각 */
+  eveAt: string;
   promise: Promise153 | null;
 }
 
-export const PROMISE_OFF: PromiseState = { on: false, branch: null, today: null, returnBonus: 0, remindAt: "08:30", promise: null };
+export const PROMISE_OFF: PromiseState = {
+  on: false,
+  branch: null,
+  today: null,
+  returnBonus: 0,
+  remindAt: "08:30",
+  eveAt: "20:00",
+  promise: null,
+};
 
 const YMD = /^\d{4}-\d{2}-\d{2}$/;
 const obj = (v: unknown): Record<string, unknown> => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : {});
@@ -86,6 +111,7 @@ export function normalizePromise(raw: unknown): Promise153 | null {
     timeSlot: isSlot(p.time_slot) ? p.time_slot : null,
     planB: str(p.plan_b),
     notify: p.notify !== false,
+    remind: isRemind(p.remind) ? p.remind : null,
     startedOn,
   };
 }
@@ -100,6 +126,7 @@ export function normalizePromiseState(raw: unknown): PromiseState {
     today: today && YMD.test(today) ? today : null,
     returnBonus: int(r.return_bonus),
     remindAt: str(r.remind_at) ?? "08:30",
+    eveAt: /^\d{2}:\d{2}$/.test(str(r.eve_at) ?? "") ? (str(r.eve_at) as string) : "20:00",
     promise: normalizePromise(r.promise),
   };
 }
@@ -119,17 +146,21 @@ const addDays = (ymd: string, n: number): string => {
 export const isPromisedDay = (p: Pick<Promise153, "weekdays" | "startedOn"> | null | undefined, day: string): boolean =>
   !!p && YMD.test(day) && day >= p.startedOn && p.weekdays.includes(weekdayOfYmd(day));
 
-/** 오늘 다음의 약속한 날 (오늘은 빼고) — 없으면 null */
-export function nextPromisedDay(p: Pick<Promise153, "weekdays" | "startedOn"> | null | undefined, today: string): string | null {
+/** 오늘 다음의 약속한 날 (오늘은 빼고 · skip = 휴관일) — 없으면 null */
+export function nextPromisedDay(
+  p: Pick<Promise153, "weekdays" | "startedOn"> | null | undefined,
+  today: string,
+  skip?: ReadonlySet<string>,
+): string | null {
   if (!p || p.weekdays.length === 0 || !YMD.test(today)) return null;
-  for (let i = 1; i <= 7; i++) {
+  for (let i = 1; i <= 14; i++) {
     const d = addDays(today, i);
-    if (isPromisedDay(p, d)) return d;
+    if (isPromisedDay(p, d) && !skip?.has(d)) return d;
   }
   return null;
 }
 
-/** 이번 주(월~오늘) 약속한 날 중 온 날 수 */
+/** 이번 주(월~오늘) 약속한 날 중 온 날 수 (휴관일에 온 날도 센다 — 온 것은 잘한 것) */
 export function weekKept(p: Pick<Promise153, "weekdays" | "startedOn"> | null | undefined, today: string, attended: ReadonlySet<string>): number {
   if (!p || !YMD.test(today)) return 0;
   const back = (weekdayOfYmd(today) + 6) % 7; // 월요일까지 며칠
@@ -160,17 +191,18 @@ export function promiseSentence(p: Pick<Promise153, "weekdays" | "timeSlot">, br
 
 export type PromiseTone = "done" | "today" | "next";
 
-/** 달력 카드 안 한 줄 — 잘한 것과 다음 한 걸음만 (놓친 약속 · 0번은 말하지 않는다) */
+/** 달력 카드 안 한 줄 — 잘한 것과 다음 한 걸음만 (놓친 약속 · 0번은 말하지 않는다 · skip = 휴관일은 약속한 날로 치지 않는다) */
 export function promiseStatus(
   p: Promise153 | null | undefined,
   today: string,
   attended: ReadonlySet<string>,
+  skip?: ReadonlySet<string>,
 ): { text: string; tone: PromiseTone } | null {
   if (!p || !YMD.test(today)) return null;
   const slot = slotLabel(p.timeSlot);
-  const next = nextPromisedDay(p, today);
+  const next = nextPromisedDay(p, today, skip);
   const nextText = next ? `다음 약속 ${DAY_FULL[weekdayOfYmd(next)]}${slot ? ` ${slot}` : ""}` : null;
-  if (isPromisedDay(p, today)) {
+  if (isPromisedDay(p, today) && (!skip?.has(today) || attended.has(today))) {
     if (attended.has(today)) return { text: nextText ? `오늘 약속 지켰어요 · ${nextText}` : "오늘 약속 지켰어요", tone: "done" };
     return { text: slot ? `오늘이 약속한 날이에요 · ${slot}에 만나요` : "오늘이 약속한 날이에요 · 체육관에서 만나요", tone: "today" };
   }
@@ -185,12 +217,25 @@ export interface PromiseDraft {
   timeSlot: TimeSlot | null;
   planB: string;
   notify: boolean;
+  remind: RemindKey;
 }
 
 export const draftFromPromise = (p: Promise153 | null): PromiseDraft =>
   p
-    ? { weekdays: [...p.weekdays], timeSlot: p.timeSlot, planB: p.planB ?? "", notify: p.notify }
-    : { weekdays: [], timeSlot: null, planB: "", notify: true };
+    ? { weekdays: [...p.weekdays], timeSlot: p.timeSlot, planB: p.planB ?? "", notify: p.notify, remind: p.remind ?? DEFAULT_REMIND }
+    : { weekdays: [], timeSlot: null, planB: "", notify: true, remind: DEFAULT_REMIND };
+
+/** 고친 것이 있나 (저장한 약속과 같으면 휴대폰 캘린더 단추를 보인다) */
+export const draftChanged = (d: PromiseDraft, p: Promise153 | null): boolean => {
+  const a = draftFromPromise(p);
+  return (
+    [...d.weekdays].sort().join() !== [...a.weekdays].sort().join() ||
+    d.timeSlot !== a.timeSlot ||
+    d.planB.replace(/\s+/g, " ").trim() !== a.planB ||
+    d.notify !== a.notify ||
+    d.remind !== a.remind
+  );
+};
 
 /** 서버(set_my_promise)와 같은 검사 — 통과하면 null */
 export function promiseDraftError(d: PromiseDraft): string | null {
@@ -205,6 +250,7 @@ export const promisePayload = (d: PromiseDraft) => ({
   p_time_slot: d.timeSlot,
   p_plan_b: d.planB.replace(/\s+/g, " ").trim() || null,
   p_notify: d.notify,
+  p_remind: d.remind,
 });
 
 /** 요일 고르기 — 누르면 넣고 빼기 */

@@ -50,6 +50,26 @@ describe("운동 달력 체크 — 서버 값 읽기", () => {
     expect(s.days.get("2026-11-11")).toMatchObject({ cheer: true, done: ["jab"], sticker: "proud", journal: { content: "오늘 미트", visibility: "private" } });
     expect(s.days.get("2026-11-12")).toMatchObject({ sticker: null, done: [] });
     expect(s.days.size).toBe(2);
+    // 2-2 칸이 없는 옛 서버 값도 읽힌다
+    expect(s.events).toEqual([]);
+    expect(s.calls).toEqual([]);
+    expect(s.nudge).toEqual({ on: false, at: "20:00" });
+  });
+
+  it("(2-2) 153 일정 · 저요 한 모집 · 저녁 독려", () => {
+    const s = normalizeCalendar({
+      on: true,
+      today: "2026-11-13",
+      items: [],
+      days: [],
+      events: [{ id: "e", kind: "closed", title: "휴관", start_on: "2026-11-14", end_on: "2026-11-14" }],
+      calls: [{ id: "c", day: "2026-11-13", hour: 19, purpose: "mitt", mine: true, joiners: 1 }],
+      nudge: { on: true, at: "20:00" },
+    });
+    expect(s.events).toHaveLength(1);
+    expect(s.calls[0]).toMatchObject({ id: "c", hour: 19, mine: true, joiners: 1 });
+    expect(s.nudge).toEqual({ on: true, at: "20:00" });
+    expect(normalizeCalendar({ on: true, nudge: { on: true, at: "8pm" } }).nudge).toEqual({ on: true, at: "20:00" });
   });
 });
 
@@ -83,6 +103,18 @@ describe("운동 달력 체크 — 그날의 체크 · 금색 별", () => {
       ["잽 100번", true],
     ]);
     expect(isStarDay(c)).toBe(false);
+  });
+
+  it("(2-2) 휴관일에 안 왔으면 체육관은 빼고 센다 — 쉬는 날도 별", () => {
+    const line = { id: "j", content: "쉬는 날 스트레칭", mood: null, photoUrl: null, visibility: "private" as const, at: "" };
+    const cal = { day: "2026-11-12", cheer: true, give153: false, journal: line, done: ["jab"], sticker: null };
+    const closed = dayChecks("2026-11-12", false, cal, [JAB], true);
+    expect(closed.map((c) => c.key)).toEqual(["cheer", "line", "item:jab"]);
+    expect(isStarDay(closed)).toBe(true);
+    // 휴관일에 왔으면 체육관도 센다
+    expect(dayChecks("2026-11-12", true, cal, [JAB], true)[0]).toMatchObject({ key: "gym", done: true });
+    // 휴관일이 아니면 그대로
+    expect(isStarDay(dayChecks("2026-11-12", false, cal, [JAB]))).toBe(false);
   });
 
   it("다 채운 날 = 금색 별 · 기록 없는 날은 별 없음", () => {

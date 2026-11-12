@@ -5,6 +5,8 @@
  *   · 고른 날 = 그날 들어온 시각 · 운동 시간 · 그날의 의미 + 체크 + 한 줄(쓴 것) + 기분 스티커(오늘부터 6일 전까지 고치기).
  *   · 저절로 체크는 누를 수 없고(체육관 = 출석, 응원 = 응원 보내기나 153, 한 줄 = 오늘 운동 한 줄), 오늘 아직이면 그 일을 하는 창을 연다.
  *   · 채운 것과 다음 한 걸음만 말한다(lib/calendarChecks checkProgress) — 못한 것 · 빈칸 표시 없음.
+ *   · (2-2 · 2026-11-13) 그날의 153 일정(휴관 · 단축 운영 · 이벤트 · 대회 · 특강) · 저요 한 운동 모집 한 줄씩(Agenda) ·
+ *     앞날은 일정만(체크 · 스티커 없음) · 휴관일에 안 왔으면 체육관 체크를 빼고 센다(lib/calendarEvents · dayChecks closed).
  */
 import { Check, ChevronRight, Lock, Plus, Star, UserRound, Users } from "lucide-react";
 import { dayLabel, durationLabel, kstTime, type AttendanceDay } from "@/lib/attendanceHistory";
@@ -21,6 +23,7 @@ import {
   type JournalVisibility,
   type StickerKey,
 } from "@/lib/calendarChecks";
+import { EVENT_KIND_META, callLine, callsOn, eventUntil, eventsOn, isClosedDay, type CalCall, type CalEvent } from "@/lib/calendarEvents";
 import { cn } from "@/lib/utils";
 
 const VIS_LABEL: Record<JournalVisibility, string> = { private: "나만 보기", partners: "친구만", branch: "전체 공개" };
@@ -40,7 +43,58 @@ export interface DayChecksPanelProps {
   onWriteLine: () => void;
   onCheer: () => void;
   onManage: () => void;
+  /** (2-2) 저요 한 운동 모집을 누르면 — 커뮤니티 '오늘 같이 해요' */
+  onOpenCalls?: () => void;
 }
+
+/** (2-2) 그날의 153 일정 · 저요 한 운동 모집 — 한 줄씩 (없으면 그리지 않음) */
+const Agenda = ({
+  day,
+  events,
+  calls,
+  onOpenCalls,
+}: {
+  day: string;
+  events: readonly CalEvent[];
+  calls: readonly CalCall[];
+  onOpenCalls?: () => void;
+}) => {
+  if (events.length === 0 && calls.length === 0) return null;
+  return (
+    <ul className="mt-2 space-y-1.5" aria-label="이날 일정">
+      {events.map((e) => {
+        const until = eventUntil(e, day);
+        return (
+          <li key={e.id} className="flex items-center gap-2 rounded-lg bg-card px-3 py-2">
+            <span className={cn("shrink-0 rounded-md px-1.5 py-0.5 text-micro font-black", EVENT_KIND_META[e.kind].chip)}>
+              {EVENT_KIND_META[e.kind].label}
+            </span>
+            <span className="line-clamp-2 min-w-0 flex-1 text-label font-bold leading-snug text-foreground">{e.title}</span>
+            {until && <span className="shrink-0 text-micro tabular-nums text-muted-foreground">{until}</span>}
+          </li>
+        );
+      })}
+      {calls.map((c) => (
+        <li key={c.id}>
+          <button
+            type="button"
+            onClick={onOpenCalls}
+            disabled={!onOpenCalls}
+            className="flex w-full items-center gap-2 rounded-lg bg-card px-3 py-2 text-left active:bg-secondary/60 disabled:active:bg-card"
+          >
+            <Users className="h-4 w-4 shrink-0 text-sky-600 dark:text-sky-300" aria-hidden />
+            <span className="line-clamp-2 min-w-0 flex-1 text-label font-bold leading-snug text-foreground">{callLine(c)}</span>
+            {c.done ? (
+              <span className="shrink-0 text-micro font-bold text-primary">같이 했어요</span>
+            ) : (
+              onOpenCalls && <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+            )}
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+};
 
 /** 체크 칩 하나 — 채운 것 = 민트 · 오늘 할 수 있는 것 = 흰 칩(누르면 그 일) · 그 밖 = 점선(누를 수 없음) */
 const CheckChip = ({
@@ -122,17 +176,31 @@ export const DayChecksPanel = ({
   onWriteLine,
   onCheer,
   onManage,
+  onOpenCalls,
 }: DayChecksPanelProps) => {
   const isToday = day === today;
+  const future = day > today;
   const editable = canEditDay(day, today);
   const info = cal.days.get(day);
-  const checks = dayChecks(day, !!attended, info, cal.items);
+  const events = eventsOn(cal.events, day);
+  const calls = callsOn(cal.calls, day);
+  const checks = dayChecks(day, !!attended, info, cal.items, isClosedDay(cal.events, day));
   const star = isStarDay(checks);
   const progress = checkProgress(checks, isToday);
   const sticker = stickerOf(info?.sticker);
   const journal = info?.journal ?? null;
   const VisIcon = journal ? VIS_ICON[journal.visibility] : null;
   const activeItems = cal.items.filter((i) => i.archivedOn == null).length;
+
+  // 앞날 — 그날 153 일정 · 저요 한 모집만 (체크 · 스티커는 그날이 와야)
+  if (future) {
+    return (
+      <div className="mt-3 rounded-xl bg-muted/60 px-4 py-3" aria-label={`${dayLabel(day)} 일정`}>
+        <p className="text-body font-bold text-foreground">{dayLabel(day)}</p>
+        <Agenda day={day} events={events} calls={calls} onOpenCalls={onOpenCalls} />
+      </div>
+    );
+  }
 
   return (
     <div className="mt-3 rounded-xl bg-muted/60 px-4 py-3" aria-label={isToday ? "오늘의 체크" : `${dayLabel(day)} 기록`}>
@@ -169,6 +237,8 @@ export const DayChecksPanel = ({
           {moment.text}
         </p>
       )}
+
+      <Agenda day={day} events={events} calls={calls} onOpenCalls={onOpenCalls} />
 
       <div className="mt-2 flex flex-wrap gap-1.5" role="group" aria-label="체크">
         {checks.map((c) => (

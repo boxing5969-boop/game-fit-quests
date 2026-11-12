@@ -3,6 +3,8 @@
  *   get_my_calendar · set_my_check_item · remove_my_check_item · set_my_check_done · set_my_day_sticker
  *   서버 함수가 아직 없거나(적용 전 · 옛 DB 미리보기) 막히면 꺼진 것으로 본다 — 달력은 지금 그대로(운동 약속과 같은 결).
  *   캐시 키는 "153cal2" 로 시작 — 한 줄 쓰기 · 응원 보내기를 마치면 이 키를 다시 읽는다. 계산 · 글은 src/lib/calendarChecks.ts.
+ *   (2-2 · DB 20261113001417_calendar_stage22.sql) get_my_calendar 가 153 일정 · 저요 한 모집 · 저녁 독려도 함께 보낸다 ·
+ *   저녁 독려 켜기 · 끄기 = set_my_calendar_prefs (useSetCalendarNudge).
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -111,5 +113,26 @@ export function useRemoveCheckItem() {
       if (error) throw new Error(translateError(error, "체크를 빼지 못했어요"));
     },
     onSuccess: () => void qc.invalidateQueries({ queryKey: CAL2_KEY }),
+  });
+}
+
+/** (2-2) 저녁 독려 켜기 · 끄기 — 누르는 순간 바뀌고 실패하면 되돌린다 */
+export function useSetCalendarNudge() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (on: boolean) => {
+      const { error } = await rpc("set_my_calendar_prefs", { p_evening_nudge: on });
+      if (error) throw new Error(translateError(error, "알림 설정을 저장하지 못했어요"));
+    },
+    onMutate: async (on) => {
+      await qc.cancelQueries({ queryKey: CAL2_KEY });
+      const snapshot = qc.getQueriesData<CalState>({ queryKey: CAL2_KEY });
+      patchAll(qc, (s) => ({ ...s, nudge: { ...s.nudge, on } }));
+      return { snapshot };
+    },
+    onError: (_e, _v, ctx) => {
+      for (const [key, val] of ctx?.snapshot ?? []) qc.setQueryData(key, val);
+    },
+    onSettled: () => void qc.invalidateQueries({ queryKey: CAL2_KEY }),
   });
 }

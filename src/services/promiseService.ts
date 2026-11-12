@@ -1,6 +1,6 @@
 /**
  * 🤝 153 운동 약속 · 코치 「오늘 만날 회원」 — 서버 함수 감싸기 (DB 20261112192617_promise_stage1.sql)
- *   get_my_promise · set_my_promise · stop_my_promise · ops_meet_today
+ *   get_my_promise · set_my_promise(_v2 — 2-2단계 알림 시각) · stop_my_promise · ops_meet_today
  *   서버 함수가 아직 없거나(적용 전 · 옛 DB 미리보기) 막히면 꺼진 것으로 본다 — 화면은 지금 그대로(동기부여 1단계와 같은 결).
  *   캐시 키는 "153promise" 로 시작. 글 · 계산은 src/lib/promise153.ts.
  */
@@ -40,12 +40,17 @@ export function useMyPromise(enabled = true) {
   });
 }
 
-/** 약속 걸기 · 고치기 */
+/** 약속 걸기 · 고치기 (+ 알림 시각 — set_my_promise_v2 · 2-2단계. v2 가 없는 DB 면 예전 함수로 알림 시각 없이) */
 export function useSetPromise() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (d: PromiseDraft): Promise<PromiseState> => {
-      const { data, error } = await rpc("set_my_promise", promisePayload(d));
+      const payload = promisePayload(d);
+      let { data, error } = await rpc("set_my_promise_v2", payload);
+      if (error && (error.code === "PGRST202" || error.code === "42883")) {
+        const { p_remind: _drop, ...v1 } = payload;
+        ({ data, error } = await rpc("set_my_promise", v1));
+      }
       if (error) throw new Error(translateError(error, "약속을 저장하지 못했어요"));
       return normalizePromiseState(data);
     },
