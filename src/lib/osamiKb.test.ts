@@ -53,6 +53,8 @@ const DIRECT: [string, string][] = [
   ["총 출석 수 확인하고 싶어요", "att-record"],
   ["같은 나이 평균이랑 비교한 상위 몇 퍼센트는 어떻게 계산해요", "att-peer"],
   ["나는 또래 중에 몇 번째예요", "att-peer"],
+  ["첫 4주 8번이 뭐예요", "att-starter"],
+  ["출석 10번째 축하는 언제 와요", "att-starter"],
   ["출석 50회 보상 뭐예요", "rw-attendance-milestone"],
   ["100번 출석하면 뭐 줘요", "rw-attendance-milestone"],
   ["마일리지 어디에 써요", "rw-mileage-use"],

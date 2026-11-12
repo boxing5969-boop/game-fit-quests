@@ -6,6 +6,9 @@ import { AlertTriangle, Clock, UserX, ChevronRight, MessageSquare } from "lucide
 import { formatRankShort, RANK_ICONS } from "@/lib/rankLabels";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useStarterWatchlist } from "@/hooks/useMotivation";
+import { isBehind, lastVisitLabel, type StarterWatchlist } from "@/lib/motivation153";
+import { kstToday } from "@/lib/attendanceCheer";
 
 type RiskLevel = "mild" | "moderate" | "severe";
 
@@ -28,6 +31,67 @@ const RISK_CONFIG: Record<RiskLevel, { label: string; color: string; bg: string;
   mild: { label: "주의", color: "text-status-pending", bg: "bg-status-pending/10", icon: <Clock className="h-4 w-4" />, minDays: 5 },
   moderate: { label: "위험", color: "text-reward-foreground", bg: "bg-reward/10", icon: <AlertTriangle className="h-4 w-4" />, minDays: 14 },
   severe: { label: "이탈 위험", color: "text-destructive", bg: "bg-destructive/10", icon: <UserX className="h-4 w-4" />, minDays: 30 },
+};
+
+/**
+ * 🥊 첫 4주 신규 (2026-11-12 동기부여 1단계 · 대표님 「추천대로」 — 선릉역점만 먼저)
+ *   첫 출석부터 28일 안의 회원 · 창 안 출석(n/8) · 마지막 출석 — 주 2번 속도보다 늦은 회원이 위로(서버 정렬).
+ *   선릉역점 신규는 첫 4주 8번이면 3개월째 77%가 남고 1~3번이면 23% — 코치님이 먼저 이름을 불러 줄 회원.
+ *   서버 get_starter_watchlist(켠 지점 지도진 · 대표님) — 켜지 않은 지점이거나 함수가 없으면 그리지 않는다.
+ */
+export const StarterWatchList = ({ data, onOpen }: { data: StarterWatchlist | undefined; onOpen: (userId: string) => void }) => {
+  if (!data?.on || data.rows.length === 0) return null;
+  const today = data.today ?? kstToday();
+  const behind = data.rows.filter((r) => isBehind(r, data.goal)).length;
+  return (
+    <section aria-label="첫 4주 신규" className="rounded-2xl border border-primary/30 bg-primary/5 p-3.5">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-bold text-foreground">첫 4주 신규 {data.rows.length}명</p>
+        {behind > 0 && <span className="rounded-full bg-status-pending/15 px-2 py-0.5 text-[10px] font-bold text-status-pending">먼저 챙길 회원 {behind}명</span>}
+      </div>
+      <p className="mt-0.5 text-[10px] text-muted-foreground">첫 출석부터 4주 안에 {data.goal}번 · 주 2번 속도보다 늦은 회원이 위에 있어요</p>
+      <div className="mt-2 space-y-1.5">
+        {data.rows.map((r) => {
+          const late = isBehind(r, data.goal);
+          return (
+            <button
+              key={r.userId}
+              type="button"
+              onClick={() => onOpen(r.userId)}
+              className="flex w-full items-center gap-2.5 rounded-xl bg-card px-3 py-2 text-left active:scale-[0.98] transition-all"
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                {r.avatarUrl ? <img src={r.avatarUrl} alt="" className="h-9 w-9 object-cover" /> : r.name.slice(0, 1)}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="truncate text-sm font-bold text-foreground">{r.name}</span>
+                  {r.realName && r.realName !== r.name && <span className="truncate text-[10px] text-muted-foreground">{r.realName}</span>}
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  {r.day}일째 · {lastVisitLabel(r.lastDay, today)}
+                </p>
+              </div>
+              <span
+                className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-black tabular-nums ${
+                  r.done ? "bg-reward/20 text-reward-foreground" : late ? "bg-status-pending/15 text-status-pending" : "bg-primary/15 text-primary"
+                }`}
+              >
+                {r.done ? "달성" : `${r.count}/${data.goal}`}
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+};
+
+const StarterWatchSection = () => {
+  const navigate = useNavigate();
+  const { data } = useStarterWatchlist();
+  return <StarterWatchList data={data} onOpen={(id) => navigate(`/manager/member/${id}`)} />;
 };
 
 const AtRiskMembersPanel = () => {
@@ -152,11 +216,17 @@ const AtRiskMembersPanel = () => {
   };
 
   if (isLoading) {
-    return <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted" />)}</div>;
+    return (
+      <div className="space-y-4">
+        <StarterWatchSection />
+        <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted" />)}</div>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-4">
+      <StarterWatchSection />
       {/* Summary */}
       <div className="grid grid-cols-3 gap-2">
         {(["mild", "moderate", "severe"] as RiskLevel[]).map(r => {

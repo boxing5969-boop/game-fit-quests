@@ -115,9 +115,11 @@ export interface WorkoutCalendarCardProps {
   storageKey: string;
   /** 접혔을 때 카드 안 맨 아래 — '내 운동 기록'의 응원 한 줄 */
   footer?: ReactNode;
+  /** 제목 바로 아래(접힘 · 펼침 모두) — 첫 4주 8번 칸(StarterProgress, 2026-11-12 동기부여 1단계) */
+  header?: ReactNode;
 }
 
-const WorkoutCalendarCard = ({ data, title, openTitle, storageKey, footer }: WorkoutCalendarCardProps) => {
+const WorkoutCalendarCard = ({ data, title, openTitle, storageKey, footer, header }: WorkoutCalendarCardProps) => {
   const today = kstToday();
   const [open, setOpen] = useState(() => readOpen(storageKey));
   const [month, setMonth] = useState(() => monthOf(today));
@@ -155,6 +157,8 @@ const WorkoutCalendarCard = ({ data, title, openTitle, storageKey, footer }: Wor
             <span className="text-label font-bold text-foreground">{n(weekCount)}번 왔어요</span>
           ) : null}
         </div>
+
+        {header}
 
         {open ? (
           <div className="mt-3">

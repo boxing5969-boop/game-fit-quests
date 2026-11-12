@@ -22,6 +22,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { CalendarCheck, ChevronDown, ChevronRight, CircleHelp } from "lucide-react";
 import { useAttendanceHistory } from "@/hooks/useAttendanceHistory";
 import WorkoutCalendarCard from "@/components/attendance/WorkoutCalendar";
+import StarterProgress from "@/components/attendance/StarterProgress";
 import {
   WEEKDAY_KO,
   bestMonthAllTime,
@@ -199,7 +200,7 @@ const SummaryBody = ({ data, onOpenAll }: { data: AttendanceHistory; onOpenAll?:
  * 이번 주 — 월 ~ 일 7칸(온 날은 민트 도장) + 몇 주 연속 + 응원 한 줄 (회원 본인)
  *   2026-11-12 선릉역점 봄 회원 제안 → 대표님 「추천대로 진행하자」: '달력 펼치기'로 한 달까지 — 홈 '운동 달력'과 같은 조각(WorkoutCalendar).
  */
-const WeekCard = ({ data }: { data: AttendanceHistory }) => {
+const WeekCard = ({ data, header }: { data: AttendanceHistory; header?: ReactNode }) => {
   const cheer = attendanceCheer({ ...data, next: 0 });
   return (
     <WorkoutCalendarCard
@@ -207,6 +208,7 @@ const WeekCard = ({ data }: { data: AttendanceHistory }) => {
       title="이번 주"
       openTitle="운동 달력"
       storageKey="153cal:record:open"
+      header={header}
       footer={
         data.total > 0 ? (
           <p className="mt-4 flex items-start gap-2 text-body leading-snug text-foreground">
@@ -436,7 +438,8 @@ const AttendanceHistoryPanel = ({
   return (
     <div className="space-y-3">
       {member ? <MemberSummary data={data} /> : <SummaryBody data={data} />}
-      {member && <WeekCard data={data} />}
+      {/* 첫 4주 8번 칸은 내 기록에서만(관리자가 회원 상세에서 볼 때는 그 회원 값이 아니라서 안 그림) — 2026-11-12 동기부여 1단계 */}
+      {member && <WeekCard data={data} header={userId ? undefined : <StarterProgress />} />}
       {member && afterWeek}
       {data.total === 0 ? (
         member ? null : (
