@@ -14,6 +14,7 @@
  *     월~일 하루씩 근무 시간 + 내 일정 · 날마다 + · 매주 반복 목록 → 넣기 · 고치기 시트(OpsPlanSheet)
  *   코치님끼리는 서로 일정이 안 보인다(10/29 근무 시간 비공개와 같은 결). 일정은 근무 시간 · 급여와 따로 — 쉰 날 인정 · 대타 · 연장은 「근무」 탭.
  *   계산(반복 펼치기 · 하루 정리 · 달력 표시)은 src/lib/opsPlans.ts 한 곳.
+ *   맨 위 「오늘 만날 회원」(2026-11-12 대표님 「추천하는대로 진행할게」 — 스케줄러는 회원을 맞이하는 도구): OpsMeetToday.
  */
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, Rows3 } from "lucide-react";
@@ -55,6 +56,7 @@ import { readOpsBranch, saveOpsBranch, shortBranch } from "@/services/opsService
 import { useOpsPlansMonth, useOpsPlansWeek } from "@/services/opsPlanService";
 import OpsPlanSheet, { type PlanSheetTarget } from "./OpsPlanSheet";
 import { MarkLegend, MonthSwitcher, PlanMonthGrid } from "./OpsPlanMonth";
+import OpsMeetToday from "./OpsMeetToday";
 import { OpsChip, kstToday } from "./OpsParts";
 
 const card = "rounded-2xl border border-border bg-card p-5";
@@ -200,6 +202,9 @@ const OpsPlanTab = () => {
           ))}
         </div>
       )}
+
+      {/* 오늘 만날 회원 — 켠 지점 지도진 · 대표님, 없으면 안 그림 */}
+      <OpsMeetToday branch={data.branch} />
 
       <div className={cn("space-y-4 transition-opacity", q.isPlaceholderData && "opacity-60")}>
         {period === "month" ? (

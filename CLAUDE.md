@@ -781,6 +781,24 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - **감정 설계판** (2026-11-12 대표님 「달력 기능도 목표는 회원님들의 감정을 설계하는 거야」 · DB 변경 없음): 기념일 = 금색 도장(첫 도장 · 출석 축하를 채운 날 — 서버 `milestones.reachedOn`) · 고른 날 아래 '그날의 의미' 한 줄(다시 시작한 날 = 14일 넘게 쉬고 온 날, 쉰 기간은 말하지 않는다 · 그 달 가장 길게 운동한 날 = 운동 시간을 실제로 잰 날 하나가 뚜렷이 길 때 · 3번 이상 온 달) · 지난 달을 넘겨 보면 '10월 · 8시간 36분 운동했어요'(앞 달보다 늘었을 때만 '9월보다 +N' 칩) · 새 달 첫 7일엔 '지난달 … 운동했어요 · 11월도 이어 가요'(홈만 — `recap`, 이번 달 숫자는 '내 운동'이 주인공이라 다시 쓰지 않는다) · **'이번 주 n번 왔어요' 칩은 뺐다**(도장 줄이 이미 말한다). 계산 [calendarMoments.ts](src/lib/calendarMoments.ts)(시험 — 글에 빠진 · 쉰 · 줄어든 · 밖에가 없는지도 본다). '153에서의 첫날'이라고 쓰지 않는다(기록은 2026-02 부터라 오래 다닌 회원에게는 사실이 아니다 → '첫 도장을 찍은 날').
 - 다음 단계(보고서 순서): 2단계 운동 약속(`myboxer:ops-schedule` 설계 — 약속한 날 = 민트 테두리 → 출석하면 채워짐 · 빠지면 회색 점) · 3단계 오늘의 체크(다 채운 날 금색 별) · 4단계 153OS 공지 '일정 날짜' · 한 줄 템플릿 칩. 모두 이 카드의 날짜 칸에 얹는다.
 
+### 153 운동 약속 1단계 · 코치 「오늘 만날 회원」 (2026-11-12 대표님 「추천하는대로 진행할게」 · 선릉역점만 · 문서 https://claude.ai/artifact/LK88UcbCHRvQNx6T8kaxu2 · 11/08 계획 3단계 중 약속 부분)
+
+| 파일 | 역할 |
+|---|---|
+| [supabase/migrations/20261112192617_promise_stage1.sql](supabase/migrations/20261112192617_promise_stage1.sql) | 새 설정 `app_settings.promise_pilot`(branches · start_date = 켠 날 · return_bonus 5000 · return_window_days 30 · remind_at 08:30 · quiet_after 21:00 · meet_starter_days 28 · meet_gap_days 14 · meet_expiring_days 14) · 새 표 `member_promises`(회원마다 지금 약속 하나 — 요일 0=일~6=토 · 시간대 · 대비책 60자 · 알림 · started_on · 그만하기 = `stopped_at`) · `member_promise_notices`(remind · return 한 번만) — 함수로만 · `get_my_promise` · `set_my_promise(p_weekdays, p_time_slot, p_plan_b, p_notify)` · `stop_my_promise` · `promise_tick`(예약 `promise-tick` 10분마다) · `ops_meet_today(p_branch)` |
+| [src/lib/promise153.ts](src/lib/promise153.ts) | 서버 JSON 읽기 · 약속한 날 · 다음 약속 · 이번 주 지킨 수 · 카드 한 줄(`promiseStatus` — 잘한 것과 다음 약속만) · 약속 문장 · 시트 검사(서버와 같은 말) · 코치 줄 이유와 할 말(`meetReasons`) · 순서(`sortMeetRows`) — 시험 promise153.test.ts |
+| [src/services/promiseService.ts](src/services/promiseService.ts) | `["153promise", …]` 캐시 · 함수가 없거나 막히면 꺼진 것으로(화면 그대로) |
+| [WorkoutCalendar](src/components/attendance/WorkoutCalendar.tsx) `withPromise` · [PromiseSheet](src/components/attendance/PromiseSheet.tsx) | 회원: 운동 달력(홈 · 내 운동 기록, 내 기록일 때만) — 약속한 날(오늘 · 앞으로, 아직 안 온 날) 점선 테두리 → 출석하면 그대로 민트 도장 · 카드 안 한 줄(없으면 「운동 약속 걸기」) · 시트 = 요일(처음엔 주 2번 권함) · 시간대(선택) · 대비책 한 줄(예시 3개) · 알림 · 약속 문장 · 「약속합니다」 · 「약속 잠시 멈추기」(두 번 눌러) |
+| [OpsMeetToday](src/components/ops/OpsMeetToday.tsx) | 153운영본부 「일정」 탭 맨 위 「오늘 만날 회원」 — 오늘 약속한 회원 + 오늘 온 회원 중 첫 출석 · 첫 4주 n번째 · n일 만에(14일+) · 수강권 n일(14일 안) · 운동 모집 → 줄마다 코치님이 할 한 가지 · 누르면 회원 카드. 온 회원 먼저(늦게 온 순) · 아직 안 온 약속 회원은 시간대 순 · 6명 넘으면 더 보기 · 없으면 안 그림 |
+
+- 감정 설계(위 「회원 감정 설계 기준」): **놓친 약속은 어디에도 표시하지 않는다**(달력 · 줄 글 · 알림 · 코치 화면 모두) · 지킴 = 약속한 날 출석(시간대 무관 · 직접 체크 없음) · 대비책 글은 회원 본인만(코치 함수에 없음).
+- 알림: 약속한 날 아침 remind_at ~ quiet_after 사이 1번(이미 왔거나 알림을 끈 회원은 안 보냄) · 복귀 보너스 = 약속한 날을 놓친 뒤 다시 온 날 `grant_mileage`(kind `milestone` '출석 기념' · 사유 '다시 시작 보너스 — 운동 약속' · idem_key `promise-return:<회원>:<연-월>` = 한 달 1번) + '다시 와서 반가워요'(알림 시간 밖이면 알림함에만 — pushed_at). **켠 날(start_date) 앞에 놓친 약속으로는 주지 않는다.**
+- 출석 표에는 트리거를 달지 않았다(보호 영역) — 10분 예약이 오늘 출석을 읽는다. 기존 함수 · 표 · 제약은 그대로. 코치님 · 운영진 · 체험 계정 · 합쳐진 계정은 약속 대상이 아니다(`_promise_member`).
+- 「오늘 만날 회원」 보는 사람 = 그 지점 지도진(`_strategy_branch_staff`) · 전체관리자 · 관리자(지점 고르기). 켠 지점(promise_pilot.branches)이 아니면 `{on:false}`.
+- 끄기 = `promise_pilot.branches` 를 빈 배열(화면 · 예약 모두 조용) + `select cron.unschedule('promise-tick');`. 다른 지점을 켜려면 branches 에 지점 이름.
+- 시험: 로컬 Postgres 16 에 운영 정의를 본뜬 뼈대(grant_mileage · _strategy_branch_staff 는 운영 본문 그대로) + 이 마이그레이션(두 번 적용) → 16개(켜지 않은 지점 · 코치 · 체험 계정 꺼짐 · 요일 정리 · 잘못된 값 막힘 · 같은 요일이면 시작일 그대로 · 멈추기 · 다시 걸기 · 조용한 시간엔 아침 알림 없고 보너스는 알림함에만 · 아침 알림 한 번씩 · 이미 온 회원은 없음 · 복귀 보너스 한 번 · 켜기 전 놓친 약속은 없음 · 코치 줄과 값 · 대비책 없음 · 대표님 지점 고르기 · 코치 다른 지점 막힘 · 표 · 예약 · 안쪽 함수 · anon 막힘) / vitest promise153 11개.
+- 다음: 일요일 주간 돌아보기(약속 · 지킨 날 · 운동 시간) · 「오늘 만날 회원」에 코치 '인사했어요' 기록 · 건강 교과서는 미룸(대표님 결정).
+
 ### 동기부여 1단계 — 첫 4주 8번 · 이른 출석 축하 · 코치 「첫 4주 신규」 (2026-11-12 대표님 「추천대로」 · 선릉역점만 먼저 · 보고서 https://claude.ai/artifact/6sAvidMfhyLhFERCK5jXFw)
 
 근거(선릉역점 운영 DB, 2026-11-12): 첫 출석부터 4주 안에 8번 이상 온 신규는 3개월째 77% · 1~3번은 23%가 남았다(3월~8월 14일 첫 출석 131명) · 4주에 8번 이상 오던 회원 42명은 다음 4주에 한 명도 안 끊겼다. 출석 축하는 50번마다라 주 2회 회원도 첫 축하가 6개월 뒤였다.

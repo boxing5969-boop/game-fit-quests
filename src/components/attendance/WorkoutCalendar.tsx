@@ -11,11 +11,14 @@
  *     기념일 = 금색 도장(첫 도장 · 출석 축하를 채운 날) · 고른 날 아래 '그날의 의미' 한 줄(다시 시작한 날 · 가장 길게 운동한 날) ·
  *     지난 달을 넘겨 보면 '10월 · 14시간 12분 운동했어요' · 새 달 첫 7일엔 지난달 한 줄(recap — 홈만).
  *     '이번 주 n번 왔어요' 칩은 뺐다 — 도장 줄이 이미 말하고, 숫자는 횟수보다 시간(10-22). 계산은 lib/calendarMoments.ts.
- *   · 다음 단계가 이 칸에 얹힌다: 2단계 운동 약속(약속한 날 테두리) · 3단계 오늘의 체크(다 채운 날 금색 별).
+ *   · 운동 약속 (2026-11-12 대표님 「추천하는대로 진행할게」 · withPromise — 내 기록에서만): 약속한 날(오늘 · 앞으로)은 점선 테두리 →
+ *     출석하면 그대로 민트 도장 · 놓친 약속은 표시하지 않는다 · 카드 안 한 줄(잘한 것 · 다음 약속) + 걸기 · 고치기 시트(PromiseSheet).
+ *     계산 · 글은 lib/promise153.ts, 자료는 services/promiseService.ts(켠 지점 회원이 아니면 아무것도 안 그림).
+ *   · 다음 단계: 오늘의 체크(다 채운 날 금색 별).
  *   날짜 계산은 lib/attendanceCalendar.ts (주는 월요일 시작).
  */
 import { useMemo, useState, type ReactNode } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Handshake, Star } from "lucide-react";
 import {
   WEEKDAY_KO,
   dayLabel,
@@ -28,6 +31,9 @@ import {
 import { attendanceByDay, monthBounds, monthOf, monthWeeks, shiftMonth, weekOf } from "@/lib/attendanceCalendar";
 import { kstToday } from "@/lib/attendanceCheer";
 import { dayMoments, freshStartLine, monthRecap, type DayMoment } from "@/lib/calendarMoments";
+import { isPromisedDay, promiseSentence, promiseStatus, type Promise153 } from "@/lib/promise153";
+import { useMyPromise } from "@/services/promiseService";
+import PromiseSheet from "@/components/attendance/PromiseSheet";
 import { cn } from "@/lib/utils";
 
 const n = (v: number) => v.toLocaleString("ko-KR");
@@ -55,17 +61,19 @@ interface CellProps {
   faint?: boolean;
   /** 기념일 — 금색 도장 */
   moment?: DayMoment;
+  /** 약속한 날(오늘 · 앞으로, 아직 안 온 날) — 점선 테두리 */
+  promised?: boolean;
   picked: boolean;
   onPick: (day: string) => void;
 }
 
 /** 날짜 한 칸 — 출석한 날 = 민트 도장(누르면 그날 한 줄) · 기념일 = 금색 도장 · 오늘 = 테두리 · 앞뒤 달 = 흐리게 */
-const DayCell = ({ day, on, today, faint = false, moment, picked, onPick }: CellProps) => {
+const DayCell = ({ day, on, today, faint = false, moment, promised = false, picked, onPick }: CellProps) => {
   const isToday = day === today;
   const num = Number(day.slice(8));
   const base = "flex h-10 w-10 items-center justify-center rounded-full text-label tabular-nums";
   const gold = on && !!moment?.gold;
-  const label = `${dayLabel(day)}${on ? " 출석" : ""}${on && moment ? ` · ${moment.text}` : ""}${isToday ? " · 오늘" : ""}`;
+  const label = `${dayLabel(day)}${on ? " 출석" : ""}${on && moment ? ` · ${moment.text}` : ""}${!on && promised ? " · 약속한 날" : ""}${isToday ? " · 오늘" : ""}`;
   if (faint) {
     return (
       <span className={cn(base, "text-muted-foreground/40")} aria-hidden>
@@ -78,7 +86,13 @@ const DayCell = ({ day, on, today, faint = false, moment, picked, onPick }: Cell
       <span
         className={cn(
           base,
-          isToday ? "font-bold text-foreground ring-2 ring-primary/60" : day > today ? "text-muted-foreground/60" : "text-foreground",
+          promised && day >= today
+            ? "border-2 border-dashed border-primary font-bold text-primary"
+            : isToday
+              ? "font-bold text-foreground ring-2 ring-primary/60"
+              : day > today
+                ? "text-muted-foreground/60"
+                : "text-foreground",
         )}
         aria-label={label}
       >
@@ -122,6 +136,58 @@ const DayLine = ({ d, moment }: { d: AttendanceDay; moment?: DayMoment }) => (
   </div>
 );
 
+const shortBranchName = (b: string | null): string | null => (b ? b.replace(/^153복싱짐\s*/, "") || b : null);
+
+/** 운동 약속 한 줄 — 없으면 걸기 단추, 있으면 잘한 것 · 다음 약속 + 고치기 (놓친 약속은 말하지 않는다) */
+const PromiseLine = ({
+  promise,
+  today,
+  attended,
+  branch,
+  onOpen,
+}: {
+  promise: Promise153 | null;
+  today: string;
+  attended: ReadonlyMap<string, unknown>;
+  branch: string | null;
+  onOpen: () => void;
+}) => {
+  if (!promise) {
+    return (
+      <button
+        type="button"
+        onClick={onOpen}
+        className="mt-3 flex w-full items-center gap-3 rounded-xl border border-dashed border-primary/50 bg-primary/5 px-4 py-3 text-left transition-transform active:scale-[0.99]"
+      >
+        <Handshake className="h-5 w-5 shrink-0 text-primary" aria-hidden />
+        <span className="min-w-0 flex-1">
+          <span className="block text-body font-bold text-foreground">운동 약속 걸기</span>
+          <span className="block text-label text-muted-foreground">약속한 날이 달력에 보이고, 그날 아침 알려 드려요</span>
+        </span>
+        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+      </button>
+    );
+  }
+  const set = new Set(attended.keys());
+  const status = promiseStatus(promise, today, set);
+  return (
+    <div className={cn("mt-3 flex items-center gap-3 rounded-xl px-4 py-3", status?.tone === "done" ? "bg-primary/10" : "bg-muted/60")}>
+      <Handshake className={cn("h-5 w-5 shrink-0", status?.tone === "next" ? "text-muted-foreground" : "text-primary")} aria-hidden />
+      <span className="min-w-0 flex-1">
+        <span className="block text-body font-bold leading-snug text-foreground">{status?.text ?? promiseSentence(promise, shortBranchName(branch))}</span>
+        <span className="block truncate text-label text-muted-foreground">{promiseSentence(promise)}</span>
+      </span>
+      <button
+        type="button"
+        onClick={onOpen}
+        className="shrink-0 rounded-full bg-card px-3 py-1.5 text-label font-bold text-foreground shadow-elev-1 active:scale-95"
+      >
+        고치기
+      </button>
+    </div>
+  );
+};
+
 export interface WorkoutCalendarCardProps {
   data: AttendanceHistory;
   /** 접혔을 때 제목 */
@@ -136,15 +202,22 @@ export interface WorkoutCalendarCardProps {
   header?: ReactNode;
   /** 새 달 첫 7일에 지난달 한 줄을 보여 주나 — 홈만 (내 운동 기록에는 월별 그래프가 있다) */
   recap?: boolean;
+  /** 운동 약속(내 기록에서만) — 약속한 날 점선 · 한 줄 · 걸기/고치기 */
+  withPromise?: boolean;
 }
 
-const WorkoutCalendarCard = ({ data, title, openTitle, storageKey, footer, header, recap = false }: WorkoutCalendarCardProps) => {
+const WorkoutCalendarCard = ({ data, title, openTitle, storageKey, footer, header, recap = false, withPromise = false }: WorkoutCalendarCardProps) => {
   const today = kstToday();
   const [open, setOpen] = useState(() => readOpen(storageKey));
   const [month, setMonth] = useState(() => monthOf(today));
   const [picked, setPicked] = useState<string | null>(null);
   const byDay = useMemo(() => attendanceByDay(data.list), [data.list]);
   const moments = useMemo(() => dayMoments(data, today), [data, today]);
+  const promiseQ = useMyPromise(withPromise);
+  const promiseState = withPromise && promiseQ.data?.on ? promiseQ.data : null;
+  const promise = promiseState?.promise ?? null;
+  const [promiseOpen, setPromiseOpen] = useState(false);
+  const promisedFor = (d: string) => !byDay.has(d) && d >= today && isPromisedDay(promise, d);
   const bounds = monthBounds(data.firstDay, today);
   const week = weekOf(today);
   const weekCount = week.filter((d) => byDay.has(d)).length;
@@ -220,6 +293,7 @@ const WorkoutCalendarCard = ({ data, title, openTitle, storageKey, footer, heade
                       today={today}
                       faint={!c.inMonth}
                       moment={moments.get(c.day)}
+                      promised={c.inMonth && promisedFor(c.day)}
                       picked={picked === c.day}
                       onPick={pick}
                     />
@@ -232,13 +306,24 @@ const WorkoutCalendarCard = ({ data, title, openTitle, storageKey, footer, heade
             {week.map((d, i) => (
               <li key={d} className="flex flex-col items-center gap-1.5">
                 <span className={cn("text-micro", d === today ? "font-black text-foreground" : "text-muted-foreground")}>{WEEKDAY_KO[i]}</span>
-                <DayCell day={d} on={byDay.has(d)} today={today} moment={moments.get(d)} picked={picked === d} onPick={pick} />
+                <DayCell
+                  day={d}
+                  on={byDay.has(d)}
+                  today={today}
+                  moment={moments.get(d)}
+                  promised={promisedFor(d)}
+                  picked={picked === d}
+                  onPick={pick}
+                />
               </li>
             ))}
           </ol>
         )}
 
         {pickedDay && <DayLine d={pickedDay} moment={moments.get(pickedDay.day)} />}
+        {promiseState && (
+          <PromiseLine promise={promise} today={today} attended={byDay} branch={promiseState.branch} onOpen={() => setPromiseOpen(true)} />
+        )}
         {pastRecap && (
           <p className="mt-3 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-t border-border pt-3">
             <span className="text-label font-bold tabular-nums text-foreground">{pastRecap.text}</span>
@@ -259,6 +344,15 @@ const WorkoutCalendarCard = ({ data, title, openTitle, storageKey, footer, heade
         {open ? "달력 접기" : "달력 펼치기"}
         <ChevronDown className={cn("h-5 w-5 transition-transform", open && "rotate-180")} aria-hidden />
       </button>
+      {promiseState && (
+        <PromiseSheet
+          open={promiseOpen}
+          onOpenChange={setPromiseOpen}
+          promise={promise}
+          branchShort={shortBranchName(promiseState.branch)}
+          returnBonus={promiseState.returnBonus}
+        />
+      )}
     </section>
   );
 };
