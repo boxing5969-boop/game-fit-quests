@@ -2,6 +2,8 @@ import { useState, useMemo, useEffect } from "react";
 import CoachLevelReviewInbox from "@/components/CoachLevelReviewInbox";
 import DailyOperationsBoard from "@/components/DailyOperationsBoard";
 import AtRiskMembersPanel from "@/components/AtRiskMembersPanel";
+import GoodsOrdersPanel from "@/components/admin/GoodsOrdersPanel";
+import GoodsAdminEntryCard from "@/components/admin/GoodsAdminEntryCard";
 import DailyReportCard from "@/components/DailyReportCard";
 import TodayListPanel from "@/components/manager/TodayListPanel";
 import Test153MeasurePanel from "@/components/test153/Test153MeasurePanel";
@@ -53,8 +55,9 @@ type SortType = "recent_submission" | "level_desc" | "pending_count";
 // today_new · today_submissions — 운영 리포트 칸을 눌러야 열리는 명단 (탭 버튼은 없음, 2026-10-15)
 // test153 — '153 PB 측정' 카드를 눌러 여는 코치 측정 화면 (2026-10-15)
 // broadcast — '유효회원 전체 메시지' 카드 (대표님·지점장만, 2026-10-15)
-type MainTab = "members" | "inbox" | "level_review" | "operations" | "at_risk" | "today_new" | "today_submissions" | "test153" | "broadcast";
-const MAIN_TABS: readonly MainTab[] = ["members", "inbox", "level_review", "operations", "at_risk", "today_new", "today_submissions", "test153", "broadcast"];
+// goods — '굿즈 신청' 카드(사전예약이 열려 있는 동안 · 마감 뒤 45일), 2026-11-12
+type MainTab = "members" | "inbox" | "level_review" | "operations" | "at_risk" | "today_new" | "today_submissions" | "test153" | "broadcast" | "goods";
+const MAIN_TABS: readonly MainTab[] = ["members", "inbox", "level_review", "operations", "at_risk", "today_new", "today_submissions", "test153", "broadcast", "goods"];
 /** 알림에서 바로 여는 탭 — /manager?tab=level_review (타이틀매치 심사 신청 알림, 2026-10-14) */
 const tabFromParam = (raw: string | null): MainTab | null =>
   MAIN_TABS.find((t) => t === raw) ?? null;
@@ -788,6 +791,9 @@ const BranchManagerHome = () => {
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </button>
 
+        {/* 🧥 굿즈 신청 — 데스크 결제 · 받음 처리 · 업체 발주표 (2026-11-12, 사전예약 기간에만) */}
+        <GoodsAdminEntryCard onOpen={() => openTab("goods")} />
+
         {/* 🧠 전략 회의 — 코치진 지시·전략 · 오늘 프로그램 · 수업 기록 · 영상 (2026-10-16 대표님 · 10-29 지점 회의실 '전략 회의' 탭으로 옮김) */}
         <button
           type="button"
@@ -889,6 +895,7 @@ const BranchManagerHome = () => {
           <Test153MeasurePanel branchName={branchName} isSuperAdmin={isSuperAdmin} onBack={() => setMainTab("members")} />
         )}
         {mainTab === "broadcast" && canBroadcast && <BroadcastNotification />}
+        {mainTab === "goods" && <GoodsOrdersPanel />}
         {(mainTab === "today_new" || mainTab === "today_submissions") && (
           <TodayListPanel
             kind={mainTab === "today_new" ? "new" : "submissions"}
@@ -952,6 +959,9 @@ const BranchManagerHome = () => {
             </span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </button>
+
+          {/* 🧥 굿즈 신청 (2026-11-12, 사전예약 기간에만) */}
+          <GoodsAdminEntryCard onOpen={() => openTab("goods")} />
 
           {canBroadcast && (
             <button
@@ -1019,6 +1029,7 @@ const BranchManagerHome = () => {
             <Test153MeasurePanel branchName={branchName} isSuperAdmin={isSuperAdmin} onBack={() => setMainTab("members")} />
           )}
           {mainTab === "broadcast" && canBroadcast && <BroadcastNotification />}
+          {mainTab === "goods" && <GoodsOrdersPanel />}
           {(mainTab === "today_new" || mainTab === "today_submissions") && (
             <TodayListPanel
               kind={mainTab === "today_new" ? "new" : "submissions"}
