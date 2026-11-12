@@ -6,6 +6,7 @@
  *   · 홈 안내 카드 = components/goods/GoodsNudgeCard (열려 있는 동안 · 아직 신청 전이거나 결제 전일 때)
  *   · 운영진 = components/admin/GoodsOrdersPanel (전체관리자 대시보드 '굿즈' 탭 · 지점장/코치 홈 '굿즈 신청' 카드)
  *   · 서버 = supabase/migrations/20261112202433_goods_preorder.sql (goods_campaigns · goods_orders, 함수로만)
+ *            + 20261113000016_goods_fleece_stock.sql (정상가 list_price · 선착순 stock_limit — 대표님 11/12 23시 「2만5천원 … 50장 선착순」)
  *
  * 이 파일은 화면 계산만 한다(서버 호출 없음) — 상태 이름 · 다음 단계 단추 · 색×사이즈 집계 · 업체 발주 문구 · 마감 날짜.
  */
@@ -42,6 +43,14 @@ export interface GoodsCampaign {
   open: boolean;
   branches: string[];
   now?: string;
+  /** 할인 전 가격(정상가) — 있으면 줄을 그어 보여 준다. 업체가 실제로 그 값에 팔던 가격일 때만 서버에 넣는다(표시광고법) */
+  list_price?: number | null;
+  /** 선착순 벌 수 — null 이면 제한 없음 */
+  stock_limit?: number | null;
+  /** 선착순으로 세는 벌 수(결제 전 + 결제 완료 + 받음) */
+  stock_used?: number;
+  stock_left?: number | null;
+  sold_out?: boolean;
 }
 
 export interface GoodsOrder {
@@ -74,7 +83,12 @@ export const FLEECE_FALLBACK: GoodsCampaign = {
   ok: true,
   slug: GOODS_FLEECE_SLUG,
   title: "153 플리스 집업",
-  price: 39000,
+  price: 25000,
+  list_price: null,
+  stock_limit: 50,
+  stock_used: 0,
+  stock_left: 50,
+  sold_out: false,
   colors: [
     { key: "white", label: "흰색 인쇄" },
     { key: "gray", label: "진회색 인쇄" },
@@ -88,6 +102,26 @@ export const FLEECE_FALLBACK: GoodsCampaign = {
 };
 
 export const won = (n: number): string => `${Math.round(n || 0).toLocaleString("ko-KR")}원`;
+
+/** 할인 전 가격이 지금 값보다 높을 때만 그 값 (줄 그어 보여 줄 것) */
+export const listPriceOf = (c: Pick<GoodsCampaign, "price" | "list_price"> | null | undefined): number | null =>
+  c && c.list_price && c.list_price > c.price ? c.list_price : null;
+
+/** 선착순이 다 찼나 — 서버 sold_out, 없으면 남은 수로 */
+export const isSoldOut = (c: Pick<GoodsCampaign, "sold_out" | "stock_limit" | "stock_left"> | null | undefined): boolean =>
+  !!c && (c.sold_out === true || (c.stock_limit != null && c.stock_left != null && c.stock_left <= 0));
+
+/** 신청을 받는 중인가 — 기간 안 · 켜짐 · 선착순이 남음 */
+export const isAccepting = (c: Pick<GoodsCampaign, "ok" | "open" | "sold_out" | "stock_limit" | "stock_left"> | null | undefined): boolean =>
+  !!c && c.ok && c.open && !isSoldOut(c);
+
+/** '선착순 50벌 · 남은 12벌' · '선착순 50벌 마감' · 제한이 없으면 '' */
+export function stockLabel(c: Pick<GoodsCampaign, "stock_limit" | "stock_left" | "sold_out"> | null | undefined): string {
+  if (!c || c.stock_limit == null) return "";
+  if (isSoldOut(c)) return `선착순 ${c.stock_limit}벌 마감`;
+  const left = c.stock_left == null ? c.stock_limit : Math.max(0, c.stock_left);
+  return left >= c.stock_limit ? `선착순 ${c.stock_limit}벌` : `선착순 ${c.stock_limit}벌 · 남은 ${left}벌`;
+}
 
 export const shortBranch = (b: string | null | undefined): string =>
   (b || "").replace(/^153복싱짐\s*/, "").trim() || "지점";

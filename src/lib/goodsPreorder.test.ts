@@ -6,9 +6,13 @@ import {
   ddayLabel,
   deadlineLabel,
   formatPhone,
+  isAccepting,
+  isSoldOut,
+  listPriceOf,
   matchesQuery,
   nextActions,
   shortBranch,
+  stockLabel,
   summarize,
   supplierText,
   won,
@@ -122,6 +126,23 @@ describe("goodsPreorder", () => {
       "153 플리스 집업 발주 (신청 포함)\n흰색 인쇄: L 2 · 2XL 1 (3벌)\n진회색 인쇄: M 1 (1벌)\n합계 4벌",
     );
     expect(supplierText(FLEECE_FALLBACK, [], "paid")).toBe("153 플리스 집업 발주 (결제 완료 기준)\n합계 0벌");
+  });
+
+  it("list price and first-come stock", () => {
+    expect(FLEECE_FALLBACK.price).toBe(25000);
+    expect(listPriceOf({ price: 25000, list_price: 35000 })).toBe(35000);
+    expect(listPriceOf({ price: 25000, list_price: null })).toBeNull();
+    expect(listPriceOf({ price: 25000, list_price: 25000 })).toBeNull(); // 같거나 낮으면 줄 긋지 않는다
+    expect(stockLabel({ stock_limit: 50, stock_left: 50, sold_out: false })).toBe("선착순 50벌");
+    expect(stockLabel({ stock_limit: 50, stock_left: 12, sold_out: false })).toBe("선착순 50벌 · 남은 12벌");
+    expect(stockLabel({ stock_limit: 50, stock_left: 0, sold_out: true })).toBe("선착순 50벌 마감");
+    expect(stockLabel({ stock_limit: null, stock_left: null, sold_out: false })).toBe("");
+    // 서버가 sold_out 을 안 보낸 옛 응답이어도 남은 수로
+    expect(isSoldOut({ stock_limit: 50, stock_left: 0 })).toBe(true);
+    expect(isSoldOut({ stock_limit: null, stock_left: null })).toBe(false);
+    expect(isAccepting({ ok: true, open: true, stock_limit: 50, stock_left: 3, sold_out: false })).toBe(true);
+    expect(isAccepting({ ok: true, open: true, stock_limit: 50, stock_left: 0, sold_out: true })).toBe(false);
+    expect(isAccepting({ ok: true, open: false, stock_limit: 50, stock_left: 9, sold_out: false })).toBe(false);
   });
 
   it("searches by name, phone digits and order number", () => {

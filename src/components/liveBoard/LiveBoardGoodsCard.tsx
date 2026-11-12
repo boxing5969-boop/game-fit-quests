@@ -7,9 +7,11 @@
  *     QR 은 옆 사이니지(번호 없는 기본 화면)에 그대로 있다.
  *   · 사전예약이 열려 있을 때만(goods_campaign_info — anon). 마감이 지나거나 서버에 닿지 않으면 그리지 않는다 → 런칭 이벤트 칸이 화면 전체를 쓴다.
  *   · 흰색 · 진회색 인쇄 모델 컷을 나란히, 글은 멀리서도 읽히게 크게 — 가격 · 인쇄 색 · 사이즈 · 마감 · 결제 · 신청하는 곳.
+ *   ③ 11/12 23시 「2만5천원 … 원가 3만5천원짜리 물건인데 연말 세일로 1만원 할인해서 2만5천원 … 50장 선착순」
+ *     → 정상가(있을 때만) 줄 긋고 25,000원 · 원가 그대로 한 줄 · 선착순 남은 벌 수. 다 차면 그리지 않는다(런칭 이벤트가 화면 전체).
  */
 import { useQuery } from "@tanstack/react-query";
-import { GOODS_FLEECE_SLUG, ddayLabel, deadlineLabel, won } from "@/lib/goodsPreorder";
+import { GOODS_FLEECE_SLUG, ddayLabel, deadlineLabel, isAccepting, listPriceOf, stockLabel, won } from "@/lib/goodsPreorder";
 import { getGoodsCampaign } from "@/services/goodsService";
 
 const PHOTOS = [
@@ -26,24 +28,27 @@ const LiveBoardGoodsCard = () => {
     retry: 1,
   });
 
-  if (!c?.ok || !c.open) return null;
+  if (!c || !isAccepting(c)) return null;
 
+  const list = listPriceOf(c);
+  const stock = stockLabel(c);
   const rows: [string, string][] = [
+    ...(stock ? ([["수량", stock]] as [string, string][]) : []),
     ["인쇄 색", "흰색 · 진회색 중 하나"],
     ["사이즈", c.sizes.join(" · ")],
     ["신청", `${deadlineLabel(c.closes_at)}까지`],
-    ["결제", "데스크 카드 결제 · 결제한 신청만 제작"],
+    ["결제", "데스크에서 카드 · 계좌이체"],
   ];
 
   return (
     <aside className="flex min-h-0 w-1/3 shrink-0 flex-col border-l border-gray-800/60 bg-gradient-to-b from-gray-900 via-gray-900/90 to-black px-8 pb-7 pt-6">
       <div className="flex items-center gap-3">
-        <span className="rounded-full bg-emerald-400/15 px-3.5 py-1 text-xl font-black text-emerald-300">회원 사전예약</span>
+        <span className="rounded-full bg-emerald-400/15 px-3.5 py-1 text-xl font-black text-emerald-300">연말 원가 판매</span>
         <span className="text-xl font-black tracking-[0.2em] text-gray-500">153 GOODS</span>
         <span className="ml-auto rounded-full bg-white px-4 py-1 text-2xl font-black tabular-nums text-gray-900">{ddayLabel(c)}</span>
       </div>
       <h2 className="mt-3 text-6xl font-black leading-tight text-white">153 플리스 집업</h2>
-      <p className="mt-1 text-2xl font-bold text-gray-400">등판 BOXER 153 BOXING GYM · 가슴 153 심볼</p>
+      <p className="mt-1 text-2xl font-bold text-gray-400">공장에 남은 물량만 · 153은 원가 그대로</p>
 
       <div className="mt-5 grid min-h-0 flex-1 grid-cols-2 gap-4">
         {PHOTOS.map((p) => (
@@ -63,8 +68,14 @@ const LiveBoardGoodsCard = () => {
       </div>
 
       <div className="mt-5 flex items-end justify-between gap-4">
-        <p className="text-7xl font-black leading-none tabular-nums text-white">{won(c.price)}</p>
-        <p className="pb-1 text-2xl font-bold text-gray-400">앞뒤 인쇄 포함</p>
+        <div>
+          {list && <p className="text-3xl font-bold tabular-nums text-gray-500 line-through decoration-2">{won(list)}</p>}
+          <p className="text-7xl font-black leading-none tabular-nums text-white">{won(c.price)}</p>
+        </div>
+        <div className="pb-1 text-right">
+          <p className="text-2xl font-black text-emerald-300">153 이익 0원</p>
+          <p className="text-2xl font-bold text-gray-400">앞뒤 인쇄 포함</p>
+        </div>
       </div>
 
       <dl className="mt-5 space-y-2.5">

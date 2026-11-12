@@ -15,6 +15,8 @@ import {
   colorLabel,
   ddayLabel,
   deadlineLabel,
+  isSoldOut,
+  stockLabel,
   formatPhone,
   matchesQuery,
   nextActions,
@@ -44,8 +46,8 @@ function demoList(): GoodsAdminList {
     color,
     size,
     qty,
-    unit_price: 39000,
-    amount: 39000 * qty,
+    unit_price: 25000,
+    amount: 25000 * qty,
     status,
     branch_name: branch,
     created_at: new Date(Date.now() - i * 3_600_000).toISOString(),
@@ -201,6 +203,12 @@ const GoodsOrdersPanel = () => {
             <p className="mt-0.5 text-label text-muted-foreground">
               {won(campaign.price)} · {deadlineLabel(campaign.closes_at)} 마감 · {ddayLabel(campaign)}
             </p>
+            {/* 선착순 (2026-11-12 대표님 「50장 선착순」) — 결제 전 + 결제 완료 + 받음을 센다 · 취소하면 자리가 다시 난다 */}
+            {campaign.stock_limit != null && (
+              <p className={`mt-0.5 text-label font-bold ${isSoldOut(campaign) ? "text-amber-700" : "text-foreground"}`}>
+                {stockLabel(campaign)} · 신청 {(campaign.stock_used ?? 0).toLocaleString("ko-KR")}벌
+              </p>
+            )}
           </div>
           <button
             type="button"

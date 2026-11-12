@@ -5,12 +5,29 @@
  *   · 신청했고 결제 전 → '결제 전 · ○일까지 ○○점 데스크에서 결제'
  *   · 결제를 마쳤으면 → 안 보인다
  * 서버 함수가 없거나(적용 전 · 미리보기 주소) 실패하면 조용히 숨긴다.
+ * 선착순(2026-11-12 23시 대표님 「2만5천원 … 50장 선착순」): 다 차면 아직 신청 전인 회원에게는 안 보인다(결제 전 안내는 그대로).
  */
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { GOODS_FLEECE_PATH, GOODS_FLEECE_SLUG, ddayLabel, deadlineLabel, shortBranch, won } from "@/lib/goodsPreorder";
+import {
+  GOODS_FLEECE_PATH,
+  GOODS_FLEECE_SLUG,
+  ddayLabel,
+  deadlineLabel,
+  isSoldOut,
+  shortBranch,
+  won,
+  type GoodsCampaign,
+} from "@/lib/goodsPreorder";
 import { getGoodsCampaign, getGoodsMyPage } from "@/services/goodsService";
+
+/** 한 줄에 들어가게 짧게 — '50벌 한정' · '남은 12벌' · (제한 없으면) '11월 26일(목)까지' */
+const stockShort = (c: GoodsCampaign): string => {
+  if (c.stock_limit == null) return `${deadlineLabel(c.closes_at)}까지`;
+  const left = c.stock_left == null ? c.stock_limit : Math.max(0, c.stock_left);
+  return left >= c.stock_limit ? `${c.stock_limit}벌 한정` : `남은 ${left}벌`;
+};
 
 const GoodsNudgeCard = () => {
   const { user } = useAuth();
@@ -30,6 +47,7 @@ const GoodsNudgeCard = () => {
   const waiting = orders.filter((o) => o.status === "applied");
   const done = orders.some((o) => o.status === "paid" || o.status === "delivered");
   if (done && waiting.length === 0) return null;
+  if (waiting.length === 0 && isSoldOut(c)) return null;
 
   const open = () => window.location.assign(`${GOODS_FLEECE_PATH}?from=app`);
 
@@ -61,9 +79,9 @@ const GoodsNudgeCard = () => {
     >
       <img src="/goods/fleece/img/model-back.webp" alt="" className="h-14 w-11 shrink-0 rounded-xl object-cover" loading="lazy" />
       <span className="min-w-0 flex-1">
-        <span className="block text-label font-extrabold text-foreground">153 플리스 집업 · 회원 사전예약</span>
+        <span className="block text-label font-extrabold text-foreground">153 플리스 집업 · 원가 판매</span>
         <span className="mt-0.5 block text-label text-muted-foreground">
-          {won(c.price)} · {deadlineLabel(c.closes_at)}까지 · {ddayLabel(c)}
+          {won(c.price)} · {stockShort(c)} · {ddayLabel(c)}
         </span>
       </span>
       <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
