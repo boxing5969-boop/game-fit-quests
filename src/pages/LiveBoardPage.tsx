@@ -122,10 +122,12 @@ interface DailyVisit {
 /**
  * 지금 근무중인 코치 — 판정은 DB(public_staff_on_duty 뷰)가 한다.
  *
- * 브로제이는 출근만 기록하고 퇴근은 남기지 않는다(GO_TO_WORK 만 존재). 그래서
+ * 브로제이는 출근만 기록하고 퇴근은 남기지 않는다(GO_TO_WORK 만 존재 · 하루 한 번). 그래서
  * "언제까지 근무중인가" 는 시간으로 판단할 수밖에 없다 — 대표님 결정:
  *   · 지점장/관장/대표 : 오늘 출근했으면 하루 종일
  *   · 그 외 코치        : 출근 후 4시간
+ *   · 2026-11-12 더함  : 오늘 출근했고 지금이 153운영본부 「근무」 시간표의 근무 시간이면 계속
+ *                        (쉰 날 · 대타 반영 — 낮 · 저녁으로 나눠 일하는 코치의 저녁 근무가 빠지던 것)
  *
  * 근거가 앱 계정이 아니라 브로제이 직원 출근이라, 앱에 가입하지 않은 코치도
  * 그대로 걸린다 — 대신 user_id 는 없을 수 있다.
@@ -844,7 +846,7 @@ const LiveBoardPage = () => {
 
   useEffect(() => { loadToday(); loadHall(); loadActivitySessions(); loadOnDutyStaff(); }, [loadToday, loadHall, loadActivitySessions, loadOnDutyStaff]);
 
-  // 근무중 판정은 시간이 지나면 바뀐다(코치 4시간). 페이지 자동 새로고침은
+  // 근무중 판정은 시간이 지나면 바뀐다(코치 4시간 · 근무 시간표). 페이지 자동 새로고침은
   // 20분 주기라 그 사이를 1분마다 메운다 — 앱 계정 없는 코치의 첫 등장도 여기서 잡힌다.
   useEffect(() => {
     const t = setInterval(() => { void loadOnDutyStaff(); }, 60_000);
