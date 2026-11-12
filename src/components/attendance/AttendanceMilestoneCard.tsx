@@ -6,26 +6,32 @@
  *   2026-10-28 리디자인: '다음 목표' 하나 — 남은 횟수가 주인공(큰 글씨), 막대, 선물은 한 줄. '이번 주' 바로 밑.
  *   숫자는 서버 get_my_attendance_stats (lib/attendanceMilestone · hooks/useAttendanceStats).
  *   지도진 계정은 축하 보상이 없다 → 안내 한 줄.
+ *   2026-11-12 동기부여 1단계(대표님 「추천대로」 · 선릉역점만): 켠 지점 회원은 5 · 10 · 20 · 30번째 이른 축하가 먼저
+ *   (보상 없이 축하 편지 — get_my_motivation.early), 지나면 기존 50번마다. 계산은 lib/motivation153 nextCelebration.
  */
 import { PartyPopper } from "lucide-react";
 import { useAttendanceStats } from "@/hooks/useAttendanceStats";
-import { milestoneProgress } from "@/lib/attendanceMilestone";
+import { useMotivation } from "@/hooks/useMotivation";
+import { celebrationProgress, nextCelebration } from "@/lib/motivation153";
 import { cn } from "@/lib/utils";
 
 const n = (v: number) => v.toLocaleString("ko-KR");
 
 const AttendanceMilestoneCard = ({ className }: { className?: string }) => {
   const { data } = useAttendanceStats();
+  const { data: motivation } = useMotivation(!!data && !data.isStaff);
   // 불러오는 중 · 실패면 조용히 — 상세 화면의 다른 카드가 상태를 알려 준다
   if (!data) return null;
   if (data.isStaff) {
     return <p className={cn("px-1 text-label leading-relaxed text-muted-foreground", className)}>지도진 계정은 출석 축하 보상이 없어요.</p>;
   }
 
-  const prog = milestoneProgress(data.total, data.step);
+  const target = nextCelebration(data.total, motivation, { next: data.next, step: data.step });
+  const prog = { next: target.next, ...celebrationProgress(data.total, target) };
+  // 이른 축하(5 · 10 · 20 · 30번째)는 편지만 — 챔피언 머니 · 마일리지는 50번마다 그대로
   const gift = [
-    data.nextGems > 0 ? `챔피언 머니 +${n(data.nextGems)}` : "",
-    data.nextMileage > 0 ? `마일리지 +${n(data.nextMileage)}점` : "",
+    !target.early && data.nextGems > 0 ? `챔피언 머니 +${n(data.nextGems)}` : "",
+    !target.early && data.nextMileage > 0 ? `마일리지 +${n(data.nextMileage)}점` : "",
     "축하 편지",
   ]
     .filter(Boolean)
@@ -42,8 +48,8 @@ const AttendanceMilestoneCard = ({ className }: { className?: string }) => {
         className="mt-3 h-2.5 overflow-hidden rounded-full bg-amber-500/15"
         role="progressbar"
         aria-valuemin={0}
-        aria-valuemax={data.step}
-        aria-valuenow={data.step - prog.left}
+        aria-valuemax={prog.span}
+        aria-valuenow={prog.done}
         aria-label={`출석 ${prog.next}회까지`}
       >
         <div

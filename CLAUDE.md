@@ -721,6 +721,27 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 끄기 = 홈 커스터마이즈(MY복서 화면) 맨 위 '첫 화면' 칸 — `HomeWidgetMeta.firstScreen`(켜고 끄기만 · 순서 단추 없음 · MY복서 슬롯에는 그리지 않음, renderers 는 null).
 - 다음 단계(보고서 순서): 2단계 운동 약속(`myboxer:ops-schedule` 설계 — 약속한 날 = 민트 테두리 → 출석하면 채워짐 · 빠지면 회색 점) · 3단계 오늘의 체크(다 채운 날 금색 별) · 4단계 153OS 공지 '일정 날짜' · 한 줄 템플릿 칩. 모두 이 카드의 날짜 칸에 얹는다.
 
+### 동기부여 1단계 — 첫 4주 8번 · 이른 출석 축하 · 코치 「첫 4주 신규」 (2026-11-12 대표님 「추천대로」 · 선릉역점만 먼저 · 보고서 https://claude.ai/artifact/6sAvidMfhyLhFERCK5jXFw)
+
+근거(선릉역점 운영 DB, 2026-11-12): 첫 출석부터 4주 안에 8번 이상 온 신규는 3개월째 77% · 1~3번은 23%가 남았다(3월~8월 14일 첫 출석 131명) · 4주에 8번 이상 오던 회원 42명은 다음 4주에 한 명도 안 끊겼다. 출석 축하는 50번마다라 주 2회 회원도 첫 축하가 6개월 뒤였다.
+
+| 파일 | 역할 |
+|---|---|
+| [supabase/migrations/20261112160924_motivation_stage1.sql](supabase/migrations/20261112160924_motivation_stage1.sql) | 새 설정 `app_settings.motivation_pilot`(branches · start_date = 적용한 날 · starter_days 28 · starter_goal 8 · starter_mileage 3000 · early [5,10,20,30]) · 새 표 `motivation_awards`(early 5/10/20/30 · starter 8 — 함수로만) · `get_my_motivation`(켠 지점 회원이 아니면 {on:false}) · `mark_my_motivation_seen` · `motivation_tick`(예약 `motivation-tick` 5분마다) · `get_starter_watchlist`(켠 지점 지도진 · 대표님) · 안쪽 `_motivation_conf` · `_motivation_member` · `_motivation_days` |
+| [src/lib/motivation153.ts](src/lib/motivation153.ts) | 서버 JSON 읽기 · 홈 칸 글(`starterView`) · 다음 축하(`nextCelebration` — 5 · 10 · 20 · 30 다음은 기존 50번마다) · 편지(`earlyLetter` · `starterLetter` · `motivationLetter`) · 코치 목록(`normalizeWatchlist` · `isBehind`) — 시험 motivation153.test.ts |
+| [src/hooks/useMotivation.ts](src/hooks/useMotivation.ts) | `["153motivation", …]` 캐시 · 함수가 없거나 막히면 꺼진 것으로(화면 그대로) |
+| [src/components/attendance/StarterProgress.tsx](src/components/attendance/StarterProgress.tsx) | '첫 4주 8번' 칸 — 홈 '운동 달력' 카드 맨 위(`WorkoutCalendarCard` `header`) · 내 운동 기록 '이번 주' 카드(내 기록일 때만). 첫 출석일부터 28일만 · 다 채우면 금색 '달성' |
+
+- **기존 함수 · 트리거 · 표는 안 건드렸다**(출석 보상 · 출석 표는 보호 영역): `attendance_milestones` 는 50의 배수만 받아(check) 이른 축하는 새 표에 · 출석 표에 트리거를 달지 않고 5분마다 최근 3일 출석을 훑는다(PT 입장 알림과 같은 방식) · 마일리지는 기존 `grant_mileage`(kind `milestone` · idem_key `starter4w:<회원>`).
+- 이른 축하 = 보상 없이 축하 편지(알림 '출석 N번째! 🎉' → 홈) — 그 출석일이 켠 날(start_date) 뒤인 것만(켜기 전 것을 몰아서 보내지 않기). 챔피언 머니 · 마일리지는 50번마다 그대로(출석 축하 막대 `AttendanceMilestoneCard` 도 이른 축하일 땐 '축하 편지'만).
+- 첫 4주 달성 = 창(첫 출석일 ~ +27일) 안 출석 8번 · 창이 켠 날과 겹치는 회원만(적용할 때 한 번 28일로 돌려 이미 채운 회원도 받음) → `motivation_awards` + 마일리지 + 알림 '첫 4주 8번 달성! 🥊'. 하루 여러 번 = 1번(출석 축하와 같은 기준) · 코치님 · 운영진 · 체험 계정 · 합쳐진 계정 제외.
+- 편지: `WelcomeLetter` 'motivation' — 승급 → 50번 축하 → **이른 축하 · 첫 4주(첫 4주가 먼저)** → 웰컴, 닫으면 `mark_my_motivation_seen`.
+- 코치 화면: 회원관리 '위험' 탭 맨 위 「첫 4주 신규 n명」(`AtRiskMembersPanel` `StarterWatchList`) — 며칠째 · 마지막 출석 · n/8 · 주 2번 속도(지금쯤 floor(날 × 8 / 28)번)보다 늦으면 주황 + 위로 · 누르면 회원 상세.
+- 끄기 = `motivation_pilot.branches` 를 빈 배열 → 화면 · 예약 모두 조용(`select cron.unschedule('motivation-tick');` 도). 다른 지점을 켜려면 branches 에 지점 이름(오삼코치 `pilot_branch_names()` 와는 따로 — 거기엔 칠금점도 있다). 마일리지 금액은 starter_mileage 한 칸.
+- 오삼코치 안내 osamiFaq `att-starter`(문구를 바꾸면 같이).
+- 시험: 로컬 Postgres 16 에 운영 정의를 본뜬 뼈대 + 이 마이그레이션(두 번 적용) → 15개(새 회원 · 켜기 전 8번 채운 회원 = 달성 + 마일리지 3,000 한 번 · 5번째가 오늘인 회원 = 이른 축하 · 켜지 않은 지점 · 코치(is_staff) 제외 · 오래된 회원 = 켜기 전 5 · 10번째는 없음 · 다시 돌려도 그대로 · 본 것으로 · 코치 목록(늦은 회원 먼저) · 회원은 목록 막힘 · 대표님 지점 고르기 · 끄기 · anon/표 직접 읽기 막힘) / vitest 17개.
+- 다음(보고서 1단계 남은 것): 레벨업 축하 · 주간 「나의 153」 카톡 · 문자(수신 동의 · 템플릿 — 대표님 결정 1번) · 메뉴 정리(더보기로 접기 — 다른 창의 메뉴 편집 패치 c19d720 이 푸시 전이라 그 판과 맞춘 뒤) · 보상 이름 '레벨' · '마일리지' 둘로.
+
 ### 153플레이 「음악」 탭 — 체육관 자동재생 (2026-11-11 대표님 「153플레이에 복싱 음악 따로 모아놓자 · 복싱짐에서 틀 수 있는 인기 음악 100곡 · 카테고리 · 체육관에 자동재생 — 광고도 없고 멈추지도 않게」 · 「100곡 더 찾아줘 최신곡으로」)
 
 | 파일 | 역할 |

@@ -11,7 +11,9 @@
  *   · blue/red/black — 회원 리그 승급 시 도착하는 축하 편지
  *   · attendance — 출석 50회마다 도착하는 축하 편지 (2026-10-21 회원님들 요청 · lib/attendanceMilestone)
  *     '안 본 축하'는 서버가 안다(get_my_attendance_stats.unseen) — 닫으면 서버에 본 것으로 표시해 어느 기기에서도 한 번만.
- *     순서: 승급 편지 → 출석 축하 편지 → 웰컴 편지 (한 접속에 한 통)
+ *     순서: 승급 편지 → 출석 축하 편지 → 이른 축하 · 첫 4주 편지 → 웰컴 편지 (한 접속에 한 통)
+ *   · motivation — 동기부여 1단계(2026-11-12 대표님 「추천대로」 · 선릉역점만): 5 · 10 · 20 · 30번째 출석 축하(보상 없이)
+ *     · 첫 4주 8번 달성(마일리지). '안 본 축하'는 서버 get_my_motivation.unseen — 닫으면 mark_my_motivation_seen (lib/motivation153)
  *   웰컴·코치 편지 문구는 설정 화면(관리자)에서 고친다 — src/lib/welcomeLetters.ts (app_settings.welcome_letters).
  *   전체관리자·관리자 계정은 자동 편지를 받지 않는다(예전엔 회원 편지가 닉네임 그대로 "…개발자님께" 로 떴다).
  *
@@ -49,11 +51,13 @@ import {
 import { firstLetterDue, firstLetterShownCount, parseShownCount } from "@/lib/letterSchedule";
 import { attendanceLetter, type AttendanceUnseen } from "@/lib/attendanceMilestone";
 import { useAttendanceStats, useMarkAttendanceMilestonesSeen } from "@/hooks/useAttendanceStats";
+import { motivationLetter, type Motivation } from "@/lib/motivation153";
+import { useMarkMotivationSeen, useMotivation } from "@/hooks/useMotivation";
 
 const RANK_ORDER = ["white", "blue", "red", "black"] as const;
 type RankKey = (typeof RANK_ORDER)[number];
 type RankLetterKey = "blue" | "red" | "black";
-type LetterKey = "welcome" | "coach" | "attendance" | RankLetterKey;
+type LetterKey = "welcome" | "coach" | "attendance" | "motivation" | RankLetterKey;
 
 // 기기 단위 옛 키(2026-09-23 이전) — 이미 본 회원에게 다시 띄우지 않으려고 읽기만 한다
 const LEGACY_WELCOME_KEY = "153_letter_welcome_v1";
@@ -307,6 +311,8 @@ const WelcomeLetter = () => {
   const decidedRef = useRef(false);
   // 출석 축하 편지 — 보여 줄 때의 '안 본 축하'를 붙잡아 둔다(닫으면 서버가 비워도 닫히는 동안 문구가 그대로)
   const [attUnseen, setAttUnseen] = useState<AttendanceUnseen | null>(null);
+  // 이른 축하 · 첫 4주 편지 — 보여 줄 때의 값을 붙잡아 둔다(같은 이유)
+  const [motSnap, setMotSnap] = useState<Motivation | null>(null);
 
   // 받는 사람 — 관리자 계정은 자동 편지 없음, 지도진·코치·관장은 코치 편지, 나머지는 회원 편지
   // '회원으로 보기' 중이어도 진짜 관리자 계정이면 자동 편지는 없다 (role 은 member 로 보인다 · 2026-10-21)
@@ -319,6 +325,11 @@ const WelcomeLetter = () => {
   const attSettled = !attEnabled || attQ.isFetched || attQ.isError;
   const attPending = attQ.data?.unseen ?? null;
   const markAttendanceSeen = useMarkAttendanceMilestonesSeen();
+  // 이른 축하 · 첫 4주 달성 — 켠 지점 회원만 서버가 값을 준다(그 밖은 {on:false} → 편지 없음)
+  const motQ = useMotivation(attEnabled);
+  const motSettled = !attEnabled || motQ.isFetched || motQ.isError;
+  const motPending = motQ.data?.on && motQ.data.unseen ? motQ.data : null;
+  const markMotivationSeen = useMarkMotivationSeen();
 
   // 관리자가 설정 화면에서 고친 문구 — 웰컴·코치 편지를 띄울 때만 읽는다(없으면 기본 문구)
   const needsTemplate = activeKey === "welcome" || activeKey === "coach";
@@ -372,7 +383,7 @@ const WelcomeLetter = () => {
       if (role === "member" && !(p.phone_number ?? "").trim()) return;
 
       // 출석 기록을 읽는 중 — 다 읽으면 다시 판단 (축하 편지가 웰컴 편지보다 먼저라서)
-      if (!attSettled) return;
+      if (!attSettled || !motSettled) return;
 
       const rank = ((progress as unknown as { current_rank?: string } | null)?.current_rank ??
         "white") as RankKey;
@@ -402,6 +413,13 @@ const WelcomeLetter = () => {
         return;
       }
 
+      // 2-1) 이른 축하(5 · 10 · 20 · 30번째) · 첫 4주 8번 달성 편지 — 첫 4주 달성이 먼저 (2026-11-12)
+      if (motPending) {
+        setMotSnap(motPending);
+        setActiveKey("motivation");
+        return;
+      }
+
       // 3) 웰컴 편지 — 처음 3번 접속까지 (2026-10-21 대표님: 첫 로그인엔 대부분 건너뛴다).
       //    튜토리얼 조건은 뺐다(2026-09-28) — 기존 회원은 튜토리얼을 거의 안 해서 편지가 영영 안 왔다.
       if (firstLetterDue(firstLetterState(uid, "welcome"))) {
@@ -410,7 +428,7 @@ const WelcomeLetter = () => {
     };
     const t = window.setTimeout(decide, 1200);
     return () => window.clearTimeout(t);
-  }, [user, profile, progress, role, isAdminRole, isCoach, location.pathname, attSettled, attPending]);
+  }, [user, profile, progress, role, isAdminRole, isCoach, location.pathname, attSettled, attPending, motSettled, motPending]);
 
   // 결정되면 살짝 지연 후 등장 (스플래시/다른 모달 정리 후). 문구를 읽는 중이면 기다린다(기본 문구 깜빡임 방지).
   const templateLoading = needsTemplate && lettersQ.isLoading;
@@ -436,6 +454,7 @@ const WelcomeLetter = () => {
       if (activeKey === "welcome") lsSet(welcomeKey(uid), "1");
       else if (activeKey === "coach") lsSet(coachKey(uid), "1");
       else if (activeKey === "attendance") void markAttendanceSeen();
+      else if (activeKey === "motivation") void markMotivationSeen();
       // 승급 편지 닫으면 기준선을 현재 리그로 올림
       else if (activeKey) lsSet(rankBaselineKey(uid), activeKey);
     }
@@ -462,6 +481,10 @@ const WelcomeLetter = () => {
   } else if (activeKey === "attendance") {
     if (!attUnseen) return null;
     letter = attendanceLetter(memberName, attUnseen);
+  } else if (activeKey === "motivation") {
+    const l = motSnap ? motivationLetter(memberName, motSnap) : null;
+    if (!l) return null;
+    letter = l;
   } else {
     const r = RANK_LETTERS[activeKey];
     letter = { eyebrow: r.eyebrow, title: r.title(memberName), body: r.body(memberName), sign: r.sign, cta: r.cta };
