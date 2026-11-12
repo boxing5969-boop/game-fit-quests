@@ -67,3 +67,6 @@ verify_jwt = true
 # 타이틀매치 영상 보관 한 달 — 도전이 끝나고 30일 지난 영상 파일 지우기, 크론이 매일 x-auto-key 로 호출 (2026-11-12)
 [functions.title-video-cleanup]
 verify_jwt = false
+
+[functions.calendar-ics]
+verify_jwt = false
