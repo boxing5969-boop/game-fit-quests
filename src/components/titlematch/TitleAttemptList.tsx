@@ -2,6 +2,7 @@
  * 타이틀매치 도전 기록 — 칸 3개(합격·불합격·남음) + 한 줄씩 기록과 '영상 보기'.
  * 회원 화면(타이틀매치)과 지점장 심사함이 같이 쓴다. 영상은 비공개 저장소 → 누를 때 서명 주소를 받아 연다.
  * 2026-11-12 부터 도전마다 영상 2개(치기 · 받기) — 받는 영상이 있으면 단추 2개, 영상이 하나면(예전 기록 · 치는 영상만 올린 불합격) '영상' 하나.
+ * 보관 기간(도전이 끝나고 한 달)이 지나 지운 영상은 단추 대신 '영상 보관 끝' 한 줄.
  */
 import { useState } from "react";
 import { Check, Loader2, Play, X } from "lucide-react";
@@ -87,7 +88,9 @@ const TitleAttemptList = ({ attempts, max, className }: { attempts: TitleAttempt
               <span className="mt-0.5 block text-label font-semibold text-muted-foreground">{formatKoShortDateTime(a.recordedAt)}</span>
               {a.note && <span className="mt-0.5 block break-words text-label leading-snug text-muted-foreground">“{a.note}”</span>}
             </span>
-            {a.videoPath && a.receiveVideoPath ? (
+            {a.videoDeletedAt ? (
+              <span className="mt-0.5 shrink-0 text-micro font-semibold text-muted-foreground">영상 보관 끝</span>
+            ) : a.videoPath && a.receiveVideoPath ? (
               <span className="flex shrink-0 flex-col gap-1.5">
                 {videoButton(a, "hit", TITLE_CLIPS.hit.short)}
                 {videoButton(a, "receive", TITLE_CLIPS.receive.short)}

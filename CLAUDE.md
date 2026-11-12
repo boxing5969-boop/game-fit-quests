@@ -689,6 +689,14 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 못 줄이는 경우: WebCodecs 가 없는 기기(iOS 16.4 전 · 아주 옛 안드로이드) · 휴대폰이 못 푸는 형식(HEVC 를 못 푸는 기기 등). 다른 앱으로 가거나 화면이 꺼지면 휴대폰이 인코더를 거둘 수 있어 줄이는 동안 화면 켜 두기(Wake Lock)를 잡는다.
 - 2026-11-12 클라우드 크롬 시험(소프트웨어 인코더): 68.8MB 1080p60 45초 → 14.7MB 720p30(37초) · 세로 회전 MOV 72MB → 13.3MB 720×1280 · VP9+Opus WebM 68MB → 18.8MB(이 크롬은 AAC 인코더가 없어 소리 뺌) · 한도 8MB → 7.0MB 540p · HEVC → '형식' 문구 · 멈추기 · 50MB 아래 그대로.
 - 다른 50MB 올리기(전략 회의 영상 `StrategyVideos` · `strategyService`)는 아직 예전처럼 막기만 한다 — 같은 함수를 붙이면 된다.
+- **50MB 아래도 720p 로** (2026-11-12 대표님 「2번까지 하고 보관기관은 한달로」): 심사함은 모든 영상을 `keepIfSmall: true` 로 넘긴다 — 이미 가벼운 영상(`isAlreadySmall`: 짧은 변 720 이하 · 평균 3Mbps 이하 · 한도 안 = 앱 촬영본)과 원본이 목표 비트레이트보다 가벼운 영상(아이폰 HEVC 등)은 다시 만들지 않고 원본 그대로(`skipped`), 다시 만든 쪽이 더 커도 원본. 50MB 아래는 줄이다 '그대로 쓰기'(멈추기 자리)를 누르거나 실패하면 원본으로 올린다(예전처럼), WebCodecs 없는 기기도 원본. 50MB 넘는 영상만 꼭 줄여야 한다. 시험(클라우드 크롬): 1080p 20초 22.6MB → 6.3MB · 360p 2Mbps 앱 촬영급 · 1080p 저비트레이트 2.9MB → 그대로(바로).
+
+### 타이틀매치 영상 보관 한 달 (2026-11-12 대표님 「보관기관은 한달로」)
+
+- 도전이 끝난(합격 · 마감 · 취소) 지 **30일** 지나면 그 도전의 영상 파일(치는 · 받는)을 저장소에서 지운다 — 합격 · 불합격 기록은 남고 `title_match_attempts.video_deleted_at` 에 지운 시각. 기록에 붙지 않은 파일(올리다 끊김)은 하루 뒤. 열린 도전(신청 중)의 영상은 끝날 때까지 둔다.
+- 흐름: 크론 `title-video-cleanup`(매일 04:23 KST = `23 19 * * *` UTC) → Edge Function [supabase/functions/title-video-cleanup](supabase/functions/title-video-cleanup/index.ts)(x-auto-key · verify_jwt=false · `{ dry_run: true }` 면 고르기만 · `days` 1~365) → DB `title_match_video_cleanup_targets(_days, _limit)`(한 기록의 두 파일은 함께) → 저장소 `remove` → `title_match_mark_videos_deleted(_paths)`(한 기록의 파일이 모두 지워졌을 때만 표시). 두 DB 함수는 service_role 만. `storage.objects` 는 SQL 로 못 지운다(`protect_objects_delete`) — 꼭 저장소 API 로.
+- 날수를 바꾸면 세 곳: Edge `KEEP_DAYS` · DB `_days` 기본값 · 화면 `TITLE_VIDEO_KEEP_DAYS`(회원 안내 '영상은 도전이 끝나고 30일 동안 볼 수 있어요' · 심사함 아래 한 줄). 지운 영상은 기록 목록에서 단추 대신 '영상 보관 끝'.
+- 마이그레이션 [20261112173151_title_match_video_retention.sql](supabase/migrations/20261112173151_title_match_video_retention.sql) (새 칸 · 함수 둘 · `get_title_match_state` 에 `videoDeletedAt` · 크론).
 
 ### 타이틀매치 심사 영상 2개 — 치는 영상 · 받는 영상 (2026-11-12 대표님 「영상도 2개 올려야해 치는거 받는거」)
 

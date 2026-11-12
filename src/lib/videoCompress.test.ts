@@ -3,6 +3,7 @@ import {
   COMPRESS_MAX_VIDEO_BPS,
   COMPRESS_MIN_VIDEO_BPS,
   VideoCompressError,
+  isAlreadySmall,
   isVideoCompressSupported,
   planVideoCompression,
   videoCompressErrorMessage,
@@ -85,6 +86,23 @@ describe("planVideoCompression — 출력 크기 · fps · 비트레이트", () 
       expect(p.width % 2).toBe(0);
       expect(p.height % 2).toBe(0);
     }
+  });
+});
+
+describe("isAlreadySmall — 이미 가벼우면 다시 만들지 않기 (2026-11-12)", () => {
+  const MB = 1024 * 1024;
+  it("앱 안 촬영(720p · 2Mbps · 1분 ≈ 15MB)은 그대로", () => {
+    expect(isAlreadySmall({ width: 720, height: 1280, durationSec: 60, bytes: 15 * MB, maxBytes: MB50 })).toBe(true);
+  });
+  it("1080p 이상은 50MB 아래여도 줄인다", () => {
+    expect(isAlreadySmall({ width: 1080, height: 1920, durationSec: 20, bytes: 30 * MB, maxBytes: MB50 })).toBe(false);
+  });
+  it("720p 라도 비트레이트가 높으면(1분 40MB ≈ 5.6Mbps) 줄인다", () => {
+    expect(isAlreadySmall({ width: 1280, height: 720, durationSec: 60, bytes: 40 * MB, maxBytes: MB50 })).toBe(false);
+  });
+  it("한도를 넘으면 무조건 줄인다 · 크기를 모르면 줄인다", () => {
+    expect(isAlreadySmall({ width: 640, height: 360, durationSec: 600, bytes: 60 * MB, maxBytes: MB50 })).toBe(false);
+    expect(isAlreadySmall({ width: 0, height: 0, durationSec: 60, bytes: 5 * MB, maxBytes: MB50 })).toBe(false);
   });
 });
 

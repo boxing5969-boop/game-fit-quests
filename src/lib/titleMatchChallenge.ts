@@ -28,6 +28,8 @@ export interface TitleAttempt {
   videoPath: string;
   /** 받는 영상 (2026-11-12 부터 · 불합격이면 없을 수 있다) */
   receiveVideoPath: string | null;
+  /** 보관 기간(도전이 끝나고 한 달)이 지나 영상 파일을 지운 시각 — 기록은 남는다 */
+  videoDeletedAt: string | null;
 }
 
 export interface TitleChallenge {
@@ -102,6 +104,7 @@ function parseAttempt(raw: unknown): TitleAttempt | null {
     recordedAt: str(a.recordedAt),
     videoPath: str(a.videoPath),
     receiveVideoPath: str(a.receiveVideoPath) || null,
+    videoDeletedAt: str(a.videoDeletedAt) || null,
   };
 }
 
@@ -242,6 +245,7 @@ export function titleMissionRules(maxAttempts = DEFAULT_MAX_ATTEMPTS, retryDays 
     "이어서 똑같은 동작을 파트너에게 미트로 3번 받아주기",
     `지점장님이 치는 영상 · 받는 영상을 찍어 앱에 올려요 · 도전은 ${maxAttempts}번까지`,
     `${maxAttempts}번 모두 아쉬우면 ${retryDays}일 뒤 다시 신청해요`,
+    `영상은 도전이 끝나고 ${TITLE_VIDEO_KEEP_DAYS}일 동안 볼 수 있어요`,
   ];
 }
 
@@ -253,6 +257,11 @@ export const reviewerLabel = (a: GateAuthority | null | undefined): string =>
 
 /** 저장소 한도와 같다 (title-match-videos 50MB) */
 export const TITLE_VIDEO_MAX_BYTES = 50 * 1024 * 1024;
+/**
+ * 영상 보관 — 도전이 끝나고(합격 · 마감 · 취소) 이 날수가 지나면 영상 파일을 지운다, 기록은 남김
+ * (2026-11-12 대표님 「보관기관은 한달로」 · 서버 title_match_video_cleanup_targets 의 _days 기본값과 같다)
+ */
+export const TITLE_VIDEO_KEEP_DAYS = 30;
 /** 앱 안 촬영 — 2Mbps · 최대 2분 30초 ≈ 38MB (한도 안) */
 export const RECORDER_BITS_PER_SECOND = 2_000_000;
 export const RECORDER_MAX_SECONDS = 150;

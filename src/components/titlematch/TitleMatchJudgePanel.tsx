@@ -8,8 +8,10 @@
  *   · 합격이면 서버가 레벨 10 심사 항목을 모두 통과로 남기고 바로 다음 리그로 승급 (기존 승인 경로 approve_level_review)
  *   · 불합격 3번이면 이번 신청은 끝 — 회원은 7일 뒤(한국 날짜)부터 다시 신청
  *   · 회원이 앱에서 신청하지 않았어도 지점장이 바로 시작할 수 있다 (잠금은 서버가 지킨다)
- *   · 50MB(저장소 한도)가 넘는 영상은 휴대폰 안에서 자동으로 줄여서 미리보기에 올린다 — src/lib/videoCompress.ts
- *     (2026-11-12 대표님 「영상올릴때 자동으로 압축해서 50mb이하로줄여줘」) · 한 번에 한 영상씩 줄인다
+ *   · 영상은 휴대폰 안에서 720p 로 줄여서 미리보기에 올린다 — src/lib/videoCompress.ts · 한 번에 한 영상씩
+ *     50MB(저장소 한도)가 넘으면 꼭 (2026-11-12 대표님 「영상올릴때 자동으로 압축해서 50mb이하로줄여줘」),
+ *     50MB 아래도 무거우면 줄인다 · 이미 가벼운 영상(앱 촬영본 등)은 그대로 · 50MB 아래는 줄이다 멈추거나
+ *     실패하면 원본 그대로 (2026-11-12 대표님 「2번까지 하고 보관기관은 한달로」 — 영상은 도전이 끝나고 한 달 뒤 지운다)
  * 심사 권한: 지점장·관장 (DB level_gate_authority — 화이트 레벨 10 = manager). 코치 화면에서는 기록만 본다.
  */
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
@@ -34,7 +36,7 @@ import {
   videoContentType,
   type TitleClipKind,
 } from "@/lib/titleMatchChallenge";
-import { VideoCompressError, compressVideoToLimit, videoCompressErrorMessage } from "@/lib/videoCompress";
+import { VideoCompressError, compressVideoToLimit, isVideoCompressSupported, videoCompressErrorMessage } from "@/lib/videoCompress";
 import { cn } from "@/lib/utils";
 import TitleAttemptList, { AttemptDots } from "./TitleAttemptList";
 import VideoRecorderSheet from "./VideoRecorderSheet";
@@ -53,12 +55,13 @@ interface Clip {
 type Clips = Record<TitleClipKind, Clip | null>;
 const NO_CLIPS: Clips = { hit: null, receive: null };
 
-/** 자동 줄이기 진행 — 어느 칸 · 몇 % · 몇 번째 시도 · 원래 크기 */
+/** 자동 줄이기 진행 — 어느 칸 · 몇 % · 몇 번째 시도 · 원래 크기 · 원본 그대로 써도 되나(50MB 아래) */
 interface Shrink {
   kind: TitleClipKind;
   pct: number;
   attempt: number;
   fromBytes: number;
+  canKeep: boolean;
 }
 
 interface SlotProps {
@@ -113,7 +116,7 @@ const ClipSlot = ({ n, kind, clip, shrink, disabled, onRecord, onPick, onClear, 
               onClick={onCancelShrink}
               className="h-9 shrink-0 px-1 text-label font-bold text-muted-foreground underline underline-offset-2"
             >
-              멈추기
+              {shrink.canKeep ? "그대로 쓰기" : "멈추기"}
             </button>
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
@@ -122,7 +125,9 @@ const ClipSlot = ({ n, kind, clip, shrink, disabled, onRecord, onPick, onClear, 
               style={{ width: `${Math.max(3, shrink.pct)}%` }}
             />
           </div>
-          <p className="mt-1.5 text-label text-muted-foreground">{formatMb(shrink.fromBytes)} → 50MB 아래로 · 화면을 켜 두세요</p>
+          <p className="mt-1.5 text-label text-muted-foreground">
+            {formatMb(shrink.fromBytes)} → {shrink.canKeep ? "720p로 가볍게" : "50MB 아래로"} · 화면을 켜 두세요
+          </p>
         </div>
       ) : clip ? (
         <div className="mt-2.5">
@@ -177,6 +182,8 @@ const TitleMatchJudgePanel = ({ memberId, nickname, rank }: Props) => {
   const [note, setNote] = useState("");
   const [shrink, setShrink] = useState<Shrink | null>(null);
   const shrinkAbortRef = useRef<AbortController | null>(null);
+  /** 줄이는 중인 50MB 아래 원본 — '그대로 쓰기'를 누르면 이걸 쓴다 */
+  const keepOnCancelRef = useRef<{ kind: TitleClipKind; blob: Blob; contentType: string } | null>(null);
 
   // 바뀐 칸의 미리보기 주소는 화면이 바뀐 뒤에 풀어 준다 (먼저 풀면 아직 붙어 있는 영상이 깨진 주소를 읽는다)
   const shownClipsRef = useRef<Clips>(NO_CLIPS);
@@ -215,15 +222,18 @@ const TitleMatchJudgePanel = ({ memberId, nickname, rank }: Props) => {
   const showClip = (kind: TitleClipKind, blob: Blob, contentType: string, originalBytes?: number) =>
     putClip(kind, { blob, contentType, url: URL.createObjectURL(blob), originalBytes });
 
-  // 50MB 넘는 영상 → 휴대폰 안에서 한도 아래 mp4 로 줄인 뒤 미리보기 (원본은 서버로 보내지 않는다)
-  const shrinkThenShow = async (kind: TitleClipKind, blob: Blob) => {
+  // 휴대폰 안에서 720p mp4 로 줄인 뒤 미리보기 (원본은 서버로 보내지 않는다) — 이미 가벼우면 그대로
+  const shrinkThenShow = async (kind: TitleClipKind, blob: Blob, contentType: string) => {
     shrinkAbortRef.current?.abort();
     const ac = new AbortController();
     shrinkAbortRef.current = ac;
-    setShrink({ kind, pct: 0, attempt: 1, fromBytes: blob.size });
+    const canKeep = blob.size <= TITLE_VIDEO_MAX_BYTES;
+    keepOnCancelRef.current = canKeep ? { kind, blob, contentType } : null;
+    setShrink({ kind, pct: 0, attempt: 1, fromBytes: blob.size, canKeep });
     try {
       const r = await compressVideoToLimit(blob, {
         maxBytes: TITLE_VIDEO_MAX_BYTES,
+        keepIfSmall: true,
         signal: ac.signal,
         // 프레임마다 불린다 — % 가 바뀔 때만 다시 그린다
         onProgress: (p, attempt) => {
@@ -233,31 +243,46 @@ const TitleMatchJudgePanel = ({ memberId, nickname, rank }: Props) => {
         },
       });
       if (ac.signal.aborted) return;
+      if (r.skipped) {
+        showClip(kind, blob, contentType);
+        return;
+      }
       showClip(kind, r.blob, r.contentType, blob.size);
       toast.success(`${TITLE_CLIPS[kind].label}을 줄였어요 · ${formatMb(blob.size)} → ${formatMb(r.blob.size)}`);
     } catch (e) {
       if (ac.signal.aborted || (e instanceof VideoCompressError && e.code === "canceled")) return;
+      // 50MB 아래면 줄이지 못해도 원본 그대로 올린다 (예전처럼)
+      if (canKeep) {
+        showClip(kind, blob, contentType);
+        return;
+      }
       toast.error(videoCompressErrorMessage(e), { description: "'앱으로 촬영'을 쓰면 처음부터 작게 저장돼요." });
     } finally {
       if (shrinkAbortRef.current === ac) {
         shrinkAbortRef.current = null;
+        keepOnCancelRef.current = null;
         setShrink(null);
       }
     }
   };
 
+  // 멈추기 — 50MB 아래면 '그대로 쓰기'(원본으로), 넘으면 그냥 멈춤
   const cancelShrink = () => {
+    const keep = keepOnCancelRef.current;
+    keepOnCancelRef.current = null;
     shrinkAbortRef.current?.abort();
     shrinkAbortRef.current = null;
     setShrink(null);
+    if (keep) showClip(keep.kind, keep.blob, keep.contentType);
   };
 
   const takeClip = (kind: TitleClipKind, blob: Blob, contentType: string) => {
-    if (blob.size > TITLE_VIDEO_MAX_BYTES) {
-      void shrinkThenShow(kind, blob);
+    // 줄일 수 없는 기기(WebCodecs 없음)는 한도 안이면 그대로 — 넘으면 줄이기가 알려 준다
+    if (blob.size <= TITLE_VIDEO_MAX_BYTES && !isVideoCompressSupported()) {
+      showClip(kind, blob, contentType);
       return;
     }
-    showClip(kind, blob, contentType);
+    void shrinkThenShow(kind, blob, contentType);
   };
 
   const pickFile = (kind: TitleClipKind) => {
@@ -380,7 +405,7 @@ const TitleMatchJudgePanel = ({ memberId, nickname, rank }: Props) => {
             />
           ))}
           <p className="text-center text-label text-muted-foreground">
-            도전 {nextNo}/{max} · 50MB가 넘는 영상은 자동으로 줄여서 올려요
+            도전 {nextNo}/{max} · 영상은 720p로 줄여 올리고, 도전이 끝나고 한 달 뒤 지워져요
           </p>
 
           {clips.hit && (

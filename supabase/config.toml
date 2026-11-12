@@ -63,3 +63,7 @@ verify_jwt = false
 # 153운영본부 「매출」 탭 — 돈을 보는 분 토큰(ops_sales_scope) 또는 점검 x-auto-key (2026-11-03)
 [functions.ops-sales]
 verify_jwt = true
+
+# 타이틀매치 영상 보관 한 달 — 도전이 끝나고 30일 지난 영상 파일 지우기, 크론이 매일 x-auto-key 로 호출 (2026-11-12)
+[functions.title-video-cleanup]
+verify_jwt = false

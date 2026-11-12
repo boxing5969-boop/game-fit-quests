@@ -8,7 +8,9 @@
  *   · 소리: AAC·MP3 는 그대로 복사, 그 밖은 AAC 로 다시 — 못 하면 소리 없이(심사는 화면이 중요).
  *   · 그래도 한도를 넘으면 비트레이트를 낮춰 다시, 인코더 오류면 한 단계 작게 다시 (모두 3번까지).
  *   · mediabunny 는 이 함수를 처음 부를 때만 받는다(dynamic import) — 앱 첫 화면 무게는 그대로.
- * 계산(planVideoCompression)은 순수 함수 — videoCompress.test.ts.
+ *   · keepIfSmall: 이미 가벼운 영상(짧은 변 720 이하 · 평균 3Mbps 이하 · 한도 안 — 앱 촬영본 등)은 다시 만들지 않고 그대로
+ *     (2026-11-12 대표님 「2번까지 하고」 — 50MB 아래 영상도 720p 로 줄여 저장 공간 · 올리는 시간을 아낀다).
+ * 계산(planVideoCompression · isAlreadySmall)은 순수 함수 — videoCompress.test.ts.
  */
 import type { ConversionAudioOptions, InputAudioTrack } from "mediabunny";
 
@@ -109,7 +111,10 @@ export const isVideoCompressSupported = (): boolean =>
 
 export interface CompressedVideo {
   blob: Blob;
-  contentType: "video/mp4";
+  /** 다시 만들었으면 "video/mp4" · 그대로 두었으면(skipped) 원본 형식 그대로 쓰도록 빈 문자열 */
+  contentType: string;
+  /** keepIfSmall 로 원본을 그대로 돌려줬다 */
+  skipped: boolean;
   width: number;
   height: number;
   durationSec: number;
@@ -123,6 +128,20 @@ export interface CompressVideoOptions {
   signal?: AbortSignal;
   /** 진행 0~1 · 몇 번째 시도인지 (다시 줄이면 2, 3) */
   onProgress?: (progress: number, attempt: number) => void;
+  /** 이미 가벼우면(isAlreadySmall) 다시 만들지 않고 원본을 돌려준다 */
+  keepIfSmall?: boolean;
+}
+
+/** 이 정도면 이미 가볍다 — 짧은 변 720 이하 · 평균 3Mbps 이하 (앱 안 촬영 720p · 2Mbps 가 여기 든다) */
+export const KEEP_MAX_SHORT_SIDE = 720;
+export const KEEP_MAX_BPS = 3_000_000;
+
+/** 다시 만들 필요가 없는 영상인가 (순수 함수) */
+export function isAlreadySmall(p: { width: number; height: number; durationSec: number; bytes: number; maxBytes: number }): boolean {
+  if (!(p.bytes > 0) || p.bytes > p.maxBytes) return false;
+  if (!(p.width > 0) || !(p.height > 0)) return false;
+  const bps = (p.bytes * 8) / Math.max(1, p.durationSec);
+  return Math.min(p.width, p.height) <= KEEP_MAX_SHORT_SIDE && bps <= KEEP_MAX_BPS;
 }
 
 type Mediabunny = typeof import("mediabunny");
@@ -205,13 +224,27 @@ export async function compressVideoToLimit(file: Blob, opts: CompressVideoOption
       throw new VideoCompressError("no_video", (e as Error)?.message);
     }
     if (!video) throw new VideoCompressError("no_video");
-    if (!(await video.canDecode())) throw new VideoCompressError("cannot_decode");
     const width = await video.getDisplayWidth();
     const height = await video.getDisplayHeight();
     if (!width || !height) throw new VideoCompressError("no_video");
     const end = await probe.computeDuration();
     const start = Math.max(0, await probe.getFirstTimestamp());
     const durationSec = Math.max(0.5, end - start);
+    // 이미 가벼우면 그대로 (풀 수 있는 형식인지 보기 전에 — 휴대폰이 못 푸는 작은 영상도 원본으로 올릴 수 있게)
+    if (opts.keepIfSmall && isAlreadySmall({ width, height, durationSec, bytes: file.size, maxBytes })) {
+      return {
+        blob: file,
+        contentType: "",
+        skipped: true,
+        width,
+        height,
+        durationSec,
+        originalBytes: file.size,
+        attempts: 0,
+        audio: "copied",
+      };
+    }
+    if (!(await video.canDecode())) throw new VideoCompressError("cannot_decode");
     let fps: number | null = null;
     try {
       fps = (await video.computePacketStats(120)).averagePacketRate || null;
@@ -229,6 +262,20 @@ export async function compressVideoToLimit(file: Blob, opts: CompressVideoOption
       if (signal?.aborted) throw new VideoCompressError("canceled");
       const plan = planVideoCompression({ durationSec, width, height, fps, audioBps: audio.bps, maxBytes, maxVideoBps, tierDrop, align });
       if (plan.ok === false) throw new VideoCompressError("too_long", undefined, plan.maxDurationSec);
+      // 원본이 이미 목표 비트레이트보다 가벼우면(예: 아이폰 HEVC) 다시 만들어도 작아지지 않는다 — 그대로
+      if (opts.keepIfSmall && attempt === 1 && file.size <= maxBytes && (file.size * 8) / durationSec <= plan.videoBps + audio.bps) {
+        return {
+          blob: file,
+          contentType: "",
+          skipped: true,
+          width,
+          height,
+          durationSec,
+          originalBytes: file.size,
+          attempts: 0,
+          audio: "copied",
+        };
+      }
 
       const quality = new mb.Quality({ bitrate: plan.videoBps });
       const codec = await mb.getFirstEncodableVideoCodec(["avc", "hevc"], { width: plan.width, height: plan.height, quality });
@@ -278,10 +325,25 @@ export async function compressVideoToLimit(file: Blob, opts: CompressVideoOption
         const buf = target.buffer;
         if (!buf || buf.byteLength === 0) throw new Error("empty output");
         const blob = new Blob([buf], { type: "video/mp4" });
+        // 원래 가벼운 영상(예: 아이폰 HEVC)은 다시 만든 쪽이 더 클 수 있다 — 그러면 원본 그대로
+        if (opts.keepIfSmall && file.size <= maxBytes && blob.size >= file.size) {
+          return {
+            blob: file,
+            contentType: "",
+            skipped: true,
+            width,
+            height,
+            durationSec,
+            originalBytes: file.size,
+            attempts: attempt,
+            audio: "copied",
+          };
+        }
         if (blob.size <= maxBytes) {
           return {
             blob,
             contentType: "video/mp4",
+            skipped: false,
             width: plan.width,
             height: plan.height,
             durationSec,

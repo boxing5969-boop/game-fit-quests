@@ -83,6 +83,21 @@ describe("parseTitleMatchState", () => {
       },
     });
     expect(s.challenge?.attempts.map((a) => a.receiveVideoPath)).toEqual([null, "u/2-recv.mp4", null]);
+    expect(s.challenge?.attempts.every((a) => a.videoDeletedAt === null)).toBe(true);
+  });
+
+  it("보관 기간이 지나 지운 영상은 지운 시각을 읽는다 (2026-11-12 한 달 보관)", () => {
+    const s = parse({
+      challenge: {
+        id: "c1",
+        status: "passed",
+        requestedAt: "2026-11-12T10:00:00Z",
+        attempts: [
+          { no: 1, passed: true, recordedAt: "2026-11-12T10:30:00Z", videoPath: "u/1-hit.mp4", receiveVideoPath: "u/1-recv.mp4", videoDeletedAt: "2026-12-13T19:23:01Z" },
+        ],
+      },
+    });
+    expect(s.challenge?.attempts[0].videoDeletedAt).toBe("2026-12-13T19:23:01Z");
   });
 
   it("모르는 상태의 신청은 없는 것으로 본다", () => {
@@ -232,6 +247,7 @@ describe("기타", () => {
     expect(rules).toContain("7일 뒤");
     for (const bad of ["벨트", "계급", "무조건", "확정 혜택", "자동 가산점"]) expect(rules).not.toContain(bad);
     expect(rules).toContain("치는 영상 · 받는 영상");
+    expect(rules).toContain("영상은 도전이 끝나고 30일 동안 볼 수 있어요");
   });
 });
 
