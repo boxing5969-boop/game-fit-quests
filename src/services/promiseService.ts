@@ -1,6 +1,7 @@
 /**
  * 🤝 153 운동 약속 · 코치 「오늘 만날 회원」 — 서버 함수 감싸기 (DB 20261112192617_promise_stage1.sql)
  *   get_my_promise · set_my_promise(_v2 — 2-2단계 알림 시각) · stop_my_promise · ops_meet_today
+ *   (2-3) coach_day_note_save · coach_day_note_remove — 「오늘 만날 회원」에서 그 회원 오늘 칸에 코치 한마디
  *   서버 함수가 아직 없거나(적용 전 · 옛 DB 미리보기) 막히면 꺼진 것으로 본다 — 화면은 지금 그대로(동기부여 1단계와 같은 결).
  *   캐시 키는 "153promise" 로 시작. 글 · 계산은 src/lib/promise153.ts.
  */
@@ -8,6 +9,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { translateError } from "@/lib/errorMessages";
+import { noteBody } from "@/lib/calendarMarks";
 import {
   MEET_OFF,
   PROMISE_OFF,
@@ -67,6 +69,30 @@ export function useStopPromise() {
       if (error) throw new Error(translateError(error, "약속을 멈추지 못했어요"));
     },
     onSuccess: () => void qc.invalidateQueries({ queryKey: PROMISE_KEY }),
+  });
+}
+
+/** (2-3) 코치 한마디 도장 — 그 회원 오늘 칸에 한 줄 남기기 · 고치기 (알림은 처음 한 번 — 서버 coach_day_note_save) */
+export function useSaveDayNote() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { member: string; body: string }) => {
+      const { error } = await rpc("coach_day_note_save", { p_member: v.member, p_body: noteBody(v.body) });
+      if (error) throw new Error(translateError(error, "한마디를 남기지 못했어요"));
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: [...PROMISE_KEY, "meet"] }),
+  });
+}
+
+/** (2-3) 코치 한마디 빼기 — 오늘 내가 남긴 것만 (이미 간 알림은 그대로) */
+export function useRemoveDayNote() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (member: string) => {
+      const { error } = await rpc("coach_day_note_remove", { p_member: member });
+      if (error) throw new Error(translateError(error, "한마디를 빼지 못했어요"));
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: [...PROMISE_KEY, "meet"] }),
   });
 }
 

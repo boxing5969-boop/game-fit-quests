@@ -13,7 +13,8 @@ import { MIN_GAIN_MINUTES } from "@/lib/attendanceCheer";
 import { durationLabel, measuredDay, type AttendanceDay, type AttendanceHistory } from "@/lib/attendanceHistory";
 import { shiftMonth } from "@/lib/attendanceCalendar";
 
-export type MomentKind = "first" | "milestone" | "restart" | "longest";
+/** anniv = 153 기념일(2-3단계 · lib/calendarMarks withAnnivMoments 가 더한다) */
+export type MomentKind = "first" | "milestone" | "anniv" | "restart" | "longest";
 
 export interface DayMoment {
   kind: MomentKind;

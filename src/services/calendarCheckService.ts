@@ -5,6 +5,8 @@
  *   캐시 키는 "153cal2" 로 시작 — 한 줄 쓰기 · 응원 보내기를 마치면 이 키를 다시 읽는다. 계산 · 글은 src/lib/calendarChecks.ts.
  *   (2-2 · DB 20261113001417_calendar_stage22.sql) get_my_calendar 가 153 일정 · 저요 한 모집 · 저녁 독려도 함께 보낸다 ·
  *   저녁 독려 켜기 · 끄기 = set_my_calendar_prefs (useSetCalendarNudge).
+ *   (2-3 · DB 20261113012729_calendar_stage23.sql) get_my_calendar 가 그날 한 일 · 코치 한마디 · 기념일 · 153 D-day 도 함께 보낸다 ·
+ *   목표일 정하기 · 빼기 = set_my_goal_day · remove_my_goal_day (useSaveGoalDay · useRemoveGoalDay — 글 · 검사는 lib/calendarMarks.ts).
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,6 +22,7 @@ import {
   type CheckItemDraft,
   type StickerKey,
 } from "@/lib/calendarChecks";
+import { goalPayload, normalizeDdays, type GoalDraft } from "@/lib/calendarMarks";
 
 export const CAL2_KEY = ["153cal2"] as const;
 
@@ -113,6 +116,38 @@ export function useRemoveCheckItem() {
       if (error) throw new Error(translateError(error, "체크를 빼지 못했어요"));
     },
     onSuccess: () => void qc.invalidateQueries({ queryKey: CAL2_KEY }),
+  });
+}
+
+/** (2-3) 목표일 정하기 · 고치기 (내일부터 2년 안 · 3개까지) — 답 = 새 D-day 목록, 달력 캐시에 바로 넣고 다시 읽는다 */
+export function useSaveGoalDay() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { draft: GoalDraft; id?: string | null }) => {
+      const { data, error } = await rpc("set_my_goal_day", goalPayload(v.draft, v.id));
+      if (error) throw new Error(translateError(error, "목표일을 저장하지 못했어요"));
+      return normalizeDdays(data);
+    },
+    onSuccess: (ddays) => {
+      patchAll(qc, (s) => ({ ...s, ddays }));
+      void qc.invalidateQueries({ queryKey: CAL2_KEY });
+    },
+  });
+}
+
+/** (2-3) 목표일 빼기 (지우지 않고) */
+export function useRemoveGoalDay() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await rpc("remove_my_goal_day", { p_id: id });
+      if (error) throw new Error(translateError(error, "목표일을 빼지 못했어요"));
+      return normalizeDdays(data);
+    },
+    onSuccess: (ddays) => {
+      patchAll(qc, (s) => ({ ...s, ddays }));
+      void qc.invalidateQueries({ queryKey: CAL2_KEY });
+    },
   });
 }
 

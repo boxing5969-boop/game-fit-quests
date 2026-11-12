@@ -20,8 +20,10 @@ export const EVENT_SPAN_MAX = 30;
 /** 시작 날은 오늘부터 이만큼 안 */
 export const EVENT_AHEAD_MAX = 400;
 
-export type EventKind = "closed" | "short" | "event" | "match" | "class" | "etc";
-export const EVENT_KINDS: readonly EventKind[] = ["closed", "short", "event", "match", "class", "etc"];
+/** exam = 승급 심사(2-3단계 · 2026-11-13) — DB 는 kind event + is_exam 으로 담고 함수가 exam 으로 보낸다.
+ *  회원 알림은 타이틀 레벨(레벨 10) 회원에게만 · 그 회원 달력 머리에 '승급 심사' D-day */
+export type EventKind = "closed" | "short" | "event" | "match" | "exam" | "class" | "etc";
+export const EVENT_KINDS: readonly EventKind[] = ["closed", "short", "event", "match", "exam", "class", "etc"];
 
 export interface EventKindMeta {
   /** 달력 · 알림에 보이는 이름 */
@@ -62,6 +64,13 @@ export const EVENT_KIND_META: Record<EventKind, EventKindMeta> = {
     chip: "bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-200",
     placeholder: "예: 153 PB 대회",
     eve: false,
+  },
+  exam: {
+    label: "승급 심사",
+    pick: "승급 심사",
+    chip: "bg-indigo-100 text-indigo-800 dark:bg-indigo-500/20 dark:text-indigo-200",
+    placeholder: "예: 화이트 리그 타이틀매치 심사 저녁 7시",
+    eve: true,
   },
   class: {
     label: "특강",

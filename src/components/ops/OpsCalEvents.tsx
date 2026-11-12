@@ -5,6 +5,7 @@
  *   · 코치님은 보기만 — 올라간 일정이 없으면 카드도 그리지 않는다(빈 것은 그리지 않기).
  *   · 서버 ops_cal_events · ops_cal_event_save · ops_cal_event_remove (services/calendarEventService) — 함수가 없으면 카드 없음.
  *   글 · 검사 · 알림 한 줄은 src/lib/calendarEvents.ts. 회원 화면은 WorkoutCalendar(칸 점) · CalendarChecks(그날 카드).
+ *   · (2-3 · 2026-11-13) 종류 '승급 심사' — 알림 · D-day 는 타이틀매치 차례(레벨 10) 회원에게만 (DB 는 kind event + is_exam).
  */
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -281,6 +282,10 @@ const EventSheet = ({ target, st, onClose }: { target: Target | null; st: OpsCal
         </label>
       </div>
       {hint && <p className="mt-2 text-label font-bold text-primary">{hint}</p>}
+      {/* (2-3) 승급 심사 — 알림 · D-day 는 타이틀매치 차례(레벨 10) 회원에게만 */}
+      {draft.kind === "exam" && (
+        <p className="mt-2 text-label text-muted-foreground">승급 심사 알림은 타이틀매치 차례(레벨 10)인 회원님께만 가고, 그 회원님 달력 머리에 D-day로 보여요</p>
+      )}
       {editing && (editing.morningSentAt || editing.eveSentAt) && (
         <p className="mt-2 text-label text-muted-foreground">이미 보낸 알림은 다시 안 가요 · 날짜를 바꾸면 새 날짜로 다시 알려요</p>
       )}

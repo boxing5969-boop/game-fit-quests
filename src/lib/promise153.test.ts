@@ -140,11 +140,22 @@ describe("코치 — 오늘 만날 회원", () => {
     gapDays: null,
     daysLeft: null,
     partnerCall: false,
+    annivYears: null,
+    annivBasis: null,
+    milestone: null,
+    notes: [],
     ...o,
   });
 
   it("서버 값 읽기 — 켜지 않은 지점 · 잘못된 줄 빼기", () => {
-    expect(normalizeMeet({ on: false, branch: "153복싱짐 칠금점" })).toEqual({ on: false, branch: "153복싱짐 칠금점", today: null, rows: [] });
+    expect(normalizeMeet({ on: false, branch: "153복싱짐 칠금점" })).toEqual({
+      on: false,
+      branch: "153복싱짐 칠금점",
+      today: null,
+      rows: [],
+      others: [],
+      canNote: false,
+    });
     const m = normalizeMeet({
       on: true,
       branch: "153복싱짐 선릉역점",
@@ -187,6 +198,40 @@ describe("코치 — 오늘 만날 회원", () => {
     expect(meetSummary([])).toBe("");
     expect(kstHm("2026-11-12T10:04:00Z")).toBe("19:04");
     expect(kstHm(null)).toBeNull();
+  });
+
+  it("(2-3) 오늘 n주년 · 출석 축하 칩 · 코치 한마디 · 오늘 온 다른 회원", () => {
+    const m = normalizeMeet({
+      on: true,
+      can_note: true,
+      rows: [
+        {
+          user_id: "f",
+          name: "일년",
+          came_at: "2026-11-13T09:00:00Z",
+          anniv_years: 1,
+          anniv_basis: "reg",
+          notes: [{ id: "n1", who: "김코치", title: "코치", body: "1년 동안 고마워요", mine: true }, { id: "bad" }],
+        },
+        { user_id: "k", name: "도장", came_at: "x", anniv_years: 2, anniv_basis: "stamp", milestone: 100 },
+        { user_id: "z", name: "아님", anniv_years: 0, milestone: 0 },
+      ],
+      others: [{ user_id: "o", name: "그냥", came_at: "2026-11-13T10:00:00Z", notes: [] }, { name: "이름만" }],
+    });
+    expect(m.canNote).toBe(true);
+    expect(m.rows[0]).toMatchObject({ annivYears: 1, annivBasis: "reg", milestone: null });
+    expect(m.rows[0].notes).toEqual([{ id: "n1", who: "김코치", title: "코치", body: "1년 동안 고마워요", mine: true }]);
+    expect(m.rows[2]).toMatchObject({ annivYears: null, annivBasis: null, milestone: null, notes: [] });
+    expect(m.others).toEqual([{ userId: "o", name: "그냥", cameAt: "2026-11-13T10:00:00Z", notes: [] }]);
+    expect(meetReasons(m.rows[0])[0]).toEqual({ key: "anniv", label: "오늘 1주년", say: "'153과 함께한 1년 고마워요' 하고 축하해 주세요" });
+    expect(meetReasons(m.rows[1]).map((r) => r.label)).toEqual(["첫 도장 2주년", "출석 100번째"]);
+    // 첫 출석이 기념일보다 먼저 · 기념일이 약속보다 먼저
+    expect(meetReasons(row({ cameAt: "x", starterDay: 1, starterCount: 1, milestone: 50, promised: true })).map((r) => r.key)).toEqual([
+      "starter",
+      "milestone",
+      "promise",
+    ]);
+    for (const r of meetReasons(m.rows[1])) expect(r.say).not.toMatch(/왜 안|빠졌|결석/);
   });
 });
 

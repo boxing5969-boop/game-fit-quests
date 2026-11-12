@@ -7,8 +7,29 @@
  *   · 채운 것과 다음 한 걸음만 말한다(lib/calendarChecks checkProgress) — 못한 것 · 빈칸 표시 없음.
  *   · (2-2 · 2026-11-13) 그날의 153 일정(휴관 · 단축 운영 · 이벤트 · 대회 · 특강) · 저요 한 운동 모집 한 줄씩(Agenda) ·
  *     앞날은 일정만(체크 · 스티커 없음) · 휴관일에 안 왔으면 체육관 체크를 빼고 센다(lib/calendarEvents · dayChecks closed).
+ *   · (2-3 · 2026-11-13) 코치 한마디(Notes — '○○ 코치님' + 한 줄, 오늘의 체크 한 줄에도) · 그날 한 일(Acts — PT 수업 · 153 PB ·
+ *     타이틀매치 · 레벨업) · 그날의 D-day · 기념일(Marks) · 앞날은 '이 날을 목표일로'(onGoal). 글은 lib/calendarMarks.ts.
  */
-import { Check, ChevronRight, Lock, Plus, Star, UserRound, Users } from "lucide-react";
+import { Check, ChevronRight, Flag, Lock, Plus, Star, UserRound, Users } from "lucide-react";
+import { ActIcon, NoteIcon } from "@/components/attendance/CalendarMarkIcons";
+import {
+  GOAL_MAX,
+  actIsGold,
+  actText,
+  actsOn,
+  annivOn,
+  annivShort,
+  annivText,
+  ddayCount,
+  ddayText,
+  ddaysOn,
+  goalsOf,
+  noteWho,
+  notesOn,
+  quickModeOf,
+  type CalAct,
+  type CalNote,
+} from "@/lib/calendarMarks";
 import { dayLabel, durationLabel, kstTime, type AttendanceDay } from "@/lib/attendanceHistory";
 import type { DayMoment } from "@/lib/calendarMoments";
 import {
@@ -45,16 +66,71 @@ export interface DayChecksPanelProps {
   onManage: () => void;
   /** (2-2) 저요 한 운동 모집을 누르면 — 커뮤니티 '오늘 같이 해요' */
   onOpenCalls?: () => void;
+  /** (2-3) 앞날 — '이 날을 목표일로' (D-day 시트를 그 날로) */
+  onGoal?: (day: string) => void;
 }
 
-/** (2-2) 그날의 153 일정 · 저요 한 운동 모집 — 한 줄씩 (없으면 그리지 않음) */
+/** (2-3) 코치 한마디 — 코치님이 「오늘 만날 회원」에서 남긴 한 줄 (없으면 그리지 않음) */
+const Notes = ({ notes }: { notes: readonly CalNote[] }) => {
+  if (notes.length === 0) return null;
+  return (
+    <ul className="mt-2 space-y-1.5" aria-label="코치 한마디">
+      {notes.map((n) => (
+        <li key={n.id} className="rounded-lg bg-card px-3 py-2.5">
+          <p className="flex items-center gap-1 text-micro font-bold text-primary">
+            <NoteIcon className="h-3.5 w-3.5 shrink-0" />
+            {noteWho(n)}
+          </p>
+          <p className="mt-0.5 whitespace-pre-line text-body font-bold leading-snug text-foreground">{n.body}</p>
+        </li>
+      ))}
+    </ul>
+  );
+};
+
+/** (2-3) 그날 한 일 — PT 수업 · 153 PB · 타이틀매치 · 레벨업 (DB 에 있는 기록만) */
+const Acts = ({ acts }: { acts: readonly CalAct[] }) => {
+  if (acts.length === 0) return null;
+  return (
+    <ul className="mt-2 space-y-1" aria-label="그날 한 일">
+      {acts.map((a, i) => (
+        <li key={`${a.kind}:${i}`} className={cn("flex items-center gap-1.5 text-label font-bold", actIsGold(a) ? "text-reward" : "text-foreground")}>
+          <ActIcon act={a} className="h-4 w-4 shrink-0" />
+          <span className="min-w-0">{actText(a)}</span>
+        </li>
+      ))}
+    </ul>
+  );
+};
+
+/** (2-3) 그날의 D-day · 기념일 한 줄씩 */
+const Marks = ({ marks }: { marks: readonly { key: string; text: string; gold?: boolean }[] }) => {
+  if (marks.length === 0) return null;
+  return (
+    <ul className="mt-2 space-y-1" aria-label="D-day">
+      {marks.map((m) => (
+        <li
+          key={m.key}
+          className={cn("flex items-center gap-1.5 text-label font-bold tabular-nums", m.gold ? "text-reward" : "text-violet-700 dark:text-violet-300")}
+        >
+          {m.gold ? <Star className="h-4 w-4 shrink-0" fill="currentColor" aria-hidden /> : <Flag className="h-4 w-4 shrink-0" aria-hidden />}
+          <span className="min-w-0">{m.text}</span>
+        </li>
+      ))}
+    </ul>
+  );
+};
+
+/** (2-2) 그날의 153 일정 · 저요 한 운동 모집 — 한 줄씩 (없으면 그리지 않음) · (2-3) 앞날의 승급 심사는 오른쪽에 D-n */
 const Agenda = ({
   day,
+  today,
   events,
   calls,
   onOpenCalls,
 }: {
   day: string;
+  today: string;
   events: readonly CalEvent[];
   calls: readonly CalCall[];
   onOpenCalls?: () => void;
@@ -64,6 +140,7 @@ const Agenda = ({
     <ul className="mt-2 space-y-1.5" aria-label="이날 일정">
       {events.map((e) => {
         const until = eventUntil(e, day);
+        const dcount = !until && e.kind === "exam" && day > today ? ddayCount({ day }, today) : null;
         return (
           <li key={e.id} className="flex items-center gap-2 rounded-lg bg-card px-3 py-2">
             <span className={cn("shrink-0 rounded-md px-1.5 py-0.5 text-micro font-black", EVENT_KIND_META[e.kind].chip)}>
@@ -71,6 +148,7 @@ const Agenda = ({
             </span>
             <span className="line-clamp-2 min-w-0 flex-1 text-label font-bold leading-snug text-foreground">{e.title}</span>
             {until && <span className="shrink-0 text-micro tabular-nums text-muted-foreground">{until}</span>}
+            {dcount && <span className="shrink-0 text-micro font-black tabular-nums text-violet-700 dark:text-violet-300">{dcount}</span>}
           </li>
         );
       })}
@@ -177,6 +255,7 @@ export const DayChecksPanel = ({
   onCheer,
   onManage,
   onOpenCalls,
+  onGoal,
 }: DayChecksPanelProps) => {
   const isToday = day === today;
   const future = day > today;
@@ -191,13 +270,41 @@ export const DayChecksPanel = ({
   const journal = info?.journal ?? null;
   const VisIcon = journal ? VIS_ICON[journal.visibility] : null;
   const activeItems = cal.items.filter((i) => i.archivedOn == null).length;
+  // (2-3) 코치 한마디 · 그날 한 일 · D-day · 기념일
+  const notes = notesOn(cal.notes, day);
+  const acts = actsOn(cal.acts, day);
+  const anniv = annivOn(cal.anniv, day);
+  const dd = ddaysOn(cal.ddays, day, today);
+  const marks: { key: string; text: string; gold?: boolean }[] = [];
+  // 기념일 — 출석한 날은 금색 도장 한 줄(moment)이 말한다 · 오늘 아직 안 왔거나 앞날이면 여기서 · 지난 날 안 온 기념일은 말하지 않는다
+  if (anniv && ((isToday && !attended) || future)) {
+    marks.push({ key: "anniv", text: isToday ? annivText(anniv, true) : `${ddayCount(anniv, today)} · ${annivShort(anniv)}`, gold: true });
+  }
+  for (const d of dd) {
+    if (d.kind === "anniv" && anniv) continue;
+    // 승급 심사는 아래 일정 줄이 이미 말한다 (D-n 은 그 줄 오른쪽에)
+    if (d.kind === "exam" && events.some((e) => e.id === d.id)) continue;
+    marks.push({ key: `${d.kind}:${d.id ?? d.day}`, text: `${ddayCount(d, today)} · ${ddayText(d, today)}` });
+  }
+  const canGoal =
+    !!onGoal && quickModeOf(day, today) === "future" && goalsOf(cal.ddays).length < GOAL_MAX && !dd.some((d) => d.kind === "goal");
 
-  // 앞날 — 그날 153 일정 · 저요 한 모집만 (체크 · 스티커는 그날이 와야)
+  // 앞날 — 그날 153 일정 · 저요 한 모집 · D-day (체크 · 스티커는 그날이 와야) + 이 날을 목표일로
   if (future) {
     return (
       <div className="mt-3 rounded-xl bg-muted/60 px-4 py-3" aria-label={`${dayLabel(day)} 일정`}>
         <p className="text-body font-bold text-foreground">{dayLabel(day)}</p>
-        <Agenda day={day} events={events} calls={calls} onOpenCalls={onOpenCalls} />
+        <Marks marks={marks} />
+        <Agenda day={day} today={today} events={events} calls={calls} onOpenCalls={onOpenCalls} />
+        {canGoal && (
+          <button
+            type="button"
+            onClick={() => onGoal?.(day)}
+            className="mt-2 inline-flex h-9 items-center gap-1 text-label font-bold text-primary active:opacity-70"
+          >
+            <Flag className="h-4 w-4" aria-hidden />이 날을 목표일로
+          </button>
+        )}
       </div>
     );
   }
@@ -238,7 +345,12 @@ export const DayChecksPanel = ({
         </p>
       )}
 
-      <Agenda day={day} events={events} calls={calls} onOpenCalls={onOpenCalls} />
+      {/* (2-3) 코치 한마디는 오늘의 체크 한 줄에도 — "코치님이 나를 봤다" */}
+      <Notes notes={notes} />
+      {!compact && <Acts acts={acts} />}
+      {!compact && <Marks marks={marks} />}
+
+      <Agenda day={day} today={today} events={events} calls={calls} onOpenCalls={onOpenCalls} />
 
       <div className="mt-2 flex flex-wrap gap-1.5" role="group" aria-label="체크">
         {checks.map((c) => (

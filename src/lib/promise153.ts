@@ -8,6 +8,8 @@
  *   요일 번호는 서버와 같다: 0 = 일요일 … 6 = 토요일 (화면 칸은 월요일부터).
  *   (2-2 · 2026-11-13) 알림 시각 고르기(remind — 전날 저녁 · 아침 7시 · 8시 30분 · 낮 12시 · 오후 5시) ·
  *   153 휴관일은 약속한 날로 치지 않는다(skip — 운동 달력이 보이는 범위의 휴관일을 넘긴다).
+ *   (2-3 · 2026-11-13) 「오늘 만날 회원」에 '오늘 n주년'(153 등록일 · 모르면 첫 도장) · '출석 n번째'(그날 채운 출석 축하) 칩 ·
+ *   줄마다 코치 한마디(notes) · 오늘 온 다른 회원(others — 접힌 줄, 누구에게나 한마디). DB 20261113012729_calendar_stage23.sql.
  *   시험 promise153.test.ts
  */
 import { hmLabel } from "@/lib/calendarEvents";
@@ -266,6 +268,15 @@ export function draftHint(days: number): string {
 }
 
 // ───────────────────────── 코치 「오늘 만날 회원」 ─────────────────────────
+/** (2-3) 그 회원 오늘 칸의 코치 한마디 — mine = 내가 남긴 것 */
+export interface MeetNote {
+  id: string;
+  who: string;
+  title: string;
+  body: string;
+  mine: boolean;
+}
+
 export interface MeetRow {
   userId: string;
   name: string;
@@ -278,6 +289,20 @@ export interface MeetRow {
   gapDays: number | null;
   daysLeft: number | null;
   partnerCall: boolean;
+  /** (2-3) 오늘 n주년 — reg = 153 등록일 · stamp = 첫 도장 */
+  annivYears: number | null;
+  annivBasis: "reg" | "stamp" | null;
+  /** (2-3) 오늘 채운 출석 축하 (50 · 100 · 150 …) */
+  milestone: number | null;
+  notes: MeetNote[];
+}
+
+/** (2-3) 오늘 온 다른 회원 — 특별한 까닭은 없지만 코치 한마디를 남길 수 있게 (접힌 줄) */
+export interface MeetOther {
+  userId: string;
+  name: string;
+  cameAt: string | null;
+  notes: MeetNote[];
 }
 
 export interface MeetToday {
@@ -285,15 +310,30 @@ export interface MeetToday {
   branch: string | null;
   today: string | null;
   rows: MeetRow[];
+  others: MeetOther[];
+  /** (2-3) 코치 한마디를 남길 수 있나 (서버에 함수가 있을 때) */
+  canNote: boolean;
 }
 
-export const MEET_OFF: MeetToday = { on: false, branch: null, today: null, rows: [] };
+export const MEET_OFF: MeetToday = { on: false, branch: null, today: null, rows: [], others: [], canNote: false };
 
 const numOrNull = (v: unknown): number | null => {
   if (v === null || v === undefined || v === "") return null;
   const n = Number(v);
   return Number.isFinite(n) ? Math.trunc(n) : null;
 };
+
+function normalizeMeetNotes(raw: unknown): MeetNote[] {
+  return (Array.isArray(raw) ? raw : [])
+    .map((x): MeetNote | null => {
+      const o = obj(x);
+      const id = str(o.id);
+      const body = str(o.body);
+      if (!id || !body) return null;
+      return { id, who: str(o.who) ?? "코치", title: str(o.title) ?? "코치", body, mine: o.mine === true };
+    })
+    .filter((x): x is MeetNote => !!x);
+}
 
 export function normalizeMeet(raw: unknown): MeetToday {
   const r = obj(raw);
@@ -303,6 +343,8 @@ export function normalizeMeet(raw: unknown): MeetToday {
       const o = obj(x);
       const userId = str(o.user_id);
       if (!userId) return null;
+      const years = numOrNull(o.anniv_years);
+      const milestone = numOrNull(o.milestone);
       return {
         userId,
         name: str(o.name) ?? "회원",
@@ -315,13 +357,25 @@ export function normalizeMeet(raw: unknown): MeetToday {
         gapDays: numOrNull(o.gap_days),
         daysLeft: numOrNull(o.days_left),
         partnerCall: o.partner_call === true,
+        annivYears: years != null && years >= 1 ? years : null,
+        annivBasis: years != null && years >= 1 ? (o.anniv_basis === "reg" ? "reg" : "stamp") : null,
+        milestone: milestone != null && milestone > 0 ? milestone : null,
+        notes: normalizeMeetNotes(o.notes),
       };
     })
     .filter((x): x is MeetRow => !!x);
-  return { on: true, branch: str(r.branch), today: str(r.today), rows };
+  const others = (Array.isArray(r.others) ? r.others : [])
+    .map((x): MeetOther | null => {
+      const o = obj(x);
+      const userId = str(o.user_id);
+      if (!userId) return null;
+      return { userId, name: str(o.name) ?? "회원", cameAt: str(o.came_at), notes: normalizeMeetNotes(o.notes) };
+    })
+    .filter((x): x is MeetOther => !!x);
+  return { on: true, branch: str(r.branch), today: str(r.today), rows, others, canNote: r.can_note === true };
 }
 
-export type MeetKey = "starter" | "back" | "promise" | "expiring" | "partner";
+export type MeetKey = "starter" | "anniv" | "milestone" | "back" | "promise" | "expiring" | "partner";
 
 export interface MeetReason {
   key: MeetKey;
@@ -331,12 +385,23 @@ export interface MeetReason {
   say: string;
 }
 
-/** 그 회원을 왜 오늘 만나나 — 중요한 순서(첫 출석 · 첫 4주 > 다시 온 > 약속 > 수강권 > 모집) */
+/** 그 회원을 왜 오늘 만나나 — 중요한 순서(첫 출석 · 첫 4주 > 기념일 · 출석 축하 > 다시 온 > 약속 > 수강권 > 모집) */
 export function meetReasons(r: MeetRow): MeetReason[] {
   const out: MeetReason[] = [];
   if (r.starterCount != null && r.starterDay != null) {
     if (r.starterCount <= 1 && r.cameAt) out.push({ key: "starter", label: "첫 출석", say: "이름을 불러 주고 먼저 인사해 주세요" });
     else out.push({ key: "starter", label: `첫 4주 ${r.starterCount}번째`, say: "이름을 부르고 오늘 잘한 것 하나를 말해 주세요" });
+  }
+  // (2-3) 153 기념일 · 출석 축하 — 오늘이 그 회원의 날
+  if (r.annivYears != null) {
+    out.push(
+      r.annivBasis === "reg"
+        ? { key: "anniv", label: `오늘 ${r.annivYears}주년`, say: `'153과 함께한 ${r.annivYears}년 고마워요' 하고 축하해 주세요` }
+        : { key: "anniv", label: `첫 도장 ${r.annivYears}주년`, say: `'첫 도장 찍은 지 ${r.annivYears}년이에요' 하고 축하해 주세요` },
+    );
+  }
+  if (r.milestone != null) {
+    out.push({ key: "milestone", label: `출석 ${r.milestone}번째`, say: `'오늘 ${r.milestone}번째 출석이에요' 하고 축하해 주세요` });
   }
   if (r.gapDays != null) out.push({ key: "back", label: `${r.gapDays}일 만에`, say: "'다시 와서 반가워요' 한마디면 충분해요" });
   if (r.promised) {

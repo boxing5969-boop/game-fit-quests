@@ -6,9 +6,20 @@
  *   · 감정 설계(CLAUDE.md 「회원 감정 설계 기준」): 채운 것과 다음 한 걸음만 말한다 — 못한 것 · 빠진 날은 어디에도 없다.
  *   · 서버 값 읽기 · 계산 · 글은 여기 한 곳(시험 calendarChecks.test.ts). DB 20261112211833_calendar_checks_stage21.sql,
  *     자료는 services/calendarCheckService.ts, 화면은 components/attendance/CalendarChecks.tsx · CheckItemsSheet.tsx.
+ *   · (2-3 · 2026-11-13) get_my_calendar 의 acts · notes · anniv · ddays 도 여기서 읽는다(글 · 계산은 lib/calendarMarks.ts).
  */
 import { weekdayOfYmd } from "@/lib/promise153";
 import { normalizeCalls, normalizeEvents, type CalCall, type CalEvent } from "@/lib/calendarEvents";
+import {
+  normalizeActs,
+  normalizeAnnivs,
+  normalizeDdays,
+  normalizeNotes,
+  type CalAct,
+  type CalAnniv,
+  type CalDday,
+  type CalNote,
+} from "@/lib/calendarMarks";
 
 const YMD = /^\d{4}-\d{2}-\d{2}$/;
 const n = (v: number) => v.toLocaleString("ko-KR");
@@ -89,9 +100,29 @@ export interface CalState {
   calls: CalCall[];
   /** (2-2) 저녁 독려 — 켠 회원만 저녁 8시 한 번 */
   nudge: { on: boolean; at: string };
+  /** (2-3) 그날 한 일 — PT 수업 · 153 PB · 타이틀매치 · 레벨업 (보이는 날짜) */
+  acts: CalAct[];
+  /** (2-3) 코치 한마디 도장 (보이는 날짜) */
+  notes: CalNote[];
+  /** (2-3) 153 기념일 (보이는 날짜) */
+  anniv: CalAnniv[];
+  /** (2-3) 153 D-day — 보이는 날짜와 상관없이 다가오는 것 */
+  ddays: CalDday[];
 }
 
-export const CAL_OFF: CalState = { on: false, today: null, items: [], days: new Map(), events: [], calls: [], nudge: { on: false, at: "20:00" } };
+export const CAL_OFF: CalState = {
+  on: false,
+  today: null,
+  items: [],
+  days: new Map(),
+  events: [],
+  calls: [],
+  nudge: { on: false, at: "20:00" },
+  acts: [],
+  notes: [],
+  anniv: [],
+  ddays: [],
+};
 
 type Raw = Record<string, unknown>;
 const obj = (v: unknown): Raw | null => (v && typeof v === "object" && !Array.isArray(v) ? (v as Raw) : null);
@@ -171,6 +202,10 @@ export function normalizeCalendar(raw: unknown): CalState {
     events: normalizeEvents(r.events),
     calls: normalizeCalls(r.calls),
     nudge: { on: nudge?.on === true, at: at && /^\d{2}:\d{2}$/.test(at) ? at : "20:00" },
+    acts: normalizeActs(r.acts),
+    notes: normalizeNotes(r.notes),
+    anniv: normalizeAnnivs(r.anniv),
+    ddays: normalizeDdays(r.ddays),
   };
 }
 

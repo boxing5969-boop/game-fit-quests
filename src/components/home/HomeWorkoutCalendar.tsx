@@ -7,15 +7,39 @@
  *   (StarterProgress — 홈 카드 수를 늘리지 않으려고 이 카드 안에).
  *   2026-11-12 2-1단계(대표님 「추천대로」): 카드 안 '오늘의 체크' 한 줄 · 나만의 체크 · 한 줄 · 기분 스티커 · 금색 별(withChecks).
  *   2026-11-13 2-2단계(대표님 「다음」): 같은 자료로 153 일정(운영본부에서 올림 · 휴관일) · 저요 한 모집 점 · 약속 알림 시각 · 휴대폰 캘린더 · 저녁 체크 알림.
+ *   2026-11-13 2-3단계(대표님 「다음」): 그날 한 일 · 코치 한마디 도장 · 153 기념일 · D-day · 밀기 · 길게 누르기 —
+ *   코치 한마디 알림 링크 '/home?cal=날짜'면 그날을 펼쳐 고르고(focusDay) 주소에서 ?cal= 을 지운다.
  */
+import { useSearchParams } from "react-router-dom";
 import { useAttendanceHistory } from "@/hooks/useAttendanceHistory";
+import { kstToday } from "@/lib/attendanceCheer";
+import { focusDayOf } from "@/lib/calendarMarks";
 import WorkoutCalendarCard from "@/components/attendance/WorkoutCalendar";
 import StarterProgress from "@/components/attendance/StarterProgress";
 
 const HomeWorkoutCalendar = () => {
   const { data } = useAttendanceHistory(null);
+  const [params, setParams] = useSearchParams();
   if (!data || data.total === 0) return null;
-  return <WorkoutCalendarCard data={data} title="운동 달력" storageKey="153cal:home:open" header={<StarterProgress />} recap withPromise withChecks />;
+  const focusDay = focusDayOf(params.get("cal"), kstToday(), data.firstDay);
+  const clearFocus = () => {
+    const next = new URLSearchParams(params);
+    next.delete("cal");
+    setParams(next, { replace: true });
+  };
+  return (
+    <WorkoutCalendarCard
+      data={data}
+      title="운동 달력"
+      storageKey="153cal:home:open"
+      header={<StarterProgress />}
+      recap
+      withPromise
+      withChecks
+      focusDay={focusDay}
+      onFocusDone={clearFocus}
+    />
+  );
 };
 
 export default HomeWorkoutCalendar;

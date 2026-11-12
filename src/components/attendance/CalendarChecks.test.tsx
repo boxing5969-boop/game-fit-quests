@@ -41,3 +41,54 @@ describe("운동 달력 그날 카드", () => {
     expect(screen.queryByRole("button", { name: /나만의 체크/ })).toBeNull();
   });
 });
+
+describe("운동 달력 그날 카드 — (2-3) 코치 한마디 · 그날 한 일 · D-day · 기념일", () => {
+  const cal3 = normalizeCalendar({
+    on: true,
+    today: "2026-11-12",
+    items: [],
+    days: [],
+    acts: [
+      { day: "2026-11-10", kind: "pt", coach: "김코치" },
+      { day: "2026-11-10", kind: "title", passed: true, rank: "white" },
+    ],
+    notes: [{ id: "n1", day: "2026-11-12", who: "김코치", title: "코치", body: "오늘 잽 거리가 딱 좋았어요" }],
+    anniv: [{ day: "2026-11-12", years: 1, basis: "reg" }],
+    ddays: [
+      { kind: "goal", id: "g1", day: "2026-11-20", title: "바디프로필" },
+      { kind: "pb", day: "2026-11-25" },
+    ],
+  });
+  const b3 = { ...base, cal: cal3, onToggle: noop };
+
+  it("오늘의 체크 한 줄에도 코치 한마디 — 이름 + 한 줄", () => {
+    render(<DayChecksPanel {...b3} day="2026-11-12" attended={null} compact />);
+    expect(screen.getByText("김코치 코치님")).toBeTruthy();
+    expect(screen.getByText("오늘 잽 거리가 딱 좋았어요")).toBeTruthy();
+  });
+
+  it("오늘(아직 안 옴) — 기념일 한 줄은 '오늘은 153과 함께한 지 1년이에요'", () => {
+    render(<DayChecksPanel {...b3} day="2026-11-12" attended={null} />);
+    expect(screen.getByText("오늘은 153과 함께한 지 1년이에요")).toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/못|안 했|놓쳤|빠졌|실패/);
+  });
+
+  it("지난 날 — 그날 한 일(타이틀매치가 먼저) · 안 온 기념일은 말하지 않는다", () => {
+    render(<DayChecksPanel {...b3} day="2026-11-10" attended={null} />);
+    const lines = screen.getByRole("list", { name: "그날 한 일" }).textContent ?? "";
+    expect(lines.indexOf("화이트 타이틀매치 통과")).toBeLessThan(lines.indexOf("PT 수업 · 김코치 코치님"));
+    expect(screen.queryByText(/함께한 지/)).toBeNull();
+  });
+
+  it("앞날 — D-day 한 줄 · 목표일이 있는 날엔 '이 날을 목표일로' 없음 · 없는 날엔 있음", () => {
+    const onGoal = vi.fn();
+    const { unmount } = render(<DayChecksPanel {...b3} day="2026-11-20" attended={null} onGoal={onGoal} />);
+    expect(screen.getByText("D-8 · 바디프로필")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /이 날을 목표일로/ })).toBeNull();
+    unmount();
+    render(<DayChecksPanel {...b3} day="2026-11-25" attended={null} onGoal={onGoal} />);
+    expect(screen.getByText("D-13 · 153 PB 다시 재는 날")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /이 날을 목표일로/ }));
+    expect(onGoal).toHaveBeenCalledWith("2026-11-25");
+  });
+});
