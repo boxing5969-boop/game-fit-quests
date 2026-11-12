@@ -62,6 +62,7 @@ import DmHeaderButton from "@/components/dm/DmHeaderButton";
 import NotificationBellButton from "@/components/notifications/NotificationBellButton";
 import PushOptInCard from "@/components/notifications/PushOptInCard";
 import SurveyNudgeCard from "@/components/survey/SurveyNudgeCard";
+import GoodsNudgeCard from "@/components/goods/GoodsNudgeCard";
 import BirthdayCongratsCard from "@/components/home/BirthdayCongratsCard";
 import GrowthLessonCard from "@/components/home/GrowthLessonCard";
 import OfficeEntryCard from "@/components/office/OfficeEntryCard";
@@ -646,6 +647,9 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
 
           {/* 이번 달 만족도 조사 — 설문이 열린 지점 · 아직 참여 전인 회원에게만 (2026-10-15 대표님) */}
           <SurveyNudgeCard />
+
+          {/* 153 플리스 집업 사전예약 — 열려 있는 동안만 · 결제를 마치면 사라진다 (2026-11-12 대표님 「마이복서에 올려서 판매신청받고」) */}
+          <GoodsNudgeCard />
 
           {/* 🏢 회의실 참석 — 지점 회의실에 들어갈 수 있는 지도진 · 대표님에게만 (회원에게는 칸 자체가 없다, 2026-10-27) */}
           <OfficeEntryCard />
