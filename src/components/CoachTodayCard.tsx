@@ -37,6 +37,8 @@ interface Props {
   onOpenVideos: () => void;
   /** 오늘의 코스 카드 바로 아래에 끼우는 칸 — 훈련 탭은 '오늘 수업(일차별 매뉴얼)' 카드를 넣는다 */
   extra?: ReactNode;
+  /** '레벨업까지' 카드 바로 위 — 훈련 탭 세 칸의 「내 레벨」 제목 (2026-11-13) */
+  levelHeading?: ReactNode;
 }
 
 const COURSE_KEY = "153_course_collapsed";
@@ -53,7 +55,7 @@ const kstDayStartIso = () => {
 const safeGet = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
 const safeSet = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* 프라이빗 모드 등 */ } };
 
-const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpenDetail, onOpenVideos, extra }: Props) => {
+const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpenDetail, onOpenVideos, extra, levelHeading }: Props) => {
   const { user, profile } = useAuth();
   const [playing, setPlaying] = useState<{ id: string; url: string; title: string; variants: OverlayVariant[] } | null>(null);
   const [collapsed, setCollapsed] = useState(() => safeGet(COURSE_KEY) === "1");
@@ -381,6 +383,8 @@ const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpe
       </div>
 
       {extra}
+
+      {levelHeading}
 
       {/* ── 레벨업까지 — 주인공은 '몇 번 더' 한 줄 (2026-10-28 리디자인). 레벨 자세히 보기 '심사' 탭과 같은 카드 ──
           타이틀매치 단추는 위 오늘의 코스에 있어 여기서는 끈다 */}

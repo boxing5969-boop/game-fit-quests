@@ -64,7 +64,8 @@ export const APP_MENU: readonly AppMenuEntry[] = [
     items: [
       { path: "/minigame", label: "복싱 트레이닝", glyph: "glove" },
       { path: "/handwrap", label: "붕대 감기", glyph: "handwrap" },
-      { path: "/training-library", label: "훈련 라이브러리", glyph: "books" },
+      // 2026-11-13 회원은 훈련 탭 「영상으로 배우기」로 옮겼다 — 코치진만 (카드 보기 · 고치기). 옛 주소 · 내 바로가기는 그리로 넘겨 준다
+      { path: "/training-library", label: "훈련 라이브러리", glyph: "books", requires: "staff" },
       { path: "/routines", label: "수업 루틴", glyph: "clipboard" },
     ],
   },

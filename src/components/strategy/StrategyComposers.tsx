@@ -1,14 +1,19 @@
 /**
  * 전략 회의실 쓰기 시트 (2026-10-16)
  *   · PostComposer    — 지시(상황·기준·요청·대상 4칸) · 전략 · 칭찬 · 운영 원칙 — 대표님·지점장님
- *   · ProgramComposer — 오늘 프로그램: 50분 4블록 틀 + 영상 붙이기 + 받을 코치 — 대표님·지점장님
+ *   · ProgramComposer — 오늘 프로그램: 50분 4블록 틀 + 카드 고르기 + 받을 코치 — 대표님·지점장님
  *       153 수업 템플릿(lib/classTemplates, 2026-11-11)을 고르면 이름 · 블록 · 코치님께 한마디가 채워진다
+ *       2026-11-13 블록마다 「카드 고르기」(CardDrawer — 153 카드 · 레벨 미션 · 우리 지점 영상) → 이름 · 분 · 블록 종류가 채워진다
  *   · ClassLogComposer — 수업 기록: 그 시간 입실 인원은 출석 기록에서 자동 — 모든 코치 · 진행한 프로그램에 153 수업 템플릿도
+ *       2026-11-13 진행한 프로그램의 카드가 칩으로(모두 켜짐) → 안 한 것만 끄고 저장(data.cards) · 프로그램 없이도 「카드 고르기」
  */
 import { useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, Plus, Sparkles, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Film, Layers, Plus, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 import { CLASS_TEMPLATES, classTemplateBlocks, classTemplateNote, type ClassTemplate } from "@/lib/classTemplates";
+import { cardShelf, cardToBlock, placeCardInBlocks, programCardIds, type TrainingCard } from "@/lib/trainingCards";
+import { useTrainingCards } from "@/services/trainingCardService";
+import { CardDrawer, type DrawerMission, type DrawerPick } from "@/components/strategy/CardDrawer";
 
 import { cn } from "@/lib/utils";
 import { DmSheet } from "@/components/dm/DmParts";
@@ -285,6 +290,8 @@ export const ProgramComposer = ({
   templates,
   initial,
   initialTemplate,
+  initialCard,
+  missions = [],
 }: {
   open: boolean;
   onClose: () => void;
@@ -295,6 +302,10 @@ export const ProgramComposer = ({
   initial?: StrategyItem | null;
   /** 153 수업 템플릿에서 시작 (템플릿 카드 「이 템플릿으로 오늘 프로그램 만들기」) */
   initialTemplate?: ClassTemplate | null;
+  /** 153 콘텐츠 카드에서 시작 (영상 칸 카드 시트 「이 카드로 오늘 프로그램 만들기」) */
+  initialCard?: TrainingCard | null;
+  /** 카드 서랍의 「레벨 미션」 칸 */
+  missions?: DrawerMission[];
 }) => {
   const save = useSaveStrategy();
   const [title, setTitle] = useState("");
@@ -304,6 +315,10 @@ export const ProgramComposer = ({
   const [note, setNote] = useState("");
   const [targets, setTargets] = useState<string[]>([]);
   const [template, setTemplate] = useState(false);
+  const [drawerFor, setDrawerFor] = useState<number | null>(null);
+  const cardsQ = useTrainingCards(open);
+  const cardMap = useMemo(() => new Map((cardsQ.data ?? []).map((c) => [c.id, c])), [cardsQ.data]);
+  const missionMap = useMemo(() => new Map(missions.map((m) => [m.id, m])), [missions]);
 
   const applyClassTemplate = (t: ClassTemplate) => {
     setTitle(t.title);
@@ -320,13 +335,52 @@ export const ProgramComposer = ({
       setNote(initial?.body ?? "");
       setTargets([]);
       setTemplate(false);
+      setDrawerFor(null);
       if (!initial && initialTemplate) {
         setTitle(initialTemplate.title);
         setBlocks(classTemplateBlocks(initialTemplate));
         setNote(classTemplateNote(initialTemplate));
+      } else if (!initial && initialCard) {
+        setBlocks(placeCardInBlocks(DEFAULT_BLOCKS, initialCard));
       }
     }
-  }, [open, initial, initialTemplate]);
+  }, [open, initial, initialTemplate, initialCard]);
+
+  // 카드 서랍에서 고른 것 — 블록마다 붙는 것은 셋 중 하나(153 카드 · 레벨 미션 · 우리 지점 영상)
+  const pick = (i: number, p: DrawerPick) => {
+    setBlocks((bs) =>
+      bs.map((b, j) => {
+        if (j !== i) return b;
+        if (p.kind === "card") return { ...cardToBlock(p.card), note: b.note ?? "" };
+        if (p.kind === "mission")
+          return { ...b, mission_id: p.mission.id, card_id: null, video_id: null, title: p.mission.title.slice(0, 80) };
+        return {
+          ...b,
+          video_id: p.video.id,
+          card_id: null,
+          mission_id: null,
+          title: b.title.trim() || p.video.title.slice(0, 80),
+          minutes: p.video.minutes ?? b.minutes,
+        };
+      }),
+    );
+    setDrawerFor(null);
+  };
+  const attachedLabel = (b: ProgramBlock): { text: string; sub: string; color: string } | null => {
+    if (b.card_id) {
+      const c = cardMap.get(b.card_id);
+      return c ? { text: c.name, sub: `153 카드 · ${cardShelf(c).label}`, color: cardShelf(c).color } : { text: "153 카드", sub: "카드를 찾지 못했어요", color: "#6B7684" };
+    }
+    if (b.mission_id) {
+      const m = missionMap.get(b.mission_id);
+      return { text: m?.title ?? "레벨 미션", sub: m?.label ?? "레벨 미션", color: "#191F28" };
+    }
+    if (b.video_id) {
+      const v = videos.find((x) => x.id === b.video_id);
+      return { text: v?.title ?? "우리 지점 영상", sub: "우리 지점 영상", color: "#6B7684" };
+    }
+    return null;
+  };
 
   const total = programTotal(blocks);
   const set = (i: number, patch: Partial<ProgramBlock>) => setBlocks((bs) => bs.map((b, j) => (j === i ? { ...b, ...patch } : b)));
@@ -338,7 +392,8 @@ export const ProgramComposer = ({
       [next[i], next[j]] = [next[j], next[i]];
       return next;
     });
-  const valid = blocks.length > 0 && blocks.every((b) => (b.title.trim() || b.video_id) && Number(b.minutes) > 0);
+  const valid =
+    blocks.length > 0 && blocks.every((b) => (b.title.trim() || b.video_id || b.card_id || b.mission_id) && Number(b.minutes) > 0);
 
   const submit = () =>
     save.mutate(
@@ -353,9 +408,17 @@ export const ProgramComposer = ({
           slot: slot.trim() || null,
           blocks: blocks.map((b) => ({
             kind: b.kind,
-            title: b.title.trim() || videos.find((v) => v.id === b.video_id)?.title || "",
+            title: (
+              b.title.trim() ||
+              (b.card_id && cardMap.get(b.card_id)?.name) ||
+              (b.mission_id && missionMap.get(b.mission_id)?.title) ||
+              videos.find((v) => v.id === b.video_id)?.title ||
+              ""
+            ).slice(0, 80),
             minutes: Math.max(1, Math.min(120, Math.round(Number(b.minutes) || 1))),
             video_id: b.video_id || null,
+            card_id: b.card_id || null,
+            mission_id: b.mission_id || null,
             note: (b.note ?? "").trim(),
           })),
           total_min: total,
@@ -372,12 +435,13 @@ export const ProgramComposer = ({
     );
 
   return (
+    <>
     <DmSheet
       open={open}
       onClose={onClose}
       tall
       title="오늘 프로그램 만들기"
-      subtitle="영상을 골라 블록을 쌓으면 코치님들이 보고 그대로 수업해요"
+      subtitle="카드를 골라 블록을 쌓으면 코치님들이 영상을 보고 그대로 수업해요"
       footer={
         <SubmitButton onClick={submit} disabled={!valid || save.isPending}>
           {save.isPending ? "보내는 중…" : `코치님께 보내기 · ${total}분`}
@@ -485,20 +549,36 @@ export const ProgramComposer = ({
               placeholder="무엇을 하나요 (예: 원·투 스텝 드릴)"
               className={cn(inputCls, "mt-2 py-2")}
             />
-            <select
-              value={b.video_id ?? ""}
-              onChange={(e) => set(i, { video_id: e.target.value || null })}
-              className={cn(inputCls, "mt-2 py-2")}
-              aria-label="영상 붙이기"
-            >
-              <option value="">🎬 영상 붙이기 (선택)</option>
-              {videos.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.title}
-                  {v.minutes ? ` · ${v.minutes}분` : ""}
-                </option>
-              ))}
-            </select>
+            {(() => {
+              // 붙인 것(153 카드 · 레벨 미션 · 우리 지점 영상) — 없으면 「카드 고르기」 (예전 '영상 붙이기' 고르기 칸 자리)
+              const att = attachedLabel(b);
+              return att ? (
+                <div className="mt-2 flex items-center gap-2 rounded-2xl border border-border bg-background px-3 py-2">
+                  <span className="h-8 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: att.color }} />
+                  <button type="button" onClick={() => setDrawerFor(i)} className="min-w-0 flex-1 text-left">
+                    <span className="block truncate text-[13.5px] font-bold text-foreground">{att.text}</span>
+                    <span className="block truncate text-[11.5px] text-muted-foreground">{att.sub} · 눌러서 바꾸기</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => set(i, { card_id: null, mission_id: null, video_id: null })}
+                    aria-label="붙인 카드 빼기"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground active:bg-secondary"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setDrawerFor(i)}
+                  aria-label={`${i + 1}번 블록 카드 고르기`}
+                  className="mt-2 flex h-10 w-full items-center justify-center gap-1.5 rounded-2xl border border-dashed border-primary/50 bg-primary/5 text-[13px] font-bold text-primary active:scale-[0.99]"
+                >
+                  <Layers className="h-4 w-4" /> 카드 고르기 <span className="font-medium opacity-80">· 153 카드 · 레벨 미션 · 우리 지점 영상</span>
+                </button>
+              );
+            })()}
             <input
               value={b.note ?? ""}
               onChange={(e) => set(i, { note: e.target.value })}
@@ -516,9 +596,9 @@ export const ProgramComposer = ({
       >
         <Plus className="h-4 w-4" /> 블록 더하기
       </button>
-      {videos.length === 0 && (
-        <p className="mt-2 text-[12px] text-muted-foreground">'영상' 탭에서 드릴 영상을 올리면 블록에 붙일 수 있어요.</p>
-      )}
+      <p className="mt-2 flex items-center gap-1 text-[12px] text-muted-foreground">
+        <Film className="h-3.5 w-3.5 shrink-0" /> 카드를 고르면 이름 · 분 · 블록 종류가 채워지고, 코치님은 블록을 눌러 영상을 봐요.
+      </p>
 
       <Label>코치님께 한마디 (선택)</Label>
       <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} maxLength={1000} placeholder="예: 신규 회원이 많은 시간이라 스텝을 천천히" className={cn(inputCls, "resize-none")} />
@@ -529,6 +609,14 @@ export const ProgramComposer = ({
         자주 쓰는 프로그램으로 저장 (다음에 불러오기)
       </label>
     </DmSheet>
+    <CardDrawer
+      open={open && drawerFor !== null}
+      onClose={() => setDrawerFor(null)}
+      onPick={(p) => drawerFor !== null && pick(drawerFor, p)}
+      videos={videos}
+      missions={missions}
+    />
+    </>
   );
 };
 
@@ -561,6 +649,23 @@ export const ClassLogComposer = ({
   const [wentWell, setWentWell] = useState("");
   const [issues, setIssues] = useState("");
   const [nextFocus, setNextFocus] = useState("");
+  // 오늘 가르친 153 카드 (2026-11-13) — 진행한 프로그램의 카드(모두 켜짐) + 직접 고른 카드, 끈 것만 빼고 data.cards
+  const [progCardIds, setProgCardIds] = useState<string[]>([]);
+  const [extraCardIds, setExtraCardIds] = useState<string[]>([]);
+  const [offCardIds, setOffCardIds] = useState<string[]>([]);
+  const [cardDrawer, setCardDrawer] = useState(false);
+  const cardsQ = useTrainingCards(open);
+  const cardMap = useMemo(() => new Map((cardsQ.data ?? []).map((c) => [c.id, c])), [cardsQ.data]);
+  const cardPool = useMemo(() => [...new Set([...progCardIds, ...extraCardIds])], [progCardIds, extraCardIds]);
+  const pickedCards = cardPool.filter((id) => !offCardIds.includes(id));
+  const toggleCard = (id: string) => {
+    if (!cardPool.includes(id)) {
+      setExtraCardIds((xs) => [...xs, id]);
+      setOffCardIds((xs) => xs.filter((x) => x !== id));
+      return;
+    }
+    setOffCardIds((xs) => (xs.includes(id) ? xs.filter((x) => x !== id) : [...xs, id]));
+  };
 
   useEffect(() => {
     if (open) {
@@ -572,6 +677,10 @@ export const ClassLogComposer = ({
       setIssues("");
       setNextFocus("");
       setStd({});
+      setProgCardIds(programCardIds(initialProgram?.data?.blocks));
+      setExtraCardIds([]);
+      setOffCardIds([]);
+      setCardDrawer(false);
     }
   }, [open, initialProgram]);
 
@@ -592,7 +701,14 @@ export const ClassLogComposer = ({
   }, [open, branch, date, hour]);
 
   const nearPrograms = useMemo(() => programs.slice(0, 20), [programs]);
-  const valid = !!(wentWell.trim() || issues.trim() || nextFocus.trim() || programTitle.trim() || markedCount(std) > 0);
+  const valid = !!(
+    wentWell.trim() ||
+    issues.trim() ||
+    nextFocus.trim() ||
+    programTitle.trim() ||
+    markedCount(std) > 0 ||
+    pickedCards.length > 0
+  );
 
   const submit = () =>
     save.mutate(
@@ -611,6 +727,7 @@ export const ClassLogComposer = ({
           issues: issues.trim(),
           next_focus: nextFocus.trim(),
           ...(markedCount(std) > 0 ? { std } : {}),
+          ...(pickedCards.length > 0 ? { cards: pickedCards.slice(0, 40) } : {}),
         },
       },
       {
@@ -623,6 +740,7 @@ export const ClassLogComposer = ({
     );
 
   return (
+    <>
     <DmSheet
       open={open}
       onClose={onClose}
@@ -673,7 +791,11 @@ export const ClassLogComposer = ({
           const id = e.target.value;
           setProgramId(id);
           const tpl = id.startsWith("tpl:") ? CLASS_TEMPLATES.find((t) => `tpl:${t.id}` === id) : undefined;
-          setProgramTitle(tpl?.title ?? nearPrograms.find((p) => p.id === id)?.title ?? programTitle);
+          const prog = tpl ? undefined : nearPrograms.find((p) => p.id === id);
+          setProgramTitle(tpl?.title ?? prog?.title ?? programTitle);
+          // 그 프로그램의 카드가 칩으로(모두 켜짐) — 직접 고른 카드는 그대로
+          setProgCardIds(programCardIds(prog?.data?.blocks));
+          setOffCardIds([]);
         }}
         className={inputCls}
         aria-label="프로그램 고르기"
@@ -701,6 +823,21 @@ export const ClassLogComposer = ({
           className={cn(inputCls, "mt-2")}
         />
       )}
+      <Label hint={cardPool.length > 0 ? `${pickedCards.length}/${cardPool.length} · 안 한 것만 끄기` : "선택"}>오늘 가르친 카드</Label>
+      <div className="flex flex-wrap gap-1.5">
+        {cardPool.map((id) => (
+          <Chip key={id} on={!offCardIds.includes(id)} onClick={() => toggleCard(id)}>
+            {cardMap.get(id)?.name ?? "153 카드"}
+          </Chip>
+        ))}
+        <button
+          type="button"
+          onClick={() => setCardDrawer(true)}
+          className="flex items-center gap-1 rounded-full border border-dashed border-primary/50 bg-primary/5 px-3 py-1.5 text-[13px] font-bold text-primary active:scale-95"
+        >
+          <Plus className="h-3.5 w-3.5" /> 카드 고르기
+        </button>
+      </div>
       {standards && standards.length > 0 && (
         <>
           <Label hint="선택 · 1분">153 기준 점검</Label>
@@ -717,5 +854,13 @@ export const ClassLogComposer = ({
         회원의 건강·부상 같은 민감한 내용은 쓰지 말아 주세요. 코치진 모두가 보는 기록이에요.
       </p>
     </DmSheet>
+    <CardDrawer
+      open={open && cardDrawer}
+      onClose={() => setCardDrawer(false)}
+      cardsOnly
+      pickedIds={pickedCards}
+      onPick={(p) => p.kind === "card" && toggleCard(p.card.id)}
+    />
+    </>
   );
 };
