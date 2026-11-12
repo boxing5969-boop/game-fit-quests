@@ -25,6 +25,7 @@ import LiveLevelUpInterrupt, {
 } from "@/components/liveBoard/LiveLevelUpInterrupt";
 import LiveBoardTestPanel from "@/components/liveBoard/LiveBoardTestPanel";
 import LiveBoardQrCard from "@/components/liveBoard/LiveBoardQrCard";
+import LiveBoardGoodsCard from "@/components/liveBoard/LiveBoardGoodsCard";
 import LaunchEventBoard from "@/components/liveBoard/LaunchEventBoard";
 import { isPilotBranch } from "@/lib/pilotBranches";
 import { STAFF_CHAMPION_LEVEL, honorTitle } from "@/lib/staffDisplay";
@@ -1380,7 +1381,7 @@ const LiveBoardPage = () => {
         {/* ═══ Center: Main area — 명예의 전당 sticky bottom + 위쪽만 스크롤 ═══ */}
         <div className="flex flex-col min-w-0 overflow-hidden flex-1">
           {/* 2번 화면(TV2): 스포트라이트 대신 런칭 이벤트 보드 — ① 출석왕 ② 앱 활동왕 ③ 닉네임 좋아요왕 (2026-09-23 대표님 지시).
-              아래 띠(오늘 다녀간 회원·COACHING STAFF·명예의 전당)와 오른쪽 패널(QR·활동 중)은 그대로 둔다. */}
+              아래 띠(오늘 다녀간 회원·COACHING STAFF·명예의 전당)와 오른쪽 패널(활동 중)은 그대로 둔다 — 오른쪽 위 QR 카드는 2026-11-12 부터 플리스 안내(LiveBoardGoodsCard). */}
           {only2 && branchName && (
             <div className="flex-1 min-h-0 overflow-hidden">
               <LaunchEventBoard branchName={branchName} />
@@ -1850,8 +1851,10 @@ const LiveBoardPage = () => {
         {/* ═══ Right panel ═══ */}
         {!only1 && (
         <div className="bg-gray-900/60 flex flex-col min-h-0 w-[26rem] border-l border-gray-800/60">
-          {/* QR 출석 — 항상 표시. 브로제이가 느릴 때 회원이 앱에서 찍으면 보드에 바로 올라온다 (2026-09-22) */}
-          {branchName && <LiveBoardQrCard branchName={branchName} />}
+          {/* QR 출석 — 항상 표시. 브로제이가 느릴 때 회원이 앱에서 찍으면 보드에 바로 올라온다 (2026-09-22)
+              2번 화면만 빼고 그 자리(패널 높이 1/3)에 플리스 사전예약 안내 — 옆 사이니지에 QR 이 있다 (2026-11-12 대표님) */}
+          {branchName && !only2 && <LiveBoardQrCard branchName={branchName} />}
+          {only2 && <LiveBoardGoodsCard className="h-1/3 shrink-0" />}
           {/* Active members — 인원수 많을 때 더 많이 보이게 flex-1 + 최소 보장 (QR 카드 232px 이 위에 생겨 40vh → 28vh) */}
           <div className="flex-1 border-b border-gray-800/60 flex flex-col min-h-[28vh]">
             <div className="px-5 py-4 flex items-center gap-3 flex-shrink-0">
