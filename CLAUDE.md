@@ -690,6 +690,13 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 2026-11-12 클라우드 크롬 시험(소프트웨어 인코더): 68.8MB 1080p60 45초 → 14.7MB 720p30(37초) · 세로 회전 MOV 72MB → 13.3MB 720×1280 · VP9+Opus WebM 68MB → 18.8MB(이 크롬은 AAC 인코더가 없어 소리 뺌) · 한도 8MB → 7.0MB 540p · HEVC → '형식' 문구 · 멈추기 · 50MB 아래 그대로.
 - 다른 50MB 올리기(전략 회의 영상 `StrategyVideos` · `strategyService`)는 아직 예전처럼 막기만 한다 — 같은 함수를 붙이면 된다.
 
+### 타이틀매치 심사 영상 2개 — 치는 영상 · 받는 영상 (2026-11-12 대표님 「영상도 2개 올려야해 치는거 받는거」)
+
+- 심사함(`TitleMatchJudgePanel`) 도전마다 칸 2개: ① 치는 영상(완벽한 자세로 3번 연속) ② 받는 영상(파트너에게 미트로 3번 받아주기). 칸마다 앱으로 촬영 · 찍어 둔 영상 · 50MB 넘으면 자동 줄이기(한 번에 한 칸씩). **합격은 두 영상 모두, 불합격은 치는 영상만으로도**(3번 연속이 안 되면 받기까지 못 간다) — 화면 `attemptUploadBlocker`([src/lib/titleMatchChallenge.ts](src/lib/titleMatchChallenge.ts)) = 서버 규칙. 칸 이름 · 안내 · 촬영 창 안내 한 줄은 `TITLE_CLIPS` 한 곳.
+- 올리기(`useRecordTitleAttempt`): 치는 영상 → 받는 영상 차례로 저장소(`…-hit.mp4` · `…-recv.mp4`) → `record_title_match_attempt_v2(_member_id, _hit_video_path, _receive_video_path, _passed, _note)`.
+- DB [20261112161952_title_match_two_videos.sql](supabase/migrations/20261112161952_title_match_two_videos.sql): `title_match_attempts.receive_video_path`(새 칸) · v2 새 함수(v1 본문 그대로 + 받는 영상 검사: 이 회원 폴더 · 실제 파일 · 치는 영상과 다른 파일 · 합격이면 꼭) · `get_title_match_state` 도전 기록에 `receiveVideoPath`. **v1(영상 1개)은 옛 화면 호환용으로 남겨 둔다 — 새로 고치지 않는다.**
+- 도전 기록(`TitleAttemptList`, 회원 화면 · 심사함): 받는 영상이 있으면 단추 '치기' · '받기', 영상이 하나면(예전 기록 · 치는 영상만 올린 불합격) '영상'. 회원 안내(`titleMissionRules`)도 '치는 영상 · 받는 영상을 찍어 앱에 올려요'.
+
 ### 로드맵 칸 (2026-10-30 대표님 "로드맵 메뉴가 안 보여" · "검색해도 안 나오고")
 - 랭크업(`/rank-up` — 40단계 길 · 리그별 레벨업 기준 · 타이틀매치 · 단증 도전)은 10-10 하단 '랭크업' 탭을 뺀 뒤 MY복서 라이센스 카드 승급 막대로만 들어갈 수 있었다.
 - 전체 메뉴(`src/lib/appMenu.ts`) 단독 칸 **「로드맵」**(글리프 `roadmap` = 접힌 지도 + 민트 점선 길 + 금 깃발) — 회원은 MY복서 다음 2번째, 코치진은 153운영본부 다음. 검색 `f:rankup` 이름 「로드맵 · 레벨업 기준」 · 관련어 로드맵 · 랭크업 로드맵 · 40단계 · 단증 도전 (테스트 appSearch.test.ts · officeLayout.test.ts).

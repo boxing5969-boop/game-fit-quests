@@ -2,7 +2,8 @@
  * 🏆 타이틀매치 도전 — 상태 읽기 · 회원 신청/취소 · 지점장 도전 기록(영상 올리기) (2026-10-14 대표님).
  *
  * 서버 함수가 정본이다 (get_title_match_state · request_title_match_review · cancel_title_match_request ·
- * record_title_match_attempt). 영상은 비공개 저장소 title-match-videos 에 올리고, 볼 때는 1시간짜리 서명 주소를 받는다.
+ * record_title_match_attempt_v2 — 치는 영상 · 받는 영상 2개, 2026-11-12). 영상은 비공개 저장소 title-match-videos 에 올리고,
+ * 볼 때는 1시간짜리 서명 주소를 받는다.
  * 쿼리키는 다른 화면 캐시와 겹치지 않게 153title: 로 시작한다.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -93,10 +94,18 @@ export function useCancelTitleMatch() {
   });
 }
 
+/** 올릴 영상 하나 */
+export interface AttemptClip {
+  blob: Blob;
+  contentType: string;
+}
+
 export interface RecordAttemptInput {
   memberId: string;
-  video: Blob;
-  contentType: string;
+  /** 치는 영상 (늘) */
+  hit: AttemptClip;
+  /** 받는 영상 (합격이면 꼭 · 불합격은 없어도 된다) — 2026-11-12 대표님 「영상도 2개 올려야해 치는거 받는거」 */
+  receive?: AttemptClip | null;
   passed: boolean;
   note?: string | null;
 }
@@ -110,14 +119,35 @@ export interface RecordAttemptResult {
   promotion?: { ranked_up?: boolean; new_rank?: string; new_level?: number; fast_track?: boolean };
 }
 
-/** 지점장·관장: 영상 올리기 → 도전 기록 (합격이면 서버가 바로 승급까지) */
+/** 영상 하나 올리기 → 저장 경로 (실패하면 화면에 보여 줄 한 줄로 던진다) */
+async function uploadTitleClip(memberId: string, clip: AttemptClip, tag: "hit" | "recv", label: string): Promise<string> {
+  const path = titleVideoPath(memberId, clip.contentType, new Date(), Math.random(), tag);
+  // supabase-js 는 Blob 본문이면 contentType 옵션 대신 Blob 자신의 형식을 보낸다 — 형식이 비었거나
+  // 다른 이름(예: 빈 문자열 · application/octet-stream)이면 저장소가 거절하므로 맞춘 형식으로 다시 감싼다
+  const body = clip.blob.type === clip.contentType ? clip.blob : new Blob([clip.blob], { type: clip.contentType });
+  const up = await supabase.storage
+    .from(TITLE_VIDEO_BUCKET)
+    .upload(path, body, { contentType: clip.contentType, upsert: false, cacheControl: "3600" });
+  if (up.error) {
+    const m = up.error.message || "";
+    if (/exceed|too large|size/i.test(m)) throw new Error(`${label}이 너무 커요 — 50MB까지예요. 앱으로 촬영하면 작게 저장돼요`);
+    throw new Error(`${label}을 올리지 못했어요 — 인터넷 연결을 확인하고 다시 눌러 주세요 (${m || "업로드 실패"})`);
+  }
+  return path;
+}
+
+/** 지점장·관장: 치는 영상 · 받는 영상 올리기 → 도전 기록 (합격이면 서버가 바로 승급까지) */
 export function useRecordTitleAttempt() {
   const invalidate = useInvalidateTitle();
   return useMutation({
     mutationFn: async (input: RecordAttemptInput): Promise<RecordAttemptResult> => {
-      if (input.video.size > TITLE_VIDEO_MAX_BYTES) {
-        throw new Error(`영상이 너무 커요 (${formatMb(input.video.size)}) — 50MB까지예요. 앱으로 촬영하면 작게 저장돼요`);
+      const receive = input.receive ?? null;
+      for (const [clip, label] of [[input.hit, "치는 영상"], [receive, "받는 영상"]] as const) {
+        if (clip && clip.blob.size > TITLE_VIDEO_MAX_BYTES) {
+          throw new Error(`${label}이 너무 커요 (${formatMb(clip.blob.size)}) — 50MB까지예요. 앱으로 촬영하면 작게 저장돼요`);
+        }
       }
+      if (input.passed && !receive) throw new Error("합격은 받는 영상도 올려 주세요");
       // 올리기 전에 지금 상태를 한 번 더 — 다른 분이 이미 합격·마감 처리했으면 큰 영상을 헛되이 올리지 않는다
       const pre = await rpc("get_title_match_state", { _member_id: input.memberId });
       if (pre.error) throw new Error(errMessage(pre.error, "회원 상태를 확인하지 못했어요 — 다시 눌러 주세요"));
@@ -127,21 +157,13 @@ export function useRecordTitleAttempt() {
       const open = now.challenge?.status === "requested" ? now.challenge : null;
       if (!open && now.retryAt) throw new Error(`도전 ${now.maxAttempts}번이 끝나 지금은 기록할 수 없어요 — 화면을 새로고침해 주세요`);
       if (open && open.attempts.length >= now.maxAttempts) throw new Error("도전 횟수를 모두 썼어요 — 화면을 새로고침해 주세요");
-      const path = titleVideoPath(input.memberId, input.contentType);
-      // supabase-js 는 Blob 본문이면 contentType 옵션 대신 Blob 자신의 형식을 보낸다 — 형식이 비었거나
-      // 다른 이름(예: 빈 문자열 · application/octet-stream)이면 저장소가 거절하므로 맞춘 형식으로 다시 감싼다
-      const body = input.video.type === input.contentType ? input.video : new Blob([input.video], { type: input.contentType });
-      const up = await supabase.storage
-        .from(TITLE_VIDEO_BUCKET)
-        .upload(path, body, { contentType: input.contentType, upsert: false, cacheControl: "3600" });
-      if (up.error) {
-        const m = up.error.message || "";
-        if (/exceed|too large|size/i.test(m)) throw new Error("영상이 너무 커요 — 50MB까지예요. 앱으로 촬영하면 작게 저장돼요");
-        throw new Error(`영상을 올리지 못했어요 — 인터넷 연결을 확인하고 다시 눌러 주세요 (${m || "업로드 실패"})`);
-      }
-      const { data, error } = await rpc("record_title_match_attempt", {
+      // 하나씩 올린다 (휴대폰 데이터에서 둘이 서로 느려지지 않게)
+      const hitPath = await uploadTitleClip(input.memberId, input.hit, "hit", "치는 영상");
+      const receivePath = receive ? await uploadTitleClip(input.memberId, receive, "recv", "받는 영상") : null;
+      const { data, error } = await rpc("record_title_match_attempt_v2", {
         _member_id: input.memberId,
-        _video_path: path,
+        _hit_video_path: hitPath,
+        _receive_video_path: receivePath,
         _passed: input.passed,
         _note: input.note?.trim() || null,
       });

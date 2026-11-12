@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  TITLE_CLIPS,
+  attemptUploadBlocker,
   attemptsLeft,
   formatKoMonthDay,
   formatKoShortDateTime,
@@ -62,7 +64,25 @@ describe("parseTitleMatchState", () => {
     expect(s.challenge?.attempts.map((a) => a.no)).toEqual([1, 2]);
     expect(s.challenge?.attempts[1].note).toBeNull();
     expect(s.challenge?.attempts[0].note).toBe("가드");
+    // 예전 기록(영상 하나)은 받는 영상 없음
+    expect(s.challenge?.attempts[0].receiveVideoPath).toBeNull();
     expect(attemptsLeft(s)).toBe(1);
+  });
+
+  it("도전 영상 2개 — 받는 영상 경로를 읽는다 (2026-11-12)", () => {
+    const s = parse({
+      challenge: {
+        id: "c1",
+        status: "requested",
+        requestedAt: "2026-11-12T10:00:00Z",
+        attempts: [
+          { no: 1, passed: false, recordedAt: "2026-11-12T10:30:00Z", videoPath: "u/1-hit.mp4", receiveVideoPath: null },
+          { no: 2, passed: true, recordedAt: "2026-11-12T11:00:00Z", videoPath: "u/2-hit.mp4", receiveVideoPath: "u/2-recv.mp4" },
+          { no: 3, passed: false, recordedAt: "2026-11-12T11:30:00Z", videoPath: "u/3-hit.mp4", receiveVideoPath: "" },
+        ],
+      },
+    });
+    expect(s.challenge?.attempts.map((a) => a.receiveVideoPath)).toEqual([null, "u/2-recv.mp4", null]);
   });
 
   it("모르는 상태의 신청은 없는 것으로 본다", () => {
@@ -169,6 +189,12 @@ describe("영상", () => {
       }
     }
     expect(titleVideoPath(uid, "video/quicktime", new Date(), 0.1).endsWith(".mov")).toBe(true);
+    // 치는 영상 · 받는 영상 꼬리표도 검사식 안 (2026-11-12)
+    for (const tag of ["hit", "recv"] as const) {
+      const p = titleVideoPath(uid, "video/mp4", new Date("2026-10-14T10:05:33Z"), 0.5, tag);
+      expect(p).toMatch(new RegExp(`^${uid}/[A-Za-z0-9._-]{1,120}$`));
+      expect(p.endsWith(`-${tag}.mp4`)).toBe(true);
+    }
   });
 
   it("촬영 형식 — mp4 먼저, 안 되면 webm, 둘 다 안 되면 null", () => {
@@ -205,5 +231,29 @@ describe("기타", () => {
     expect(rules).toContain("도전은 3번까지");
     expect(rules).toContain("7일 뒤");
     for (const bad of ["벨트", "계급", "무조건", "확정 혜택", "자동 가산점"]) expect(rules).not.toContain(bad);
+    expect(rules).toContain("치는 영상 · 받는 영상");
+  });
+});
+
+describe("도전 영상 2개 — 치는 영상 · 받는 영상 (2026-11-12 대표님)", () => {
+  it("치는 영상은 늘 · 받는 영상은 합격일 때 꼭 (서버 v2 와 같은 규칙)", () => {
+    expect(attemptUploadBlocker(null, false, false)).toBe("치는 영상을 먼저 올려 주세요");
+    expect(attemptUploadBlocker(true, false, true)).toBe("치는 영상을 먼저 올려 주세요");
+    expect(attemptUploadBlocker(null, true, false)).toBe("합격·불합격을 골라 주세요");
+    expect(attemptUploadBlocker(true, true, false)).toBe("합격은 받는 영상도 올려 주세요");
+    expect(attemptUploadBlocker(true, true, true)).toBeNull();
+    // 3번 연속이 안 되면 받기까지 못 간다 — 불합격은 치는 영상만으로도
+    expect(attemptUploadBlocker(false, true, false)).toBeNull();
+    expect(attemptUploadBlocker(false, true, true)).toBeNull();
+  });
+
+  it("칸 이름 · 단추 글 (단추 2~5자)", () => {
+    expect([TITLE_CLIPS.hit.label, TITLE_CLIPS.receive.label]).toEqual(["치는 영상", "받는 영상"]);
+    for (const c of Object.values(TITLE_CLIPS)) {
+      expect(c.short.length).toBeGreaterThanOrEqual(2);
+      expect(c.short.length).toBeLessThanOrEqual(5);
+    }
+    expect(TITLE_CLIPS.hit.tag).toBe("hit");
+    expect(TITLE_CLIPS.receive.tag).toBe("recv");
   });
 });

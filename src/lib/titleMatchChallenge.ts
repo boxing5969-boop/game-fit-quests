@@ -8,8 +8,9 @@
  *   · 미션 = 완벽한 자세로 3번 연속 성공 → 똑같은 동작 3회 미트 받아주기
  *   · 3번 모두 아쉬우면 7일 뒤 다시 신청 · 신청은 레벨 10이 되자마자
  *
- * 정본은 DB — get_title_match_state · request_title_match_review · record_title_match_attempt
- * (마이그레이션 20261014150000_white_title_match_challenge.sql). 숫자(3번·7일)도 서버가 내려 준 값을 쓴다.
+ * 정본은 DB — get_title_match_state · request_title_match_review · record_title_match_attempt_v2
+ * (마이그레이션 20261014150000_white_title_match_challenge.sql · 영상 2개 20261112161952_title_match_two_videos.sql).
+ * 숫자(3번·7일)도 서버가 내려 준 값을 쓴다.
  * 여기는 화면이 쓰는 순수 계산과 안내 문구만 둔다 (테스트: titleMatchChallenge.test.ts).
  */
 
@@ -23,8 +24,10 @@ export interface TitleAttempt {
   passed: boolean;
   note: string | null;
   recordedAt: string;
-  /** 비공개 저장소 title-match-videos 안 경로 — 보려면 서명 주소를 받는다 */
+  /** 치는 영상 — 비공개 저장소 title-match-videos 안 경로, 보려면 서명 주소를 받는다 (2026-11-12 전 기록은 치기·받기 한 영상) */
   videoPath: string;
+  /** 받는 영상 (2026-11-12 부터 · 불합격이면 없을 수 있다) */
+  receiveVideoPath: string | null;
 }
 
 export interface TitleChallenge {
@@ -98,6 +101,7 @@ function parseAttempt(raw: unknown): TitleAttempt | null {
     note: typeof a.note === "string" && a.note.trim() ? a.note : null,
     recordedAt: str(a.recordedAt),
     videoPath: str(a.videoPath),
+    receiveVideoPath: str(a.receiveVideoPath) || null,
   };
 }
 
@@ -236,7 +240,7 @@ export function titleMissionRules(maxAttempts = DEFAULT_MAX_ATTEMPTS, retryDays 
   return [
     "타이틀매치 동작을 완벽한 자세로 3번 연속 성공",
     "이어서 똑같은 동작을 파트너에게 미트로 3번 받아주기",
-    `지점장님이 영상으로 찍어 앱에 올려요 · 도전은 ${maxAttempts}번까지`,
+    `지점장님이 치는 영상 · 받는 영상을 찍어 앱에 올려요 · 도전은 ${maxAttempts}번까지`,
     `${maxAttempts}번 모두 아쉬우면 ${retryDays}일 뒤 다시 신청해요`,
   ];
 }
@@ -278,15 +282,54 @@ export function videoContentType(file: { type?: string | null; name?: string | n
 }
 
 /**
- * 저장 경로 — "{회원 id}/{한국 날짜시각}-{임의 6자}.{확장자}".
- * DB record_title_match_attempt 가 '^회원id/[A-Za-z0-9._-]{1,120}$' 로 확인한다.
+ * 저장 경로 — "{회원 id}/{한국 날짜시각}-{임의 6자}[-hit|-recv].{확장자}".
+ * DB record_title_match_attempt(_v2) 가 '^회원id/[A-Za-z0-9._-]{1,120}$' 로 확인한다.
  */
-export function titleVideoPath(memberId: string, contentType: string, now: Date = new Date(), rand: number = Math.random()): string {
+export function titleVideoPath(
+  memberId: string,
+  contentType: string,
+  now: Date = new Date(),
+  rand: number = Math.random(),
+  tag?: "hit" | "recv",
+): string {
   const k = new Date(now.getTime() + KST_MS).toISOString(); // 2026-10-14T19:05:33.000Z (한국 시각 숫자)
   const stamp = k.slice(0, 19).replace(/[-:]/g, "").replace("T", "-"); // 20261014-190533
   const tail = Math.floor(Math.abs(rand) * 36 ** 6).toString(36).padStart(6, "0").slice(-6);
   const ext = EXT_BY_TYPE[contentType] ?? "mp4";
-  return `${memberId}/${stamp}-${tail}.${ext}`;
+  return `${memberId}/${stamp}-${tail}${tag ? `-${tag}` : ""}.${ext}`;
+}
+
+// ── 도전 영상 2개 — 치는 영상 · 받는 영상 (2026-11-12 대표님 「영상도 2개 올려야해 치는거 받는거」) ──
+
+export type TitleClipKind = "hit" | "receive";
+export const TITLE_CLIP_KINDS: readonly TitleClipKind[] = ["hit", "receive"];
+
+export const TITLE_CLIPS: Record<TitleClipKind, { label: string; short: string; hint: string; recorderHint: string; tag: "hit" | "recv" }> = {
+  hit: {
+    label: "치는 영상",
+    short: "치기",
+    hint: "완벽한 자세로 3번 연속 성공",
+    recorderHint: "완벽한 자세로 3번 연속 성공까지 찍어요",
+    tag: "hit",
+  },
+  receive: {
+    label: "받는 영상",
+    short: "받기",
+    hint: "파트너에게 미트로 3번 받아주기 · 합격이면 꼭",
+    recorderHint: "파트너에게 미트로 3번 받아주기까지 찍어요",
+    tag: "recv",
+  },
+};
+
+/**
+ * 올리기 전에 막히는 이유 (없으면 null) — 서버 record_title_match_attempt_v2 와 같은 규칙.
+ * 치는 영상은 늘 · 받는 영상은 합격일 때 꼭 (3번 연속이 안 되면 받기까지 못 가니 불합격은 치는 영상만으로도 된다).
+ */
+export function attemptUploadBlocker(verdict: boolean | null, hasHit: boolean, hasReceive: boolean): string | null {
+  if (!hasHit) return "치는 영상을 먼저 올려 주세요";
+  if (verdict === null) return "합격·불합격을 골라 주세요";
+  if (verdict && !hasReceive) return "합격은 받는 영상도 올려 주세요";
+  return null;
 }
 
 /** 앱 안 촬영 형식 — mp4(아이폰·최신 크롬)를 먼저, 안 되면 webm */

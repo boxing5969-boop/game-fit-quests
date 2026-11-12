@@ -19,8 +19,10 @@ import { cn } from "@/lib/utils";
 
 interface Props {
   open: boolean;
-  /** 위에 띄울 한 줄 — "닉네임 · 도전 2/3" */
+  /** 위에 띄울 한 줄 — "닉네임 · 도전 2/3 · 치는 영상" */
   title: string;
+  /** 아래 안내 한 줄 — 무엇을 어디까지 찍는지 (없으면 치기 → 받기 한 번에) */
+  hint?: string;
   onClose: () => void;
   onRecorded: (blob: Blob, contentType: string) => void;
 }
@@ -37,7 +39,7 @@ const cameraError = (e: unknown): string => {
   return "카메라를 열 수 없어요. 찍어 둔 영상을 골라 주세요.";
 };
 
-const VideoRecorderSheet = ({ open, title, onClose, onRecorded }: Props) => {
+const VideoRecorderSheet = ({ open, title, hint, onClose, onRecorded }: Props) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -248,7 +250,7 @@ const VideoRecorderSheet = ({ open, title, onClose, onRecorded }: Props) => {
         </button>
       </div>
       <p className="px-6 pb-4 text-center text-label text-white/60">
-        3번 연속 성공 → 미트 3번 받아주기까지 한 번에 찍어요 · {formatClock(RECORDER_MAX_SECONDS)}에서 자동으로 멈춰요
+        {hint ?? "3번 연속 성공 → 미트 3번 받아주기까지 한 번에 찍어요"} · {formatClock(RECORDER_MAX_SECONDS)}에서 자동으로 멈춰요
       </p>
     </div>,
     document.body,
