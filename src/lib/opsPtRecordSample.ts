@@ -29,8 +29,11 @@ const MEMBERS: PtRecMember[] = [
 const nameOf = (id: string) => MEMBERS.find((m) => m.user_id === id)?.name ?? "회원";
 const ticketOf = (id: string) => MEMBERS.find((m) => m.user_id === id)?.ticket ?? null;
 
-/** 예시 한 벌 — manage: 관리자 화면(지점 전체) / 코치 화면(본인) */
-export const buildPtSample = (today: string, manage: boolean): PtRecordData => {
+/**
+ * 예시 한 벌 — manage: 관리자 화면(지점 전체) / 코치 화면(본인)
+ *   auto: 자동 기록을 켠 지점처럼(2026-11-12 근무 1단계) — 어제 수업 하나가 서버가 넣은 자동 기록 · 이틀 안의 입장은 묻지 않음
+ */
+export const buildPtSample = (today: string, manage: boolean, opts: { auto?: boolean } = {}): PtRecordData => {
   const d = (n: number) => addDays(today, n);
   const at = (n: number, hm: string) => `${d(n)}T${hm}:00+09:00`;
   let seq = 0;
@@ -71,7 +74,12 @@ export const buildPtSample = (today: string, manage: boolean): PtRecordData => {
   const sessions: PtRecSession[] = [
     session("sample-m2", 0, "lesson"), // 오늘 수업 — 차감 확인 중
     session("sample-m5", 0, "self"), // 오늘 개인 운동
-    session("sample-m3", -1, "lesson"), // 어제 수업 — 차감 확인
+    session(
+      "sample-m3",
+      -1,
+      "lesson",
+      opts.auto ? { source: "auto", note: "자동 기록 — 브로제이 차감 + 그날 입장", created_at: at(0, "10:50") } : {},
+    ), // 어제 수업 — 차감 확인(자동 기록을 켠 예시는 서버가 넣은 기록)
     session("sample-m2", -2, "lesson"), // 옮겨 온 수업
     session("sample-m4", -3, "lesson"), // 차감 대기
     session("sample-m1", -4, "lesson", { no_entry_reason: "door_open" }), // 출석 체크 없는 수업(사유 있음)
@@ -101,12 +109,13 @@ export const buildPtSample = (today: string, manage: boolean): PtRecordData => {
     branch: "예시 지점",
     on: true,
     notify: true,
+    auto: !!opts.auto,
     started_on: d(-10),
     from: d(-24),
     to: d(31),
     today,
     manage,
-    can_set: false,
+    can_set: manage && !!opts.auto, // 자동 기록 예시는 관리자 예시에 대표님 켜기 · 끄기 칸까지
     me_staff: manage ? null : PT_SAMPLE_COACH,
     sample: true,
     coaches: [{ id: PT_SAMPLE_COACH, name: "예시 코치" }],
@@ -122,7 +131,8 @@ export type PtDemoAction =
   | { type: "save"; p: PtSavePayload }
   | { type: "void"; id: string }
   | { type: "review"; id: string }
-  | { type: "label"; member: string; label: string };
+  | { type: "label"; member: string; label: string }
+  | { type: "auto"; on: boolean };
 
 let demoSeq = 0;
 
@@ -130,6 +140,7 @@ let demoSeq = 0;
 export const applyPtDemo = (d: PtRecordData, a: PtDemoAction): PtRecordData => {
   const sessions = d.sessions ?? [];
   const today = d.today ?? "";
+  if (a.type === "auto") return { ...d, auto: a.on };
   if (a.type === "void") return { ...d, sessions: sessions.filter((s) => s.id !== a.id) };
   if (a.type === "review") {
     return { ...d, sessions: sessions.map((s) => (s.id === a.id ? { ...s, reviewed_at: new Date().toISOString() } : s)) };

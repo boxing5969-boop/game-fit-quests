@@ -2,6 +2,8 @@
  * 153운영본부 · 근무 — 하루 (관리: 지점장 · 대표님 · 회계매니저 / 코치님: 내 근무)
  *   대표님 규칙: 일찍 감 · 늦게 옴은 그날 인정 시간을 고친다 · 쉰 날 · 수업 대타 지정 · 연장 근무(대표님은 바로, 그 밖은 대표님 승인)
  *   코치님(manage=false)은 수업 대타 요청(지점장님 승인) · 연장 근무 신청(대표님 승인)만, 내가 낸 대기 중 요청만 되돌린다.
+ *   출근 확정(2026-11-12): 코치님은 「출근 신고」(와 있었어요 · 일찍 퇴근 · 쉬는 날 → 지점장님 승인) · 관리자는 맨 위에서 그날 신고를
+ *     시간 고쳐 승인 · 반려 — OpsDuty · src/lib/opsDuty.ts. 서버에 신고 함수가 없으면(duty 없음) 예전과 같다.
  */
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -9,8 +11,19 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 import { fmtDuration, hmToMin, type OpsDay, type OpsEntry, type OpsStaff } from "@/lib/opsWork";
+import { DUTY_BACK_DAYS, dutyDayDiff, type DutyData, type DutyKind } from "@/lib/opsDuty";
 import { useOpsEntryCancel, useOpsEntrySave } from "@/services/opsService";
+import type { DutyActions } from "@/services/opsDutyService";
+import { DutyDecideBox, DutyReportForm } from "./OpsDuty";
 import { OpsButton, OpsChip, OpsLabel, OpsSheet, StatusPill, fmtDay, opsInput } from "./OpsParts";
+
+/** 출근 확정 — 서버에 신고 함수가 있을 때만(useOpsDuty 의 available) */
+export interface OpsDayDuty {
+  data: DutyData;
+  actions: DutyActions;
+  today: string;
+  nowHm: string;
+}
 
 interface Props {
   open: boolean;
@@ -24,14 +37,18 @@ interface Props {
   staffById: Map<string, OpsStaff>;
   /** 그 달 기록 전체 — 이날 · 이 사람 것만 골라 보여 준다 */
   entries: OpsEntry[];
+  /** 출근 확정(코치 신고 · 관리자 승인) — 없으면 예전 화면 */
+  duty?: OpsDayDuty | null;
+  /** 코치 화면 — 「출근 신고」를 이 종류로 열기(맨 위 카드 · 알림 링크) */
+  initialDutyKind?: DutyKind | null;
 }
 
 const ENTRY_LABEL: Record<OpsEntry["kind"], string> = { adjust: "시간 고침", off: "쉰 날", overtime: "연장 근무", cover: "수업 대타" };
 const STATUS_LABEL: Record<OpsEntry["status"], string> = { pending: "승인 대기", approved: "반영", rejected: "반려", canceled: "취소" };
 
-type Mode = "hours" | "cover" | "overtime";
+type Mode = "hours" | "cover" | "overtime" | "duty";
 
-const OpsDaySheet = ({ open, onClose, staff, day, hq, manage, colleagues, staffById, entries }: Props) => {
+const OpsDaySheet = ({ open, onClose, staff, day, hq, manage, colleagues, staffById, entries, duty, initialDutyKind }: Props) => {
   const save = useOpsEntrySave();
   const cancel = useOpsEntryCancel();
   const [mode, setMode] = useState<Mode>("hours");
@@ -42,16 +59,26 @@ const OpsDaySheet = ({ open, onClose, staff, day, hq, manage, colleagues, staffB
   const [segIdx, setSegIdx] = useState(0);
   const [otMin, setOtMin] = useState(60);
 
+  // 코치님 출근 신고 — 출근 확인을 하는 카드 · 오늘부터 14일 앞까지
+  const canDuty =
+    !manage &&
+    !!duty?.data.available &&
+    !!staff?.checkin_required &&
+    !!day &&
+    day.date <= duty.today &&
+    dutyDayDiff(day.date, duty.today) <= DUTY_BACK_DAYS;
   useEffect(() => {
     if (!open || !day) return;
     const base = day.adjust ? day.adjust.minutes ?? 0 : day.scheduledMin;
     setH(String(Math.floor(base / 60)));
     setM(String(base % 60));
     setReason("");
-    setMode(manage ? "hours" : day.segs.some((s) => !s.coverFor) ? "cover" : "overtime");
+    const dutyFirst = canDuty && (!!initialDutyKind || day.status === "missing" || (day.status === "today" && !day.checkin && day.segs.length > 0));
+    setMode(manage ? "hours" : dutyFirst ? "duty" : day.segs.some((s) => !s.coverFor) ? "cover" : "overtime");
     setCoverTo("");
     setSegIdx(0);
     setOtMin(60);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, day, manage]);
 
   if (!staff || !day) return null;
@@ -70,6 +97,8 @@ const OpsDaySheet = ({ open, onClose, staff, day, hq, manage, colleagues, staffB
   const dayEntries = entries.filter(
     (e) => e.work_date === day.date && (e.staff_id === staff.id || e.cover_staff_id === staff.id) && e.status !== "canceled",
   );
+  // 관리자 — 그날 열린 코치 신고
+  const openDuty = manage && duty?.data.available ? duty.data.reports.filter((r) => r.status === "open" && r.staff_id === staff.id && r.work_date === day.date) : [];
 
   return (
     <OpsSheet
@@ -99,7 +128,16 @@ const OpsDaySheet = ({ open, onClose, staff, day, hq, manage, colleagues, staffB
         </div>
       </div>
 
+      {openDuty.length > 0 && duty && (
+        <div className="mt-4">
+          <DutyDecideBox reports={openDuty} scheduledMin={day.scheduledMin} actions={duty.actions} hq={hq} onDone={onClose} />
+        </div>
+      )}
+
       <div className="mt-4 flex gap-1.5 overflow-x-auto pb-0.5">
+        {canDuty && (
+          <OpsChip on={mode === "duty"} onClick={() => setMode("duty")}>출근 신고</OpsChip>
+        )}
         {manage && (
           <OpsChip on={mode === "hours"} onClick={() => setMode("hours")}>인정 시간</OpsChip>
         )}
@@ -108,6 +146,21 @@ const OpsDaySheet = ({ open, onClose, staff, day, hq, manage, colleagues, staffB
         )}
         <OpsChip on={mode === "overtime"} onClick={() => setMode("overtime")}>연장 근무</OpsChip>
       </div>
+
+      {mode === "duty" && canDuty && duty && (
+        <div className="mt-4">
+          <DutyReportForm
+            staff={staff}
+            day={day}
+            data={duty.data}
+            actions={duty.actions}
+            today={duty.today}
+            nowHm={duty.nowHm}
+            initialKind={initialDutyKind}
+            onDone={onClose}
+          />
+        </div>
+      )}
 
       {mode === "hours" && manage && (
         <>
