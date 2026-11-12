@@ -5,6 +5,8 @@
  *     → 순서: 요약 · 월별 · 요일별 그래프 → 받은 축하 → 축하 진행(횟수) · 153과 함께하며 · 이룬 것 → 날짜별 목록.
  *   2026-10-28 리디자인: 요약(주인공 하나) → 이번 주 → 다음 축하 → 월별 · 요일별(기록이 쌓이면) → 153과 함께하며 → 이룬 것 → 목록.
  *     머리글 부제목(월별 운동 시간 · 요일별 · 날짜별)은 뺐다 — 화면 이름만.
+ *   2026-11-12 대표님 "운동기록에 비교할 수 있는 대상 — 내 나이 평균 · 나는 평균에서 어느 정도 · 상위 몇 %"
+ *     → 153과 함께하며 다음에 '같은 나이와 비교'(PeerCompareCard — 국민체력100 나이 · 성별 백분위).
  */
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
@@ -12,6 +14,7 @@ import { AppPage, PageHeader } from "@/components/ui/rankingup";
 import AttendanceHistoryPanel from "@/components/attendance/AttendanceHistoryPanel";
 import RenewalStoryCard from "@/components/attendance/RenewalStoryCard";
 import AttendanceMilestoneCard from "@/components/attendance/AttendanceMilestoneCard";
+import PeerCompareCard from "@/components/attendance/PeerCompareCard";
 import HealthGainsCard from "@/components/home/HealthGainsCard";
 import AchievementCard from "@/components/profile/AchievementCard";
 
@@ -51,6 +54,8 @@ const MyAttendancePage = () => {
           <>
             {/* 건강 수명 · 심폐지구력 · 근력 · 행복도 (2026-10-22) */}
             <HealthGainsCard />
+            {/* 같은 나이와 비교 — 체지방률 · 악력 상위 % · 처음보다 오른 계단 (2026-11-12 대표님) */}
+            <PeerCompareCard />
             {/* 지금까지 이룬 것 (2026-10-21 대표님: "주평균 빼 주고 지금까지 이룬 것들을 보여 줘") */}
             <AchievementCard showInvite={false} />
           </>

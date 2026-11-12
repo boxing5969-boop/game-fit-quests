@@ -51,6 +51,8 @@ const DIRECT: [string, string][] = [
   // 출석 기록 · 50회마다 축하 (2026-10-21)
   ["이번 달 출석 몇 번 했는지 어디서 봐요", "att-record"],
   ["총 출석 수 확인하고 싶어요", "att-record"],
+  ["같은 나이 평균이랑 비교한 상위 몇 퍼센트는 어떻게 계산해요", "att-peer"],
+  ["나는 또래 중에 몇 번째예요", "att-peer"],
   ["출석 50회 보상 뭐예요", "rw-attendance-milestone"],
   ["100번 출석하면 뭐 줘요", "rw-attendance-milestone"],
   ["마일리지 어디에 써요", "rw-mileage-use"],
