@@ -855,6 +855,23 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 클라우드 작업공간(데이터센터 IP)에서는 유튜브가 영상 재생을 막는다('Video unavailable') — 실제 재생 확인은 체육관 · 사무실 기기에서.
 - 실제 재생 확인하는 법(11-12): 사무실 PC 크롬에서 myboxer153.com 을 연 탭에 IFrame API 플레이어를 `youtube-nocookie` 호스트 · 음소거로 띄우고 id 를 차례로 `loadVideoById` — 재생되면 통과, `onError`(150 = 퍼가기 막힘)면 뺀다. nocookie 라 유튜브 시청 기록에 남지 않는다.
 
+### 153 굿즈 사전예약 — 플리스 집업 (2026-11-12 대표님 「디자인 마무리 하고 모델에 입혀서 상세페이지 처럼 만들어줘 마이복서에 올려서 회원님들에게 판매신청받고 … 유효 회원님들에게 전체 문자 보내서 판매하게 상세페이지 링크 만들어줘」)
+
+39,000원 · 옷은 검정 플리스 하나, 인쇄 색만 흰색 / 진회색 고르기 · 신청 뒤 다니는 지점 데스크에서 카드 결제 · 마감 2주(11/26 목) · 결제한 신청만 제작. 디자인 = 가슴 153 심볼 3.8cm + 등판 BOXER / 153 / BOXING GYM 가로 22cm(컷팅 필름 · 획 1.5mm 이상) — 인쇄 파일은 대표님 대화의 153_final_thick_print_files.zip.
+
+| 파일 | 역할 |
+|---|---|
+| [public/goods/fleece/index.html](public/goods/fleece/index.html) | 상세페이지(정적 HTML, `/goods/fleece` — `_redirects`). 문자 · 카카오 링크 미리보기(og.jpg) · 로그인 없이 신청(이름 · 휴대폰 · 지점 · 동의). 같은 브라우저에 마이복서153 로그인이 남아 있으면(localStorage `sb-whnczhxyjmyywhlfbgsd-auth-token`, 만료 전) 그 계정으로 채우고 '내 신청' · 결제 전 취소. 앱 카드에서 열면 `?from=app` → source app. 서버에 닿지 않으면(미리보기 주소 · 적용 전) 같은 값의 기본값으로 그린다 |
+| `public/goods/fleece/img/*.webp` | 모델 컷 5장(제미나이로 만든 AI 예시 — 페이지에 그렇게 적었다 · 가슴 로고는 정확한 벡터로 다시 얹음) · 앞/뒤 평면 컷(업체 사진 합성) · 인쇄 확대 |
+| [supabase/migrations/20261112202433_goods_preorder.sql](supabase/migrations/20261112202433_goods_preorder.sql) | `goods_campaigns`(상품 한 줄 — 가격 · 색 · 사이즈 · 마감, 바꿀 땐 update) · `goods_orders` · 함수 6개(아래). 표는 anon · authenticated 모두 막음 |
+| [src/lib/goodsPreorder.ts](src/lib/goodsPreorder.ts) · [services/goodsService.ts](src/services/goodsService.ts) | 상태 이름 · 다음 단계(서버 허용 변화와 같게) · 색×사이즈 집계 · 업체 발주 문구 · 마감 날짜(한국 날짜) / 서버 호출 |
+| [components/admin/GoodsOrdersPanel.tsx](src/components/admin/GoodsOrdersPanel.tsx) | 운영진 신청 관리 — 전체관리자 대시보드 '굿즈' 탭 · 지점장/코치 홈 '굿즈 신청' 카드(`/manager?tab=goods`, 열린 동안 · 마감 뒤 45일). 결제 완료 · 받음 · 취소 · 되돌리기 · 옵션/메모 · 색×사이즈(결제 기준 / 신청 포함) · 업체 발주 문구 복사 · 링크 복사. `?demo=1` = 예시 |
+| [components/goods/GoodsNudgeCard.tsx](src/components/goods/GoodsNudgeCard.tsx) | 홈 안내 카드(만족도 조사 카드 아래) — 열린 동안만, 결제 전이면 '○일까지 ○○점 데스크에서 결제', 결제를 마치면 사라짐 |
+
+- 서버 함수: `goods_campaign_info`(anon) · `goods_order_apply`(anon · 회원 — 로그인이면 그 계정, 아니면 같은 휴대폰 번호의 앱 계정에 잇는다 · **답에 회원인지 싣지 않는다** · 2분 안 같은 신청 = 같은 줄 · 번호당 결제 전+결제 5건 · 회원과 안 이어지는 신청이 10분에 60건이면 잠깐 BUSY) · `goods_my_page`(회원) · `goods_order_cancel`(회원 — 결제 전 · 마감 전) · `goods_admin_orders` / `goods_admin_update`(대표님 · 관리자 = 전 지점, 지점장 · 코치 · is_staff = 자기 지점 — `_goods_staff_scope`). 상태 applied → paid → delivered, canceled ↔ applied.
+- 시험: 로컬 Postgres 16 에 운영 정의를 본뜬 뼈대(역할 · auth.uid() · has_role · branches · profiles · Supabase 기본 권한) + 이 마이그레이션(두 번 적용) → 66개(표 직접 읽기 · 쓰기 막힘 · 안쪽 함수 막힘 · 검사 11가지 · 번호로 잇기 · 두 번 눌림 · 5건 · 회원 채우기 · 내 신청 · 취소 규칙 · 지점 범위 · 상태 변화 · 옵션 잠금 · 마감 · BUSY 중에도 회원은 됨) / vitest goodsPreorder 9개 / 상세페이지는 플레이라이트로 손님 · 로그인 흐름(가짜 서버 답).
+- 남은 일(대표님 확인): 사이즈(업체 확인 전 M · L · XL · 2XL — `update goods_campaigns set sizes = …`) · 마감일 · 문자 발송(153OS, 대표님 승인 뒤) · 개인정보 보관 '사전예약이 끝나고 6개월 뒤 지움'(지우는 예약은 아직 없음 — 2027-05 전에 만든다).
+
 ### Claude API 크레딧 (2026-10-15 연결)
 
 - Console 조직 **153복싱짐** — Max 플랜 월 $200 크레딧 (매달 16일 지급). 조직 월 한도 $500, 워크스페이스 한도는 매달 1일(UTC) 초기화.
