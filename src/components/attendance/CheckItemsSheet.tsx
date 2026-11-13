@@ -4,10 +4,14 @@
  *   검사 · 보낼 값은 lib/calendarChecks.ts, 저장은 services/calendarCheckService.ts. 달력(WorkoutCalendar)이 처음 열 때 받아 온다.
  *   (2-2 · 2026-11-13) 맨 아래 「저녁 체크 알림」 — 켠 회원만 저녁 8시 한 번, 채운 것이 있고 아직 남았을 때만
  *   '오늘 2개 채웠어요 · 하나 더 채우면 금색 별' (하나도 안 채운 날 · 다 채운 날은 안 보냄 — set_my_calendar_prefs).
+ *   (3-4 · 2026-11-14 대표님 「진행」) 언제? = 매일 · 요일 · 주 n번(아무 날이나 — 금색 별에는 안 셈) ·
+ *   체크마다 '이번 주 2/3번' · 'n주째 이어 가요' · '가장 길게 n주' (get_my_habits — 달성률 · 놓친 날은 없음) ·
+ *   「마감 있는 할 일」 — 넣기(30자 · 오늘 · 내일 · 이번 주 일요일 · 날짜) · 끝냈어요 · 고치기 · 빼기 · 마감이 지나면 '다음에 해도 돼요'.
+ *   습관 · 할 일 글 · 계산은 lib/memberHabits.ts.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ChevronRight } from "lucide-react";
+import { Check, ChevronRight, Pencil } from "lucide-react";
 
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Switch } from "@/components/ui/switch";
@@ -21,12 +25,42 @@ import {
   draftFromItem,
   emptyCheckDraft,
   itemLabel,
+  scheduleOf,
   type CheckItem,
   type CheckItemDraft,
+  type CheckSchedule,
 } from "@/lib/calendarChecks";
+import {
+  LATER_HINT,
+  LATER_TITLE,
+  TODO_EMPTY,
+  TODO_EXAMPLES,
+  TODO_OPEN_MAX,
+  TODO_TITLE_MAX,
+  WEEK_GOAL_MAX,
+  scheduleLabel,
+  streakParts,
+  todoDueLabel,
+  todoError,
+  todoGroups,
+  todoQuickDues,
+  weekGoalHint,
+  weekLine,
+  type HabitItem,
+  type MemberTodo,
+} from "@/lib/memberHabits";
 import { PROMISE_WEEK, toggleDay, weekdaysLabel } from "@/lib/promise153";
 import { cn } from "@/lib/utils";
-import { useRemoveCheckItem, useSaveCheckItem, useSetCalendarNudge, useSetWeeklyRecap } from "@/services/calendarCheckService";
+import {
+  useMyHabits,
+  useRemoveCheckItem,
+  useRemoveTodo,
+  useSaveCheckItem,
+  useSaveTodo,
+  useSetCalendarNudge,
+  useSetTodoDone,
+  useSetWeeklyRecap,
+} from "@/services/calendarCheckService";
 import type { CalRecapPref } from "@/lib/calendarTogether";
 
 export interface CheckItemsSheetProps {
@@ -42,6 +76,260 @@ export interface CheckItemsSheetProps {
   onOpenFeed?: () => void;
 }
 
+const kstToday = (): string => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(new Date());
+
+const SCHEDULES: ReadonlyArray<{ key: CheckSchedule; label: string }> = [
+  { key: "daily", label: "매일" },
+  { key: "days", label: "요일" },
+  { key: "goal", label: "주 n번" },
+];
+
+const chipCls = (on: boolean) =>
+  cn("h-9 rounded-full border px-3 text-label font-bold active:scale-95", on ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-foreground");
+
+/** 마감 고르기 — 오늘 · 내일 · 이번 주 일요일 · 날짜 */
+const TodoDuePicker = ({ value, today, onChange }: { value: string | null; today: string; onChange: (d: string) => void }) => {
+  const quick = todoQuickDues(today);
+  const custom = !!value && !quick.some((q) => q.date === value);
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {quick.map((q) => (
+        <button key={q.key} type="button" aria-pressed={value === q.date} onClick={() => onChange(q.date)} className={chipCls(value === q.date)}>
+          {q.label}
+        </button>
+      ))}
+      <label className={cn("relative inline-flex cursor-pointer items-center", chipCls(custom))}>
+        {custom && value ? todoDueLabel(value, today) : "날짜"}
+        <input
+          type="date"
+          value={value ?? ""}
+          min={today}
+          onChange={(e) => e.target.value && onChange(e.target.value)}
+          aria-label="마감 날짜 고르기"
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+        />
+      </label>
+    </div>
+  );
+};
+
+/** 할 일 한 줄 — 동그라미 = 끝냈어요 · 연필 = 고치기(이름 · 마감 · 빼기) */
+const TodoRow = ({ t, today, busy, onDone, onEdit }: { t: MemberTodo; today: string; busy: boolean; onDone: (done: boolean) => void; onEdit: () => void }) => {
+  const done = !!t.doneOn;
+  return (
+    <li className="flex items-center gap-1">
+      <button
+        type="button"
+        disabled={busy}
+        aria-pressed={done}
+        aria-label={done ? `${t.title} — 끝냈어요 (누르면 되돌리기)` : `${t.title} — 끝냈어요`}
+        onClick={() => onDone(!done)}
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full active:scale-90 disabled:opacity-50"
+      >
+        <span
+          className={cn(
+            "flex h-6 w-6 items-center justify-center rounded-full border-2",
+            done ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/50",
+          )}
+        >
+          {done && <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden />}
+        </span>
+      </button>
+      <span className="min-w-0 flex-1 py-2">
+        <span className={cn("block text-body font-bold leading-snug", done ? "text-muted-foreground line-through" : "text-foreground")}>{t.title}</span>
+        <span className={cn("block text-label tabular-nums", done ? "text-muted-foreground" : t.dueOn === today ? "font-bold text-primary" : "text-muted-foreground")}>
+          {done ? "끝냈어요" : todoDueLabel(t.dueOn, today)}
+        </span>
+      </span>
+      {!done && (
+        <button
+          type="button"
+          onClick={onEdit}
+          aria-label={`${t.title} 고치기`}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted-foreground active:bg-muted"
+        >
+          <Pencil className="h-4 w-4" aria-hidden />
+        </button>
+      )}
+    </li>
+  );
+};
+
+/** 마감 있는 할 일 — 넣기 · 고치기 · 끝냈어요 · 빼기 */
+const TodoSection = ({ todos, today }: { todos: readonly MemberTodo[]; today: string }) => {
+  const saveTodo = useSaveTodo();
+  const doneTodo = useSetTodoDone();
+  const removeTodo = useRemoveTodo();
+  const [title, setTitle] = useState("");
+  const [due, setDue] = useState<string | null>(today);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState(false);
+  const g = useMemo(() => todoGroups(todos, today), [todos, today]);
+  const openCount = g.upcoming.length + g.later.length;
+  const editing = editId ? todos.find((t) => t.id === editId) ?? null : null;
+  const busy = saveTodo.isPending || removeTodo.isPending;
+
+  const reset = () => {
+    setTitle("");
+    setDue(today);
+    setEditId(null);
+    setError(null);
+    setConfirmRemove(false);
+  };
+  const startEdit = (t: MemberTodo) => {
+    setEditId(t.id);
+    setTitle(t.title);
+    setDue(t.dueOn);
+    setError(null);
+    setConfirmRemove(false);
+  };
+  const submit = () => {
+    const e = todoError(title, due, today, editing ? editing.dueOn : undefined);
+    if (e || !due) return setError(e ?? "마감일을 골라 주세요");
+    saveTodo.mutate(
+      { title, due, id: editId },
+      {
+        onSuccess: () => {
+          toast.success(editId ? "고쳤어요" : `할 일을 넣었어요 · ${todoDueLabel(due, today)}`);
+          reset();
+        },
+        onError: (err) => setError((err as Error).message),
+      },
+    );
+  };
+  const onRemove = () => {
+    if (!editId) return;
+    if (!confirmRemove) return setConfirmRemove(true);
+    removeTodo.mutate(editId, {
+      onSuccess: () => {
+        toast.success("뺐어요");
+        reset();
+      },
+      onError: (err) => setError((err as Error).message),
+    });
+  };
+  const toggleDone = (t: MemberTodo, done: boolean) =>
+    doneTodo.mutate(
+      { id: t.id, done, today },
+      {
+        onSuccess: () => {
+          if (done) toast.success("끝냈어요");
+        },
+        onError: (err) => toast.error((err as Error).message),
+      },
+    );
+
+  const canAdd = !editId && openCount < TODO_OPEN_MAX;
+
+  return (
+    <section aria-label="마감 있는 할 일" className="rounded-2xl border border-border bg-card p-4">
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className="text-body font-black text-foreground">마감 있는 할 일</h3>
+        {openCount > 0 && <span className="text-label tabular-nums text-muted-foreground">{openCount}개</span>}
+      </div>
+
+      {g.upcoming.length > 0 && (
+        <ul className="mt-1">
+          {g.upcoming.map((t) => (
+            <TodoRow key={t.id} t={t} today={today} busy={doneTodo.isPending} onDone={(d) => toggleDone(t, d)} onEdit={() => startEdit(t)} />
+          ))}
+        </ul>
+      )}
+
+      {g.later.length > 0 && (
+        <div className="mt-3 rounded-xl bg-muted/60 px-3 py-2">
+          <p className="text-label font-bold text-foreground">{LATER_TITLE}</p>
+          <p className="text-label text-muted-foreground">{LATER_HINT}</p>
+          <ul className="mt-1">
+            {g.later.map((t) => (
+              <TodoRow key={t.id} t={t} today={today} busy={doneTodo.isPending} onDone={(d) => toggleDone(t, d)} onEdit={() => startEdit(t)} />
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {g.done.length > 0 && (
+        <ul className="mt-2">
+          {g.done.map((t) => (
+            <TodoRow key={t.id} t={t} today={today} busy={doneTodo.isPending} onDone={(d) => toggleDone(t, d)} onEdit={() => startEdit(t)} />
+          ))}
+        </ul>
+      )}
+
+      {(canAdd || editId) && (
+        <div className={cn("space-y-2.5", todos.length > 0 ? "mt-3 border-t border-border pt-3" : "mt-2")}>
+          {todos.length === 0 && !editId && (
+            <>
+              <p className="text-label text-muted-foreground">{TODO_EMPTY}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {TODO_EXAMPLES.map((ex) => (
+                  <button key={ex} type="button" onClick={() => setTitle(ex)} className={chipCls(title === ex)}>
+                    {ex}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+          {editId && <p className="text-label font-bold text-muted-foreground">할 일 고치기</p>}
+          <input
+            value={title}
+            maxLength={TODO_TITLE_MAX + 5}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              setError(null);
+            }}
+            placeholder="예) 수강권 연장 상담"
+            aria-label="할 일"
+            className="h-12 w-full rounded-xl border border-border bg-background px-4 text-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+          <TodoDuePicker
+            value={due}
+            today={today}
+            onChange={(d) => {
+              setDue(d);
+              setError(null);
+            }}
+          />
+          {error && (
+            <p role="alert" className="text-label font-bold text-destructive">
+              {error}
+            </p>
+          )}
+          <div className="flex gap-2">
+            {editId && (
+              <>
+                <button type="button" onClick={reset} className="h-12 flex-1 rounded-xl bg-muted text-body font-bold text-foreground active:scale-[0.98]">
+                  그만
+                </button>
+                <button
+                  type="button"
+                  onClick={onRemove}
+                  disabled={busy}
+                  className="h-12 flex-1 rounded-xl border border-border text-body font-bold text-muted-foreground active:scale-[0.98] disabled:opacity-50"
+                >
+                  {confirmRemove ? "한 번 더" : "빼기"}
+                </button>
+              </>
+            )}
+            <button
+              type="button"
+              onClick={submit}
+              disabled={busy || !title.trim() || !due}
+              className="h-12 flex-[2] rounded-xl bg-foreground text-body font-black text-background active:scale-[0.98] disabled:opacity-40"
+            >
+              {saveTodo.isPending ? "저장하는 중…" : editId ? "이렇게 고칠게요" : "할 일 넣기"}
+            </button>
+          </div>
+        </div>
+      )}
+      {!canAdd && !editId && openCount >= TODO_OPEN_MAX && (
+        <p className="mt-2 text-label text-muted-foreground">할 일은 {TODO_OPEN_MAX}개까지 둘 수 있어요 · 끝내면 새로 넣을 수 있어요</p>
+      )}
+    </section>
+  );
+};
+
 const CheckItemsSheet = ({ open, onOpenChange, items, nudge, recap, onOpenFeed }: CheckItemsSheetProps) => {
   const [draft, setDraft] = useState<CheckItemDraft>(emptyCheckDraft);
   const [editId, setEditId] = useState<string | null>(null);
@@ -51,8 +339,14 @@ const CheckItemsSheet = ({ open, onOpenChange, items, nudge, recap, onOpenFeed }
   const remove = useRemoveCheckItem();
   const nudgeM = useSetCalendarNudge();
   const recapM = useSetWeeklyRecap();
+  // (3-4) 이번 주 · 이어 간 주 · 할 일 — 시트를 열 때만 받는다 (함수가 없으면 꺼짐 → 예전 시트 그대로)
+  const habitsQ = useMyHabits(open);
+  const habits = habitsQ.data?.on ? habitsQ.data : null;
+  const today = habits?.today ?? kstToday();
+  const habitOf = useMemo(() => new Map<string, HabitItem>((habits?.items ?? []).map((h) => [h.id, h])), [habits]);
   const full = items.length >= CHECK_ITEM_MAX;
   const showForm = editId != null || !full;
+  const schedule = scheduleOf(draft);
 
   useEffect(() => {
     if (!open) return;
@@ -74,7 +368,8 @@ const CheckItemsSheet = ({ open, onOpenChange, items, nudge, recap, onOpenFeed }
       return;
     }
     try {
-      await save.mutateAsync({ draft, id: editId });
+      const prev = editId ? items.find((i) => i.id === editId) : null;
+      await save.mutateAsync({ draft, id: editId, prevIds: items.map((i) => i.id), hadGoal: !!prev?.weekGoal });
       toast.success(editId ? "체크를 고쳤어요" : "나만의 체크를 만들었어요 · 오늘부터 달력에서 체크해요");
       setDraft(emptyCheckDraft());
       setEditId(null);
@@ -103,6 +398,7 @@ const CheckItemsSheet = ({ open, onOpenChange, items, nudge, recap, onOpenFeed }
 
   const busy = save.isPending || remove.isPending;
   const hasTarget = draft.target.trim() !== "";
+  const goal = draft.goal ?? 3;
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -114,35 +410,56 @@ const CheckItemsSheet = ({ open, onOpenChange, items, nudge, recap, onOpenFeed }
         <div className="space-y-5 overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom,0px)+16px)]">
           {items.length > 0 && (
             <ul className="divide-y divide-border rounded-2xl border border-border bg-card" aria-label="지금 있는 체크">
-              {items.map((i) => (
-                <li key={i.id} className="flex items-center gap-2 px-4 py-3">
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-body font-bold text-foreground">{itemLabel(i)}</span>
-                    <span className="block text-label text-muted-foreground">{i.weekdays ? `매주 ${weekdaysLabel(i.weekdays)}` : "매일"}</span>
-                  </span>
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => {
-                      setEditId(i.id);
-                      setDraft(draftFromItem(i));
-                      setError(null);
-                      setConfirmId(null);
-                    }}
-                    className="h-9 shrink-0 rounded-full bg-muted px-3 text-label font-bold text-foreground active:scale-95 disabled:opacity-50"
-                  >
-                    고치기
-                  </button>
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => void onRemove(i.id)}
-                    className="h-9 shrink-0 rounded-full px-3 text-label font-bold text-muted-foreground active:bg-muted disabled:opacity-50"
-                  >
-                    {confirmId === i.id ? "한 번 더" : "빼기"}
-                  </button>
-                </li>
-              ))}
+              {items.map((i) => {
+                const h = habitOf.get(i.id);
+                const week = h ? weekLine(h.week) : null;
+                const streak = h ? streakParts(h.nowWeeks, h.bestWeeks) : [];
+                const met = !!h && h.week.goal > 0 && h.week.done >= h.week.goal;
+                return (
+                  <li key={i.id} className="flex items-center gap-2 px-4 py-3">
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-body font-bold text-foreground">{itemLabel(i)}</span>
+                      <span className="block text-label text-muted-foreground">{scheduleLabel(i)}</span>
+                      {(week || streak.length > 0) && (
+                        <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-label font-bold tabular-nums">
+                          {week && (
+                            <span className={cn("inline-flex items-center gap-0.5", met ? "text-primary" : "text-foreground")}>
+                              {met && <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden />}
+                              {week}
+                            </span>
+                          )}
+                          {streak.map((s) => (
+                            <span key={s} className="whitespace-nowrap text-reward">
+                              {s}
+                            </span>
+                          ))}
+                        </span>
+                      )}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => {
+                        setEditId(i.id);
+                        setDraft(draftFromItem(i));
+                        setError(null);
+                        setConfirmId(null);
+                      }}
+                      className="h-9 shrink-0 rounded-full bg-muted px-3 text-label font-bold text-foreground active:scale-95 disabled:opacity-50"
+                    >
+                      고치기
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void onRemove(i.id)}
+                      className="h-9 shrink-0 rounded-full px-3 text-label font-bold text-muted-foreground active:bg-muted disabled:opacity-50"
+                    >
+                      {confirmId === i.id ? "한 번 더" : "빼기"}
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           )}
 
@@ -217,28 +534,73 @@ const CheckItemsSheet = ({ open, onOpenChange, items, nudge, recap, onOpenFeed }
               </div>
 
               <div>
-                <p className="text-label font-bold text-muted-foreground">언제? (안 고르면 매일)</p>
-                <div className="mt-2 grid grid-cols-7 gap-1.5">
-                  {PROMISE_WEEK.map((w) => {
-                    const on = draft.weekdays.includes(w.day);
-                    return (
+                <p className="text-label font-bold text-muted-foreground">언제?</p>
+                {/* (3-4) 매일 · 요일 · 주 n번 — 주 n번은 서버에 기능이 있을 때만 */}
+                <div role="radiogroup" aria-label="언제 체크하나" className={cn("mt-2 grid gap-1 rounded-xl bg-muted/70 p-1", habits ? "grid-cols-3" : "grid-cols-2")}>
+                  {SCHEDULES.filter((sc) => sc.key !== "goal" || !!habits || schedule === "goal").map((sc) => (
+                    <button
+                      key={sc.key}
+                      type="button"
+                      role="radio"
+                      aria-checked={schedule === sc.key}
+                      onClick={() => set({ schedule: sc.key })}
+                      className={cn(
+                        "h-10 rounded-lg text-label font-black transition-all active:scale-[0.98]",
+                        schedule === sc.key ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground",
+                      )}
+                    >
+                      {sc.label}
+                    </button>
+                  ))}
+                </div>
+                {schedule === "days" && (
+                  <div className="mt-2 grid grid-cols-7 gap-1.5">
+                    {PROMISE_WEEK.map((w) => {
+                      const on = draft.weekdays.includes(w.day);
+                      return (
+                        <button
+                          key={w.day}
+                          type="button"
+                          aria-pressed={on}
+                          onClick={() => set({ weekdays: toggleDay(draft.weekdays, w.day) })}
+                          className={cn(
+                            "flex h-11 items-center justify-center rounded-xl border text-body font-bold active:scale-95",
+                            on ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground",
+                          )}
+                        >
+                          {w.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                {schedule === "goal" && (
+                  <div className="mt-2 grid grid-cols-6 gap-1.5" role="radiogroup" aria-label="일주일에 몇 번">
+                    {Array.from({ length: WEEK_GOAL_MAX }, (_, k) => k + 1).map((n) => (
                       <button
-                        key={w.day}
+                        key={n}
                         type="button"
-                        aria-pressed={on}
-                        onClick={() => set({ weekdays: toggleDay(draft.weekdays, w.day) })}
+                        role="radio"
+                        aria-checked={goal === n}
+                        onClick={() => set({ goal: n })}
                         className={cn(
-                          "flex h-11 items-center justify-center rounded-xl border text-body font-bold active:scale-95",
-                          on ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground",
+                          "flex h-11 items-center justify-center rounded-xl border text-body font-bold tabular-nums active:scale-95",
+                          goal === n ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground",
                         )}
                       >
-                        {w.label}
+                        {n}번
                       </button>
-                    );
-                  })}
-                </div>
+                    ))}
+                  </div>
+                )}
                 <p className="mt-1.5 text-label text-muted-foreground">
-                  {draft.weekdays.length === 0 || draft.weekdays.length === 7 ? "매일 체크해요" : `매주 ${weekdaysLabel(draft.weekdays)} 체크해요`}
+                  {schedule === "goal"
+                    ? weekGoalHint(goal)
+                    : schedule === "days" && draft.weekdays.length > 0 && draft.weekdays.length < 7
+                      ? `매주 ${weekdaysLabel(draft.weekdays)} 체크해요`
+                      : schedule === "days"
+                        ? "체크할 요일을 골라 주세요"
+                        : "매일 체크해요"}
                 </p>
               </div>
 
@@ -273,6 +635,9 @@ const CheckItemsSheet = ({ open, onOpenChange, items, nudge, recap, onOpenFeed }
               </div>
             </section>
           )}
+
+          {/* 마감 있는 할 일 (3-4) */}
+          {habits && <TodoSection todos={habits.todos} today={today} />}
 
           {/* 저녁 체크 알림 — 잘한 것만 (2-2) */}
           {nudge && (

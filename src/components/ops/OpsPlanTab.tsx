@@ -17,6 +17,9 @@
  *     · 답할 초대 카드 · 초대 응답 시트 · 알림 링크 ?plan=<id>(&d=) = 내 일정이면 고치기, 초대면 답하기
  *     · 코치님도 「팀」 보기(사람 × 월~일 — 다른 분은 '바쁨'만, 제목 없이) · 시간 찾기 · 캘린더 켜고 끄기(DB) · 기본 알림
  *     · 내 일정 보기에 153 일정(회원 달력) · 정기 회의(사무실)를 겹쳐 그리기 · 하루 보기 '팀' 줄 · 이번 주 시간 · 휴무 → 대타 요청
+ *   캘린더 3-4(2026-11-14 「진행」 — 할 일, 조각은 OpsTasks.tsx):
+ *     · 보기 고르기 마지막 칸 「할 일」(오늘 고정 업무 · 하는 중 · 할 일 · 끝 · 관리자 맡긴 일 · 이번 주 팀) · 알림 링크 ?todo=1 = 할 일 보기
+ *     · 월 보기 칸에 할 일 마감 점(캘린더 '할 일 마감'으로 끄기) · 고른 날 카드에 그날 마감 할 일
  */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -32,6 +35,7 @@ import { kstYmd } from "@/lib/officeSchedule";
 import { OPS_WEEKDAY, weekdayOf } from "@/lib/opsWork";
 import {
   BUSY_META,
+  MARK_META,
   PLAN_AGENDA_DAYS as AGENDA_DAYS,
   PLAN_KINDS,
   PLAN_KIND_META,
@@ -84,6 +88,8 @@ import {
 import { readOpsBranch, saveOpsBranch, shortBranch } from "@/services/opsService";
 import { useOpsPlanSave, useOpsPlansRange } from "@/services/opsPlanService";
 import { useOpsCalEvents } from "@/services/calendarEventService";
+import { useOpsTasksDay } from "@/services/opsTaskService";
+import { TASK_STATUS_META, dueByDay, type OpsTask } from "@/lib/opsTasks";
 import { useOfficeMe, useOfficeSchedules } from "@/services/officeService";
 import OpsPlanSheet, { type PlanSheetTarget } from "./OpsPlanSheet";
 import { MarkLegend, MonthSwitcher, PlanMonthGrid } from "./OpsPlanMonth";
@@ -103,6 +109,7 @@ import { PlanScopeAsk, PlanSearchSheet, PlanToolsRow, PlanTrashSheet } from "./O
 import OpsMeetToday from "./OpsMeetToday";
 import OpsCalEvents from "./OpsCalEvents";
 import OpsPhoneCalendar from "./OpsPhoneCalendar";
+import { TaskSheet, TaskTeamCard, TasksView, type TaskSheetTarget } from "./OpsTasks";
 import { OpsChip, kstToday } from "./OpsParts";
 
 const card = "rounded-2xl border border-border bg-card p-5";
@@ -132,6 +139,7 @@ const MINE_VIEWS: ReadonlyArray<{ key: MineView; label: string }> = [
   { key: "month", label: "월" },
   { key: "list", label: "목록" },
   { key: "year", label: "연간" },
+  { key: "todo", label: "할 일" },
 ];
 const VIEW_KEY = "153plan:view";
 const readView = (): MineView => {
@@ -157,13 +165,15 @@ const OpsPlanTab = () => {
   const thisMonth = ymOf(today);
   const [params, setParams] = useSearchParams();
   const linkDay = params.get("d");
+  // (3-4) 할 일 알림 링크 ?todo=1 — 내 일정 「할 일」 보기로 (기기 기억은 그대로)
+  const linkTodo = params.get("todo") === "1";
   const [branch, setBranchState] = useState<string | null>(readOpsBranch);
   const [period, setPeriodState] = useState<Period>(readPeriod);
-  const [mineView, setMineViewState] = useState<MineView>(() => (isDay(linkDay) ? "day" : readView()));
+  const [mineView, setMineViewState] = useState<MineView>(() => (isDay(linkDay) ? "day" : linkTodo ? "todo" : readView()));
   const [day, setDay] = useState(() => (isDay(linkDay) ? linkDay : today));
   const [ym, setYm] = useState(() => ymOf(isDay(linkDay) ? linkDay : today));
   // 처음엔 관리자 = 팀 일정, 코치님 = 내 일정 (알림 링크면 내 일정)
-  const [view, setView] = useState<"team" | "mine" | null>(() => (isDay(linkDay) ? "mine" : null));
+  const [view, setView] = useState<"team" | "mine" | null>(() => (isDay(linkDay) || linkTodo ? "mine" : null));
   const [sheet, setSheet] = useState<PlanSheetTarget | null>(null);
   const [invite, setInvite] = useState<{ plan: OpsPlan; date: string | null } | null>(null);
   const [layerItem, setLayerItem] = useState<{ plan: OpsPlan; date: string | null } | null>(null);
@@ -179,14 +189,26 @@ const OpsPlanTab = () => {
   const [manageKnown, setManageKnown] = useState(false);
   const save = useOpsPlanSave();
 
-  // 알림 링크(?d=날짜)는 한 번만 — 주소에서 지운다
+  // 알림 링크(?d=날짜 · ?todo=1)는 한 번만 — 주소에서 지운다
   useEffect(() => {
-    if (!isDay(linkDay)) return;
+    if (!isDay(linkDay) && !linkTodo) return;
     const next = new URLSearchParams(params);
     next.delete("d");
+    next.delete("todo");
     setParams(next, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // (3-4) 이미 열려 있는 탭에서 할 일 알림을 눌렀을 때도 할 일 보기로 (처음 열 때는 위 처음 값이 한다)
+  useEffect(() => {
+    if (!linkTodo) return;
+    setView("mine");
+    setMineViewState("todo");
+    const next = new URLSearchParams(params);
+    next.delete("todo");
+    setParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [linkTodo]);
 
   const effView: "team" | "mine" = view ?? (manageKnown ? "team" : "mine");
   const teamMode = effView === "team";
@@ -200,6 +222,8 @@ const OpsPlanTab = () => {
   const officeMe = useOfficeMe(!!data);
   const hasOffice = !!data && !!officeMe.data?.offices.some((o) => o.branch === data.branch);
   const schedQ = useOfficeSchedules(data?.branch ?? null, hasOffice);
+  // (3-4) 캘린더 시트의 '할 일 마감' 칸 — 시트를 열 때만 묻는다(내 일정 보기와 같은 캐시)
+  const todoAvail = useOpsTasksDay(data?.branch ?? null, today, calsOpen).data?.available === true;
   const layers = useMemo<OpsPlan[]>(() => {
     if (!data) return [];
     const ev = calQ.data?.on
@@ -514,7 +538,7 @@ const OpsPlanTab = () => {
               setSheet({ mode: "new", branch: data.branch, date: slot.date, kind: "work", time: { start: slot.start, end: slot.end }, guests: users });
             }}
           />
-          <PlanCalendarsSheet open={calsOpen} data={data} hasEvents={!!calQ.data?.on} hasMeetings={hasOffice} onClose={() => setCalsOpen(false)} />
+          <PlanCalendarsSheet open={calsOpen} data={data} hasEvents={!!calQ.data?.on} hasMeetings={hasOffice} hasTodo={todoAvail} onClose={() => setCalsOpen(false)} />
         </>
       )}
       <PlanSearchSheet
@@ -546,6 +570,13 @@ const OpsPlanTab = () => {
 };
 
 // ───────────────────────── 내 일정 (3-2) — 보기 고르기 · 넘기기 · 보기 · 아래 줄 ─────────────────────────
+/** 달력 칸 표시 순서 (할 일 마감 점을 끼워 넣을 때) */
+const markRank = (k: string) => {
+  const order = ["off", "out", "class", "pt", "work", "personal", "meeting", "event", "todo", "shift"];
+  const i = order.indexOf(k);
+  return i < 0 ? order.length : i;
+};
+
 const MineSection = ({
   data: raw,
   layers,
@@ -607,7 +638,13 @@ const MineSection = ({
       .filter((b) => b.date === day && b.user_id !== raw.me)
       .map((b, i) => ({ key: `${b.user_id}:${i}`, name: names.get(b.user_id) ?? "팀원", start: b.start, end: b.end, allDay: b.all_day }));
   }, [raw, data.busy, day]);
-  const views = MINE_VIEWS.filter((v) => v.key !== "year" || rangeFn);
+  // (3-4) 할 일 — 할 일 보기 · 월 보기(마감 점)에서만 받는다. 함수가 없는 DB 면 「할 일」 칸을 숨긴다(받는 중엔 고른 보기 그대로)
+  const tasksQ = useOpsTasksDay(raw.branch, today, view === "todo" || view === "month");
+  const tasks = tasksQ.data?.available ? tasksQ.data : null;
+  const tasksOn = tasksQ.data ? tasksQ.data.available : view === "todo";
+  const [taskSheet, setTaskSheet] = useState<TaskSheetTarget | null>(null);
+  const dues = useMemo(() => (tasks && !calsOff(raw).has("todo") ? dueByDay(tasks.tasks) : new Map<string, OpsTask[]>()), [tasks, raw]);
+  const views = MINE_VIEWS.filter((v) => (v.key !== "year" || rangeFn) && (v.key !== "todo" || tasksOn));
   const shown = views.some((v) => v.key === view) ? view : "month";
   const dates = shown === "day" ? [day] : shown === "3day" ? [day, addDays(day, 1), addDays(day, 2)] : weekDates(mondayOf(day));
   const year = Number(day.slice(0, 4));
@@ -640,12 +677,13 @@ const MineSection = ({
     for (const mon of monthMondays(ym)) {
       for (let i = 0; i < 7; i++) {
         const d = addDays(mon, i);
-        // 내 달력은 근무 시간도 — '일하는 날'이 보이게
-        map.set(d, dayMarks([dayItems(data, me, d)], true));
+        // 내 달력은 근무 시간도 — '일하는 날'이 보이게 · (3-4) 그날 마감인 할 일
+        const ms = dayMarks([dayItems(data, me, d)], true);
+        map.set(d, dues.has(d) ? [...ms, { key: "todo" as const, ...MARK_META.todo, people: 1 }].sort((a, b) => markRank(a.key) - markRank(b.key)) : ms);
       }
     }
     return map;
-  }, [shown, ym, data, me]);
+  }, [shown, ym, data, me, dues]);
 
   return (
     <>
@@ -663,13 +701,23 @@ const MineSection = ({
                 <Search className="h-4 w-4" />
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => onAdd(shown === "list" || shown === "year" ? (day < today ? today : day) : day)}
-              className="flex h-10 items-center gap-1 rounded-xl bg-foreground px-3.5 text-label font-black text-background active:scale-95"
-            >
-              <Plus className="h-4 w-4" /> 일정 넣기
-            </button>
+            {shown === "todo" ? (
+              <button
+                type="button"
+                onClick={() => setTaskSheet({ mode: "new" })}
+                className="flex h-10 items-center gap-1 rounded-xl bg-foreground px-3.5 text-label font-black text-background active:scale-95"
+              >
+                <Plus className="h-4 w-4" /> 할 일 넣기
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onAdd(shown === "list" || shown === "year" ? (day < today ? today : day) : day)}
+                className="flex h-10 items-center gap-1 rounded-xl bg-foreground px-3.5 text-label font-black text-background active:scale-95"
+              >
+                <Plus className="h-4 w-4" /> 일정 넣기
+              </button>
+            )}
           </div>
         </div>
 
@@ -692,8 +740,8 @@ const MineSection = ({
           ))}
         </div>
 
-        {/* 넘기기 */}
-        <div className="mt-2 flex justify-center">
+        {/* 넘기기 (할 일 보기는 오늘만) */}
+        <div className={cn("mt-2 flex justify-center", shown === "todo" && "hidden")}>
           {shown === "month" ? (
             <MonthSwitcher ym={ym} thisMonth={thisMonth} min={shiftYm(thisMonth, -6)} max={shiftYm(thisMonth, 12)} today={today} onChange={setYm} />
           ) : (
@@ -726,14 +774,40 @@ const MineSection = ({
         {shown === "year" && (
           <OpsPlanYear data={data} year={year} meUid={me.user_id} today={today} onPickDay={(d) => onGo(d, "day")} onPickMonth={(m) => { setYm(m); onView("month"); }} />
         )}
+        {shown === "todo" &&
+          (tasks ? (
+            <TasksView data={tasks} today={today} onOpen={setTaskSheet} />
+          ) : tasksQ.isError ? (
+            <p className="mt-4 text-body text-muted-foreground">{(tasksQ.error as Error | null)?.message ?? "할 일을 불러오지 못했어요"}</p>
+          ) : (
+            <div className="mt-4 space-y-2" aria-hidden>
+              <div className="h-12 animate-pulse rounded-xl bg-secondary" />
+              <div className="h-12 animate-pulse rounded-xl bg-secondary" />
+            </div>
+          ))}
 
         {rangeFn && <PlanToolsRow briefOn={raw.prefs?.brief_on !== false} onTrash={onTrash} onCalendars={onCalendars} onFind={onFind} />}
       </section>
 
-      {shown === "month" && <MyDayCard data={data} me={me} day={day} today={today} canHoliday={canHoliday} onAdd={onAdd} onOpenPlan={onOpenPlan} onHoliday={onHoliday} />}
-      {rangeFn && <PlanInsightsCard branch={raw.branch} today={today} />}
-      <RepeatsCard data={raw} onOpenPlan={onOpenPlan} />
+      {shown === "month" && (
+        <MyDayCard
+          data={data}
+          me={me}
+          day={day}
+          today={today}
+          canHoliday={canHoliday}
+          dues={dues.get(day) ?? []}
+          onOpenTask={(t) => setTaskSheet({ mode: "mine", task: t })}
+          onAdd={onAdd}
+          onOpenPlan={onOpenPlan}
+          onHoliday={onHoliday}
+        />
+      )}
+      {shown === "todo" && tasks?.manage && <TaskTeamCard branch={tasks.branch} me={tasks.me} today={today} onAssign={(uid) => setTaskSheet({ mode: "new", userId: uid })} />}
+      {rangeFn && shown !== "todo" && <PlanInsightsCard branch={raw.branch} today={today} />}
+      {shown !== "todo" && <RepeatsCard data={raw} onOpenPlan={onOpenPlan} />}
       <WorkTabNote data={raw} />
+      {tasks && <TaskSheet target={taskSheet} data={tasks} today={today} onClose={() => setTaskSheet(null)} />}
     </>
   );
 };
@@ -1438,6 +1512,8 @@ const MyDayCard = ({
   day,
   today,
   canHoliday,
+  dues = [],
+  onOpenTask,
   onAdd,
   onOpenPlan,
   onHoliday,
@@ -1447,6 +1523,9 @@ const MyDayCard = ({
   day: string;
   today: string;
   canHoliday: boolean;
+  /** (3-4) 그날이 마감인 안 끝낸 할 일 */
+  dues?: OpsTask[];
+  onOpenTask?: (t: OpsTask) => void;
   onAdd: (date: string) => void;
   onOpenPlan: (p: OpsPlan, date: string | null) => void;
   onHoliday: (date: string, name: string) => void;
@@ -1469,8 +1548,25 @@ const MyDayCard = ({
         </button>
       </div>
       <DayExtras data={data} date={day} today={today} canHoliday={canHoliday} onHoliday={onHoliday} />
+      {dues.length > 0 && (
+        <ul className="mt-3 space-y-1" aria-label="이날 마감 할 일">
+          {dues.map((t) => (
+            <li key={t.id}>
+              <button
+                type="button"
+                onClick={() => onOpenTask?.(t)}
+                className="flex w-full items-center gap-2.5 rounded-xl bg-blue-50 px-3 py-2 text-left active:scale-[0.99] dark:bg-blue-500/10"
+              >
+                <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", TASK_STATUS_META[t.status].dot)} aria-hidden />
+                <span className="min-w-0 flex-1 truncate text-body font-bold text-foreground">{t.title}</span>
+                <span className="shrink-0 text-label font-bold text-blue-700 dark:text-blue-300">마감</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
       {items.length === 0 ? (
-        <p className="mt-3 text-body text-muted-foreground">이날은 잡힌 일정이 없어요</p>
+        dues.length === 0 && <p className="mt-3 text-body text-muted-foreground">이날은 잡힌 일정이 없어요</p>
       ) : (
         <ul className="mt-3 space-y-2">
           {items.map((it) => (

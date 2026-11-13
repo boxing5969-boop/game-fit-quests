@@ -9,6 +9,8 @@
  *   · (2-3 · 2026-11-13) get_my_calendar 의 acts · notes · anniv · ddays 도 여기서 읽는다(글 · 계산은 lib/calendarMarks.ts).
  *   · (2-4 · 2026-11-13) get_my_calendar 의 recap(일요일 주간 돌아보기 알림) · partner(운동 짝꿍 — 약속 요일 · 쌍도장)도
  *     여기서 읽는다(글 · 계산은 lib/calendarTogether.ts).
+ *   · (3-4 · 2026-11-14) 나만의 체크 '주 n번'(week_goal — 아무 날이나 · 금색 별에 세지 않음 = flex) · get_my_calendar 'todos'
+ *     (보이는 날짜가 마감인 할 일) 도 여기서 읽는다(습관 · 할 일 글 · 계산은 lib/memberHabits.ts).
  */
 import { weekdayOfYmd } from "@/lib/promise153";
 import { normalizeCalls, normalizeEvents, type CalCall, type CalEvent } from "@/lib/calendarEvents";
@@ -23,6 +25,7 @@ import {
   type CalNote,
 } from "@/lib/calendarMarks";
 import { RECAP_PREF_OFF, normalizePartner, normalizeRecapPref, type CalPartner, type CalRecapPref } from "@/lib/calendarTogether";
+import { WEEK_GOAL_MAX, normalizeCalTodos, type CalTodo } from "@/lib/memberHabits";
 
 const YMD = /^\d{4}-\d{2}-\d{2}$/;
 const n = (v: number) => v.toLocaleString("ko-KR");
@@ -67,6 +70,8 @@ export interface CheckItem {
   unit: string | null;
   /** null = 매일 · [1,3,5] = 월 · 수 · 금 (0 = 일) */
   weekdays: number[] | null;
+  /** (3-4) 주 n번(1 ~ 6) — 아무 날이나 · 금색 별에 세지 않음. null = 요일 또는 매일 */
+  weekGoal: number | null;
   createdOn: string;
   archivedOn: string | null;
 }
@@ -115,6 +120,8 @@ export interface CalState {
   recap: CalRecapPref;
   /** (2-4) 운동 짝꿍 — 약속 요일 · 보이는 날짜 중 둘 다 온 날(쌍도장). 짝꿍이 없으면 null */
   partner: CalPartner | null;
+  /** (3-4) 보이는 날짜가 마감인 할 일 */
+  todos: CalTodo[];
 }
 
 export const CAL_OFF: CalState = {
@@ -131,6 +138,7 @@ export const CAL_OFF: CalState = {
   ddays: [],
   recap: RECAP_PREF_OFF,
   partner: null,
+  todos: [],
 };
 
 type Raw = Record<string, unknown>;
@@ -152,6 +160,7 @@ function normalizeItem(raw: unknown): CheckItem | null {
   const createdOn = ymd(r?.created_on);
   if (!r || !id || !label || !createdOn) return null;
   const target = int(r.target);
+  const wg = int(r.week_goal);
   const days = Array.isArray(r.weekdays)
     ? [...new Set(r.weekdays.map(int).filter((d): d is number => d != null && d >= 0 && d <= 6))].sort((a, b) => a - b)
     : null;
@@ -161,6 +170,7 @@ function normalizeItem(raw: unknown): CheckItem | null {
     target: target != null && target >= 1 ? target : null,
     unit: target != null ? str(r.unit) : null,
     weekdays: days && days.length > 0 && days.length < 7 ? days : null,
+    weekGoal: wg != null && wg >= 1 && wg <= WEEK_GOAL_MAX ? wg : null,
     createdOn,
     archivedOn: ymd(r.archived_on),
   };
@@ -217,6 +227,7 @@ export function normalizeCalendar(raw: unknown): CalState {
     ddays: normalizeDdays(r.ddays),
     recap: normalizeRecapPref(r.recap),
     partner: normalizePartner(r.partner),
+    todos: normalizeCalTodos(r.todos),
   };
 }
 
@@ -258,6 +269,8 @@ export interface DayCheck {
   done: boolean;
   /** 나만의 체크 항목 id */
   itemId?: string;
+  /** (3-4) 주 n번 체크 — 그날 해도 되고 안 해도 되는 칸 · 금색 별 · 한 줄에 세지 않는다 */
+  flex?: boolean;
 }
 
 /** 그날의 체크 — 저절로 3개(체육관 · 응원 · 한 줄) + 그날의 나만의 체크
@@ -275,18 +288,29 @@ export function dayChecks(
     { key: "cheer", kind: "cheer", label: "응원", done: !!cal && (cal.cheer || cal.give153) },
     { key: "line", kind: "line", label: "한 줄", done: !!cal?.journal },
     ...itemsForDay(items, day).map(
-      (i): DayCheck => ({ key: `item:${i.id}`, kind: "custom", label: itemLabel(i), done: done.has(i.id), itemId: i.id }),
+      (i): DayCheck => ({
+        key: `item:${i.id}`,
+        kind: "custom",
+        label: itemLabel(i),
+        done: done.has(i.id),
+        itemId: i.id,
+        ...(i.weekGoal ? { flex: true } : {}),
+      }),
     ),
   ];
 }
 
-/** 금색 별 — 그날의 체크를 다 채운 날 */
-export const isStarDay = (checks: readonly DayCheck[]): boolean => checks.length > 0 && checks.every((c) => c.done);
+/** 금색 별 — 그날의 체크를 다 채운 날 · (3-4) 주 n번 체크는 세지 않는다(서버 _cal_check_count 와 같은 식) */
+export const isStarDay = (checks: readonly DayCheck[]): boolean => {
+  const must = checks.filter((c) => !c.flex);
+  return must.length > 0 && must.every((c) => c.done);
+};
 
-/** 한 줄 — 채운 것과 다음 한 걸음만 (지난 날 0개는 아무 말도 안 한다) */
+/** 한 줄 — 채운 것과 다음 한 걸음만 (지난 날 0개는 아무 말도 안 한다) · 주 n번 체크는 세지 않는다 */
 export function checkProgress(checks: readonly DayCheck[], isToday: boolean): string | null {
-  const total = checks.length;
-  const done = checks.filter((c) => c.done).length;
+  const must = checks.filter((c) => !c.flex);
+  const total = must.length;
+  const done = must.filter((c) => c.done).length;
   if (total === 0) return null;
   if (done === total) return isToday ? "오늘 금색 별을 받았어요" : "금색 별을 받은 날이에요";
   if (done === 0) return isToday ? "하나씩 채우면 금색 별이 돼요" : null;
@@ -312,23 +336,35 @@ export function applySticker(state: CalState, day: string, sticker: StickerKey |
 }
 
 // ───────────────────────── 나만의 체크 만들기 ─────────────────────────
+/** (3-4) 언제 체크하나 — 매일 · 요일 · 주 n번(아무 날이나) */
+export type CheckSchedule = "daily" | "days" | "goal";
+
 export interface CheckItemDraft {
   label: string;
   /** 비우면 숫자 없이 (예: 스트레칭) */
   target: string;
   unit: CheckUnit | null;
-  /** 비우면 매일 */
+  /** 요일(schedule 'days') — 예전 화면처럼 비우면 매일 */
   weekdays: number[];
+  /** (3-4) 없으면 예전처럼 — 요일을 골랐으면 'days', 아니면 'daily' */
+  schedule?: CheckSchedule;
+  /** (3-4) 주 n번 (schedule 'goal') */
+  goal?: number;
 }
 
-export const emptyCheckDraft = (): CheckItemDraft => ({ label: "", target: "", unit: "번", weekdays: [] });
+export const emptyCheckDraft = (): CheckItemDraft => ({ label: "", target: "", unit: "번", weekdays: [], schedule: "daily", goal: 3 });
 
 export const draftFromItem = (i: CheckItem): CheckItemDraft => ({
   label: i.label,
   target: i.target != null ? String(i.target) : "",
   unit: (CHECK_UNITS as readonly string[]).includes(i.unit ?? "") ? (i.unit as CheckUnit) : "번",
   weekdays: i.weekdays ?? [],
+  schedule: i.weekGoal ? "goal" : i.weekdays ? "days" : "daily",
+  goal: i.weekGoal ?? 3,
 });
+
+/** 고른 방식 (예전 초안은 요일이 있으면 'days') */
+export const scheduleOf = (d: CheckItemDraft): CheckSchedule => d.schedule ?? (d.weekdays.length > 0 && d.weekdays.length < 7 ? "days" : "daily");
 
 const tidyLabel = (s: string) => s.replace(/\s+/g, " ").trim();
 
@@ -344,13 +380,16 @@ export function checkItemError(d: CheckItemDraft): string | null {
     if (d.unit && !(CHECK_UNITS as readonly string[]).includes(d.unit)) return "단위를 다시 골라 주세요";
   }
   if (d.weekdays.some((w) => !Number.isInteger(w) || w < 0 || w > 6)) return "요일을 다시 골라 주세요";
+  const sc = scheduleOf(d);
+  if (sc === "days" && d.schedule === "days" && d.weekdays.length === 0) return "요일을 하나 이상 골라 주세요";
+  if (sc === "goal" && !(Number.isInteger(d.goal) && (d.goal as number) >= 1 && (d.goal as number) <= WEEK_GOAL_MAX)) return "주 1번부터 6번까지 골라 주세요";
   return null;
 }
 
 export function checkItemPayload(d: CheckItemDraft, id?: string | null) {
   const t = d.target.trim();
   const target = t ? Number(t.replace(/,/g, "")) : null;
-  const days = [...new Set(d.weekdays)].sort((a, b) => a - b);
+  const days = scheduleOf(d) === "days" ? [...new Set(d.weekdays)].sort((a, b) => a - b) : [];
   return {
     p_id: id ?? null,
     p_label: tidyLabel(d.label),
@@ -359,3 +398,6 @@ export function checkItemPayload(d: CheckItemDraft, id?: string | null) {
     p_weekdays: days.length === 0 || days.length === 7 ? null : days,
   };
 }
+
+/** (3-4) 저장 뒤 주 n번 — 'goal' 이면 그 수, 'daily' · 'days' 면 비우기(null). 예전 항목에 원래 없었으면 부르지 않아도 된다 */
+export const checkGoalOf = (d: CheckItemDraft): number | null => (scheduleOf(d) === "goal" ? (d.goal ?? null) : null);

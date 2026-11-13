@@ -9,6 +9,10 @@
  *   목표일 정하기 · 빼기 = set_my_goal_day · remove_my_goal_day (useSaveGoalDay · useRemoveGoalDay — 글 · 검사는 lib/calendarMarks.ts).
  *   (2-4 · DB 20261113111423_calendar_stage24.sql) get_my_calendar 가 주간 돌아보기 알림(recap) · 운동 짝꿍(partner)도 함께 보낸다 ·
  *   일요일 주간 돌아보기 알림 켜기 · 끄기 = set_my_weekly_recap (useSetWeeklyRecap).
+ *   (3-4 · DB 20261114005029_calendar_stage34.sql) 주 n번 = set_my_check_goal(체크를 저장한 뒤 한 번 더) ·
+ *   나만의 체크 시트의 이번 주 · 이어 간 주 · 할 일 = get_my_habits (useMyHabits — 캐시 키 "153habits", 달력 키와 따로) ·
+ *   마감 있는 할 일 = set_my_todo · set_my_todo_done · remove_my_todo (useSaveTodo · useSetTodoDone · useRemoveTodo).
+ *   함수가 없는 DB 면 습관은 꺼짐(시트는 예전 그대로) · 주 n번 저장은 '아직 쓸 수 없어요'.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,15 +22,22 @@ import {
   CAL_OFF,
   applyDone,
   applySticker,
+  checkGoalOf,
   checkItemPayload,
   normalizeCalendar,
   type CalState,
   type CheckItemDraft,
   type StickerKey,
 } from "@/lib/calendarChecks";
+import { HABITS_OFF, applyTodoDone, normalizeHabits, todoPayload, type Habits } from "@/lib/memberHabits";
 import { goalPayload, normalizeDdays, type GoalDraft } from "@/lib/calendarMarks";
 
 export const CAL2_KEY = ["153cal2"] as const;
+/** (3-4) 나만의 체크 시트 — 이번 주 · 이어 간 주 · 할 일 (달력 캐시와 모양이 달라 따로) */
+export const HABITS_KEY = ["153habits"] as const;
+
+type RpcError = { code?: string; message?: string } | null;
+const isMissingFn = (e: RpcError) => !!e && (e.code === "PGRST202" || e.code === "42883" || /could not find the function/i.test(e.message ?? ""));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const rpc = (name: string, args?: Record<string, unknown>) => (supabase as any).rpc(name, args);
@@ -72,7 +83,10 @@ export function useSetCheckDone() {
     onError: (_e, _v, ctx) => {
       for (const [key, val] of ctx?.snapshot ?? []) qc.setQueryData(key, val);
     },
-    onSettled: () => void qc.invalidateQueries({ queryKey: CAL2_KEY }),
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: CAL2_KEY });
+      void qc.invalidateQueries({ queryKey: HABITS_KEY });
+    },
   });
 }
 
@@ -97,15 +111,110 @@ export function useSetDaySticker() {
   });
 }
 
-/** 나만의 체크 만들기 · 고치기 (3개까지) */
+/**
+ * 나만의 체크 만들기 · 고치기 (3개까지) — (3-4) 저장한 뒤 주 n번을 맞춘다(set_my_check_goal).
+ *   새로 만들 때는 저장 전 목록(prevIds)에 없던 항목이 새 항목. 주 n번 · 매일이면 요일은 비워서 보낸다(lib checkItemPayload).
+ *   예전 항목에 주 n번이 없었고 지금도 아니면(hadGoal=false) 두 번째 부름은 하지 않는다.
+ */
 export function useSaveCheckItem() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (v: { draft: CheckItemDraft; id?: string | null }) => {
-      const { error } = await rpc("set_my_check_item", checkItemPayload(v.draft, v.id));
-      if (error) throw new Error(translateError(error, "체크를 저장하지 못했어요"));
+    mutationFn: async (v: { draft: CheckItemDraft; id?: string | null; prevIds?: readonly string[]; hadGoal?: boolean }) => {
+      const { data, error } = await rpc("set_my_check_item", checkItemPayload(v.draft, v.id));
+      if (error) throw new Error(translateError(error, "잠시 뒤 다시 해 주세요"));
+      const goal = checkGoalOf(v.draft);
+      if (goal == null && !v.hadGoal) return;
+      let id = v.id ?? null;
+      if (!id) {
+        const prev = new Set(v.prevIds ?? []);
+        const items = Array.isArray((data as { items?: unknown[] } | null)?.items) ? ((data as { items: Array<{ id?: string }> }).items) : [];
+        id = items.map((i) => i.id).find((x): x is string => !!x && !prev.has(x)) ?? null;
+      }
+      if (!id) return;
+      const r = await rpc("set_my_check_goal", { p_id: id, p_goal: goal });
+      if (r.error) {
+        if (isMissingFn(r.error)) {
+          if (goal != null) throw new Error("주 n번은 아직 쓸 수 없어요 — 요일로 정해 주세요");
+          return;
+        }
+        throw new Error(translateError(r.error, "잠시 뒤 다시 해 주세요"));
+      }
     },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: CAL2_KEY }),
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: CAL2_KEY });
+      void qc.invalidateQueries({ queryKey: HABITS_KEY });
+    },
+  });
+}
+
+/** (3-4) 나만의 체크 시트 — 체크마다 이번 주 · 이어 가는 주 · 가장 길게 + 마감 있는 할 일 (함수 없음 · 승인 전 = 꺼짐) */
+export function useMyHabits(enabled = true) {
+  const { user } = useAuth();
+  return useQuery<Habits>({
+    queryKey: [...HABITS_KEY, user?.id ?? "anon"],
+    enabled: enabled && !!user?.id,
+    staleTime: 30_000,
+    retry: false,
+    placeholderData: (prev) => prev,
+    queryFn: async () => {
+      const { data, error } = await rpc("get_my_habits");
+      if (error) return HABITS_OFF;
+      return normalizeHabits(data);
+    },
+  });
+}
+
+const invalidateBoth = (qc: ReturnType<typeof useQueryClient>) => {
+  void qc.invalidateQueries({ queryKey: CAL2_KEY });
+  void qc.invalidateQueries({ queryKey: HABITS_KEY });
+};
+
+/** (3-4) 할 일 넣기 · 고치기 */
+export function useSaveTodo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { title: string; due: string; id?: string | null }) => {
+      const { error } = await rpc("set_my_todo", todoPayload(v.title, v.due, v.id));
+      if (error) throw new Error(translateError(error, "잠시 뒤 다시 해 주세요"));
+    },
+    onSettled: () => invalidateBoth(qc),
+  });
+}
+
+/** (3-4) 할 일 끝냈어요 · 되돌리기 — 누르는 순간 바뀌고 실패하면 되돌린다 */
+export function useSetTodoDone() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { id: string; done: boolean; today: string }) => {
+      const { error } = await rpc("set_my_todo_done", { p_id: v.id, p_done: v.done });
+      if (error) throw new Error(translateError(error, "잠시 뒤 다시 해 주세요"));
+    },
+    onMutate: async (v) => {
+      await qc.cancelQueries({ queryKey: HABITS_KEY });
+      await qc.cancelQueries({ queryKey: CAL2_KEY });
+      const habits = qc.getQueriesData<Habits>({ queryKey: HABITS_KEY });
+      const cals = qc.getQueriesData<CalState>({ queryKey: CAL2_KEY });
+      for (const [key, val] of habits) if (val?.on) qc.setQueryData(key, applyTodoDone(val, v.id, v.done, v.today));
+      patchAll(qc, (s) => ({ ...s, todos: s.todos.map((t) => (t.id === v.id ? { ...t, done: v.done } : t)) }));
+      return { habits, cals };
+    },
+    onError: (_e, _v, ctx) => {
+      for (const [key, val] of ctx?.habits ?? []) qc.setQueryData(key, val);
+      for (const [key, val] of ctx?.cals ?? []) qc.setQueryData(key, val);
+    },
+    onSettled: () => invalidateBoth(qc),
+  });
+}
+
+/** (3-4) 할 일 빼기 (지우지 않고) */
+export function useRemoveTodo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await rpc("remove_my_todo", { p_id: id });
+      if (error) throw new Error(translateError(error, "잠시 뒤 다시 해 주세요"));
+    },
+    onSettled: () => invalidateBoth(qc),
   });
 }
 
@@ -117,7 +226,7 @@ export function useRemoveCheckItem() {
       const { error } = await rpc("remove_my_check_item", { p_id: id });
       if (error) throw new Error(translateError(error, "체크를 빼지 못했어요"));
     },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: CAL2_KEY }),
+    onSuccess: () => invalidateBoth(qc),
   });
 }
 

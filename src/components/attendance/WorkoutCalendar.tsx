@@ -86,7 +86,7 @@ import {
 } from "@/lib/calendarMarks";
 import { albumOf, isTogetherDay, partnerPromiseLine, renewalLine, weekRecap, type CalPartner } from "@/lib/calendarTogether";
 import { useMyPromise } from "@/services/promiseService";
-import { CAL2_KEY, useMyCalendar, useSetCheckDone, useSetDaySticker } from "@/services/calendarCheckService";
+import { CAL2_KEY, useMyCalendar, useSetCheckDone, useSetDaySticker, useSetTodoDone } from "@/services/calendarCheckService";
 import { useCalendarFeed } from "@/services/calendarFeedService";
 import PromiseSheet from "@/components/attendance/PromiseSheet";
 import DayChecksPanel from "@/components/attendance/CalendarChecks";
@@ -525,6 +525,7 @@ const WorkoutCalendarCard = ({
   const feedOk = withChecks && !!feedQ.data?.available && !!feedQ.data?.can;
   const doneM = useSetCheckDone();
   const stickerM = useSetDaySticker();
+  const todoM = useSetTodoDone();
   const [sheet, setSheet] = useState<SheetKey | null>(null);
   const [sheetDay, setSheetDay] = useState<string | null>(null);
   const [sheetMonth, setSheetMonth] = useState<string>(() => monthOf(today));
@@ -588,6 +589,17 @@ const WorkoutCalendarCard = ({
         onManage={() => openSheet("items")}
         onOpenCalls={() => navigate("/myboxer/community?together=1")}
         onGoal={(d) => openSheet("dday", d)}
+        onTodo={(id, done) =>
+          todoM.mutate(
+            { id, done, today },
+            {
+              onSuccess: () => {
+                if (done) toast.success("끝냈어요");
+              },
+              onError: (e) => toast.error((e as Error).message),
+            },
+          )
+        }
       />
     ) : null;
   // 지난 달을 넘겨 보면 그 달 한 줄 · 새 달 첫 7일엔 지난달 한 줄 (이번 달 숫자는 홈 '내 운동'이 주인공 — 다시 쓰지 않는다)

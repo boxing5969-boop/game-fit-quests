@@ -657,12 +657,15 @@ export const PlanCalendarsSheet = ({
   data,
   hasEvents,
   hasMeetings,
+  hasTodo = false,
   onClose,
 }: {
   open: boolean;
   data: PlansWeek;
   hasEvents: boolean;
   hasMeetings: boolean;
+  /** (3-4) 할 일 함수가 있는 DB — '할 일 마감' 칸 */
+  hasTodo?: boolean;
   onClose: () => void;
 }) => {
   const save = useOpsPlanPrefsSave();
@@ -670,7 +673,9 @@ export const PlanCalendarsSheet = ({
   const [local, setLocal] = useState<{ off?: CalKey[]; remind?: number[]; brief?: boolean }>({});
   useEffect(() => setLocal({}), [data.prefs]);
   const off = new Set<CalKey>(local.off ?? [...calsOff(data)]);
-  const layers = CAL_LAYERS.filter((l) => (l.key !== "events" || hasEvents) && (l.key !== "meetings" || hasMeetings) && (l.key !== "team" || (data.team ?? []).length > 1));
+  const layers = CAL_LAYERS.filter(
+    (l) => (l.key !== "events" || hasEvents) && (l.key !== "meetings" || hasMeetings) && (l.key !== "team" || (data.team ?? []).length > 1) && (l.key !== "todo" || hasTodo),
+  );
   const remind = local.remind ?? data.prefs?.remind_default ?? [10];
   const briefOn = local.brief ?? data.prefs?.brief_on !== false;
   const fail = (e: unknown) => {
@@ -743,7 +748,7 @@ export const PlanCalendarsSheet = ({
       >
         <span className="min-w-0 flex-1">
           <span className="block text-body font-bold text-foreground">아침 8시 브리핑</span>
-          <span className="block text-label text-muted-foreground">그날 수업 · PT · 약속한 회원이 있을 때만 한 통</span>
+          <span className="block text-label text-muted-foreground">그날 일정 · 할 일 · 약속한 회원이 있을 때만</span>
         </span>
         <span className={cn("relative h-6 w-10 shrink-0 rounded-full transition-colors", briefOn ? "bg-primary" : "bg-muted-foreground/30")} aria-hidden>
           <span className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-card shadow transition-all", briefOn ? "left-[1.125rem]" : "left-0.5")} />

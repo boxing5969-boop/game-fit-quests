@@ -414,6 +414,8 @@ export const MEETING_LAYER_META = {
   dot: "bg-indigo-500",
   chip: "bg-indigo-100 text-indigo-800 dark:bg-indigo-500/20 dark:text-indigo-200",
 } as const;
+/** 3-4 — 할 일 마감 (달력 점 · 캘린더 켜고 끄기) */
+export const TODO_LAYER_META = { label: "할 일 마감", dot: "bg-blue-600" } as const;
 export const BUSY_META = { label: "바쁨", dot: "bg-zinc-400", chip: "bg-zinc-100 text-zinc-700 dark:bg-zinc-500/25 dark:text-zinc-200" } as const;
 
 /** 일정 한 줄의 이름 · 점 · 칩 — 겹쳐 그린 캘린더면 그 이름 */
@@ -824,8 +826,9 @@ export const mergeWeeks = (weeks: readonly PlansWeek[]): PlansWeek | null => {
 };
 
 /** 달력 칸 표시 — 휴무(승인된 쉰 날 포함) → 외부 → 수업 → PT → 업무 → 개인 → 근무 시간 */
-export type MarkKey = PlanKind | "shift" | "event" | "meeting";
-export const MARK_ORDER: readonly MarkKey[] = ["off", "out", "class", "pt", "work", "personal", "meeting", "event", "shift"];
+/** (3-4) todo = 그날이 마감인 안 끝낸 할 일 (「할 일」 보기 · 내 달력만) */
+export type MarkKey = PlanKind | "shift" | "event" | "meeting" | "todo";
+export const MARK_ORDER: readonly MarkKey[] = ["off", "out", "class", "pt", "work", "personal", "meeting", "event", "todo", "shift"];
 export const MARK_META: Record<MarkKey, { label: string; dot: string }> = {
   off: { label: PLAN_KIND_META.off.label, dot: PLAN_KIND_META.off.dot },
   out: { label: PLAN_KIND_META.out.label, dot: PLAN_KIND_META.out.dot },
@@ -835,6 +838,7 @@ export const MARK_META: Record<MarkKey, { label: string; dot: string }> = {
   personal: { label: PLAN_KIND_META.personal.label, dot: PLAN_KIND_META.personal.dot },
   meeting: { label: MEETING_LAYER_META.label, dot: MEETING_LAYER_META.dot },
   event: { label: EVENT_LAYER_META.label, dot: EVENT_LAYER_META.dot },
+  todo: { label: TODO_LAYER_META.label, dot: TODO_LAYER_META.dot },
   shift: { label: SHIFT_META.label, dot: SHIFT_META.dot },
 };
 
@@ -876,7 +880,7 @@ export const presentMarks = (byDay: ReadonlyMap<string, readonly DayMark[]>, ym:
 };
 
 // ───────────────────────── 내 일정 보기 (3-2 — 일 · 3일 · 주 · 월 · 목록 · 연간) ─────────────────────────
-export type MineView = "day" | "3day" | "week" | "month" | "list" | "year";
+export type MineView = "day" | "3day" | "week" | "month" | "list" | "year" | "todo";
 export const PLAN_AGENDA_DAYS = 60;
 
 /** 보기마다 받을 범위 — 팀 주간 = 한 주 · 팀/내 달력 = 달력에 보이는 주 · 일/3일/주 = 그 날들 · 목록 = 60일 · 연간 = 한 해 */
@@ -903,6 +907,9 @@ export const planRange = (
       return { from: day, to: addDays(day, PLAN_AGENDA_DAYS - 1) };
     case "year":
       return { from: `${day.slice(0, 4)}-01-01`, to: `${day.slice(0, 4)}-12-31` };
+    case "todo":
+      // (3-4) 할 일 보기는 일정을 거의 안 쓴다 — 그날만
+      return { from: day, to: day };
     default:
       return monthGrid();
   }
@@ -982,6 +989,7 @@ export const CAL_LAYERS: ReadonlyArray<{ key: CalKey; label: string; hint: strin
   { key: "events", label: "153 일정", hint: "회원 달력 휴관 · 이벤트 · 대회 · 승급 심사", dot: EVENT_LAYER_META.dot },
   { key: "meetings", label: "정기 회의", hint: "사무실 정기 회의 (1시간으로)", dot: MEETING_LAYER_META.dot },
   { key: "team", label: "팀 바쁜 시간", hint: "하루 보기에 팀원 바쁜 시간 — 제목 없이", dot: BUSY_META.dot },
+  { key: "todo", label: TODO_LAYER_META.label, hint: "「할 일」 보기의 마감일 — 달력에 점으로", dot: TODO_LAYER_META.dot },
 ];
 export const DEFAULT_CALS_OFF: readonly CalKey[] = ["team"];
 export const calsOff = (week: Pick<PlansWeek, "prefs">): Set<CalKey> => new Set(week.prefs?.cals_off ?? DEFAULT_CALS_OFF);

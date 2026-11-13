@@ -7,6 +7,7 @@ import {
   canEditDay,
   checkItemError,
   checkItemPayload,
+  checkGoalOf,
   checkProgress,
   dayChecks,
   draftFromItem,
@@ -20,9 +21,9 @@ import {
 } from "./calendarChecks";
 
 // 2026-11-12 = 목요일
-const JAB: CheckItem = { id: "jab", label: "잽", target: 100, unit: "번", weekdays: null, createdOn: "2026-11-01", archivedOn: null };
-const ROPE: CheckItem = { id: "rope", label: "줄넘기", target: 10, unit: "분", weekdays: [1, 3, 5], createdOn: "2026-11-01", archivedOn: null };
-const OLD: CheckItem = { id: "old", label: "스트레칭", target: null, unit: null, weekdays: null, createdOn: "2026-11-01", archivedOn: "2026-11-10" };
+const JAB: CheckItem = { id: "jab", label: "잽", target: 100, unit: "번", weekdays: null, weekGoal: null, createdOn: "2026-11-01", archivedOn: null };
+const ROPE: CheckItem = { id: "rope", label: "줄넘기", target: 10, unit: "분", weekdays: [1, 3, 5], weekGoal: null, createdOn: "2026-11-01", archivedOn: null };
+const OLD: CheckItem = { id: "old", label: "스트레칭", target: null, unit: null, weekdays: null, weekGoal: null, createdOn: "2026-11-01", archivedOn: "2026-11-10" };
 
 describe("운동 달력 체크 — 서버 값 읽기", () => {
   it("꺼짐 · 잘못된 줄 빼기 · 정리", () => {
@@ -177,6 +178,51 @@ describe("운동 달력 체크 — 글 · 만들기", () => {
       p_unit: null,
       p_weekdays: null,
     });
-    expect(draftFromItem(ROPE)).toEqual({ label: "줄넘기", target: "10", unit: "분", weekdays: [1, 3, 5] });
+    expect(draftFromItem(ROPE)).toEqual({ label: "줄넘기", target: "10", unit: "분", weekdays: [1, 3, 5], schedule: "days", goal: 3 });
+  });
+});
+
+// (3-4) 주 n번 — 아무 날이나 · 금색 별 · 한 줄에 세지 않는다 (서버 _cal_check_count 와 같은 식)
+describe("운동 달력 체크 — 주 n번 (3-4)", () => {
+  const FLEX: CheckItem = { id: "flex", label: "푸시업", target: 20, unit: "개", weekdays: null, weekGoal: 3, createdOn: "2026-11-01", archivedOn: null };
+  const all = (done: string[]) => ({ day: "2026-11-12", cheer: true, give153: false, journal: null, done, sticker: null });
+
+  it("읽기 — week_goal (1 ~ 6 만)", () => {
+    const s = normalizeCalendar({
+      on: true,
+      items: [
+        { id: "a", label: "푸시업", week_goal: 3, created_on: "2026-11-01" },
+        { id: "b", label: "잽", week_goal: 9, created_on: "2026-11-01" },
+      ],
+      todos: [{ id: "t1", title: "등록 상담", due_on: "2026-11-14", done: false }, { id: "x" }],
+    });
+    expect(s.items[0].weekGoal).toBe(3);
+    expect(s.items[1].weekGoal).toBeNull();
+    expect(s.todos).toEqual([{ id: "t1", title: "등록 상담", dueOn: "2026-11-14", done: false }]);
+  });
+
+  it("그날 체크에 보이지만 금색 별 · 한 줄에는 안 셈", () => {
+    const line = { id: "j", content: "좋았다", mood: null, photoUrl: null, visibility: "private" as const, at: "" };
+    const c = dayChecks("2026-11-12", true, { ...all(["jab"]), journal: line }, [JAB, FLEX]);
+    expect(c.find((x) => x.itemId === "flex")).toMatchObject({ flex: true, done: false });
+    expect(isStarDay(c)).toBe(true);
+    expect(checkProgress(c, true)).toBe("오늘 금색 별을 받았어요");
+    // 주 n번만 있고 나머지를 안 채운 날 — 별 없음
+    const c2 = dayChecks("2026-11-12", false, all(["flex"]), [FLEX]);
+    expect(isStarDay(c2)).toBe(false);
+    expect(checkProgress(c2, true)).toBe("1개 채웠어요 · 2개 더 채우면 금색 별");
+  });
+
+  it("만들기 — 방식 · 검사 · 보낼 값", () => {
+    const d = { ...emptyCheckDraft(), label: "푸시업" };
+    expect(d.schedule).toBe("daily");
+    expect(checkItemError({ ...d, schedule: "days", weekdays: [] })).toBe("요일을 하나 이상 골라 주세요");
+    expect(checkItemError({ ...d, schedule: "goal", goal: 7 })).toBe("주 1번부터 6번까지 골라 주세요");
+    expect(checkItemError({ ...d, schedule: "goal", goal: 3 })).toBeNull();
+    // 주 n번 · 매일 → 요일은 비워서 보낸다 (주 n번은 저장 뒤 set_my_check_goal)
+    expect(checkItemPayload({ ...d, schedule: "goal", goal: 3, weekdays: [1, 3] }).p_weekdays).toBeNull();
+    expect(checkGoalOf({ ...d, schedule: "goal", goal: 4 })).toBe(4);
+    expect(checkGoalOf({ ...d, schedule: "days", weekdays: [1] })).toBeNull();
+    expect(draftFromItem(FLEX)).toMatchObject({ schedule: "goal", goal: 3, weekdays: [] });
   });
 });
