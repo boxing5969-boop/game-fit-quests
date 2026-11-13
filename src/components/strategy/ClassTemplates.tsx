@@ -4,6 +4,7 @@
  *   → 글씨 6단계(제목 24 · 순서 이름 19 · 설명 16) · 순서는 번호 줄(타임라인) · 순서마다 「참고 영상」 · 맨 위 「수업 요약 영상」
  *   코치님: 펼쳐서 흐름 · 영상 · 대상 · 지도 원칙을 보기
  *   대표님 · 지점장님: 「이 템플릿으로 오늘 프로그램 만들기」 → 오늘 프로그램 시트가 템플릿으로 채워져 열린다
+ *   코치진 모두: 「이 템플릿으로 내 수업 짜기」(2026-11-13) → 내 수업 짜기 시트가 템플릿 블록으로 채워져 열린다(고쳐서 수업안으로)
  *   대표님: 순서마다 「참고 영상 넣기 · 바꾸기 · 빼기」(영상은 모든 지점 공통 — class_template_videos)
  */
 import { Fragment, useMemo, useState } from "react";
@@ -51,6 +52,8 @@ interface Props {
   /** 올리는 중 · 빼는 중인 자리 (templateVideoKey) */
   busy?: string | null;
   onUse: (t: ClassTemplate) => void;
+  /** 「이 템플릿으로 내 수업 짜기」 — 코치진 모두 (2026-11-13) */
+  onPlan?: (t: ClassTemplate) => void;
   onPlay?: (t: ClassTemplate, step: number, v: ClassTemplateVideo) => void;
   onAttach?: (t: ClassTemplate, step: number, file: File) => void;
   onClear?: (t: ClassTemplate, step: number) => void;
@@ -58,7 +61,7 @@ interface Props {
   initialOpenId?: string | null;
 }
 
-export default function ClassTemplateList({ canDirect, isHq = false, videos = [], busy = null, onUse, onPlay, onAttach, onClear, initialOpenId = null }: Props) {
+export default function ClassTemplateList({ canDirect, isHq = false, videos = [], busy = null, onUse, onPlan, onPlay, onAttach, onClear, initialOpenId = null }: Props) {
   const [openId, setOpenId] = useState<string | null>(initialOpenId);
   const byKey = useMemo(() => new Map(videos.map((v) => [templateVideoKey(v.template_id, v.step), v])), [videos]);
 
@@ -183,6 +186,19 @@ export default function ClassTemplateList({ canDirect, isHq = false, videos = []
                     className="mt-5 flex h-14 w-full items-center justify-center rounded-2xl bg-foreground text-body font-black text-background active:scale-[0.99]"
                   >
                     이 템플릿으로 오늘 프로그램 만들기
+                  </button>
+                )}
+                {onPlan && (
+                  <button
+                    type="button"
+                    onClick={() => onPlan(t)}
+                    className={
+                      canDirect
+                        ? "mt-2 flex h-12 w-full items-center justify-center rounded-2xl border border-border bg-card text-body font-black text-foreground active:scale-[0.99]"
+                        : "mt-5 flex h-14 w-full items-center justify-center rounded-2xl bg-foreground text-body font-black text-background active:scale-[0.99]"
+                    }
+                  >
+                    이 템플릿으로 내 수업 짜기
                   </button>
                 )}
               </div>

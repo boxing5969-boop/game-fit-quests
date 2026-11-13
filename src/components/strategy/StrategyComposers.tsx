@@ -4,6 +4,8 @@
  *   · ProgramComposer — 오늘 프로그램: 50분 4블록 틀 + 카드 고르기 + 받을 코치 — 대표님·지점장님
  *       153 수업 템플릿(lib/classTemplates, 2026-11-11)을 고르면 이름 · 블록 · 코치님께 한마디가 채워진다
  *       2026-11-13 블록마다 「카드 고르기」(CardDrawer — 153 카드 · 레벨 미션 · 우리 지점 영상) → 이름 · 분 · 블록 종류가 채워진다
+ *   · ProgramComposer mode 'plan' — 코치님 「내 수업 짜기」(2026-11-13): 같은 블록 · 카드 고르기로 짜서 수업안(class_log · data.stage 'plan')으로 저장
+ *       — 지시처럼 알림이 퍼지지 않고, 대표님 · 지점장님이 보고 피드백 · 수업이 끝나면 같은 글이 수업 기록이 된다(lib/classPlan)
  *   · ClassLogComposer — 수업 기록: 그 시간 입실 인원은 출석 기록에서 자동 — 모든 코치 · 진행한 프로그램에 153 수업 템플릿도
  *       2026-11-13 진행한 프로그램의 카드가 칩으로(모두 켜짐) → 안 한 것만 끄고 저장(data.cards) · 프로그램 없이도 「카드 고르기」
  */
@@ -12,6 +14,7 @@ import { ArrowDown, ArrowUp, Film, Layers, Plus, Sparkles, X } from "lucide-reac
 import { toast } from "sonner";
 import { CLASS_TEMPLATES, classTemplateBlocks, classTemplateNote, type ClassTemplate } from "@/lib/classTemplates";
 import { cardShelf, cardToBlock, placeCardInBlocks, programCardIds, type TrainingCard } from "@/lib/trainingCards";
+import { PLAN_STAGE, isClassPlan, planHour, planSnapshot } from "@/lib/classPlan";
 import { useTrainingCards } from "@/services/trainingCardService";
 import { CardDrawer, type DrawerMission, type DrawerPick } from "@/components/strategy/CardDrawer";
 
@@ -292,6 +295,7 @@ export const ProgramComposer = ({
   initialTemplate,
   initialCard,
   missions = [],
+  mode = "program",
 }: {
   open: boolean;
   onClose: () => void;
@@ -299,6 +303,7 @@ export const ProgramComposer = ({
   branch: string | null;
   videos: StrategyVideo[];
   templates: StrategyItem[];
+  /** program = 복사해서 새로 보내기 · plan = 고칠 수업안(같은 글을 고친다) */
   initial?: StrategyItem | null;
   /** 153 수업 템플릿에서 시작 (템플릿 카드 「이 템플릿으로 오늘 프로그램 만들기」) */
   initialTemplate?: ClassTemplate | null;
@@ -306,7 +311,11 @@ export const ProgramComposer = ({
   initialCard?: TrainingCard | null;
   /** 카드 서랍의 「레벨 미션」 칸 */
   missions?: DrawerMission[];
+  /** program = 오늘 프로그램(대표님 · 지점장님 → 코치님께 보내기) · plan = 코치님 「내 수업 짜기」(수업안 저장) */
+  mode?: "program" | "plan";
 }) => {
+  const isPlan = mode === "plan";
+  const editingPlan = isPlan && !!initial && isClassPlan(initial);
   const save = useSaveStrategy();
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(kstToday());
@@ -323,13 +332,15 @@ export const ProgramComposer = ({
   const applyClassTemplate = (t: ClassTemplate) => {
     setTitle(t.title);
     setBlocks(classTemplateBlocks(t));
-    setNote(classTemplateNote(t));
+    // 수업안 메모는 코치님 것 — 템플릿의 「코치님께 한마디」는 오늘 프로그램에만
+    if (!isPlan) setNote(classTemplateNote(t));
   };
 
   useEffect(() => {
     if (open) {
       setTitle(initial?.title ?? "");
-      setDate(kstToday());
+      // 수업안을 고칠 때는 그 수업 날짜 그대로 (프로그램 복사는 오늘)
+      setDate(isPlan && initial?.event_date ? initial.event_date : kstToday());
       setSlot(initial?.data?.slot ?? "");
       setBlocks(initial?.data?.blocks?.length ? initial.data.blocks.map((b) => ({ ...b })) : DEFAULT_BLOCKS.map((b) => ({ ...b })));
       setNote(initial?.body ?? "");
@@ -339,12 +350,12 @@ export const ProgramComposer = ({
       if (!initial && initialTemplate) {
         setTitle(initialTemplate.title);
         setBlocks(classTemplateBlocks(initialTemplate));
-        setNote(classTemplateNote(initialTemplate));
+        if (!isPlan) setNote(classTemplateNote(initialTemplate));
       } else if (!initial && initialCard) {
         setBlocks(placeCardInBlocks(DEFAULT_BLOCKS, initialCard));
       }
     }
-  }, [open, initial, initialTemplate, initialCard]);
+  }, [open, initial, initialTemplate, initialCard, isPlan]);
 
   // 카드 서랍에서 고른 것 — 블록마다 붙는 것은 셋 중 하나(153 카드 · 레벨 미션 · 우리 지점 영상)
   const pick = (i: number, p: DrawerPick) => {
@@ -395,7 +406,46 @@ export const ProgramComposer = ({
   const valid =
     blocks.length > 0 && blocks.every((b) => (b.title.trim() || b.video_id || b.card_id || b.mission_id) && Number(b.minutes) > 0);
 
+  const cleanBlocks = (): ProgramBlock[] =>
+    blocks.map((b) => ({
+      kind: b.kind,
+      title: (
+        b.title.trim() ||
+        (b.card_id && cardMap.get(b.card_id)?.name) ||
+        (b.mission_id && missionMap.get(b.mission_id)?.title) ||
+        videos.find((v) => v.id === b.video_id)?.title ||
+        ""
+      ).slice(0, 80),
+      minutes: Math.max(1, Math.min(120, Math.round(Number(b.minutes) || 1))),
+      video_id: b.video_id || null,
+      card_id: b.card_id || null,
+      mission_id: b.mission_id || null,
+      note: (b.note ?? "").trim(),
+    }));
+
+  // 코치님 수업안 — 수업 기록(class_log) 한 줄 · data.stage 'plan' (lib/classPlan). 고칠 때는 같은 글
+  const submitPlan = () =>
+    save.mutate(
+      {
+        id: editingPlan ? initial?.id : undefined,
+        branch,
+        kind: "class_log",
+        title: title.trim() || `${shortDate(date)} 내 수업`,
+        body: note.trim(),
+        eventDate: date,
+        data: { stage: PLAN_STAGE, slot: slot.trim() || null, blocks: cleanBlocks(), total_min: total },
+      },
+      {
+        onSuccess: () => {
+          toast.success(editingPlan ? "수업안을 고쳤어요" : "수업안을 저장했어요 — 대표님 · 지점장님이 보고 피드백을 남길 수 있어요");
+          onClose();
+        },
+        onError: (e) => toast.error((e as Error).message),
+      },
+    );
+
   const submit = () =>
+    isPlan ? submitPlan() :
     save.mutate(
       {
         branch,
@@ -440,11 +490,21 @@ export const ProgramComposer = ({
       open={open}
       onClose={onClose}
       tall
-      title="오늘 프로그램 만들기"
-      subtitle="카드를 골라 블록을 쌓으면 코치님들이 영상을 보고 그대로 수업해요"
+      title={isPlan ? (editingPlan ? "수업안 고치기" : "내 수업 짜기") : "오늘 프로그램 만들기"}
+      subtitle={
+        isPlan
+          ? "칸마다 카드를 골라 블록을 쌓아요 — 대표님 · 지점장님이 보고 피드백을 남기고, 수업이 끝나면 그대로 수업 기록이 돼요"
+          : "카드를 골라 블록을 쌓으면 코치님들이 영상을 보고 그대로 수업해요"
+      }
       footer={
         <SubmitButton onClick={submit} disabled={!valid || save.isPending}>
-          {save.isPending ? "보내는 중…" : `코치님께 보내기 · ${total}분`}
+          {save.isPending
+            ? isPlan
+              ? "저장하는 중…"
+              : "보내는 중…"
+            : isPlan
+              ? `${editingPlan ? "고친 수업안 저장" : "수업안 저장"} · ${total}분`
+              : `코치님께 보내기 · ${total}분`}
         </SubmitButton>
       }
     >
@@ -477,8 +537,14 @@ export const ProgramComposer = ({
           </div>
         </>
       )}
-      <Label>프로그램 이름</Label>
-      <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} placeholder="예: 원·투 스텝 + 미트 3R" className={inputCls} />
+      <Label>{isPlan ? "수업 이름" : "프로그램 이름"}</Label>
+      <input
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        maxLength={120}
+        placeholder={isPlan ? "예: 위빙 수업 — 기본 그룹은 원·투로" : "예: 원·투 스텝 + 미트 3R"}
+        className={inputCls}
+      />
       <div className="mt-3 grid grid-cols-2 gap-2">
         <div>
           <Label>날짜</Label>
@@ -600,14 +666,29 @@ export const ProgramComposer = ({
         <Film className="h-3.5 w-3.5 shrink-0" /> 카드를 고르면 이름 · 분 · 블록 종류가 채워지고, 코치님은 블록을 눌러 영상을 봐요.
       </p>
 
-      <Label>코치님께 한마디 (선택)</Label>
-      <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} maxLength={1000} placeholder="예: 신규 회원이 많은 시간이라 스텝을 천천히" className={cn(inputCls, "resize-none")} />
-      <Label>받는 코치</Label>
-      <TargetPicker me={me} value={targets} onChange={setTargets} />
-      <label className="mt-3 flex items-center gap-2 text-[13.5px] font-bold text-foreground">
-        <input type="checkbox" checked={template} onChange={(e) => setTemplate(e.target.checked)} className="h-4 w-4" />
-        자주 쓰는 프로그램으로 저장 (다음에 불러오기)
-      </label>
+      <Label>{isPlan ? "메모 (선택)" : "코치님께 한마디 (선택)"}</Label>
+      <textarea
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        rows={2}
+        maxLength={1000}
+        placeholder={isPlan ? "예: 처음 온 회원이 많은 시간 — 스텝을 단계별로 천천히" : "예: 신규 회원이 많은 시간이라 스텝을 천천히"}
+        className={cn(inputCls, "resize-none")}
+      />
+      {isPlan ? (
+        <p className="mt-3 rounded-2xl bg-secondary px-3 py-2 text-[11.5px] leading-snug text-muted-foreground">
+          수업안은 코치진과 대표님이 함께 봐요 — 회원 이름 · 건강 같은 민감한 내용은 쓰지 말아 주세요.
+        </p>
+      ) : (
+        <>
+          <Label>받는 코치</Label>
+          <TargetPicker me={me} value={targets} onChange={setTargets} />
+          <label className="mt-3 flex items-center gap-2 text-[13.5px] font-bold text-foreground">
+            <input type="checkbox" checked={template} onChange={(e) => setTemplate(e.target.checked)} className="h-4 w-4" />
+            자주 쓰는 프로그램으로 저장 (다음에 불러오기)
+          </label>
+        </>
+      )}
     </DmSheet>
     <CardDrawer
       open={open && drawerFor !== null}
@@ -629,12 +710,18 @@ export const ClassLogComposer = ({
   programs,
   initialProgram,
   standards,
+  plans = [],
+  fromPlan,
 }: {
   open: boolean;
   onClose: () => void;
   branch: string | null;
   programs: StrategyItem[];
   initialProgram?: StrategyItem | null;
+  /** 내 수업안(「내 수업 짜기」) — 고르면 그 수업안이 이 기록이 된다(같은 글) */
+  plans?: StrategyItem[];
+  /** 수업안 카드의 「수업 끝 — 기록 쓰기」로 열 때 */
+  fromPlan?: StrategyItem | null;
   /** 153 기준 다섯 가지 (2026-11-05) — 있으면 '153 기준 점검' 칸을 그린다 · data.std 로 저장 */
   standards?: CoachStd[];
 }) => {
@@ -669,20 +756,22 @@ export const ClassLogComposer = ({
 
   useEffect(() => {
     if (open) {
-      setDate(kstToday());
-      setHour(Math.max(5, Math.min(23, kstHour() - (new Date().getMinutes() < 30 ? 1 : 0))));
-      setProgramId(initialProgram?.id ?? "");
-      setProgramTitle(initialProgram?.title ?? "");
+      const nowHour = Math.max(5, Math.min(23, kstHour() - (new Date().getMinutes() < 30 ? 1 : 0)));
+      // 수업안에서 열면 그 수업 날짜 · 시간 · 카드 그대로
+      setDate(fromPlan?.event_date ?? kstToday());
+      setHour(fromPlan ? planHour(typeof fromPlan.data?.slot === "string" ? fromPlan.data.slot : null, nowHour) : nowHour);
+      setProgramId(fromPlan ? `plan:${fromPlan.id}` : initialProgram?.id ?? "");
+      setProgramTitle(fromPlan?.title ?? initialProgram?.title ?? "");
       setWentWell("");
       setIssues("");
       setNextFocus("");
       setStd({});
-      setProgCardIds(programCardIds(initialProgram?.data?.blocks));
+      setProgCardIds(programCardIds((fromPlan ?? initialProgram)?.data?.blocks));
       setExtraCardIds([]);
       setOffCardIds([]);
       setCardDrawer(false);
     }
-  }, [open, initialProgram]);
+  }, [open, initialProgram, fromPlan]);
 
   // 그 시간 입실 인원 — 출석 기록에서 자동 (고쳐 쓸 수 있다)
   useEffect(() => {
@@ -701,6 +790,12 @@ export const ClassLogComposer = ({
   }, [open, branch, date, hour]);
 
   const nearPrograms = useMemo(() => programs.slice(0, 20), [programs]);
+  // 고를 수 있는 내 수업안 — 수업안 카드에서 열었으면 그 수업안도 (목록이 아직 안 왔을 때)
+  const myPlans = useMemo(() => {
+    const list = plans.filter((p) => isClassPlan(p) && p.mine);
+    return fromPlan && !list.some((p) => p.id === fromPlan.id) ? [fromPlan, ...list] : list;
+  }, [plans, fromPlan]);
+  const chosenPlan = programId.startsWith("plan:") ? myPlans.find((p) => `plan:${p.id}` === programId) ?? null : null;
   const valid = !!(
     wentWell.trim() ||
     issues.trim() ||
@@ -713,6 +808,8 @@ export const ClassLogComposer = ({
   const submit = () =>
     save.mutate(
       {
+        // 내 수업안을 골랐으면 그 글이 기록이 된다(stage 가 빠지고 짠 블록은 data.plan 에 남는다 · 피드백도 이어진다)
+        id: chosenPlan?.id,
         branch,
         kind: "class_log",
         title: `${shortDate(date)} ${hour}시 수업`,
@@ -720,19 +817,20 @@ export const ClassLogComposer = ({
         data: {
           hour,
           attendees: attendees.trim() === "" ? null : Math.max(0, Math.round(Number(attendees) || 0)),
-          // 153 수업 템플릿을 골랐으면 이름만 남긴다 (프로그램 글이 아니라서)
-          program_id: programId && !programId.startsWith("tpl:") ? programId : null,
+          // 153 수업 템플릿 · 내 수업안을 골랐으면 이름만 남긴다 (프로그램 글이 아니라서)
+          program_id: programId && !programId.startsWith("tpl:") && !programId.startsWith("plan:") ? programId : null,
           program_title: programTitle.trim() || null,
           went_well: wentWell.trim(),
           issues: issues.trim(),
           next_focus: nextFocus.trim(),
           ...(markedCount(std) > 0 ? { std } : {}),
           ...(pickedCards.length > 0 ? { cards: pickedCards.slice(0, 40) } : {}),
+          ...(chosenPlan ? { plan: planSnapshot(chosenPlan) } : {}),
         },
       },
       {
         onSuccess: () => {
-          toast.success("수업 기록을 남겼어요");
+          toast.success(chosenPlan ? "수업안이 수업 기록이 됐어요" : "수업 기록을 남겼어요");
           onClose();
         },
         onError: (e) => toast.error((e as Error).message),
@@ -746,7 +844,7 @@ export const ClassLogComposer = ({
       onClose={onClose}
       tall
       title="수업 기록"
-      subtitle="1분이면 돼요 — 인원은 출석 기록에서 자동으로 채워요"
+      subtitle={chosenPlan ? "짠 수업안이 그대로 기록이 돼요 — 1분이면 돼요" : "1분이면 돼요 — 인원은 출석 기록에서 자동으로 채워요"}
       footer={
         <SubmitButton onClick={submit} disabled={!valid || save.isPending}>
           {save.isPending ? "저장하는 중…" : "기록 남기기"}
@@ -791,16 +889,26 @@ export const ClassLogComposer = ({
           const id = e.target.value;
           setProgramId(id);
           const tpl = id.startsWith("tpl:") ? CLASS_TEMPLATES.find((t) => `tpl:${t.id}` === id) : undefined;
-          const prog = tpl ? undefined : nearPrograms.find((p) => p.id === id);
-          setProgramTitle(tpl?.title ?? prog?.title ?? programTitle);
-          // 그 프로그램의 카드가 칩으로(모두 켜짐) — 직접 고른 카드는 그대로
-          setProgCardIds(programCardIds(prog?.data?.blocks));
+          const plan = id.startsWith("plan:") ? myPlans.find((p) => `plan:${p.id}` === id) : undefined;
+          const prog = tpl || plan ? undefined : nearPrograms.find((p) => p.id === id);
+          setProgramTitle(tpl?.title ?? plan?.title ?? prog?.title ?? programTitle);
+          // 그 프로그램 · 수업안의 카드가 칩으로(모두 켜짐) — 직접 고른 카드는 그대로
+          setProgCardIds(programCardIds((plan ?? prog)?.data?.blocks));
           setOffCardIds([]);
         }}
         className={inputCls}
         aria-label="프로그램 고르기"
       >
         <option value="">직접 쓰기</option>
+        {myPlans.length > 0 && (
+          <optgroup label="내 수업안">
+            {myPlans.map((p) => (
+              <option key={p.id} value={`plan:${p.id}`}>
+                {shortDate(p.event_date)} {p.title}
+              </option>
+            ))}
+          </optgroup>
+        )}
         {nearPrograms.map((p) => (
           <option key={p.id} value={p.id}>
             {shortDate(p.event_date)} {p.title}

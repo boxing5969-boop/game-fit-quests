@@ -3,6 +3,7 @@
  *   드릴·트레이닝 영상을 올려 그 영상으로 오늘 훈련 프로그램을 공유받아 적용")
  *   DB: supabase/migrations/20261016030000_strategy_room.sql — 읽기·쓰기는 모두 strategy_* 함수(서버가 직원만 통과시킨다)
  *   글 종류: directive 지시 · strategy 전략 · praise 칭찬 · principle 운영 원칙 · program 오늘 프로그램 · class_log 수업 기록
+ *   코치님 수업안(「내 수업 짜기」 2026-11-13) = class_log 중 data.stage 'plan' — lib/classPlan.ts
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,6 +67,10 @@ export interface ClassLogData {
   next_focus?: string;
   /** 오늘 가르친 153 콘텐츠 카드 id (2026-11-13 — 프로그램 카드 칩에서 안 한 것만 끄고 저장) */
   cards?: string[];
+  /** 'plan' = 코치님 수업안(아직 기록 전 — slot · blocks · total_min 은 ProgramData 칸). 기록을 쓰면 빠진다 (lib/classPlan) */
+  stage?: "plan";
+  /** 수업안에서 기록이 된 글 — 짰던 블록 */
+  plan?: { title?: string; slot?: string | null; blocks?: ProgramBlock[]; total_min?: number };
 }
 
 export interface StrategyAck {

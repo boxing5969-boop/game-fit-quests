@@ -3,6 +3,8 @@
  *   코치진(지도진 · 관리 권한)만 — 회원에게는 입구가 없고 서버도 막는다. 새 페이지가 아니라 지점 회의실의 탭.
  *   하위 탭: 지시·전략(운영 원칙 고정) · 오늘 프로그램 · 수업 기록 · 영상
  *   2026-11-13 세 칸(오늘 프로그램 · 수업 기록 · 영상)이 153 콘텐츠 카드로 이어진다 — 카드 서랍(CardDrawer) · 영상 칸 맨 위 카드 선반
+ *   2026-11-13 코치님 「내 수업 짜기」 — 오늘 프로그램 칸에서 카드를 조합해 수업안을 저장(수업 기록 중 data.stage 'plan' · lib/classPlan)
+ *     → 대표님 · 지점장님 피드백 → 수업이 끝나면 「기록 쓰기」로 같은 글이 수업 기록이 된다. 수업 기록 칸에는 수업안을 빼고 보인다.
  *   기획안: claude.ai 문서 '전략 회의실 기획안' · DB: 20261016030000_strategy_room.sql
  */
 import { useMemo, useState } from "react";
@@ -34,8 +36,10 @@ import TrainingDrillSheet from "@/components/TrainingDrillSheet";
 import { useMissions } from "@/hooks/useMissionData";
 import { primaryMissionVideo } from "@/lib/missionVideos";
 import { cardMedia, type TrainingCard } from "@/lib/trainingCards";
+import { onlyClassLogs, plansAwaitingFeedback, plansForBoard } from "@/lib/classPlan";
 import { trainingVideoUrl, useTrainingCards } from "@/services/trainingCardService";
 import {
+  kstToday,
   strategyVideoUrl,
   useAckStrategy,
   useStrategyFeed,
@@ -84,6 +88,16 @@ const Skeleton = () => (
   </div>
 );
 
+const SubActionButton = ({ onClick, children }: { onClick: () => void; children: React.ReactNode }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="flex h-11 w-full items-center justify-center gap-1.5 rounded-2xl border border-border bg-card text-[14px] font-black text-foreground active:scale-[0.99]"
+  >
+    <Plus className="h-4 w-4" /> {children}
+  </button>
+);
+
 const ActionButton = ({ onClick, children }: { onClick: () => void; children: React.ReactNode }) => (
   <button
     type="button"
@@ -121,7 +135,8 @@ const StrategyRoom = () => {
 
   const board = useStrategyFeed(b, ["principle", "directive", "strategy", "praise"], ok && section === "board");
   const programs = useStrategyFeed(b, ["program"], ok && (section === "program" || section === "log"));
-  const logs = useStrategyFeed(b, ["class_log"], ok && section === "log");
+  // 수업 기록 + 코치님 수업안(오늘 프로그램 칸) — 대표님 · 지점장님은 칸 점(오늘 피드백 기다리는 수업안)을 위해 늘
+  const logs = useStrategyFeed(b, ["class_log"], ok && (section === "log" || section === "program" || !!me?.can_direct));
   const videosQ = useStrategyVideos(b, ok && (section === "video" || section === "program"));
   const videos = useMemo(() => videosQ.data ?? [], [videosQ.data]);
   const videoMap = useMemo(() => new Map(videos.map((v) => [v.id, v])), [videos]);
@@ -137,6 +152,9 @@ const StrategyRoom = () => {
   const [programInit, setProgramInit] = useState<StrategyItem | null>(null);
   const [programTpl, setProgramTpl] = useState<ClassTemplate | null>(null);
   const [programCard, setProgramCard] = useState<TrainingCard | null>(null);
+  // program = 오늘 프로그램(대표님 · 지점장님) · plan = 코치님 「내 수업 짜기」
+  const [programMode, setProgramMode] = useState<"program" | "plan">("program");
+  const [logPlan, setLogPlan] = useState<StrategyItem | null>(null);
   // 받은 프로그램 · 수업 기록의 카드를 눌렀는데 영상이 아직 없으면 카드 시트(포인트 · 실수)
   const [sheetCard, setSheetCard] = useState<TrainingCard | null>(null);
   const [logOpen, setLogOpen] = useState(false);
@@ -204,6 +222,26 @@ const StrategyRoom = () => {
   const programRows = programs.data ?? [];
   const templates = programRows.filter((p) => p.data?.template);
   const unackedPrinciples = principles.filter((p) => !p.mine && !p.my_ack?.acked_at);
+  // 코치님 수업안 — 내 것(지난 기록 전 포함) 먼저 · 다른 코치님 것은 오늘 · 앞으로 / 수업 기록 칸은 수업안을 빼고
+  const today = kstToday();
+  const logRows = logs.data ?? [];
+  const { mine: myPlans, others: otherPlans } = plansForBoard(logRows, today);
+  const classLogs = onlyClassLogs(logRows);
+  const planWaiting = me.can_direct ? plansAwaitingFeedback(logRows, today) : 0;
+  const openPlan = (init: { item?: StrategyItem | null; tpl?: ClassTemplate | null; card?: TrainingCard | null }) => {
+    setProgramMode("plan");
+    setProgramInit(init.item ?? null);
+    setProgramTpl(init.tpl ?? null);
+    setProgramCard(init.card ?? null);
+    setProgramOpen(true);
+  };
+  const openProgram = (init: { item?: StrategyItem | null; tpl?: ClassTemplate | null; card?: TrainingCard | null }) => {
+    setProgramMode("program");
+    setProgramInit(init.item ?? null);
+    setProgramTpl(init.tpl ?? null);
+    setProgramCard(init.card ?? null);
+    setProgramOpen(true);
+  };
 
   return (
     <div className="space-y-3">
@@ -239,6 +277,9 @@ const StrategyRoom = () => {
             {s.label}
             {s.v === "std" && growthUnseen > 0 && (
               <span aria-label="새 피드백" className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-primary" />
+            )}
+            {s.v === "program" && planWaiting > 0 && (
+              <span aria-label={`피드백을 기다리는 수업안 ${planWaiting}개`} className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-primary" />
             )}
           </button>
         ))}
@@ -325,29 +366,49 @@ const StrategyRoom = () => {
 
       {section === "program" && (
         <>
-          {me.can_direct && (
-            <ActionButton
-              onClick={() => {
-                setProgramInit(null);
-                setProgramTpl(null);
-                setProgramCard(null);
-                setProgramOpen(true);
-              }}
-            >
-              오늘 프로그램 만들기
-            </ActionButton>
+          {me.can_direct ? (
+            <>
+              <ActionButton onClick={() => openProgram({})}>오늘 프로그램 만들기</ActionButton>
+              <SubActionButton onClick={() => openPlan({})}>내 수업 짜기</SubActionButton>
+            </>
+          ) : (
+            <ActionButton onClick={() => openPlan({})}>내 수업 짜기</ActionButton>
+          )}
+          {/* 코치님 수업안 — 카드를 조합해 짠 수업 (대표님 · 지점장님은 피드백) */}
+          {(myPlans.length > 0 || otherPlans.length > 0) && (
+            <div className="space-y-2.5">
+              <h2 className="px-1 text-[15px] font-black text-foreground">
+                수업안 <span className="text-muted-foreground">{myPlans.length + otherPlans.length}</span>
+                {planWaiting > 0 && <span className="ml-1.5 text-[12.5px] font-bold text-primary">피드백 기다림 {planWaiting}</span>}
+              </h2>
+              {[...myPlans, ...otherPlans].map((i) => (
+                <StrategyItemCard
+                  key={i.id}
+                  item={i}
+                  me={me}
+                  videos={videoMap}
+                  onPlay={play}
+                  cards={cardMap}
+                  missions={missionMap}
+                  onOpenCard={openCard}
+                  onPlayMission={playMission}
+                  onEditPlan={(p) => openPlan({ item: p })}
+                  onRecordPlan={(p) => {
+                    setLogProgram(null);
+                    setLogPlan(p);
+                    setLogOpen(true);
+                  }}
+                />
+              ))}
+            </div>
           )}
           <ClassTemplateList
             canDirect={!!me.can_direct}
             isHq={!!me.hq}
             videos={tplVideosQ.data ?? []}
             busy={tplBusy}
-            onUse={(t) => {
-              setProgramInit(null);
-              setProgramTpl(t);
-              setProgramCard(null);
-              setProgramOpen(true);
-            }}
+            onUse={(t) => openProgram({ tpl: t })}
+            onPlan={(t) => openPlan({ tpl: t })}
             onPlay={async (t, step, v) => {
               try {
                 const url = await classTemplateVideoUrl(v.storage_path);
@@ -396,15 +457,11 @@ const StrategyRoom = () => {
                   onOpenCard={openCard}
                   onPlayMission={playMission}
                   onApplied={(p) => {
+                    setLogPlan(null);
                     setLogProgram(p);
                     setLogOpen(true);
                   }}
-                  onReuse={(p) => {
-                    setProgramInit(p);
-                    setProgramTpl(null);
-                    setProgramCard(null);
-                    setProgramOpen(true);
-                  }}
+                  onReuse={(p) => openProgram({ item: p })}
                 />
               ))}
             </div>
@@ -417,6 +474,7 @@ const StrategyRoom = () => {
           <ActionButton
             onClick={() => {
               setLogProgram(null);
+              setLogPlan(null);
               setLogOpen(true);
             }}
           >
@@ -424,11 +482,11 @@ const StrategyRoom = () => {
           </ActionButton>
           {logs.isLoading ? (
             <Skeleton />
-          ) : (logs.data ?? []).length === 0 ? (
+          ) : classLogs.length === 0 ? (
             <Empty emoji="📝" title="아직 수업 기록이 없어요" body={"수업이 끝나면 1분만 — 인원은 출석 기록에서 자동으로 채워요.\n잘 된 수업은 '추천 수업'으로 모두가 따라 할 수 있어요."} />
           ) : (
             <div className="space-y-2.5">
-              {(logs.data ?? []).map((i) => (
+              {classLogs.map((i) => (
                 <StrategyItemCard key={i.id} item={i} me={me} cards={cardMap} onOpenCard={openCard} />
               ))}
             </div>
@@ -441,6 +499,7 @@ const StrategyRoom = () => {
           branch={b}
           onCheckClass={() => {
             setLogProgram(null);
+            setLogPlan(null);
             setLogOpen(true);
           }}
         />
@@ -451,25 +510,35 @@ const StrategyRoom = () => {
           {/* 153 콘텐츠 카드 — 모든 지점이 같이 보는 카드(코치용 영상 · 포인트 · 실수) · 「이 카드로 오늘 프로그램 만들기」 */}
           <TrainingShelf
             audience="staff"
-            sheetFooter={
-              me.can_direct
-                ? (card, close) => (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        close();
-                        setProgramInit(null);
-                        setProgramTpl(null);
-                        setProgramCard(card);
-                        setProgramOpen(true);
-                      }}
-                      className="mt-4 flex h-12 w-full items-center justify-center rounded-2xl bg-foreground text-body font-black text-background active:scale-[0.99]"
-                    >
-                      이 카드로 오늘 프로그램 만들기
-                    </button>
-                  )
-                : undefined
-            }
+            sheetFooter={(card, close) => (
+              <>
+                {me.can_direct && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      close();
+                      openProgram({ card });
+                    }}
+                    className="mt-4 flex h-12 w-full items-center justify-center rounded-2xl bg-foreground text-body font-black text-background active:scale-[0.99]"
+                  >
+                    이 카드로 오늘 프로그램 만들기
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    close();
+                    openPlan({ card });
+                  }}
+                  className={cn(
+                    "flex h-12 w-full items-center justify-center rounded-2xl text-body font-black active:scale-[0.99]",
+                    me.can_direct ? "mt-2 border border-border bg-card text-foreground" : "mt-4 bg-foreground text-background",
+                  )}
+                >
+                  이 카드로 내 수업 짜기
+                </button>
+              </>
+            )}
           />
           {/* 우리 지점 영상 — 지금 그대로(올리기 · 지우기 · 코치진만) */}
           <div className="space-y-3">
@@ -491,6 +560,7 @@ const StrategyRoom = () => {
         initialTemplate={programTpl}
         initialCard={programCard}
         missions={drawerMissions}
+        mode={programMode}
       />
       <ClassLogComposer
         open={logOpen}
@@ -502,6 +572,8 @@ const StrategyRoom = () => {
         programs={programRows}
         initialProgram={logProgram}
         standards={growth.data?.standards}
+        plans={myPlans}
+        fromPlan={logPlan}
       />
       <VideoOverlay video={overlay} onClose={() => setOverlay(null)} />
       <TrainingDrillSheet exercise={sheetCard} onClose={() => setSheetCard(null)} />

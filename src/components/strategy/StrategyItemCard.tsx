@@ -3,6 +3,7 @@
  *   · 받은 사람은 '확인했어요' (프로그램은 수업 뒤 '수업에 적용했어요')
  *   · 확인 n/n 을 누르면 누가 확인했는지 (글쓴이 · 지시권자)
  *   · 댓글(피드백) · 추천 수업(지시권자) · 지우기(글쓴이 · 지시권자)
+ *   · 코치님 수업안(「내 수업 짜기」 2026-11-13 — 수업 기록 중 data.stage 'plan'): 블록 · 카드 ▶ · 글쓴이는 「고치기」 · 「수업 끝 — 기록 쓰기」
  */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -12,10 +13,12 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { DmSheet } from "@/components/dm/DmParts";
 import { cardShelf, hasCardVideo, type TrainingCard } from "@/lib/trainingCards";
+import { isClassPlan, planOverdue } from "@/lib/classPlan";
 import type { DrawerMission } from "@/components/strategy/CardDrawer";
 import {
   BLOCK_LABEL,
   KIND_LABEL,
+  kstToday,
   programTotal,
   shortDate,
   strategyTime,
@@ -72,9 +75,12 @@ interface Props {
   /** 카드 블록을 누르면 — 코치용 영상(없으면 회원용), 영상이 없으면 카드 시트 */
   onOpenCard?: (card: TrainingCard) => void;
   onPlayMission?: (missionId: string) => void;
+  /** 수업안(글쓴이) — 「고치기」 · 「수업 끝 — 기록 쓰기」 */
+  onEditPlan?: (item: StrategyItem) => void;
+  onRecordPlan?: (item: StrategyItem) => void;
 }
 
-const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse, cards, missions, onOpenCard, onPlayMission }: Props) => {
+const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse, cards, missions, onOpenCard, onPlayMission, onEditPlan, onRecordPlan }: Props) => {
   const [openComments, setOpenComments] = useState(false);
   const [ackSheet, setAckSheet] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -86,6 +92,9 @@ const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse, cards,
   const applied = !!item.my_ack?.applied_at;
   const d = item.data ?? {};
   const canDelete = item.mine || canDirect;
+  // 코치님 수업안 — 수업 기록 중 아직 기록 전(stage 'plan')
+  const plan = isClassPlan(item);
+  const overdue = plan && planOverdue(item, kstToday());
   const navigate = useNavigate();
   // 지점 회의실 3단계 — 회의에서 정한 것으로 만든 지시는 그 회의록으로 (office_wrap_up 이 data.meeting_id 를 남긴다)
   const meetingId = item.kind === "directive" && typeof d.meeting_id === "string" ? d.meeting_id : null;
@@ -112,9 +121,17 @@ const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse, cards,
       )}
     >
       <div className="mb-2 flex items-start gap-2">
-        <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-[11.5px] font-black", KIND_TONE[item.kind])}>
-          {item.kind === "principle" && item.principle_no ? `원칙 ${item.principle_no}` : KIND_LABEL[item.kind]}
+        <span
+          className={cn(
+            "shrink-0 rounded-full px-2.5 py-0.5 text-[11.5px] font-black",
+            plan ? "bg-sky-500/10 text-sky-700 dark:text-sky-300" : KIND_TONE[item.kind],
+          )}
+        >
+          {plan ? "수업안" : item.kind === "principle" && item.principle_no ? `원칙 ${item.principle_no}` : KIND_LABEL[item.kind]}
         </span>
+        {overdue && (
+          <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[11.5px] font-black text-primary">기록 전</span>
+        )}
         {item.kind === "class_log" && item.starred && (
           <span className="shrink-0 rounded-full bg-amber-400/20 px-2 py-0.5 text-[11.5px] font-black text-amber-700 dark:text-amber-300">
             ⭐ 추천 수업
@@ -157,7 +174,14 @@ const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse, cards,
       </div>
 
       {/* 제목 */}
-      {item.kind === "class_log" ? (
+      {plan ? (
+        <p className="text-[16px] font-black text-foreground">
+          {item.title || "내 수업"}
+          <span className="ml-1.5 text-[13px] font-bold text-muted-foreground">
+            {[shortDate(item.event_date), d.slot].filter(Boolean).join(" ")} · {programTotal(d.blocks)}분
+          </span>
+        </p>
+      ) : item.kind === "class_log" ? (
         <p className="text-[16px] font-black text-foreground">
           {shortDate(item.event_date)} {d.hour != null ? `${d.hour}시` : ""} 수업
           {d.attendees != null && <span className="ml-1.5 text-[13px] font-bold text-muted-foreground">· 입실 {d.attendees}명</span>}
@@ -183,7 +207,7 @@ const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse, cards,
             <Row label="대상" text={d.target} />
           </>
         )}
-        {item.kind === "class_log" && (
+        {item.kind === "class_log" && !plan && (
           <>
             <Row label="프로그램" text={d.program_title} />
             {Array.isArray(d.cards) && d.cards.length > 0 && (
@@ -212,7 +236,7 @@ const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse, cards,
             <Row label="다음에" text={d.next_focus} />
           </>
         )}
-        {item.kind === "program" && (
+        {(item.kind === "program" || plan) && (
           <ol className="space-y-1.5">
             {(d.blocks ?? []).map((b, i) => {
               const v = b.video_id ? videos?.get(b.video_id) : undefined;
@@ -310,7 +334,25 @@ const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse, cards,
             {item.kind === "program" && item.applied > 0 ? ` · 적용 ${item.applied}` : ""}
           </button>
         )}
-        {item.kind === "class_log" && canDirect && (
+        {plan && item.mine && onRecordPlan && (
+          <button
+            type="button"
+            onClick={() => onRecordPlan(item)}
+            className="flex h-10 items-center gap-1.5 rounded-full bg-foreground px-4 text-[13.5px] font-black text-background active:scale-95"
+          >
+            <Check className="h-4 w-4" /> 수업 끝 — 기록 쓰기
+          </button>
+        )}
+        {plan && item.mine && onEditPlan && (
+          <button
+            type="button"
+            onClick={() => onEditPlan(item)}
+            className="rounded-full bg-secondary px-3 py-1.5 text-[12px] font-bold text-muted-foreground active:scale-95"
+          >
+            고치기
+          </button>
+        )}
+        {item.kind === "class_log" && !plan && canDirect && (
           <button
             type="button"
             disabled={star.isPending}
@@ -358,7 +400,12 @@ const StrategyItemCard = ({ item, me, videos, onPlay, onApplied, onReuse, cards,
         </button>
       </div>
 
-      {openComments && <Comments itemId={item.id} placeholder={item.kind === "class_log" ? "피드백을 남겨 주세요" : "질문·의견을 남겨 주세요"} />}
+      {openComments && (
+        <Comments
+          itemId={item.id}
+          placeholder={plan ? "수업안에 피드백을 남겨 주세요" : item.kind === "class_log" ? "피드백을 남겨 주세요" : "질문·의견을 남겨 주세요"}
+        />
+      )}
 
       <AckSheet open={ackSheet} onClose={() => setAckSheet(false)} item={item} />
     </article>
