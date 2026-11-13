@@ -70,3 +70,7 @@ verify_jwt = false
 
 [functions.calendar-ics]
 verify_jwt = false
+
+# 캘린더 3-1 구독 주소 — 휴대폰 · 구글 캘린더 앱이 로그인 없이 읽는다(토큰이 열쇠) (2026-11-13)
+[functions.calendar-feed]
+verify_jwt = false
