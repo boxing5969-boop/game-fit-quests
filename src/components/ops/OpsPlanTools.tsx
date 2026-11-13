@@ -4,6 +4,7 @@
  *   · 휴지통 — 지운 지 30일 안 · 되살리기(같이 지운 묶음 함께)
  *   · 아침 8시 브리핑 — 그날 수업 · PT · 약속한 회원이 있을 때만 한 통(대표님 결정 6) · 사람마다 끄기
  *   · 반복 일정을 끌어 옮기면 '이 일정만 / 이후 모두'
+ *   · 3-3 — 아래 줄에 「캘린더」(켜고 끄기 · 기본 알림) · 「시간 찾기」
  *   3-2 함수가 없는 DB 면 검색 · 휴지통 · 브리핑 줄을 숨긴다(available=false).
  */
 import { useEffect, useState } from "react";
@@ -12,7 +13,7 @@ import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { nextOccurrence } from "@/lib/opsRecur";
-import { PLAN_KIND_META, agoLabel, ddayLabel, isRepeat, planDay, planWhenLabel, timeLabel, type OpsPlan, type PlanMember } from "@/lib/opsPlans";
+import { agoLabel, ddayLabel, inviteLine, isInvitedPlan, isRepeat, planDay, planMeta, planTitle, planWhenLabel, timeLabel, type OpsPlan, type PlanMember } from "@/lib/opsPlans";
 import { useOpsPlanPrefs, useOpsPlanRestore, useOpsPlanSearch, useOpsPlanTrash } from "@/services/opsPlanService";
 import { OpsButton, OpsSheet, opsInput } from "./OpsParts";
 
@@ -81,11 +82,13 @@ export const PlanSearchSheet = ({
             return (
               <li key={p.id}>
                 <button type="button" onClick={() => onGo(go, p)} className="flex w-full items-start gap-2 py-3 text-left active:bg-secondary/60">
-                  <span className={cn("mt-0.5 shrink-0 rounded-md px-1.5 py-0.5 text-micro font-black", PLAN_KIND_META[p.kind].chip)}>{PLAN_KIND_META[p.kind].label}</span>
+                  <span className={cn("mt-0.5 shrink-0 rounded-md px-1.5 py-0.5 text-micro font-black", planMeta(p).chip)}>{planMeta(p).label}</span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-body font-bold text-foreground">{p.masked ? "개인 일정" : p.title || PLAN_KIND_META[p.kind].label}</span>
+                    <span className="block truncate text-body font-bold text-foreground">{planTitle(p)}</span>
                     <span className="block truncate text-label text-muted-foreground">
-                      {[!p.mine ? nameOf(p.user_id) : null, planWhenLabel(p), timeLabel(p.all_day, p.start_time, p.end_time), p.location].filter(Boolean).join(" · ")}
+                      {[isInvitedPlan(p) ? inviteLine(p) : !p.mine ? nameOf(p.user_id) : null, planWhenLabel(p), timeLabel(p.all_day, p.start_time, p.end_time), p.location]
+                        .filter(Boolean)
+                        .join(" · ")}
                     </span>
                     <span className="block text-label font-bold text-foreground">{nextLabel(p, next, today)}</span>
                   </span>
@@ -112,9 +115,9 @@ export const PlanTrashSheet = ({ open, onClose }: { open: boolean; onClose: () =
         <ul className="mt-1 divide-y divide-border">
           {rows.map((p) => (
             <li key={p.id} className="flex items-center gap-2 py-3">
-              <span className={cn("shrink-0 rounded-md px-1.5 py-0.5 text-micro font-black", PLAN_KIND_META[p.kind].chip)}>{PLAN_KIND_META[p.kind].label}</span>
+              <span className={cn("shrink-0 rounded-md px-1.5 py-0.5 text-micro font-black", planMeta(p).chip)}>{planMeta(p).label}</span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-body font-bold text-foreground">{p.title || PLAN_KIND_META[p.kind].label}</span>
+                <span className="block truncate text-body font-bold text-foreground">{planTitle(p)}</span>
                 <span className="block truncate text-label text-muted-foreground">
                   {planWhenLabel(p)} · {agoLabel(p.deleted_at)} 지움
                 </span>
@@ -140,14 +143,40 @@ export const PlanTrashSheet = ({ open, onClose }: { open: boolean; onClose: () =
   );
 };
 
-// ───────────────────────── 아래 한 줄 — 휴지통 · 아침 브리핑 ─────────────────────────
-export const PlanToolsRow = ({ briefOn, onTrash }: { briefOn: boolean; onTrash: () => void }) => {
+// ───────────────────────── 아래 한 줄 — 휴지통 · 캘린더 · 시간 찾기 · 아침 브리핑 ─────────────────────────
+export const PlanToolsRow = ({
+  briefOn,
+  onTrash,
+  onCalendars,
+  onFind,
+}: {
+  briefOn: boolean;
+  onTrash: () => void;
+  /** 3-3 — 캘린더 켜고 끄기 · 기본 알림 (함수가 없으면 안 줌) */
+  onCalendars?: () => void;
+  /** 3-3 — 시간 찾기 (함께할 팀원이 없으면 안 줌) */
+  onFind?: () => void;
+}) => {
   const prefs = useOpsPlanPrefs();
   return (
-    <div className="mt-4 flex items-center justify-between gap-2 border-t border-border pt-3">
-      <button type="button" onClick={onTrash} className="h-9 rounded-full px-2 text-label font-bold text-muted-foreground active:scale-95">
-        휴지통
-      </button>
+    <div className="mt-4 flex items-center justify-between gap-1 border-t border-border pt-3">
+      <div className="flex min-w-0 items-center">
+        <button type="button" onClick={onTrash} className="h-9 shrink-0 rounded-full px-2 text-label font-bold text-muted-foreground active:scale-95">
+          휴지통
+        </button>
+        {onCalendars && (
+          <button type="button" onClick={onCalendars} className="h-9 shrink-0 rounded-full px-2 text-label font-bold text-muted-foreground active:scale-95">
+            캘린더
+          </button>
+        )}
+        {onFind && (
+          <button type="button" onClick={onFind} className="h-9 shrink-0 rounded-full px-2 text-label font-bold text-muted-foreground active:scale-95">
+            시간 찾기
+          </button>
+        )}
+      </div>
+      {/* 3-3 — 캘린더 시트가 있으면 아침 브리핑 스위치는 그 시트 안으로 (하나 넣으면 하나 접기 · 글씨 크게에서도 한 줄) */}
+      {!onCalendars && (
       <button
         type="button"
         role="switch"
@@ -159,13 +188,14 @@ export const PlanToolsRow = ({ briefOn, onTrash }: { briefOn: boolean; onTrash: 
             onError: (e) => toast.error((e as Error).message),
           })
         }
-        className="flex h-9 items-center gap-2 rounded-full px-2 text-label font-bold text-foreground active:scale-95 disabled:opacity-50"
+        className="flex h-9 shrink-0 items-center gap-2 rounded-full px-1 text-label font-bold text-foreground active:scale-95 disabled:opacity-50"
       >
         아침 8시 브리핑
         <span className={cn("relative h-6 w-10 rounded-full transition-colors", briefOn ? "bg-primary" : "bg-muted-foreground/30")} aria-hidden>
           <span className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-card shadow transition-all", briefOn ? "left-[1.125rem]" : "left-0.5")} />
         </span>
       </button>
+      )}
     </div>
   );
 };

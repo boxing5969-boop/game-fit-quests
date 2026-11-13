@@ -8,9 +8,12 @@
  *     이후 모두 = 원래 반복은 그 전날까지 + 그날부터 새 반복
  *   · 지우기: 범위대로 — 이 일정만 = 그날 빼기 · 이후 모두 = 그 전날까지 · 전체 = 휴지통(30일 안에 되살리기) · 두 번 눌러 확인
  *   · '개인'은 '대표님 · 지점장님께는 시간만 보이기'를 고를 수 있다 (서버도 개인만 받는다)
+ *   · 3-3(2026-11-13 「남은거 진행하자」): 함께하는 사람(그 지점 팀 · 답 · 메모 · 제안 → 「이 시간으로」) · 회의 링크 · 첨부 ·
+ *     집중 시간 — 덜 쓰는 칸(회의 링크 · 첨부 · 색 · 메모 · 집중)은 '더 보기'에 접는다(하나 넣으면 하나 접기) · 새 일정 알림은 기본 알림(설정)
  *   검사는 src/lib/opsPlans.ts draftError (서버 ops_plan_save 와 같은 말)
  */
 import { useEffect, useMemo, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
@@ -41,16 +44,19 @@ import {
   type EndMode,
   type OpsPlan,
   type PlanDraft,
+  type PlanGuest,
   type PlanKind,
   type PlanScope,
+  type TeamPerson,
 } from "@/lib/opsPlans";
 import { RECUR_COUNT_MAX, monthModeLabel, type RecurFreq } from "@/lib/opsRecur";
 import { shortBranch } from "@/services/opsService";
 import { useOpsPlanRemoveScope, useOpsPlanSave } from "@/services/opsPlanService";
 import { OpsButton, OpsChip, OpsLabel, OpsSheet, opsInput } from "./OpsParts";
+import { GuestsEditor, PlanAttachments } from "./OpsPlanTogether";
 
 export type PlanSheetTarget =
-  | { mode: "new"; branch: string; date: string; kind?: PlanKind; time?: { start: string; end: string } }
+  | { mode: "new"; branch: string; date: string; kind?: PlanKind; time?: { start: string; end: string }; guests?: string[] }
   /** date: 반복 일정을 그날에서 열었으면 그날 (반복 목록에서 열면 null) */
   | { mode: "edit"; plan: OpsPlan; date: string | null };
 
@@ -70,7 +76,25 @@ const ENDS: ReadonlyArray<{ key: EndMode; label: string }> = [
 
 const mdShort = (d: string) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}(${OPS_WEEKDAY[new Date(`${d}T00:00:00Z`).getUTCDay()]})`;
 
-const OpsPlanSheet = ({ target, today, onClose }: { target: PlanSheetTarget | null; today: string; onClose: () => void }) => {
+const OpsPlanSheet = ({
+  target,
+  today,
+  team = [],
+  meUid = null,
+  remindDefault,
+  onClose,
+  onSaved,
+}: {
+  target: PlanSheetTarget | null;
+  today: string;
+  /** 3-3 — 초대할 수 있는 사람(그 지점 팀) · 내 user_id(첨부 폴더) · 새 일정 기본 알림 */
+  team?: TeamPerson[];
+  meUid?: string | null;
+  remindDefault?: readonly number[];
+  onClose: () => void;
+  /** 저장한 뒤 — 휴무면 그 기간의 수업 · 근무를 보여 준다(부모) */
+  onSaved?: (d: PlanDraft) => void;
+}) => {
   const save = useOpsPlanSave();
   const remove = useOpsPlanRemoveScope();
   // 닫히는 동안(애니메이션)에도 마지막 내용을 그린다
@@ -78,22 +102,30 @@ const OpsPlanSheet = ({ target, today, onClose }: { target: PlanSheetTarget | nu
   const [draft, setDraft] = useState<PlanDraft | null>(null);
   const [scope, setScope] = useState<PlanScope>("all");
   const [confirm, setConfirm] = useState(false);
+  const [more, setMore] = useState(false);
 
   useEffect(() => {
     setConfirm(false);
     if (!target) return;
     setLast(target);
     if (target.mode === "new") {
-      setDraft(newDraft(target.branch, target.date, target.kind, target.time));
+      setDraft(newDraft(target.branch, target.date, target.kind, target.time, { reminders: remindDefault, guests: target.guests }));
       setScope("all");
-    } else if (isRepeat(target.plan) && target.date) {
-      // 반복 일정을 그날에서 열었으면 '이 일정만'부터 — 날짜도 그날
-      setDraft(draftForScope(draftFromPlan(target.plan), target.plan, "one", target.date));
-      setScope("one");
+      setMore(false);
     } else {
-      setDraft(draftFromPlan(target.plan));
-      setScope("all");
+      const p = target.plan;
+      // 회의 링크 · 첨부 · 메모 · 색 · 집중이 있는 일정은 '더 보기'를 펼쳐서
+      setMore(!!(p.meet_url || (p.attachments ?? []).length || p.memo || p.color || p.focus));
+      if (isRepeat(p) && target.date) {
+        // 반복 일정을 그날에서 열었으면 '이 일정만'부터 — 날짜도 그날
+        setDraft(draftForScope(draftFromPlan(p), p, "one", target.date));
+        setScope("one");
+      } else {
+        setDraft(draftFromPlan(p));
+        setScope("all");
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target]);
 
   const t = target ?? last;
@@ -158,10 +190,28 @@ const OpsPlanSheet = ({ target, today, onClose }: { target: PlanSheetTarget | nu
       return { ...d, reminders: [...d.reminders, min].sort((a, b) => a - b) };
     });
 
+  /** 손님이 제안한 시간으로 (저장하면 모두에게 '바뀌었어요') */
+  const useProposal = (g: PlanGuest) => {
+    if (!g.proposed_on) return;
+    setDraft((d) =>
+      d
+        ? {
+            ...d,
+            start_on: g.proposed_on as string,
+            end_on: "",
+            ...(g.proposed_start && g.proposed_end ? { all_day: false, start_time: g.proposed_start, end_time: g.proposed_end } : {}),
+          }
+        : d,
+    );
+    toast(`${g.name}님이 제안한 시간으로 바꿨어요 — 저장하면 모두에게 알림이 가요`);
+  };
+
   const onSave = () => {
     if (err || busy) return;
+    const saved = draft;
     save.mutate(draftPayload(draft, editing ? scope : null, occurrence), {
       onSuccess: () => {
+        onSaved?.(saved);
         toast.success(
           editing && occurrence && scope === "one"
             ? `${planDay(occurrence)} 일정만 바꿨어요`
@@ -419,6 +469,10 @@ const OpsPlanSheet = ({ target, today, onClose }: { target: PlanSheetTarget | nu
         </>
       )}
 
+      {draft.kind !== "off" && !(draft.kind === "personal" && draft.private) && (
+        <GuestsEditor team={team} selected={draft.guests} plan={editing} onChange={(g) => set("guests", g)} onUseProposal={useProposal} />
+      )}
+
       {!draft.all_day && (
         <>
           <OpsLabel>알림 (4개까지)</OpsLabel>
@@ -448,6 +502,29 @@ const OpsPlanSheet = ({ target, today, onClose }: { target: PlanSheetTarget | nu
         maxLength={PLAN_LOCATION_MAX}
         className={opsInput}
       />
+
+      <button
+        type="button"
+        onClick={() => setMore((v) => !v)}
+        aria-expanded={more}
+        className="mt-4 flex h-11 w-full items-center justify-between rounded-xl bg-secondary/60 px-3 text-label font-bold text-foreground active:scale-[0.99]"
+      >
+        회의 링크 · 첨부 · 색 · 메모 · 집중 시간
+        <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", more && "rotate-180")} aria-hidden />
+      </button>
+      {more && (
+        <>
+      <OpsLabel>줌 · 구글 미트 링크 (선택)</OpsLabel>
+      <input
+        value={draft.meet_url}
+        onChange={(e) => set("meet_url", e.target.value.slice(0, 600))}
+        placeholder="초대 글을 통째로 붙여 넣어도 돼요"
+        className={opsInput}
+        aria-label="회의 링크"
+      />
+
+      <OpsLabel>첨부 (사진 · PDF 5개까지)</OpsLabel>
+      <PlanAttachments items={draft.attachments} uid={meUid} editable onChange={(a) => set("attachments", a)} />
 
       <OpsLabel>색</OpsLabel>
       <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="색">
@@ -488,6 +565,18 @@ const OpsPlanSheet = ({ target, today, onClose }: { target: PlanSheetTarget | nu
         maxLength={PLAN_MEMO_MAX}
         className={cn(opsInput, "resize-none")}
       />
+
+      {!draft.all_day && (
+        <label className="mt-4 flex items-start gap-2 text-body text-foreground">
+          <input type="checkbox" checked={draft.focus} onChange={(e) => set("focus", e.target.checked)} className="mt-0.5 h-5 w-5" />
+          <span>
+            집중 시간
+            <span className="block text-label text-muted-foreground">이 일정 동안 앱 알림은 휴대폰에 울리지 않고 알림함에만 들어가요</span>
+          </span>
+        </label>
+      )}
+        </>
+      )}
 
       {draft.kind === "personal" && (
         <label className="mt-4 flex items-center gap-2 text-body text-foreground">
