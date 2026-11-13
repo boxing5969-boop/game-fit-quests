@@ -6,6 +6,8 @@
  *   · 끌어 옮기기(15분 단위) — 휴대폰은 0.45초 길게 누른 뒤(그 전에 움직이면 그냥 스크롤) · 마우스는 바로
  *     아래 끝(손잡이)을 길게 눌러 끌면 늘리기 · 반복 일정은 놓을 때 '이 일정만 / 이후 모두'를 묻는다(부모 OpsPlanTab)
  *   · 내 일정만 끈다(남의 일정 · 근무 시간은 못 끈다 — 서버도 '내 일정만 고칠 수 있어요')
+ *   · 3-3 — 초대받은 일정(답 기다림 = 점선 · 누르면 답하기) · 겹쳐 그린 153 일정 · 정기 회의(누르면 보기) ·
+ *     하루 보기 오른쪽 '팀' 줄(팀원 바쁜 시간 — 제목 없이 · 캘린더에서 '팀 바쁜 시간'을 켜면)
  *   계산(놓기 · 붙이기)은 src/lib/opsTimeGrid.ts, 하루 정리는 src/lib/opsPlans.ts dayItems.
  */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
@@ -15,11 +17,17 @@ import { cn } from "@/lib/utils";
 import { openMemberCard } from "@/lib/appEvents";
 import { holidayOn } from "@/lib/krHolidays";
 import { OPS_WEEKDAY, weekdayOf } from "@/lib/opsWork";
+import { toast } from "sonner";
+
 import {
-  PLAN_KIND_META,
+  BUSY_META,
   dayItems,
+  isInvitedPlan,
   isRepeat,
   planColorHex,
+  planMeta,
+  planOpenable,
+  planTitle,
   type DayItem,
   type OpsPlan,
   type PlanMember,
@@ -40,6 +48,18 @@ import {
   resizedEnd,
   slotAt,
 } from "@/lib/opsTimeGrid";
+
+/** 하루 보기 오른쪽 '팀' 줄 — 팀원 바쁜 시간 (제목 없이) */
+export interface TeamLaneItem {
+  key: string;
+  name: string;
+  start: string | null;
+  end: string | null;
+  allDay: boolean;
+}
+
+/** 팀 줄이 차지하는 폭 (하루 보기) */
+const LANE_W = 0.3;
 
 export interface PlanMove {
   plan: OpsPlan;
@@ -98,6 +118,7 @@ const OpsPlanTimeGrid = ({
   onAdd,
   onOpenPlan,
   onMove,
+  lane,
 }: {
   data: PlansWeek;
   dates: string[];
@@ -107,6 +128,8 @@ const OpsPlanTimeGrid = ({
   onAdd: (date: string, time?: { start: string; end: string }) => void;
   onOpenPlan: (plan: OpsPlan, date: string | null) => void;
   onMove: (m: PlanMove) => void;
+  /** 3-3 — 하루 보기의 팀원 바쁜 시간 (주지 않으면 줄이 없다) */
+  lane?: TeamLaneItem[];
 }) => {
   const scroller = useRef<HTMLDivElement | null>(null);
   const cols = useRef<Array<HTMLDivElement | null>>([]);
@@ -123,6 +146,10 @@ const OpsPlanTimeGrid = ({
   const [nowMin, setNowMin] = useState(kstNowMin);
   const wide = dates.length === 1;
   const narrow = dates.length >= 7;
+  const laneOn = wide && !!lane;
+  const laneTimed = useMemo(() => (laneOn ? (lane ?? []).filter((l) => !l.allDay && l.start && l.end) : []), [laneOn, lane]);
+  const laneAllDay = laneOn ? (lane ?? []).filter((l) => l.allDay) : [];
+  const evW = laneOn ? 1 - LANE_W : 1;
 
   useEffect(() => {
     const t = window.setInterval(() => setNowMin(kstNowMin()), 60_000);
@@ -285,7 +312,7 @@ const OpsPlanTimeGrid = ({
 
   const openItem = (plan: OpsPlan, date: string) => {
     if (Date.now() - justDragged.current < 350) return; // 방금 끈 손을 뗀 것
-    if (!plan.mine) return;
+    if (!planOpenable(plan)) return;
     onOpenPlan(plan, isRepeat(plan) ? date : null);
   };
 
@@ -332,7 +359,7 @@ const OpsPlanTimeGrid = ({
       </div>
 
       {/* 하루 종일 · 생일 */}
-      <AllDayRow data={data} dates={dates} perDay={perDay} narrow={narrow} wide={wide} onOpen={openItem} onPickDay={onPickDay} />
+      <AllDayRow data={data} dates={dates} perDay={perDay} narrow={narrow} wide={wide} laneAllDay={laneAllDay} onOpen={openItem} onPickDay={onPickDay} />
 
       {/* 시간축 */}
       <div
@@ -355,6 +382,7 @@ const OpsPlanTimeGrid = ({
             const shifts = items.filter((i): i is Extract<DayItem, { type: "shift" }> => i.type === "shift");
             const timed = items.filter((i): i is Extract<DayItem, { type: "plan" }> => i.type === "plan" && !i.allDay);
             const placed = layoutDay(timed, (i) => ({ id: i.id, start: i.start ?? "06:00", end: i.end ?? "07:00" }));
+            const lanePlaced = laneOn ? layoutDay(laneTimed, (l) => ({ id: `${l.key}:${l.start}`, start: l.start ?? "06:00", end: l.end ?? "07:00" })) : [];
             const isToday = d === today;
             return (
               <div
@@ -390,35 +418,39 @@ const OpsPlanTimeGrid = ({
                   const plan = p.item.plan;
                   const hex = planColorHex(plan.color);
                   const dragging = ghost?.plan.id === plan.id && ghost.from === d;
-                  const title = plan.masked ? "개인 일정" : plan.title || PLAN_KIND_META[plan.kind].label;
+                  const title = planTitle(plan);
                   const tall = p.height >= 34;
+                  const invited = isInvitedPlan(plan);
+                  // 답 기다림 초대 = 점선 · 바탕 없이 (참석 · 아마는 보통 칸)
+                  const pending = invited && !plan.my_response;
                   const style: CSSProperties = {
                     top: p.top,
                     height: p.height,
-                    left: `calc(${(p.col / p.cols) * 100}% + 1px)`,
-                    width: `calc(${100 / p.cols}% - 2px)`,
-                    ...(hex ? { backgroundColor: `${hex}26`, borderLeftColor: hex } : {}),
+                    left: `calc(${(p.col / p.cols) * evW * 100}% + 1px)`,
+                    width: `calc(${(evW * 100) / p.cols}% - 2px)`,
+                    ...(hex ? { backgroundColor: pending ? "transparent" : `${hex}26`, borderLeftColor: hex } : {}),
                   };
                   return (
                     <div
                       key={`${plan.id}:${d}`}
                       role="button"
-                      tabIndex={plan.mine ? 0 : -1}
-                      aria-label={`${title} ${p.item.start}~${p.item.end}${plan.location ? ` · ${plan.location}` : ""}`}
+                      tabIndex={planOpenable(plan) ? 0 : -1}
+                      aria-label={`${invited ? "초대 · " : ""}${plan.focus ? "집중 시간 · " : ""}${title} ${p.item.start}~${p.item.end}${plan.location ? ` · ${plan.location}` : ""}`}
                       onPointerDown={(e) => startPress(e, plan, d, "move")}
                       onClick={(e) => {
                         e.stopPropagation();
                         openItem(plan, d);
                       }}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter") onOpenPlan(plan, isRepeat(plan) ? d : null);
+                        if (e.key === "Enter" && planOpenable(plan)) onOpenPlan(plan, isRepeat(plan) ? d : null);
                       }}
                       onContextMenu={(e) => e.preventDefault()}
                       className={cn(
                         "absolute overflow-hidden rounded-md border-l-[3px] py-0.5 text-left",
                         narrow ? "px-0.5" : "px-1",
-                        !hex && PLAN_KIND_META[plan.kind].chip,
+                        !hex && planMeta(plan).chip,
                         !hex && "border-l-current",
+                        pending && "border border-dashed border-current !bg-card",
                         dragging && "opacity-40",
                         canDrag(plan) && "cursor-grab",
                       )}
@@ -429,7 +461,8 @@ const OpsPlanTimeGrid = ({
                       {tall && !narrow && (
                         <p className={cn("truncate text-micro leading-tight opacity-80", hex && "text-foreground")}>
                           {p.item.start}~{p.item.end}
-                          {plan.location && wide ? ` · ${plan.location}` : ""}
+                          {plan.focus ? " · 집중" : ""}
+                          {invited && wide ? ` · ${plan.owner_name ?? "팀원"}님 초대` : plan.location && wide ? ` · ${plan.location}` : ""}
                         </p>
                       )}
                       {p.early && <p className="truncate text-micro leading-tight opacity-80">이른 일정</p>}
@@ -446,6 +479,35 @@ const OpsPlanTimeGrid = ({
                     </div>
                   );
                 })}
+                {/* 팀 줄 — 팀원 바쁜 시간 (하루 보기 오른쪽 · 제목 없이) */}
+                {laneOn && (
+                  <span
+                    className="pointer-events-none absolute inset-y-0 border-l border-dashed border-border"
+                    style={{ left: `${evW * 100}%` }}
+                    aria-hidden
+                  />
+                )}
+                {lanePlaced.map((lp) => (
+                  <button
+                    key={lp.item.key + lp.item.start}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toast(`${lp.item.name} · 바쁨 ${lp.item.start}~${lp.item.end}`);
+                    }}
+                    aria-label={`${lp.item.name} 바쁨 ${lp.item.start}~${lp.item.end}`}
+                    className={cn("absolute overflow-hidden rounded-md px-0.5 py-0.5 text-left", BUSY_META.chip)}
+                    style={{
+                      top: lp.top,
+                      height: lp.height,
+                      left: `calc(${(evW + (lp.col / lp.cols) * LANE_W) * 100}% + 1px)`,
+                      width: `calc(${(LANE_W * 100) / lp.cols}% - 2px)`,
+                    }}
+                  >
+                    {/* 나란히면 이름 두 글자(성 빼고) — 좁은 칸에서 한 글자씩 꺾이지 않게 */}
+                    <span className="block break-all text-micro font-bold leading-tight">{lp.cols > 1 && lp.item.name.length > 2 ? lp.item.name.slice(-2) : lp.item.name}</span>
+                  </button>
+                ))}
                 {/* 끄는 곳 미리 보기 */}
                 {ghost && ghost.date === d && <GhostBox ghost={ghost} narrow={narrow} edge={ci === 0 ? "left" : ci === dates.length - 1 ? "right" : null} />}
                 {/* 지금 */}
@@ -500,6 +562,7 @@ const AllDayRow = ({
   perDay,
   narrow,
   wide,
+  laneAllDay,
   onOpen,
   onPickDay,
 }: {
@@ -509,6 +572,8 @@ const AllDayRow = ({
   narrow: boolean;
   /** 하루 보기 — 생일을 한 줄에 칩으로 */
   wide: boolean;
+  /** 3-3 — 하루 종일 바쁜 팀원(하루 보기 · 팀 줄을 켰을 때) */
+  laneAllDay: TeamLaneItem[];
   onOpen: (plan: OpsPlan, date: string) => void;
   onPickDay: (date: string) => void;
 }) => {
@@ -517,7 +582,7 @@ const AllDayRow = ({
     items: perDay[i].filter((it) => it.allDay),
     bdays: (data.birthdays ?? []).filter((b) => b.date === d),
   }));
-  if (rows.every((r) => r.items.length === 0 && (narrow || r.bdays.length === 0))) return null;
+  if (laneAllDay.length === 0 && rows.every((r) => r.items.length === 0 && (narrow || r.bdays.length === 0))) return null;
   return (
     <div className="grid border-t border-border py-1" style={{ gridTemplateColumns: `2.5rem repeat(${dates.length}, minmax(0, 1fr))` }}>
       <span className="self-center pr-1 text-right text-micro text-muted-foreground">종일</span>
@@ -528,7 +593,7 @@ const AllDayRow = ({
           <div key={d} className="min-w-0 space-y-0.5 border-l border-border px-0.5">
             {shown.map((it) => {
               const plan = it.type === "plan" ? it.plan : null;
-              const label = plan ? (plan.masked ? "개인 일정" : plan.title || PLAN_KIND_META[plan.kind].label) : "쉰 날";
+              const label = plan ? planTitle(plan) : "쉰 날";
               const hex = plan ? planColorHex(plan.color) : null;
               return (
                 <button
@@ -537,7 +602,7 @@ const AllDayRow = ({
                   onClick={() => (plan ? onOpen(plan, d) : onPickDay(d))}
                   className={cn(
                     "block w-full truncate rounded px-1 text-left text-micro font-bold leading-5",
-                    !hex && (plan ? PLAN_KIND_META[plan.kind].chip : PLAN_KIND_META.off.chip),
+                    !hex && (plan ? planMeta(plan).chip : "bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-200"),
                   )}
                   style={hex ? { backgroundColor: `${hex}26` } : undefined}
                 >
@@ -549,6 +614,15 @@ const AllDayRow = ({
               <button type="button" onClick={() => onPickDay(d)} className="block w-full text-left text-micro font-bold text-muted-foreground">
                 +{more}
               </button>
+            )}
+            {wide && laneAllDay.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {laneAllDay.map((l) => (
+                  <span key={l.key} className={cn("max-w-full truncate rounded-full px-2 text-micro font-bold leading-5", BUSY_META.chip)}>
+                    바쁨 · {l.name}
+                  </span>
+                ))}
+              </div>
             )}
             {!narrow && bdays.length > 0 && (
               <div className={wide ? "flex flex-wrap gap-1" : "space-y-0.5"}>

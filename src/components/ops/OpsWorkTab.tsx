@@ -673,6 +673,22 @@ const CoachView = ({ data, onOpenContract, ptDemo }: { data: OpsMonthData; onOpe
       { replace: true },
     );
   }, [dutyParam, month, duty, setParams]);
+  // 캘린더 3-3 — 「일정」 탭에서 휴무를 넣은 뒤 /office?tab=work&cover=<날짜> : 그날 시트를 연다(수업이 있으면 「수업 대타」부터)
+  const coverParam = params.get("cover");
+  useEffect(() => {
+    if (!coverParam || !month) return;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(coverParam)) {
+      if (month.days.some((d) => d.date === coverParam)) setPick({ date: coverParam });
+      else toast(`${Number(coverParam.slice(5, 7))}월 근무에서 열어 주세요`);
+    }
+    setParams(
+      (p) => {
+        p.delete("cover");
+        return p;
+      },
+      { replace: true },
+    );
+  }, [coverParam, month, setParams]);
   // PT 위탁 코치 — 내 PT 회원 · 이번 달 차감 · 내 PT 수당(서버가 본인에게 수당표를 보낼 때만)
   const ptQ = useOpsPtMonth(data.branch, data.month, !!mine?.pt_freelancer);
   const ptPay = !!ptQ.data?.pay && (ptQ.data?.rates.length ?? 0) > 0;
