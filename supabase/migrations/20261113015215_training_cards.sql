@@ -6,7 +6,11 @@
 --   1) training_exercises 에 칸 5개 — video_path(회원용 영상 member/…) · coach_video_path(코치용 coach/…) ·
 --      poster_path(첫 장면 member/…) · minutes(기본 몇 분 1~120) · equipment(준비물 60자). 예전 video_url(링크)은 그대로
 --   2) 비공개 저장소 training-videos (mp4 · webp/jpg/png · 50MB)
---        member/ 읽기 = 로그인한 사람 누구나(서명 주소) · coach/ 읽기 = 코치진(_strategy_staff) · 넣기 · 바꾸기 · 지우기 = 대표님 · 운영진(_strategy_hq)
+--        member/ 읽기 = 로그인한 사람 누구나(서명 주소) · coach/ 읽기 = 코치진(_strategy_staff) · 넣기 = 대표님 · 운영진(has_role super_admin · admin)
+--        ⚠️ storage.objects 정책에는 authenticated 가 실행할 수 있는 함수만 — _strategy_hq 는 안쪽 함수(실행 권한 없음)라 넣으면
+--           'permission denied' 가 나고, 정책은 저장소마다 나뉘지 않아 다른 저장소(커뮤니티 사진 등) 올리기까지 모두 막힌다
+--           (2026-11-13 적용 직후 되돌림 시험에서 발견 · 21분 만에 has_role 로 고침 — 그사이 올리기 시도 0건)
+--        파일을 덮어쓰거나 지우는 정책은 두지 않는다 — 앱은 늘 새 파일을 올리고 카드 칸만 바꾼다(빼도 파일은 남음). 지울 일이 있으면 대시보드에서
 --      코치님 얼굴이 나오는 영상이라 공개 저장소(mission-videos)가 아니라 비공개 — 동의를 거두면 바로 내릴 수 있게
 --   3) 카드 쓰기 정책 tex_write 를 대표님 · 운영진(super_admin · admin)으로 좁힌다 — 모든 지점이 같은 카드를 본다 (읽기 tex_read 는 그대로)
 --   4) 새 카드 4장(11/12 촬영) — 십자 스텝 · 뛰는 스텝(풋워크) · 워킹 런지(워밍업) · 샌드백 구령(샌드백). 이름이 같은 카드가 있으면 넣지 않는다
@@ -67,17 +71,7 @@ exception when duplicate_object then null; end $$;
 do $$ begin
   create policy "training videos hq insert" on storage.objects for insert to authenticated
     with check (bucket_id = 'training-videos' and (storage.foldername(name))[1] in ('member', 'coach')
-                and public._strategy_hq(auth.uid()));
-exception when duplicate_object then null; end $$;
-do $$ begin
-  create policy "training videos hq update" on storage.objects for update to authenticated
-    using (bucket_id = 'training-videos' and public._strategy_hq(auth.uid()))
-    with check (bucket_id = 'training-videos' and (storage.foldername(name))[1] in ('member', 'coach')
-                and public._strategy_hq(auth.uid()));
-exception when duplicate_object then null; end $$;
-do $$ begin
-  create policy "training videos hq delete" on storage.objects for delete to authenticated
-    using (bucket_id = 'training-videos' and public._strategy_hq(auth.uid()));
+                and (public.has_role(auth.uid(), 'super_admin'::public.app_role) or public.has_role(auth.uid(), 'admin'::public.app_role)));
 exception when duplicate_object then null; end $$;
 
 -- ───────────────────────── 3) 카드 쓰기 = 대표님 · 운영진 ─────────────────────────
@@ -156,7 +150,7 @@ update public.training_exercises
 -- alter policy tex_write on public.training_exercises
 --   using (has_role(auth.uid(), 'super_admin') or has_role(auth.uid(), 'admin') or has_role(auth.uid(), 'branch_manager') or has_role(auth.uid(), 'coach'))
 --   with check (has_role(auth.uid(), 'super_admin') or has_role(auth.uid(), 'admin') or has_role(auth.uid(), 'branch_manager') or has_role(auth.uid(), 'coach'));
--- drop policy "training videos member read" on storage.objects;  (coach read · hq insert · hq update · hq delete 도 같게)
+-- drop policy "training videos member read" on storage.objects;  (coach read · hq insert 도 같게)
 -- 저장소 training-videos 는 파일이 남아 있으면 지우지 않는다(대시보드에서 비운 뒤).
 -- alter table public.training_exercises drop column video_path, drop column coach_video_path, drop column poster_path,
 --   drop column minutes, drop column equipment;
