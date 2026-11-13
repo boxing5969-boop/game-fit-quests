@@ -21,6 +21,7 @@ import {
   type GoodsCampaign,
 } from "@/lib/goodsPreorder";
 import { getGoodsCampaign, getGoodsMyPage } from "@/services/goodsService";
+import { leaveApp } from "@/lib/docCache";
 
 /** 한 줄에 들어가게 짧게 — '50벌 한정' · '남은 12벌' · (제한 없으면) '11월 26일(목)까지' */
 const stockShort = (c: GoodsCampaign): string => {
@@ -49,7 +50,9 @@ const GoodsNudgeCard = () => {
   if (done && waiting.length === 0) return null;
   if (waiting.length === 0 && isSoldOut(c)) return null;
 
-  const open = () => window.location.assign(`${GOODS_FLEECE_PATH}?from=app`);
+  // 같은 탭에서 정적 상세페이지로 — 지금 화면의 HTML 사본을 먼저 새로 받아 둬야 거기서 뒤로가기를 눌렀을 때
+  // 흰 화면이 안 된다(src/lib/docCache.ts · 2026-11-13). 끝 '/' 까지 붙여 308 한 번을 건너뛴다.
+  const open = () => void leaveApp(`${GOODS_FLEECE_PATH}/?from=app`);
 
   if (waiting.length > 0) {
     const branch = shortBranch(waiting[0].branch_name);
