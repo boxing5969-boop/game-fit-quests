@@ -11,6 +11,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { shiftMonth } from "@/lib/attendanceCalendar";
+import { holidayOn } from "@/lib/krHolidays";
 import { OPS_WEEKDAY, weekdayOf } from "@/lib/opsWork";
 import {
   MARK_META,
@@ -93,6 +94,8 @@ const MonthCell = ({
 }) => {
   const isToday = day === today;
   const wd = weekdayOf(day);
+  // 3-2 — 공휴일은 빨간 글씨 (src/lib/krHolidays.ts)
+  const hol = holidayOn(day);
   const shown = marks.length > MAX_DOTS ? marks.slice(0, MAX_DOTS - 1) : marks;
   const more = marks.length > shown.length;
   return (
@@ -100,7 +103,7 @@ const MonthCell = ({
       type="button"
       onClick={() => onPick(day)}
       aria-pressed={selected}
-      aria-label={`${planDay(day)}${isToday ? " · 오늘" : ""} — ${marks.length ? marksLine(marks, team) : "일정 없음"}`}
+      aria-label={`${planDay(day)}${hol ? ` · ${hol}` : ""}${isToday ? " · 오늘" : ""} — ${marks.length ? marksLine(marks, team) : "일정 없음"}`}
       className={cn(
         "flex h-12 flex-col items-center gap-1 rounded-xl pt-0.5 transition-transform active:scale-95",
         !inMonth && "opacity-40",
@@ -113,9 +116,11 @@ const MonthCell = ({
             ? "bg-foreground text-background"
             : isToday
               ? "text-primary ring-2 ring-primary/60"
-              : wd === 0
-                ? "text-muted-foreground"
-                : "text-foreground",
+              : hol
+                ? "text-rose-600"
+                : wd === 0
+                  ? "text-muted-foreground"
+                  : "text-foreground",
         )}
       >
         {Number(day.slice(8, 10))}

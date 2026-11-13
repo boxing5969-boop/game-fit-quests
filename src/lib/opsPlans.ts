@@ -9,6 +9,24 @@
  *   · 일정은 근무 시간 · 급여와 따로다 — 쉰 날 인정 · 대타 · 연장은 「근무」 탭
  */
 import { OPS_WEEKDAY, hmToMin, weekdayOf } from "@/lib/opsWork";
+import {
+  RECUR_COUNT_MAX,
+  countUntil,
+  firstOccurrence,
+  isRecurring,
+  monthModeOf,
+  monthModes,
+  monthRule,
+  occursOnRule,
+  recurDates,
+  ruleLabel,
+  ruleOf,
+  ruleText,
+  shiftRule,
+  type MonthMode,
+  type RecurFreq,
+  type RecurRule,
+} from "@/lib/opsRecur";
 
 export type PlanKind = "class" | "pt" | "work" | "out" | "off" | "personal";
 
@@ -86,6 +104,18 @@ export interface OpsPlan {
   end_time: string | null;
   mine: boolean;
   updated_at?: string;
+  /** 3-2 — 반복 규칙(비면 repeat_weekdays 로 매주 · 둘 다 비면 한 번) · 색 · 장소 · 알림(내 것만) · 묶음 */
+  rrule?: string | null;
+  color?: string | null;
+  location?: string | null;
+  reminders?: number[];
+  series_id?: string | null;
+}
+
+export interface PlanBirthday {
+  date: string;
+  user_id: string;
+  name: string;
 }
 
 export interface PlanShift {
@@ -117,6 +147,8 @@ export interface PlanRecent {
   start_on: string;
   end_on: string;
   repeat_weekdays: number[];
+  rrule?: string | null;
+  until_on?: string | null;
   all_day: boolean;
   start_time: string | null;
   end_time: string | null;
@@ -139,6 +171,10 @@ export interface PlansWeek {
   shifts: PlanShift[];
   offs: PlanOff[];
   recent: PlanRecent[];
+  /** 3-2 — 아침 8시 브리핑 (없으면 켬) */
+  prefs?: { brief_on: boolean };
+  /** 3-2 — 그 지점 회원 생일(「오늘 만날 회원」과 같은 범위 · 62일 넘는 범위는 비어 있음) */
+  birthdays?: PlanBirthday[];
 }
 
 // ───────────────────────── 날짜 ─────────────────────────
@@ -198,24 +234,25 @@ export const repeatLabel = (days: readonly number[], until?: string | null): str
 export const timeLabel = (allDay: boolean, start: string | null, end: string | null): string =>
   allDay || !start || !end ? "하루 종일" : `${start}~${end}`;
 
-// ───────────────────────── 일정 펼치기 ─────────────────────────
-export const isRepeat = (p: Pick<OpsPlan, "repeat_weekdays">): boolean => p.repeat_weekdays.length > 0;
+// ───────────────────────── 일정 펼치기 (3-2 — 반복은 src/lib/opsRecur.ts 한 곳) ─────────────────────────
+/** 반복 일정인가 — rrule 이 있거나 예전 매주 요일이 있으면 */
+export const isRepeat = (p: Pick<OpsPlan, "repeat_weekdays"> & { rrule?: string | null }): boolean => isRecurring(p);
 
-/** 그날 이 일정이 있나 */
+/** 그날 이 일정이 있나 (매일 · 매주 · 매월 · 매년 · 간격 · 횟수 · 끝 · 빼는 날) */
 export const occursOn = (
-  p: Pick<OpsPlan, "start_on" | "end_on" | "repeat_weekdays" | "until_on" | "skip_dates">,
+  p: Pick<OpsPlan, "start_on" | "end_on" | "repeat_weekdays" | "until_on" | "skip_dates"> & { rrule?: string | null },
   date: string,
-): boolean => {
-  if (!isRepeat(p)) return date >= p.start_on && date <= p.end_on;
-  if (date < p.start_on) return false;
-  if (p.until_on && date > p.until_on) return false;
-  if (p.skip_dates.includes(date)) return false;
-  return p.repeat_weekdays.includes(weekdayOf(date));
+): boolean => occursOnRule(p, date);
+
+/** 반복 한 줄 — "매월 셋째 화요일 · 10번" · "2주마다 월 · 12월 31일까지" (예전 매주는 "매주 화 · 목") */
+export const planRepeatLabel = (p: Pick<OpsPlan, "start_on" | "repeat_weekdays" | "until_on"> & { rrule?: string | null }): string => {
+  const rule = ruleOf(p);
+  return rule ? ruleLabel(rule, p.start_on, p.until_on) : "";
 };
 
 /** 일정이 어떻게 잡혔는지 한 줄 — "매주 화 · 목" · "11월 10일 – 14일" */
-export const planWhenLabel = (p: Pick<OpsPlan, "start_on" | "end_on" | "repeat_weekdays" | "until_on">): string =>
-  isRepeat(p) ? repeatLabel(p.repeat_weekdays, p.until_on) : spanLabel(p.start_on, p.end_on);
+export const planWhenLabel = (p: Pick<OpsPlan, "start_on" | "end_on" | "repeat_weekdays" | "until_on"> & { rrule?: string | null }): string =>
+  isRepeat(p) ? planRepeatLabel(p) : spanLabel(p.start_on, p.end_on);
 
 export type DayItem =
   | {
@@ -335,6 +372,53 @@ export const summaryLabel = (s: DaySummary): string =>
   [s.working ? `근무 ${s.working}명` : "", s.off ? `휴무 ${s.off}명` : "", s.out ? `외부 ${s.out}명` : ""].filter(Boolean).join(" · ");
 
 // ───────────────────────── 넣기 · 고치기 ─────────────────────────
+/** 3-2 — 색 12가지 (비면 종류 색) · 구글 캘린더 이름을 우리말로 + 153 민트 */
+export const PLAN_COLORS = [
+  { key: "tomato", label: "토마토", hex: "#D50000" },
+  { key: "flamingo", label: "플라밍고", hex: "#E67C73" },
+  { key: "tangerine", label: "귤", hex: "#F4511E" },
+  { key: "banana", label: "바나나", hex: "#F6BF26" },
+  { key: "sage", label: "세이지", hex: "#33B679" },
+  { key: "basil", label: "바질", hex: "#0B8043" },
+  { key: "peacock", label: "공작", hex: "#039BE5" },
+  { key: "blueberry", label: "블루베리", hex: "#3F51B5" },
+  { key: "lavender", label: "라벤더", hex: "#7986CB" },
+  { key: "grape", label: "포도", hex: "#8E24AA" },
+  { key: "graphite", label: "흑연", hex: "#616161" },
+  { key: "mint", label: "153 민트", hex: "#29C39C" },
+] as const;
+export type PlanColor = (typeof PLAN_COLORS)[number]["key"];
+
+/** 고른 색의 hex (없거나 모르는 이름이면 null = 종류 색) */
+export const planColorHex = (color: string | null | undefined): string | null => PLAN_COLORS.find((c) => c.key === color)?.hex ?? null;
+
+/** 3-2 — 알림 (시각 일정만 · 4개까지) · 코치님 기본 10분 전 (결정 6) */
+export const REMINDER_OPTIONS: ReadonlyArray<{ min: number; label: string }> = [
+  { min: 0, label: "정시" },
+  { min: 5, label: "5분 전" },
+  { min: 10, label: "10분 전" },
+  { min: 15, label: "15분 전" },
+  { min: 30, label: "30분 전" },
+  { min: 60, label: "1시간 전" },
+  { min: 120, label: "2시간 전" },
+  { min: 1440, label: "하루 전" },
+];
+export const REMINDER_DEFAULT: readonly number[] = [10];
+export const REMINDER_MAX = 4;
+export const reminderLabel = (min: number): string => REMINDER_OPTIONS.find((o) => o.min === min)?.label ?? `${min}분 전`;
+
+/** 반복 고르기 — 간격 칩 (그 밖의 간격은 가져온 일정에서만 — 그대로 둔다) */
+export const INTERVAL_CHOICES: Record<RecurFreq, readonly number[]> = { DAILY: [1, 2, 3], WEEKLY: [1, 2, 3, 4], MONTHLY: [1, 2, 3, 6], YEARLY: [1, 2] };
+export const intervalLabel = (freq: RecurFreq, n: number): string =>
+  freq === "DAILY" ? (n === 1 ? "매일" : `${n}일마다`)
+    : freq === "WEEKLY" ? (n === 1 ? "매주" : `${n}주마다`)
+      : freq === "MONTHLY" ? (n === 1 ? "매월" : `${n}개월마다`)
+        : n === 1 ? "매년" : `${n}년마다`;
+
+export type EndMode = "never" | "until" | "count";
+/** 고치기 범위 — 이 일정만 · 이후 모두 · 전체 */
+export type PlanScope = "one" | "following" | "all";
+
 export interface PlanDraft {
   id?: string;
   branch: string;
@@ -345,19 +429,36 @@ export interface PlanDraft {
   /** 한 번 하는 일정의 끝나는 날 — 비면 하루 */
   end_on: string;
   repeat: boolean;
+  freq: RecurFreq;
+  interval: number;
+  /** 매주 반복 요일 */
   repeat_weekdays: number[];
-  /** 반복이 끝나는 날 — 비면 계속 */
+  /** 매월 반복 모양 (시작 날로 고르는 것 — 13일 · 둘째 금요일 · 마지막 금요일 · 말일) */
+  monthMode: MonthMode;
+  endMode: EndMode;
+  /** 반복이 끝나는 날 (endMode until) */
   until_on: string;
+  /** 반복 횟수 (endMode count) */
+  count: number;
   all_day: boolean;
   start_time: string;
   end_time: string;
   private: boolean;
+  color: string | null;
+  location: string;
+  reminders: number[];
 }
 
 export const PLAN_TITLE_MAX = 40;
 export const PLAN_MEMO_MAX = 300;
+export const PLAN_LOCATION_MAX = 80;
 
-export const newDraft = (branch: string, date: string, kind: PlanKind = "class"): PlanDraft => ({
+export const newDraft = (
+  branch: string,
+  date: string,
+  kind: PlanKind = "class",
+  time?: { start: string; end: string },
+): PlanDraft => ({
   branch,
   kind,
   title: "",
@@ -365,40 +466,93 @@ export const newDraft = (branch: string, date: string, kind: PlanKind = "class")
   start_on: date,
   end_on: "",
   repeat: false,
+  freq: "WEEKLY",
+  interval: 1,
   repeat_weekdays: [weekdayOf(date)],
+  monthMode: "day",
+  endMode: "never",
   until_on: "",
-  all_day: kind === "off",
-  start_time: "19:00",
-  end_time: "20:00",
+  count: 10,
+  all_day: kind === "off" && !time,
+  start_time: time?.start ?? "19:00",
+  end_time: time?.end ?? "20:00",
   private: false,
+  color: null,
+  location: "",
+  reminders: [...REMINDER_DEFAULT],
 });
 
-export const draftFromPlan = (p: OpsPlan): PlanDraft => ({
-  id: p.id,
-  branch: p.branch,
-  kind: p.kind,
-  title: p.title ?? "",
-  memo: p.memo ?? "",
-  start_on: p.start_on,
-  end_on: !isRepeat(p) && p.end_on !== p.start_on ? p.end_on : "",
-  repeat: isRepeat(p),
-  repeat_weekdays: isRepeat(p) ? [...p.repeat_weekdays] : [weekdayOf(p.start_on)],
-  until_on: p.until_on ?? "",
-  all_day: p.all_day,
-  start_time: p.start_time ?? "19:00",
-  end_time: p.end_time ?? "20:00",
-  private: p.private,
-});
+export const draftFromPlan = (p: OpsPlan): PlanDraft => {
+  const rule = ruleOf(p);
+  return {
+    id: p.id,
+    branch: p.branch,
+    kind: p.kind,
+    title: p.title ?? "",
+    memo: p.memo ?? "",
+    start_on: p.start_on,
+    end_on: !rule && p.end_on !== p.start_on ? p.end_on : "",
+    repeat: !!rule,
+    freq: rule?.freq ?? "WEEKLY",
+    interval: rule?.interval ?? 1,
+    repeat_weekdays: rule?.freq === "WEEKLY" ? [...rule.byDay] : [weekdayOf(p.start_on)],
+    monthMode: rule?.freq === "MONTHLY" ? monthModeOf(rule) : "day",
+    endMode: rule?.count != null ? "count" : p.until_on ? "until" : "never",
+    until_on: rule?.count != null ? "" : (p.until_on ?? ""),
+    count: rule?.count ?? 10,
+    all_day: p.all_day,
+    start_time: p.start_time ?? "19:00",
+    end_time: p.end_time ?? "20:00",
+    private: p.private,
+    color: p.color ?? null,
+    location: p.location ?? "",
+    reminders: p.all_day ? [] : [...(p.reminders ?? [])],
+  };
+};
 
-/** 서버(ops_plan_save)와 같은 검사 — 통과하면 null */
-export const draftError = (d: PlanDraft, today: string, onlyDate?: string | null): string | null => {
+/** 시트에서 범위를 바꿀 때 — 이 일정만 = 그날 · 한 번 / 이후 모두 = 그날부터(횟수는 끝나는 날로) / 전체 = 원래 시작 */
+export const draftForScope = (d: PlanDraft, plan: OpsPlan, scope: PlanScope, occurrence: string | null): PlanDraft => {
+  const base = draftFromPlan(plan);
+  const keep = { ...d, repeat: base.repeat, freq: base.freq, interval: base.interval, repeat_weekdays: base.repeat_weekdays, monthMode: base.monthMode };
+  if (scope === "one" && occurrence) return { ...keep, start_on: occurrence, end_on: "" };
+  if (scope === "following" && occurrence)
+    return { ...keep, start_on: occurrence, endMode: base.endMode === "count" ? (plan.until_on ? "until" : "never") : base.endMode, until_on: plan.until_on ?? "", count: base.count };
+  return { ...keep, start_on: plan.start_on, endMode: base.endMode, until_on: base.until_on, count: base.count };
+};
+
+/** 시트의 반복 → 규칙 (한 번이면 null) */
+export const draftRule = (d: PlanDraft): RecurRule | null => {
+  if (!d.repeat) return null;
+  const m = d.freq === "MONTHLY" ? monthRule(d.monthMode, d.start_on) : { nth: null, nthWd: null, monthDay: null };
+  return {
+    freq: d.freq,
+    interval: d.interval,
+    byDay: d.freq === "WEEKLY" ? [...new Set(d.repeat_weekdays)].sort((a, b) => a - b) : [],
+    ...m,
+    count: d.endMode === "count" ? d.count : null,
+  };
+};
+
+/** 서버(ops_plan_save)와 같은 검사 — 통과하면 null. oneOff = '이 일정만'(반복 칸을 보지 않음) */
+export const draftError = (d: PlanDraft, today: string, oneOff?: boolean | string | null): string | null => {
   if (!d.start_on) return "날짜를 골라 주세요";
   if (d.start_on < addDays(today, -62) || d.start_on > addDays(today, 400)) return "날짜를 다시 골라 주세요";
   if (d.title.trim().length > PLAN_TITLE_MAX) return `제목은 ${PLAN_TITLE_MAX}자까지예요`;
   if (d.memo.trim().length > PLAN_MEMO_MAX) return `메모는 ${PLAN_MEMO_MAX}자까지예요`;
-  if (d.repeat && !onlyDate) {
-    if (d.repeat_weekdays.length === 0) return "반복할 요일을 골라 주세요";
-    if (d.until_on && d.until_on < d.start_on) return "반복이 끝나는 날이 시작보다 빨라요";
+  if (d.location.trim().length > PLAN_LOCATION_MAX) return `장소는 ${PLAN_LOCATION_MAX}자까지예요`;
+  if (d.repeat && !oneOff) {
+    if (d.freq === "WEEKLY" && d.repeat_weekdays.length === 0) return "반복할 요일을 골라 주세요";
+    const rule = draftRule(d) as RecurRule;
+    const first = firstOccurrence(rule, d.start_on);
+    if (!first) return "이 반복으로는 잡히는 날이 없어요";
+    if (d.endMode === "until") {
+      if (!d.until_on) return "반복이 끝나는 날을 골라 주세요";
+      if (d.until_on < first) return "반복이 끝나는 날이 시작보다 빨라요";
+    }
+    if (d.endMode === "count") {
+      if (!Number.isInteger(d.count) || d.count < 1 || d.count > RECUR_COUNT_MAX) return `횟수는 1 ~ ${RECUR_COUNT_MAX}번이에요`;
+      if (!countUntil(rule, first)) return "반복 횟수를 줄여 주세요 — 10년 안에서 반복해요";
+    }
   } else if (d.end_on) {
     if (d.end_on < d.start_on) return "끝나는 날이 시작보다 빨라요";
     if (d.end_on > addDays(d.start_on, 62)) return "여러 날 일정은 두 달까지예요";
@@ -406,30 +560,84 @@ export const draftError = (d: PlanDraft, today: string, onlyDate?: string | null
   if (!d.all_day) {
     if (!d.start_time || !d.end_time) return "시작 · 끝 시각을 골라 주세요";
     if (hmToMin(d.end_time) <= hmToMin(d.start_time)) return "끝 시각이 시작보다 늦어야 해요";
+    if (d.reminders.length > REMINDER_MAX || d.reminders.some((m) => !REMINDER_OPTIONS.some((o) => o.min === m))) return "알림을 다시 골라 주세요";
   }
   return null;
 };
 
-/** ops_plan_save 에 보낼 값. onlyDate = 반복 일정의 그날 하나만 바꾸기 */
-export const draftPayload = (d: PlanDraft, onlyDate?: string | null): Record<string, unknown> => {
-  const repeat = d.repeat && !onlyDate;
+/**
+ * ops_plan_save 에 보낼 값.
+ *   scope = 고칠 때 범위(이 일정만 · 이후 모두 · 전체), occurrence = 반복 일정을 그날에서 열었으면 그날.
+ *   예전 함수(onlyDate 문자열)로 불러도 그대로 — 그날 하나만 바꾸기.
+ */
+export const draftPayload = (d: PlanDraft, scopeOrOnly?: PlanScope | string | null, occurrence?: string | null): Record<string, unknown> => {
+  const isScope = scopeOrOnly === "one" || scopeOrOnly === "following" || scopeOrOnly === "all";
+  const scope: PlanScope = isScope ? (scopeOrOnly as PlanScope) : scopeOrOnly ? "one" : "all";
+  const occ = isScope ? (occurrence ?? null) : (scopeOrOnly ?? null);
+  const oneOff = !!d.id && scope === "one" && !!occ;
+  const rule = oneOff ? null : draftRule(d);
   return {
     ...(d.id ? { id: d.id } : {}),
-    ...(d.id && onlyDate ? { only_date: onlyDate } : {}),
+    ...(d.id && scope !== "all" && occ ? { only_date: occ, scope } : d.id ? { scope: "all" } : {}),
     branch: d.branch,
     kind: d.kind,
     title: d.title.trim(),
     memo: d.memo.trim(),
     start_on: d.start_on,
-    end_on: repeat ? d.start_on : d.end_on || d.start_on,
-    repeat_weekdays: repeat ? [...new Set(d.repeat_weekdays)].sort((a, b) => a - b) : [],
-    until_on: repeat ? d.until_on || null : null,
+    end_on: rule ? d.start_on : d.end_on || d.start_on,
+    rrule: rule ? ruleText(rule) : null,
+    repeat_weekdays: rule && rule.freq === "WEEKLY" ? rule.byDay : [],
+    until_on: rule && d.endMode === "until" ? d.until_on || null : null,
     all_day: d.all_day,
     start_time: d.all_day ? null : d.start_time,
     end_time: d.all_day ? null : d.end_time,
     private: d.kind === "personal" && d.private,
+    color: d.color,
+    location: d.location.trim(),
+    reminders: d.all_day ? [] : [...new Set(d.reminders)].sort((a, b) => a - b),
   };
 };
+
+/**
+ * 끌어 옮긴 반복 일정 「이후 모두」 — 새 반복의 넣기 칸 + 나누는 날(서버 only_date — 그 전날까지가 원래 반복)
+ *   앞당기면 놓은 날에서, 미루면 끈 날에서 나눈다(그사이 회차가 두 번 보이거나 빠지지 않게).
+ *   규칙은 shiftRule(매주 = 끈 요일만 새 요일로 · 매월 = 새 날 기준 · 매일 · 매년 = 새 시작 날 기준).
+ *   매주를 같은 주 안에서 미루면 새 반복은 끈 날부터 — 그사이 다른 요일 회차가 남는다(서버가 첫 회차로 당긴다).
+ */
+export const moveFollowing = (plan: OpsPlan, from: string, to: string, start: string, end: string): { draft: PlanDraft; split: string } => {
+  const split = to < from ? to : from;
+  let d = draftForScope(draftFromPlan(plan), plan, "following", split);
+  let startOn = to;
+  const rule = draftRule(d);
+  if (rule && to !== from) {
+    const sh = shiftRule(rule, from, to);
+    d = { ...d, repeat_weekdays: sh.freq === "WEEKLY" ? sh.byDay : d.repeat_weekdays, monthMode: sh.freq === "MONTHLY" ? monthModeOf(sh) : d.monthMode };
+    if (sh.freq === "WEEKLY" && to > from && mondayOf(to) === mondayOf(from)) startOn = from;
+  }
+  return { draft: { ...d, start_on: startOn, start_time: start, end_time: end }, split };
+};
+
+/** 「이후 모두」를 고르면 될 모양 한 줄 — "매주 화 · 금 · 19:00~20:00" */
+export const moveFollowingLabel = (d: PlanDraft): string | null => {
+  const rule = draftRule(d);
+  if (!rule) return null;
+  const first = firstOccurrence(rule, d.start_on) ?? d.start_on;
+  return `${ruleLabel(rule, first, d.endMode === "until" ? d.until_on || null : null)} · ${timeLabel(d.all_day, d.start_time, d.end_time)}`;
+};
+
+/** 시트 미리 보기 — 반복이면 앞으로 잡히는 날 n개 */
+export const draftPreview = (d: PlanDraft, n = 3): string[] => {
+  const rule = draftRule(d);
+  if (!rule) return [];
+  const first = firstOccurrence(rule, d.start_on);
+  if (!first) return [];
+  const until = d.endMode === "until" ? d.until_on || null : d.endMode === "count" ? countUntil(rule, first) : null;
+  const src = { start_on: first, end_on: first, rrule: ruleText(rule), repeat_weekdays: rule.byDay, until_on: until, skip_dates: [] };
+  return recurDates(src, first, addDays(first, 3653)).slice(0, n);
+};
+
+/** 매월 반복 고를 수 있는 모양 (시작 날로) */
+export const draftMonthModes = (d: PlanDraft): MonthMode[] => monthModes(d.start_on);
 
 // ───────────────────────── 최근 바뀐 일정 ─────────────────────────
 export const RECENT_ACTION: Record<PlanRecent["action"], string> = { new: "새로 넣음", edit: "고침", removed: "지움" };
@@ -448,7 +656,9 @@ export const agoLabel = (iso: string, now: Date = new Date()): string => {
 export const recentLine = (r: PlanRecent): string =>
   [
     PLAN_KIND_META[r.kind].label + (r.title ? ` ${r.title}` : ""),
-    r.repeat_weekdays.length ? repeatLabel(r.repeat_weekdays) : spanLabel(r.start_on, r.end_on),
+    r.rrule || r.repeat_weekdays.length
+      ? planRepeatLabel({ start_on: r.start_on, repeat_weekdays: r.repeat_weekdays, until_on: r.until_on ?? null, rrule: r.rrule })
+      : spanLabel(r.start_on, r.end_on),
     timeLabel(r.all_day, r.start_time, r.end_time),
   ].join(" · ");
 
@@ -491,6 +701,7 @@ export const mergeWeeks = (weeks: readonly PlansWeek[]): PlansWeek | null => {
     plans: uniq(sorted.flatMap((w) => w.plans), (p) => p.id),
     shifts: uniq(sorted.flatMap((w) => w.shifts), (s) => [s.key, s.branch, s.weekday, s.start_time, s.end_time, s.valid_from].join("|")),
     offs: uniq(sorted.flatMap((w) => w.offs), (o) => `${o.key}|${o.branch}|${o.date}`),
+    birthdays: uniq(sorted.flatMap((w) => w.birthdays ?? []), (b) => `${b.date}|${b.user_id}`),
   };
 };
 
@@ -541,4 +752,44 @@ export const presentMarks = (byDay: ReadonlyMap<string, readonly DayMark[]>, ym:
   const seen = new Set<MarkKey>();
   for (const [day, marks] of byDay) if (day.startsWith(`${ym}-`)) for (const m of marks) seen.add(m.key);
   return MARK_ORDER.filter((k) => seen.has(k));
+};
+
+// ───────────────────────── 내 일정 보기 (3-2 — 일 · 3일 · 주 · 월 · 목록 · 연간) ─────────────────────────
+export type MineView = "day" | "3day" | "week" | "month" | "list" | "year";
+export const PLAN_AGENDA_DAYS = 60;
+
+/** 보기마다 받을 범위 — 팀 주간 = 한 주 · 팀/내 달력 = 달력에 보이는 주 · 일/3일/주 = 그 날들 · 목록 = 60일 · 연간 = 한 해 */
+export const planRange = (
+  mode: "team" | "mine",
+  period: "week" | "month",
+  view: MineView,
+  day: string,
+  ym: string,
+): { from: string; to: string } => {
+  const monthGrid = () => {
+    const mons = monthMondays(ym);
+    return { from: mons[0], to: addDays(mons[mons.length - 1], 6) };
+  };
+  if (mode === "team") return period === "week" ? { from: mondayOf(day), to: addDays(mondayOf(day), 6) } : monthGrid();
+  switch (view) {
+    case "day":
+      return { from: day, to: day };
+    case "3day":
+      return { from: day, to: addDays(day, 2) };
+    case "week":
+      return { from: mondayOf(day), to: addDays(mondayOf(day), 6) };
+    case "list":
+      return { from: day, to: addDays(day, PLAN_AGENDA_DAYS - 1) };
+    case "year":
+      return { from: `${day.slice(0, 4)}-01-01`, to: `${day.slice(0, 4)}-12-31` };
+    default:
+      return monthGrid();
+  }
+};
+
+/** 앞으로 n일 — 'D-3' · 오늘 'D-day' (지난 날이면 null) */
+export const ddayLabel = (date: string, today: string): string | null => {
+  const n = Math.round((Date.parse(`${date}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 86_400_000);
+  if (n < 0) return null;
+  return n === 0 ? "D-day" : `D-${n}`;
 };

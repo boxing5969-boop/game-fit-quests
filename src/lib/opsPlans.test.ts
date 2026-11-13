@@ -186,7 +186,7 @@ describe("넣기 · 고치기", () => {
     expect(draftError({ ...d, end_time: "18:00" }, today)).toBe("끝 시각이 시작보다 늦어야 해요");
     expect(draftError({ ...d, all_day: true, end_time: "18:00" }, today)).toBeNull();
     expect(draftError({ ...d, repeat: true, repeat_weekdays: [] }, today)).toBe("반복할 요일을 골라 주세요");
-    expect(draftError({ ...d, repeat: true, until_on: "2026-11-01" }, today)).toBe("반복이 끝나는 날이 시작보다 빨라요");
+    expect(draftError({ ...d, repeat: true, endMode: "until" as const, until_on: "2026-11-01" }, today)).toBe("반복이 끝나는 날이 시작보다 빨라요");
     expect(draftError({ ...d, end_on: "2026-11-01" }, today)).toBe("끝나는 날이 시작보다 빨라요");
     expect(draftError({ ...d, end_on: "2027-01-10" }, today)).toBe("여러 날 일정은 두 달까지예요");
     expect(draftError({ ...d, start_on: "2026-08-01" }, today)).toBe("날짜를 다시 골라 주세요");

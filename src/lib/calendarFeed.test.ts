@@ -326,3 +326,42 @@ describe("구독 주소 — 화면 쪽", () => {
     expect(fetchedLine({ lastFetchedAt: null }, now)).toContain("아직 읽어 간 캘린더가 없어요");
   });
 });
+
+describe("3-2 반복 규칙 내보내기", () => {
+  it("rrule 은 그대로 · 끝나는 날 = UNTIL · 횟수는 빼고 · 빼는 날 = EXDATE · 장소", () => {
+    const data = normalizeFeedData({
+      kind: "staff",
+      name: "153 운영본부 일정",
+      events: [
+        {
+          uid: "plan-m1",
+          title: "수업 · 월말 특강",
+          day: "2026-11-27",
+          end_day: "2026-11-27",
+          start: "19:00",
+          end: "20:30",
+          weekly: null,
+          rrule: "FREQ=MONTHLY;BYDAY=-1FR;COUNT=4",
+          until: "2027-02-26",
+          exdates: ["2026-12-25", "2026-11-01"],
+          location: "2층 링",
+          busy: true,
+        },
+        { uid: "plan-y1", title: "외부 · 연례 대회", day: "2026-11-13", end_day: "2026-11-13", start: null, end: null, rrule: "FREQ=YEARLY;INTERVAL=2", until: null, exdates: [] },
+        { uid: "plan-bad", title: "이상한 규칙", day: "2026-11-13", end_day: "2026-11-13", start: "10:00", end: "11:00", rrule: "FREQ=HOURLY", until: null, exdates: [] },
+      ],
+    }) as FeedData;
+    const ics = buildFeedIcs(data, STAMP);
+    const m = veventOf(ics, "plan-m1");
+    expect(m).toContain("DTSTART;TZID=Asia/Seoul:20261127T190000");
+    expect(m).toContain("RRULE:FREQ=MONTHLY;BYDAY=-1FR;UNTIL=20270226T145959Z");
+    expect(m).toContain("EXDATE;TZID=Asia/Seoul:20261225T190000");
+    expect(m).toContain("LOCATION:2층 링");
+    const y = veventOf(ics, "plan-y1");
+    expect(y).toContain("DTSTART;VALUE=DATE:20261113");
+    expect(y).toContain("DTEND;VALUE=DATE:20261114");
+    expect(y).toContain("RRULE:FREQ=YEARLY;INTERVAL=2");
+    // 받지 않는 규칙은 한 번 하는 일정으로 (반복 없음)
+    expect(veventOf(ics, "plan-bad").some((l) => l.startsWith("RRULE"))).toBe(false);
+  });
+});

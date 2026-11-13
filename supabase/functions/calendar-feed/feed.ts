@@ -4,6 +4,8 @@
 //   DB(calendar_feed_data · calendar_feed_branch)가 준 일정 자료 → 구독용 .ics (RFC 5545 · CRLF · 75바이트 접기).
 //   휴대폰(아이폰) · 구글 캘린더가 몇 시간마다 다시 읽어 153 일정이 저절로 바뀐다 — 한 방향(거기서 고쳐도 153에는 안 옴).
 //     · 매주 반복 = RRULE WEEKLY(첫 날은 그 요일로 · 언제까지 = UNTIL) · 이 날만 빼기 = EXDATE
+//     · (3-2) 반복 규칙(rrule — 매일 · 매주 · 매월 · 매년 · 간격) = 그 RRULE 그대로 + UNTIL(서버가 횟수를 끝나는 날로 바꿔 준다) ·
+//       첫 날은 서버가 규칙에 맞는 날로 저장해 둔다(src/lib/opsRecur.ts 와 같은 뜻 — RFC 5545)
 //     · 여러 날 시각 일정 = 날마다 같은 시각(DAILY COUNT — 앱 「일정」 탭과 같은 뜻) · 하루 종일 = DATE
 //     · 운동 약속 = 2-2 calendar-ics 와 같은 시각 · 제목 · 알림(VALARM — 약속 알림을 끈 회원은 없음)
 //   제목 · 장소는 DB 가 정한 글(사람 이름 없음 — PT = 'PT 수업' · 개인 일정 = '개인 일정'), 설명 · 링크는 여기서 정한 글만.
@@ -30,6 +32,8 @@ export interface FeedEvent {
   end: string | null;
   /** 0=일 … 6=토 — 매주 반복 */
   weekly: number[] | null;
+  /** (3-2) 반복 규칙 — 'FREQ=MONTHLY;BYDAY=-1FR' 처럼 UNTIL · COUNT 없이 (있으면 weekly 보다 먼저) */
+  rrule: string | null;
   until: string | null;
   exdates: string[];
   busy: boolean;
@@ -53,6 +57,8 @@ const HM = /^([01]\d|2[0-4]):([0-5]\d)(:\d{2})?$/;
 const TOKEN = /^[0-9a-f]{64}$/;
 const CODE = /^[a-z0-9-]{2,40}$/;
 const BYDAY = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"] as const;
+/** 3-2 반복 규칙 모양 (서버 ops_plans_rrule_check 와 같은 글자들) */
+const RRULE = /^FREQ=(DAILY|WEEKLY|MONTHLY|YEARLY)(;(INTERVAL|BYDAY|BYMONTHDAY)=[0-9A-Z,+-]{1,40})*$/;
 const APP = "https://myboxer153.com";
 /** 여러 날 시각 일정 · EXDATE 상한 (서버 검사와 같은 두 달 · 넉넉한 빼기 수) */
 const MAX_DAILY = 62;
@@ -119,6 +125,7 @@ export function normalizeFeedData(raw: unknown): FeedData | null {
       start,
       end: start && typeof e.end === "string" && minOf(e.end) != null ? e.end.slice(0, 5) : null,
       weekly: weekdaysOf(e.weekly),
+      rrule: typeof e.rrule === "string" && RRULE.test(e.rrule.replace(/;COUNT=\d+/, "")) ? e.rrule.replace(/;COUNT=\d+/, "") : null,
       until: validDay(e.until) ? e.until : null,
       exdates: Array.isArray(e.exdates) ? e.exdates.filter(validDay) : [],
       busy: e.busy === true,
@@ -184,10 +191,10 @@ export function feedNote(e: Pick<FeedEvent, "uid" | "day" | "url">, kind: FeedKi
 /** ISO 시각 → 'YYYYMMDDTHHMMSSZ' */
 const utcStamp = (iso: string): string => new Date(iso).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
 
-/** 반복 일정의 EXDATE 날짜 — 실제로 일정이 있는 날만 (첫 날 이후 · 언제까지 안 · 그 요일) */
-function exdatesFor(dates: readonly string[], first: string, until: string | null, weekdays: readonly number[]): string[] {
+/** 반복 일정의 EXDATE 날짜 — 첫 날 이후 · 언제까지 안 (매주면 그 요일만 · 규칙이면 그대로 — 일정 없는 날의 EXDATE 는 캘린더가 무시한다) */
+function exdatesFor(dates: readonly string[], first: string, until: string | null, weekdays: readonly number[] | null): string[] {
   return [...new Set(dates)]
-    .filter((d) => d >= first && (!until || d <= until) && weekdays.includes(weekdayOf(d)))
+    .filter((d) => d >= first && (!until || d <= until) && (!weekdays || weekdays.includes(weekdayOf(d))))
     .sort()
     .slice(0, MAX_EXDATES);
 }
@@ -195,9 +202,10 @@ function exdatesFor(dates: readonly string[], first: string, until: string | nul
 /** 일정 하나 → VEVENT 줄들 (그릴 수 없으면 []) */
 export function eventLines(e: FeedEvent, kind: FeedKind, stamp: string): string[] {
   const p = e.promise;
-  const weekly = p ? p.weekdays : e.weekly;
+  const rule = p ? null : e.rrule;
+  const weekly = rule ? null : p ? p.weekdays : e.weekly;
   const first = weekly ? firstMatching(e.day, weekly) : e.day;
-  if (weekly && e.until && first > e.until) return []; // 반복이 끝난 일정
+  if ((weekly || rule) && e.until && first > e.until) return []; // 반복이 끝난 일정
   const { note, link } = feedNote(e, kind);
 
   // 시각 — 약속은 시간대(새벽 6시 … 밤 9시, 1시간), 그 밖은 'HH:MM'
@@ -221,7 +229,11 @@ export function eventLines(e: FeedEvent, kind: FeedKind, stamp: string): string[
     const sm = startMin as number;
     const em = endMin as number;
     lines.push(`DTSTART;TZID=Asia/Seoul:${localAt(first, sm)}`, `DTEND;TZID=Asia/Seoul:${localAt(first, em)}`);
-    if (weekly) {
+    if (rule) {
+      lines.push(`RRULE:${rule}${e.until ? `;UNTIL=${icsDate(e.until)}T145959Z` : ""}`);
+      const ex = exdatesFor(e.exdates, first, e.until, null);
+      if (ex.length) lines.push(`EXDATE;TZID=Asia/Seoul:${ex.map((d) => localAt(d, sm)).join(",")}`);
+    } else if (weekly) {
       lines.push(`RRULE:FREQ=WEEKLY;BYDAY=${weekly.map((d) => BYDAY[d]).join(",")}${e.until ? `;UNTIL=${icsDate(e.until)}T145959Z` : ""}`);
       const ex = exdatesFor(e.exdates, first, e.until, weekly);
       if (ex.length) lines.push(`EXDATE;TZID=Asia/Seoul:${ex.map((d) => localAt(d, sm)).join(",")}`);
@@ -230,9 +242,13 @@ export function eventLines(e: FeedEvent, kind: FeedKind, stamp: string): string[
       lines.push(`RRULE:FREQ=DAILY;COUNT=${Math.min(MAX_DAILY, dayDiff(e.day, e.end_day) + 1)}`);
     }
   } else {
-    const endDay = weekly ? first : e.end_day;
+    const endDay = weekly || rule ? first : e.end_day;
     lines.push(`DTSTART;VALUE=DATE:${icsDate(first)}`, `DTEND;VALUE=DATE:${icsDate(addDays(endDay, 1))}`);
-    if (weekly) {
+    if (rule) {
+      lines.push(`RRULE:${rule}${e.until ? `;UNTIL=${icsDate(e.until)}` : ""}`);
+      const ex = exdatesFor(e.exdates, first, e.until, null);
+      if (ex.length) lines.push(`EXDATE;VALUE=DATE:${ex.map(icsDate).join(",")}`);
+    } else if (weekly) {
       lines.push(`RRULE:FREQ=WEEKLY;BYDAY=${weekly.map((d) => BYDAY[d]).join(",")}${e.until ? `;UNTIL=${icsDate(e.until)}` : ""}`);
       const ex = exdatesFor(e.exdates, first, e.until, weekly);
       if (ex.length) lines.push(`EXDATE;VALUE=DATE:${ex.map(icsDate).join(",")}`);

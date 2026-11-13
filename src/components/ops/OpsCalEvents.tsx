@@ -149,7 +149,7 @@ export const OpsCalEventsView = ({
   );
 };
 
-type Target = { mode: "new"; date: string } | { mode: "edit"; event: OpsCalEvent };
+type Target = { mode: "new"; date: string; title?: string } | { mode: "edit"; event: OpsCalEvent };
 
 /** 올리기 · 고치기 시트 */
 const EventSheet = ({ target, st, onClose }: { target: Target | null; st: OpsCalState; onClose: () => void }) => {
@@ -163,7 +163,11 @@ const EventSheet = ({ target, st, onClose }: { target: Target | null; st: OpsCal
 
   useEffect(() => {
     if (!target) return;
-    setDraft(target.mode === "edit" ? draftFromEvent(target.event) : newEventDraft(target.date < today ? today : target.date));
+    setDraft(
+      target.mode === "edit"
+        ? draftFromEvent(target.event)
+        : { ...newEventDraft(target.date < today ? today : target.date), title: (target.title ?? "").slice(0, EVENT_TITLE_MAX) },
+    );
     setError(null);
     setConfirmRemove(false);
   }, [target, today]);
@@ -333,11 +337,19 @@ const EventSheet = ({ target, st, onClose }: { target: Target | null; st: OpsCal
   );
 };
 
-/** 데이터 + 시트 — branch = 「일정」 탭에서 고른 지점, date = 새로 올릴 때 처음 날짜(고른 날) */
-const OpsCalEvents = ({ branch, date }: { branch: string; date: string }) => {
+/**
+ * 데이터 + 시트 — branch = 「일정」 탭에서 고른 지점, date = 새로 올릴 때 처음 날짜(고른 날)
+ * preset (3-2) = 공휴일 「휴관으로 올리기」 — seq 가 바뀌면 그 날 · 제목으로 올리기 시트를 연다(휴관 종류)
+ */
+const OpsCalEvents = ({ branch, date, preset }: { branch: string; date: string; preset?: { date: string; title: string; seq: number } | null }) => {
   const q = useOpsCalEvents(branch);
   const [target, setTarget] = useState<Target | null>(null);
   const st = q.data;
+  const canEdit = !!st?.on && !!st?.canEdit;
+  useEffect(() => {
+    if (preset && canEdit) setTarget({ mode: "new", date: preset.date, title: preset.title });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preset?.seq]);
   const codeQ = useBranchCode(st?.branch ?? null, !!st?.on && !!st?.canEdit);
   if (!st?.on) return null;
   const today = st.today ?? kstToday();
