@@ -216,9 +216,13 @@ export function cardMedia(card: Pick<TrainingCard, "video_path" | "coach_video_p
 /** 코치용 영상이 따로 있나 (전략 회의 · 코치진 카드 시트의 「코치용 영상」 단추) */
 export const hasCoachVideo = (card: Pick<TrainingCard, "coach_video_path">): boolean => !!card.coach_video_path;
 
-/** 카드에 영상이 붙어 있나 (타일의 ▶ 표시) */
+/** 카드에 영상이 붙어 있나 (코치진 타일 · 카드 서랍의 ▶ 표시) */
 export const hasCardVideo = (card: Pick<TrainingCard, "video_path" | "coach_video_path" | "video_url">): boolean =>
   !!(card.video_path || card.coach_video_path || (card.video_url ?? "").trim());
+
+/** 회원이 볼 수 있는 영상이 있나 (회원 타일의 ▶ 표시) — 코치용 영상만 붙은 카드는 회원에게 영상이 없다 */
+export const hasMemberVideo = (card: Pick<TrainingCard, "video_path" | "video_url">): boolean =>
+  !!(card.video_path || (card.video_url ?? "").trim());
 
 const norm = (s: string | null | undefined) => (s ?? "").toLowerCase().replace(/[\s·\-_/()]+/g, "");
 

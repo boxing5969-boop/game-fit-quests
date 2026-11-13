@@ -9,6 +9,8 @@ import {
   cardSpeech,
   cardToBlock,
   categoryToBlockKind,
+  hasCardVideo,
+  hasMemberVideo,
   categoryToShelf,
   groupByShelf,
   isMemberVisible,
@@ -108,6 +110,15 @@ describe("영상 · 설명 듣기 · 검색", () => {
     const linkOnly = mk({ id: "l", category: "워밍업", video_url: " https://youtu.be/abc " });
     expect(cardMedia(linkOnly, "coach")).toEqual({ kind: "url", url: "https://youtu.be/abc" });
     expect(cardMedia(mk({ id: "n", category: "워밍업" }), "member")).toBeNull();
+  });
+
+  it("▶ 표시 — 코치용 영상만 붙은 카드는 코치진 타일에만 (회원 타일에는 없음)", () => {
+    const coachOnly = mk({ id: "c", category: "워밍업", coach_video_path: "coach/c-1.mp4" });
+    expect(hasCardVideo(coachOnly)).toBe(true);
+    expect(hasMemberVideo(coachOnly)).toBe(false);
+    expect(hasMemberVideo(mk({ id: "m", category: "워밍업", video_path: "member/m-1.mp4" }))).toBe(true);
+    expect(hasMemberVideo(mk({ id: "u", category: "워밍업", video_url: " https://youtu.be/x " }))).toBe(true);
+    expect(hasMemberVideo(mk({ id: "e", category: "워밍업", video_url: "  " }))).toBe(false);
   });
 
   it("설명 듣기 — 이름 · 한 줄 · 포인트 문장, 153 은 '일오삼' · 화살표는 말로", () => {

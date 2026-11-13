@@ -21,6 +21,7 @@ import {
   cardShelf,
   groupByShelf,
   hasCardVideo,
+  hasMemberVideo,
   isMemberVisible,
   levelTag,
   orderForMember,
@@ -87,17 +88,32 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
     }
   };
 
-  // 기능 검색 · 옛 훈련 라이브러리 주소 → /missions?learn=1 (&shelf=step) 이면 이 칸으로 내려온다
+  // 기능 검색 · 옛 훈련 라이브러리 주소 → /missions?learn=1 (&shelf=step) 이면 이 칸으로 내려온다.
+  // 주소를 지우면 이 효과가 다시 돌므로 내려가기는 따로 기억해 둔다(예전엔 지우는 순간 내려가기 예약까지 취소됐다).
   const learnParam = params.get("learn");
+  const [scrollWanted, setScrollWanted] = useState(() => !staff && learnParam === "1");
   useEffect(() => {
     if (staff || learnParam !== "1") return;
-    const t = window.setTimeout(() => sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 250);
+    const fromUrl = params.get("shelf") as Shelf | null;
+    if (fromUrl && allowed.includes(fromUrl)) setShelf(fromUrl);
+    setScrollWanted(true);
     const next = new URLSearchParams(params);
     next.delete("learn");
     next.delete("shelf");
     setParams(next, { replace: true });
-    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [learnParam, params, setParams, staff]);
+  // 위 칸(오늘 할 것 · 내 레벨)이 늦게 그려지며 밀어내도 이 칸에 닿도록, 카드를 읽은 뒤 몇 번 더 맞춘다
+  useEffect(() => {
+    if (!scrollWanted || cardsQ.isLoading) return;
+    const go = () => sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const timers = [200, 900, 1700].map((ms) => window.setTimeout(go, ms));
+    const done = window.setTimeout(() => setScrollWanted(false), 1800);
+    return () => {
+      timers.forEach((t) => window.clearTimeout(t));
+      window.clearTimeout(done);
+    };
+  }, [scrollWanted, cardsQ.isLoading]);
 
   const visible = useMemo(
     () => (cardsQ.data ?? []).filter((c) => (staff ? c.is_active !== false : isMemberVisible(c))),
@@ -228,7 +244,7 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
                 onClick={() => setOpen(c)}
                 className="overflow-hidden rounded-2xl border border-border bg-card text-left shadow-elev-1 transition-all active:scale-[0.98]"
               >
-                <Thumb src={posterOf(c)} color={info.color} label={info.label} video={hasCardVideo(c)} />
+                <Thumb src={posterOf(c)} color={info.color} label={info.label} video={staff ? hasCardVideo(c) : hasMemberVideo(c)} />
                 <div className="p-3">
                   <p className="line-clamp-2 text-body font-bold leading-snug text-foreground">{c.name}</p>
                   <p className={`mt-0.5 text-label ${tag?.upcoming ? "text-muted-foreground" : staff ? "text-muted-foreground" : "font-bold text-primary"}`}>

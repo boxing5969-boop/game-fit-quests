@@ -205,8 +205,16 @@ const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
 
 // 훈련 라이브러리 — 코치진만 이 화면, 회원은 훈련 탭 「영상으로 배우기」로 (2026-11-13)
 const TrainingLibraryRoute = () => {
-  const { role, loading } = useAuth();
-  if (loading) return <RouteLoader />;
+  const { user, role, loading } = useAuth();
+  // 바로가기 · 새로고침으로 처음 열 때는 로그인(loading)이 끝난 뒤에도 역할을 잠깐 못 읽은 상태다 —
+  // 그때 넘기면 코치진도 회원 화면으로 가 버리니 역할이 올 때까지 기다린다(못 읽으면 4초 뒤 회원 화면으로)
+  const [roleWaitOver, setRoleWaitOver] = useState(false);
+  useEffect(() => {
+    if (role) return;
+    const t = window.setTimeout(() => setRoleWaitOver(true), 4000);
+    return () => window.clearTimeout(t);
+  }, [role]);
+  if (loading || (user && !role && !roleWaitOver)) return <RouteLoader />;
   if (!isManagerRole(role)) return <Navigate to="/missions?learn=1" replace />;
   return <TrainingLibraryPage />;
 };
