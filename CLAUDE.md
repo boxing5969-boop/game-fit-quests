@@ -857,6 +857,13 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - DB 적용 전에도 앱은 이 기기에만 저장하며 그대로 돈다(순서 상관없음). 적용하면 다음에 열 때 이 기기 값이 DB 로 올라간다.
 - **적용 · 다시 얹기 (2026-11-12 · 클로드·boxing5969.menued2)**: 11-08 커밋 c19d720 은 푸시되지 않은 채 남아, 대표님이 붙여 준 패치로 최신 main 위에 다시 얹었다. 패치가 중간에 잘려 `menuLayout.ts` 227줄부터 · 위 SQL · tailwind `menu-jiggle`(±1.6° · 0.28초 — 값은 이때 정함)은 이 설명과 원래 시험(menuLayout.test.ts · HomeMenuGrid.test.tsx)대로 다시 썼고, 끝 경우 시험 [src/lib/menuLayoutEdge.test.ts](src/lib/menuLayoutEdge.test.ts) 23개를 더했다. 운영 DB 는 MCP 로 적용(기록 `20261112095756_user_menu_layout` — 파일 번호와 다르고 본문은 같다) · 되돌리는 시험 25/25(본인 줄만 · 객체만 · 32KB · 남의 줄 안 보임 · 로그인 없음 · anon 막힘 · 표 직접 읽기쓰기 막힘) · DB 함수 지문 = 이 파일.
 
+### 뒤로가기 흰 화면 막기 — 앱 밖 페이지에서 돌아올 때 (2026-11-13 대표님 「마이복서153안에 옷확인하고 뒤로가기 누르면 흰색화면뜨고 마이복서 153으로 이동이안되」)
+
+- 원인(확인함): 같은 탭에서 앱 밖(정적 굿즈 상세 `/goods/fleece/` · 결제선생 · 다른 사이트)으로 나갔다가 뒤로가면, 브라우저가 돌아갈 주소(예: `/home`)의 HTML 을 **캐시에서 검증 없이** 꺼낸다 — Cloudflare 가 HTML 에 `max-age=0, must-revalidate` 를 보내도 그렇다(크로미움 · 삼성 인터넷 · 플레이라이트 CDP `fromDiskCache=true`). 앱은 `/` 로 열려 화면 안에서 `/home` 으로 가므로 `/home` 사본은 며칠 전 것일 수 있고, 그 사본이 부르는 `/assets/index-…js` 는 지금 배포에 없다. **없는 파일은 SPA 규칙(`/* /index.html 200`) 때문에 HTML 로 답해** 화면 파일을 못 읽고 하얗게 멈춘다(그 판의 화면 파일이 브라우저 캐시에 남아 있으면 옛 판으로 뜬다 — 그래서 될 때도 안 될 때도 있다). 11/13 운영 로그(Supabase API): 운영진 계정(삼성 인터넷)이 굿즈 상세에 들어간 뒤 그 탭의 앱 요청이 끊긴 것 확인.
+- 고침 셋: ① [src/lib/docCache.ts](src/lib/docCache.ts) `rememberDocCache` — 화면(주소)을 옮길 때마다 그 주소를 `fetch(…, { cache: "reload" })` 로 한 번(이 페이지를 연 동안 주소마다 한 번 · 바쁘지 않을 때) 받아 둔다. 같은 캐시 칸을 덮어서(응답 date 가 fetch 때 것 확인) 뒤로가기가 지금 배포의 HTML 을 꺼낸다. App 의 `AppRoutes` 가 pathname · search 가 바뀔 때 부른다(TV · 키오스크 주소는 안 함) ② `leaveApp(url)` — 같은 탭에서 앱 밖으로 나가는 곳은 지금 주소를 받아 둔 뒤(길어야 1.5초) `location.assign`. 지금은 홈 굿즈 카드(`GoodsNudgeCard` → `/goods/fleece/?from=app`, 끝 '/' 로 308 한 번 건너뜀). **새로 앱 밖 링크를 같은 탭으로 열 때는 `leaveApp` 을 쓴다** ③ `index.html` 맨 위 복구 스크립트 — 그래도 사본이 옛 배포 것이면(받아 둔 뒤 배포가 끼면) `/assets/` 첫 화면 파일을 못 받은 순간 한 번 `location.reload()`(30초 안에 또 실패하면 멈춤 · 저장 공간을 못 쓰는 창에서는 안 함). 앱이 뜬 뒤(`src/main.tsx` 가 `window.__mb153Booted` 를 켬)의 화면별 파일 실패는 손대지 않는다 — 그건 `lazyWithRetry`(두 번 다시 시도 → 한 번 새로고침).
+- 시험: [src/lib/docCache.test.ts](src/lib/docCache.test.ts) 8개 + 플레이라이트로 Cloudflare 처럼 답하는 시험 서버(HTML max-age=0 · 화면 파일 4시간 · 없는 파일 = index.html 200)에서 판 세 개(고치기 전 · 고친 판 둘, 해시 다름): 고치기 전 사본 → 새 배포 → 뒤로가기 = **흰 화면(재현)** / 고친 판 · 화면 이동 때 새로 받기 = 뜸 / 고친 판 사본인데 새로 받기 없이 = 복구 스크립트가 한 번 새로 받아 뜸 / 같은 판 = 새로고침 없음 / 앱이 뜬 뒤 파일 실패 = 새로고침 0번. 시험 스크립트는 저장소 밖(클로드 작업공간).
+- 흰 화면이 떴을 때 회원 안내: 화면을 아래로 당겨 새로고침하거나 앱을 껐다 켜면 된다(새로고침은 캐시를 검증해 지금 배포를 받는다).
+
 ### 창(모달·시트) 뒤 페이지 스크롤 잠금 (2026-10-19)
 
 - `useModalDismiss(open, onClose)` 또는 `lockBodyScroll()`([src/lib/scrollLock.ts](src/lib/scrollLock.ts))만 쓴다 — 잠금 개수를 세서 마지막 창이 닫힐 때만 푼다.
