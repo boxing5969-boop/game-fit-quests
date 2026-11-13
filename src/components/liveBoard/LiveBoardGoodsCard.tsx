@@ -17,8 +17,8 @@ import { GOODS_FLEECE_SLUG, ddayLabel, deadlineLabel, hasGoodsSample, isAcceptin
 import { getGoodsCampaign } from "@/services/goodsService";
 
 const PHOTOS = [
-  { src: "/goods/fleece/img/model-back.webp", label: "흰색 인쇄", dot: "#F2F2F0" },
-  { src: "/goods/fleece/img/model-back-gray.webp", label: "진회색 인쇄", dot: "#63666A" },
+  { src: "/goods/fleece/img/model-back.webp?v=2", label: "흰색 인쇄", dot: "#F2F2F0" },
+  { src: "/goods/fleece/img/model-back-gray.webp?v=2", label: "진회색 인쇄", dot: "#63666A" },
 ];
 
 const LiveBoardGoodsCard = ({ branchName }: { branchName?: string }) => {

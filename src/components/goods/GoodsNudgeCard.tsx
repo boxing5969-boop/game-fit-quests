@@ -59,7 +59,7 @@ const GoodsNudgeCard = () => {
         onClick={open}
         className="flex w-full items-center gap-3 rounded-2xl border border-amber-400/40 bg-amber-400/[0.07] px-4 py-3.5 text-left transition-transform active:scale-[0.99]"
       >
-        <img src="/goods/fleece/img/model-back.webp" alt="" className="h-14 w-11 shrink-0 rounded-xl object-cover" loading="lazy" />
+        <img src="/goods/fleece/img/model-back.webp?v=2" alt="" className="h-14 w-11 shrink-0 rounded-xl object-cover" loading="lazy" />
         <span className="min-w-0 flex-1">
           <span className="block text-label font-extrabold text-foreground">플리스 집업 신청 완료 · 결제 전</span>
           <span className="mt-0.5 block text-label text-muted-foreground">
@@ -77,7 +77,7 @@ const GoodsNudgeCard = () => {
       onClick={open}
       className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 text-left shadow-elev-1 transition-transform active:scale-[0.99]"
     >
-      <img src="/goods/fleece/img/model-back.webp" alt="" className="h-14 w-11 shrink-0 rounded-xl object-cover" loading="lazy" />
+      <img src="/goods/fleece/img/model-back.webp?v=2" alt="" className="h-14 w-11 shrink-0 rounded-xl object-cover" loading="lazy" />
       <span className="min-w-0 flex-1">
         <span className="block text-label font-extrabold text-foreground">153 플리스 집업 · 원가 판매</span>
         <span className="mt-0.5 block text-label text-muted-foreground">

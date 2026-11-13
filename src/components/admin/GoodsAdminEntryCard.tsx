@@ -22,7 +22,7 @@ const GoodsAdminEntryCard = ({ onOpen }: { onOpen: () => void }) => {
       onClick={onOpen}
       className="mb-4 flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-left active:scale-[0.99]"
     >
-      <img src="/goods/fleece/img/model-back.webp" alt="" className="h-12 w-9 shrink-0 rounded-lg object-cover" loading="lazy" />
+      <img src="/goods/fleece/img/model-back.webp?v=2" alt="" className="h-12 w-9 shrink-0 rounded-lg object-cover" loading="lazy" />
       <span className="min-w-0 flex-1">
         <span className="block text-body font-black text-foreground">굿즈 신청 · {c.title}</span>
         <span className="block text-label text-muted-foreground">
