@@ -25,7 +25,8 @@ import {
 } from "@/lib/calendarChecks";
 import { PROMISE_WEEK, toggleDay, weekdaysLabel } from "@/lib/promise153";
 import { cn } from "@/lib/utils";
-import { useRemoveCheckItem, useSaveCheckItem, useSetCalendarNudge } from "@/services/calendarCheckService";
+import { useRemoveCheckItem, useSaveCheckItem, useSetCalendarNudge, useSetWeeklyRecap } from "@/services/calendarCheckService";
+import type { CalRecapPref } from "@/lib/calendarTogether";
 
 export interface CheckItemsSheetProps {
   open: boolean;
@@ -34,9 +35,11 @@ export interface CheckItemsSheetProps {
   items: readonly CheckItem[];
   /** (2-2) 저녁 체크 알림 — 켰나 · 몇 시 */
   nudge?: { on: boolean; at: string };
+  /** (2-4) 일요일 주간 돌아보기 알림 — 이 회원에게 가는 지점(sends)일 때만 칸이 보인다 */
+  recap?: CalRecapPref;
 }
 
-const CheckItemsSheet = ({ open, onOpenChange, items, nudge }: CheckItemsSheetProps) => {
+const CheckItemsSheet = ({ open, onOpenChange, items, nudge, recap }: CheckItemsSheetProps) => {
   const [draft, setDraft] = useState<CheckItemDraft>(emptyCheckDraft);
   const [editId, setEditId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +47,7 @@ const CheckItemsSheet = ({ open, onOpenChange, items, nudge }: CheckItemsSheetPr
   const save = useSaveCheckItem();
   const remove = useRemoveCheckItem();
   const nudgeM = useSetCalendarNudge();
+  const recapM = useSetWeeklyRecap();
   const full = items.length >= CHECK_ITEM_MAX;
   const showForm = editId != null || !full;
 
@@ -284,6 +288,27 @@ const CheckItemsSheet = ({ open, onOpenChange, items, nudge }: CheckItemsSheetPr
                   })
                 }
                 aria-label="저녁 체크 알림"
+              />
+            </label>
+          )}
+
+          {/* 일요일 주간 돌아보기 알림 — 기본 켬 · 안 온 주엔 보내지 않는다 (2-4) */}
+          {recap?.sends && (
+            <label className="flex items-center justify-between gap-3 rounded-xl bg-muted/60 px-4 py-3">
+              <span className="min-w-0">
+                <span className="block text-body font-bold text-foreground">일요일 주간 돌아보기</span>
+                <span className="block text-label text-muted-foreground">일요일 {hmLabel(recap.at)}에 이번 주 운동을 알려 드려요 · 안 온 주엔 보내지 않아요</span>
+              </span>
+              <Switch
+                checked={recap.on}
+                disabled={recapM.isPending}
+                onCheckedChange={(v) =>
+                  recapM.mutate(v, {
+                    onSuccess: () => toast.success(v ? `일요일 ${hmLabel(recap.at)}에 이번 주를 돌아봐 드릴게요` : "주간 돌아보기 알림을 껐어요"),
+                    onError: (e) => toast.error((e as Error).message),
+                  })
+                }
+                aria-label="일요일 주간 돌아보기 알림"
               />
             </label>
           )}

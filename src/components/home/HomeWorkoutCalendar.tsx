@@ -9,9 +9,14 @@
  *   2026-11-13 2-2단계(대표님 「다음」): 같은 자료로 153 일정(운영본부에서 올림 · 휴관일) · 저요 한 모집 점 · 약속 알림 시각 · 휴대폰 캘린더 · 저녁 체크 알림.
  *   2026-11-13 2-3단계(대표님 「다음」): 그날 한 일 · 코치 한마디 도장 · 153 기념일 · D-day · 밀기 · 길게 누르기 —
  *   코치 한마디 알림 링크 '/home?cal=날짜'면 그날을 펼쳐 고르고(focusDay) 주소에서 ?cal= 을 지운다.
+ *   2026-11-13 2-4단계(대표님 「시작하자」): 일요일 주간 돌아보기 · 운동 짝꿍 쌍도장 · 앨범 · 이번 달 운동 카드 + 회원은 수강권 끝나기
+ *   14일 전부터 맨 위 '153과 함께한 시간'(renewalEnd — 권유 문구 없이 · 코치님 · 운영진 계정엔 없음).
+ *   주간 돌아보기 알림 링크도 '/home?cal=그 일요일'.
  */
 import { useSearchParams } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { useAttendanceHistory } from "@/hooks/useAttendanceHistory";
+import { isStaffProfile } from "@/lib/staffDisplay";
 import { kstToday } from "@/lib/attendanceCheer";
 import { focusDayOf } from "@/lib/calendarMarks";
 import WorkoutCalendarCard from "@/components/attendance/WorkoutCalendar";
@@ -19,9 +24,13 @@ import StarterProgress from "@/components/attendance/StarterProgress";
 
 const HomeWorkoutCalendar = () => {
   const { data } = useAttendanceHistory(null);
+  const { profile, role } = useAuth();
   const [params, setParams] = useSearchParams();
   if (!data || data.total === 0) return null;
   const focusDay = focusDayOf(params.get("cal"), kstToday(), data.firstDay);
+  // 회원만 — 코치님 · 운영진 계정엔 수강권 이야기를 하지 않는다 (RenewalStoryCard 와 같은 기준)
+  const renewalEnd =
+    role === "member" && !isStaffProfile(profile) ? ((profile as { membership_end?: string | null } | null)?.membership_end ?? null) : null;
   const clearFocus = () => {
     const next = new URLSearchParams(params);
     next.delete("cal");
@@ -38,6 +47,7 @@ const HomeWorkoutCalendar = () => {
       withChecks
       focusDay={focusDay}
       onFocusDone={clearFocus}
+      renewalEnd={renewalEnd}
     />
   );
 };

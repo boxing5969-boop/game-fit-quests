@@ -92,3 +92,24 @@ describe("운동 달력 그날 카드 — (2-3) 코치 한마디 · 그날 한 �
     expect(onGoal).toHaveBeenCalledWith("2026-11-25");
   });
 });
+
+describe("운동 달력 그날 카드 — (2-4) 운동 짝꿍 쌍도장", () => {
+  const cal4 = normalizeCalendar({
+    on: true,
+    today: "2026-11-12",
+    items: [],
+    days: [],
+    partner: { name: "비비", days: [3, 5], slot: "morning", together: ["2026-11-11"] },
+  });
+  const att11: AttendanceDay = { day: "2026-11-11", at: "2026-11-11T10:10:00Z", end: null, endSource: null, minutes: 66, method: "face", branch: null };
+  it("둘 다 온 날은 '짝꿍 ○○님과 같이 운동한 날이에요' · 아닌 날 · 접힌 한 줄엔 없음", () => {
+    const { unmount } = render(<DayChecksPanel {...base} cal={cal4} day="2026-11-11" attended={att11} onToggle={noop} />);
+    expect(screen.getByText("짝꿍 비비님과 같이 운동한 날이에요")).toBeTruthy();
+    unmount();
+    const r2 = render(<DayChecksPanel {...base} cal={cal4} day="2026-11-10" attended={{ ...att11, day: "2026-11-10" }} onToggle={noop} />);
+    expect(screen.queryByText(/짝꿍 비비님과 같이/)).toBeNull();
+    r2.unmount();
+    render(<DayChecksPanel {...base} cal={cal4} day="2026-11-11" attended={att11} compact onToggle={noop} />);
+    expect(screen.queryByText(/짝꿍 비비님과 같이/)).toBeNull();
+  });
+});

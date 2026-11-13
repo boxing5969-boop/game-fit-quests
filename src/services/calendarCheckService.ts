@@ -7,6 +7,8 @@
  *   저녁 독려 켜기 · 끄기 = set_my_calendar_prefs (useSetCalendarNudge).
  *   (2-3 · DB 20261113012729_calendar_stage23.sql) get_my_calendar 가 그날 한 일 · 코치 한마디 · 기념일 · 153 D-day 도 함께 보낸다 ·
  *   목표일 정하기 · 빼기 = set_my_goal_day · remove_my_goal_day (useSaveGoalDay · useRemoveGoalDay — 글 · 검사는 lib/calendarMarks.ts).
+ *   (2-4 · DB 20261113111423_calendar_stage24.sql) get_my_calendar 가 주간 돌아보기 알림(recap) · 운동 짝꿍(partner)도 함께 보낸다 ·
+ *   일요일 주간 돌아보기 알림 켜기 · 끄기 = set_my_weekly_recap (useSetWeeklyRecap).
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -148,6 +150,27 @@ export function useRemoveGoalDay() {
       patchAll(qc, (s) => ({ ...s, ddays }));
       void qc.invalidateQueries({ queryKey: CAL2_KEY });
     },
+  });
+}
+
+/** (2-4) 일요일 주간 돌아보기 알림 켜기 · 끄기 — 누르는 순간 바뀌고 실패하면 되돌린다 */
+export function useSetWeeklyRecap() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (on: boolean) => {
+      const { error } = await rpc("set_my_weekly_recap", { p_on: on });
+      if (error) throw new Error(translateError(error, "알림 설정을 저장하지 못했어요"));
+    },
+    onMutate: async (on) => {
+      await qc.cancelQueries({ queryKey: CAL2_KEY });
+      const snapshot = qc.getQueriesData<CalState>({ queryKey: CAL2_KEY });
+      patchAll(qc, (s) => ({ ...s, recap: { ...s.recap, on } }));
+      return { snapshot };
+    },
+    onError: (_e, _v, ctx) => {
+      for (const [key, val] of ctx?.snapshot ?? []) qc.setQueryData(key, val);
+    },
+    onSettled: () => void qc.invalidateQueries({ queryKey: CAL2_KEY }),
   });
 }
 

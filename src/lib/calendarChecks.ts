@@ -7,6 +7,8 @@
  *   · 서버 값 읽기 · 계산 · 글은 여기 한 곳(시험 calendarChecks.test.ts). DB 20261112211833_calendar_checks_stage21.sql,
  *     자료는 services/calendarCheckService.ts, 화면은 components/attendance/CalendarChecks.tsx · CheckItemsSheet.tsx.
  *   · (2-3 · 2026-11-13) get_my_calendar 의 acts · notes · anniv · ddays 도 여기서 읽는다(글 · 계산은 lib/calendarMarks.ts).
+ *   · (2-4 · 2026-11-13) get_my_calendar 의 recap(일요일 주간 돌아보기 알림) · partner(운동 짝꿍 — 약속 요일 · 쌍도장)도
+ *     여기서 읽는다(글 · 계산은 lib/calendarTogether.ts).
  */
 import { weekdayOfYmd } from "@/lib/promise153";
 import { normalizeCalls, normalizeEvents, type CalCall, type CalEvent } from "@/lib/calendarEvents";
@@ -20,6 +22,7 @@ import {
   type CalDday,
   type CalNote,
 } from "@/lib/calendarMarks";
+import { RECAP_PREF_OFF, normalizePartner, normalizeRecapPref, type CalPartner, type CalRecapPref } from "@/lib/calendarTogether";
 
 const YMD = /^\d{4}-\d{2}-\d{2}$/;
 const n = (v: number) => v.toLocaleString("ko-KR");
@@ -108,6 +111,10 @@ export interface CalState {
   anniv: CalAnniv[];
   /** (2-3) 153 D-day — 보이는 날짜와 상관없이 다가오는 것 */
   ddays: CalDday[];
+  /** (2-4) 일요일 주간 돌아보기 알림 — 켬/끔 · 시각 · 이 회원에게 가는지 */
+  recap: CalRecapPref;
+  /** (2-4) 운동 짝꿍 — 약속 요일 · 보이는 날짜 중 둘 다 온 날(쌍도장). 짝꿍이 없으면 null */
+  partner: CalPartner | null;
 }
 
 export const CAL_OFF: CalState = {
@@ -122,6 +129,8 @@ export const CAL_OFF: CalState = {
   notes: [],
   anniv: [],
   ddays: [],
+  recap: RECAP_PREF_OFF,
+  partner: null,
 };
 
 type Raw = Record<string, unknown>;
@@ -206,6 +215,8 @@ export function normalizeCalendar(raw: unknown): CalState {
     notes: normalizeNotes(r.notes),
     anniv: normalizeAnnivs(r.anniv),
     ddays: normalizeDdays(r.ddays),
+    recap: normalizeRecapPref(r.recap),
+    partner: normalizePartner(r.partner),
   };
 }
 

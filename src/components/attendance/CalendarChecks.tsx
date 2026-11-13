@@ -9,6 +9,7 @@
  *     앞날은 일정만(체크 · 스티커 없음) · 휴관일에 안 왔으면 체육관 체크를 빼고 센다(lib/calendarEvents · dayChecks closed).
  *   · (2-3 · 2026-11-13) 코치 한마디(Notes — '○○ 코치님' + 한 줄, 오늘의 체크 한 줄에도) · 그날 한 일(Acts — PT 수업 · 153 PB ·
  *     타이틀매치 · 레벨업) · 그날의 D-day · 기념일(Marks) · 앞날은 '이 날을 목표일로'(onGoal). 글은 lib/calendarMarks.ts.
+ *   · (2-4 · 2026-11-13) 운동 짝꿍과 둘 다 온 날(쌍도장)은 들어온 시각 아래 '짝꿍 ○○님과 같이 운동한 날이에요' (lib/calendarTogether.ts).
  */
 import { Check, ChevronRight, Flag, Lock, Plus, Star, UserRound, Users } from "lucide-react";
 import { ActIcon, NoteIcon } from "@/components/attendance/CalendarMarkIcons";
@@ -45,6 +46,7 @@ import {
   type StickerKey,
 } from "@/lib/calendarChecks";
 import { EVENT_KIND_META, callLine, callsOn, eventUntil, eventsOn, isClosedDay, type CalCall, type CalEvent } from "@/lib/calendarEvents";
+import { isTogetherDay, togetherText } from "@/lib/calendarTogether";
 import { cn } from "@/lib/utils";
 
 const VIS_LABEL: Record<JournalVisibility, string> = { private: "나만 보기", partners: "친구만", branch: "전체 공개" };
@@ -342,6 +344,13 @@ export const DayChecksPanel = ({
         <p className={cn("mt-1 flex items-center gap-1 text-label font-bold", moment.gold ? "text-reward" : "text-primary")}>
           <Star className="h-4 w-4 shrink-0" fill="currentColor" aria-hidden />
           {moment.text}
+        </p>
+      )}
+      {/* (2-4) 쌍도장 — 운동 짝꿍과 둘 다 온 날 */}
+      {!compact && attended && cal.partner && isTogetherDay(cal.partner, day) && (
+        <p className="mt-1 flex items-center gap-1 text-label font-bold text-sky-700 dark:text-sky-300">
+          <Users className="h-4 w-4 shrink-0" aria-hidden />
+          {togetherText(cal.partner)}
         </p>
       )}
 

@@ -5,10 +5,12 @@
  *   검사 · 글은 src/lib/promise153.ts, 저장은 services/promiseService.ts (set_my_promise · stop_my_promise).
  *   (2-2 · 2026-11-13 대표님 「다음」) 알림 시각 고르기(전날 저녁 · 아침 7시 · 8시 30분 · 낮 12시 · 오후 5시 — set_my_promise_v2) ·
  *   「휴대폰 캘린더에 추가」(저장한 약속 그대로 · Edge Function calendar-ics — 앱 알림을 안 켠 회원에게도 휴대폰이 알려 준다).
+ *   (2-4 · 2026-11-13 대표님 「시작하자」) 운동 짝꿍 한 줄 — '짝꿍 ○○님은 수 · 금 아침에 약속했어요' + 「같은 요일로」
+ *   (같은 요일로 약속하면 서로 달력 약속 줄에 보인다 · 글은 lib/calendarTogether.ts partnerHint).
  */
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CalendarPlus } from "lucide-react";
+import { CalendarPlus, Users } from "lucide-react";
 
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Switch } from "@/components/ui/switch";
@@ -29,6 +31,7 @@ import {
   type PromiseDraft,
 } from "@/lib/promise153";
 import { openPhoneCalendar } from "@/lib/promiseIcs";
+import { partnerHint, type CalPartner } from "@/lib/calendarTogether";
 import { cn } from "@/lib/utils";
 import { useSetPromise, useStopPromise } from "@/services/promiseService";
 
@@ -46,9 +49,11 @@ export interface PromiseSheetProps {
   eveAt?: string;
   /** 오늘 (휴대폰 캘린더 첫 날) */
   today: string;
+  /** (2-4) 운동 짝꿍 — 짝꿍 약속 한 줄 · 「같은 요일로」 */
+  partner?: CalPartner | null;
 }
 
-const PromiseSheet = ({ open, onOpenChange, promise, branchShort, returnBonus, eveAt = "20:00", today }: PromiseSheetProps) => {
+const PromiseSheet = ({ open, onOpenChange, promise, branchShort, returnBonus, eveAt = "20:00", today, partner = null }: PromiseSheetProps) => {
   const [draft, setDraft] = useState<PromiseDraft>(() => draftFromPromise(promise));
   const [error, setError] = useState<string | null>(null);
   const [confirmStop, setConfirmStop] = useState(false);
@@ -105,6 +110,9 @@ const PromiseSheet = ({ open, onOpenChange, promise, branchShort, returnBonus, e
 
   const busy = save.isPending || stop.isPending;
   const ready = draft.weekdays.length > 0;
+  const hint = partnerHint(partner);
+  const sameAsPartner =
+    !!partner && partner.days.length > 0 && [...partner.days].sort().join() === [...draft.weekdays].sort().join();
   const unchanged = !!promise && !draftChanged(draft, promise);
 
   return (
@@ -115,6 +123,23 @@ const PromiseSheet = ({ open, onOpenChange, promise, branchShort, returnBonus, e
           <DrawerDescription className="text-label">약속한 날이 달력에 보이고, 고른 시각에 알려 드려요</DrawerDescription>
         </DrawerHeader>
         <div className="space-y-5 overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom,0px)+16px)]">
+          {/* (2-4) 운동 짝꿍 — 같은 요일로 약속하면 서로 보인다 */}
+          {hint && (
+            <div className="flex items-center gap-3 rounded-xl bg-sky-50 px-4 py-3 dark:bg-sky-500/10">
+              <Users className="h-5 w-5 shrink-0 text-sky-600 dark:text-sky-300" aria-hidden />
+              <p className="min-w-0 flex-1 text-label font-bold leading-snug text-foreground">{hint}</p>
+              {partner && partner.days.length > 0 && !sameAsPartner && (
+                <button
+                  type="button"
+                  onClick={() => set({ weekdays: [...partner.days] })}
+                  className="shrink-0 rounded-full bg-card px-3 py-1.5 text-label font-bold text-foreground shadow-elev-1 active:scale-95"
+                >
+                  같은 요일로
+                </button>
+              )}
+            </div>
+          )}
+
           {/* 요일 */}
           <section aria-label="요일">
             <p className="text-label font-bold text-muted-foreground">언제 갈까요?</p>

@@ -26,6 +26,10 @@
  *     왼쪽 아래 = 코치 한마디 말풍선 도장 · 보라 점 = D-day · 출석한 153 기념일 = 금색 도장 · 머리 칩 = 가장 가까운 D-day(누르면 DdaySheet) ·
  *     한 달 보기는 좌우로 밀어 달 넘기기 · 날짜를 길게 누르면 바로 넣기(오늘 · 6일 전까지 = QuickDaySheet, 앞날 = 목표일) ·
  *     알림 링크 '/home?cal=날짜'면 그날을 펼쳐 고른다(focusDay). 글 · 계산은 lib/calendarMarks.ts.
+ *   · 2-4단계 (2026-11-13 대표님 「시작하자」 · 같은 자료 get_my_calendar + 내 운동 기록): 일요일 주간 돌아보기(그날은 약속 한 줄을 접는다) ·
+ *     운동 짝꿍과 같은 요일 약속 한 줄 · 둘 다 온 날 쌍도장(도장 뒤에 하늘색 도장) · 달 아래 '앨범 n · 카드'(나의 153 앨범 ·
+ *     이번 달 운동 카드 이미지 — 지난달 한 줄과 같은 줄) · 홈은 수강권 끝나기 14일 전부터 맨 위에 '153과 함께한 시간'(renewalEnd —
+ *     그때는 첫 4주 칸을 접는다). 글 · 계산은 lib/calendarTogether.ts.
  *   날짜 계산은 lib/attendanceCalendar.ts (주는 월요일 시작).
  */
 import {
@@ -77,11 +81,13 @@ import {
   withAnnivMoments,
   type CalAct,
 } from "@/lib/calendarMarks";
+import { albumOf, isTogetherDay, partnerPromiseLine, renewalLine, weekRecap, type CalPartner } from "@/lib/calendarTogether";
 import { useMyPromise } from "@/services/promiseService";
 import { CAL2_KEY, useMyCalendar, useSetCheckDone, useSetDaySticker } from "@/services/calendarCheckService";
 import PromiseSheet from "@/components/attendance/PromiseSheet";
 import DayChecksPanel from "@/components/attendance/CalendarChecks";
 import { ActIcon, NoteIcon } from "@/components/attendance/CalendarMarkIcons";
+import { MonthTools, RenewalBlock, WeekRecapPanel } from "@/components/attendance/CalendarTogether";
 import { cn } from "@/lib/utils";
 
 // 그날 카드에서 누를 때만 받는 창 (홈 첫 화면 묶음을 키우지 않게)
@@ -90,6 +96,8 @@ const ChampionJournalSheet = lazy(() => import("@/components/engagement/Champion
 const SecondCheerSheet = lazy(() => import("@/components/engagement/SecondCheerSheet"));
 const DdaySheet = lazy(() => import("@/components/attendance/DdaySheet"));
 const QuickDaySheet = lazy(() => import("@/components/attendance/QuickDaySheet"));
+const MonthCardSheet = lazy(() => import("@/components/attendance/MonthCardSheet"));
+const AlbumSheet = lazy(() => import("@/components/attendance/AlbumSheet"));
 
 const n = (v: number) => v.toLocaleString("ko-KR");
 
@@ -134,6 +142,8 @@ interface CellProps {
   note?: boolean;
   /** (2-3) 칸 아래 보라 점 — D-day */
   dday?: boolean;
+  /** (2-4) 쌍도장 — 운동 짝꿍과 둘 다 온 날 (도장 뒤에 하늘색 도장이 겹친다) */
+  together?: boolean;
   /** (2-3) 길게 누르기 — 바로 넣기 (없으면 길게 눌러도 아무 일 없음) */
   onLongPress?: (day: string) => void;
   picked: boolean;
@@ -215,6 +225,7 @@ const DayCell = ({
   act = null,
   note = false,
   dday = false,
+  together = false,
   onLongPress,
   picked,
   onPick,
@@ -224,7 +235,7 @@ const DayCell = ({
   const lp = useLongPress(day, faint ? undefined : onLongPress);
   const base = "flex h-10 w-10 items-center justify-center rounded-full text-label tabular-nums";
   const gold = on && !!moment?.gold;
-  const label = `${dayLabel(day)}${on ? " 출석" : ""}${on && moment ? ` · ${moment.text}` : ""}${!on && promised ? " · 약속한 날" : ""}${star ? " · 금색 별" : ""}${act ? ` · ${actShort(act)}` : ""}${note ? " · 코치 한마디" : ""}${dday ? " · D-day" : ""}${dot === "closed" ? " · 휴관" : dot === "event" ? " · 153 일정" : ""}${call ? " · 같이 운동" : ""}${isToday ? " · 오늘" : ""}`;
+  const label = `${dayLabel(day)}${on ? " 출석" : ""}${on && together ? " · 짝꿍과 같이" : ""}${on && moment ? ` · ${moment.text}` : ""}${!on && promised ? " · 약속한 날" : ""}${star ? " · 금색 별" : ""}${act ? ` · ${actShort(act)}` : ""}${note ? " · 코치 한마디" : ""}${dday ? " · D-day" : ""}${dot === "closed" ? " · 휴관" : dot === "event" ? " · 153 일정" : ""}${call ? " · 같이 운동" : ""}${isToday ? " · 오늘" : ""}`;
   const pickedRing = picked && "ring-2 ring-foreground ring-offset-2 ring-offset-card";
   // 길게 누를 때 아이폰 글자 고르기 · 메뉴가 뜨지 않게
   const pressCls = onLongPress ? "select-none [-webkit-touch-callout:none]" : "";
@@ -306,6 +317,8 @@ const DayCell = ({
   }
   return (
     <span className="relative inline-flex">
+      {/* (2-4) 쌍도장 — 짝꿍 도장이 살짝 뒤에 겹친다 */}
+      {together && <span className="pointer-events-none absolute left-[5px] top-[4px] h-10 w-10 rounded-full bg-sky-300 dark:bg-sky-500/70" aria-hidden />}
       <button
         type="button"
         onClick={click}
@@ -315,7 +328,7 @@ const DayCell = ({
         className={cn(
           base,
           pressCls,
-          "font-extrabold transition-transform active:scale-95",
+          "relative font-extrabold transition-transform active:scale-95",
           gold ? "bg-reward text-reward-foreground" : "bg-primary text-primary-foreground",
           pickedRing,
         )}
@@ -354,6 +367,7 @@ const PromiseLine = ({
   attended,
   branch,
   skip,
+  partner,
   onOpen,
 }: {
   promise: Promise153 | null;
@@ -362,6 +376,8 @@ const PromiseLine = ({
   branch: string | null;
   /** 휴관일 — 약속한 날로 치지 않는다 */
   skip?: ReadonlySet<string>;
+  /** (2-4) 운동 짝꿍 — 같은 요일로 약속했으면 아래 줄이 '짝꿍 ○○님과 수 같이 약속했어요' */
+  partner?: CalPartner | null;
   onOpen: () => void;
 }) => {
   if (!promise) {
@@ -382,12 +398,18 @@ const PromiseLine = ({
   }
   const set = new Set(attended.keys());
   const status = promiseStatus(promise, today, set, skip);
+  const together = partnerPromiseLine(promise, partner);
   return (
     <div className={cn("mt-3 flex items-center gap-3 rounded-xl px-4 py-3", status?.tone === "done" ? "bg-primary/10" : "bg-muted/60")}>
       <Handshake className={cn("h-5 w-5 shrink-0", status?.tone === "next" ? "text-muted-foreground" : "text-primary")} aria-hidden />
       <span className="min-w-0 flex-1">
         <span className="block text-body font-bold leading-snug text-foreground">{status?.text ?? promiseSentence(promise, shortBranchName(branch))}</span>
-        <span className="block truncate text-label text-muted-foreground">{promiseSentence(promise)}</span>
+        {/* 회색 줄은 하나만 — 짝꿍과 같은 요일이면 그 한 줄이 약속 문장 대신 */}
+        {together ? (
+          <span className="block text-label font-bold leading-snug text-sky-700 dark:text-sky-300">{together}</span>
+        ) : (
+          <span className="block truncate text-label text-muted-foreground">{promiseSentence(promise)}</span>
+        )}
       </span>
       <button
         type="button"
@@ -422,9 +444,11 @@ export interface WorkoutCalendarCardProps {
   focusDay?: string | null;
   /** focusDay 를 쓴 뒤 — 주소의 ?cal= 을 지우게 */
   onFocusDone?: () => void;
+  /** (2-4) 수강권 끝나는 날 — 14일 전 ~ 끝나고 14일 맨 위에 '153과 함께한 시간' (홈 · 회원만, 없으면 안 그림) */
+  renewalEnd?: string | null;
 }
 
-type SheetKey = "items" | "line" | "cheer" | "dday" | "quick";
+type SheetKey = "items" | "line" | "cheer" | "dday" | "quick" | "card" | "album";
 
 const WorkoutCalendarCard = ({
   data,
@@ -438,6 +462,7 @@ const WorkoutCalendarCard = ({
   withChecks = false,
   focusDay = null,
   onFocusDone,
+  renewalEnd,
 }: WorkoutCalendarCardProps) => {
   const today = kstToday();
   const [open, setOpen] = useState(() => readOpen(storageKey));
@@ -469,6 +494,9 @@ const WorkoutCalendarCard = ({
   const dotFor = (d: string) => (cal ? eventDot(cal.events, d) : null);
   const callFor = (d: string) => !!cal && callsOn(cal.calls, d).length > 0;
   const hasAgenda = (d: string) => !!cal && (eventsOn(cal.events, d).length > 0 || callsOn(cal.calls, d).length > 0);
+  // (2-4) 운동 짝꿍 — 둘 다 온 날 = 쌍도장
+  const partner = cal?.partner ?? null;
+  const togetherFor = (d: string) => byDay.has(d) && isTogetherDay(partner, d);
   const legend = useMemo(() => {
     if (!cal) return null;
     const dots = new Set(visibleDays.map((d) => eventDot(cal.events, d)).filter(Boolean));
@@ -476,11 +504,13 @@ const WorkoutCalendarCard = ({
     const dday = visibleDays.some(
       (d) => d >= today && (ddaysOn(cal.ddays, d, today).length > 0 || (!byDay.has(d) && !!annivOn(cal.anniv, d))),
     );
+    const together = visibleDays.some((d) => byDay.has(d) && isTogetherDay(cal.partner, d));
     const out = [
       ...(dots.has("event") ? [{ cls: DOT_EVENT, label: "153 일정" }] : []),
       ...(dots.has("closed") ? [{ cls: DOT_CLOSED, label: "휴관" }] : []),
       ...(calls ? [{ cls: DOT_CALL, label: "같이 운동" }] : []),
       ...(dday ? [{ cls: DOT_DDAY, label: "D-day" }] : []),
+      ...(together ? [{ cls: "bg-sky-300 dark:bg-sky-500/70", label: "짝꿍과 같이" }] : []),
     ];
     return out.length ? out : null;
   }, [cal, visibleDays, today, byDay]);
@@ -489,7 +519,16 @@ const WorkoutCalendarCard = ({
   const stickerM = useSetDaySticker();
   const [sheet, setSheet] = useState<SheetKey | null>(null);
   const [sheetDay, setSheetDay] = useState<string | null>(null);
-  const [mounted, setMounted] = useState<Record<SheetKey, boolean>>({ items: false, line: false, cheer: false, dday: false, quick: false });
+  const [sheetMonth, setSheetMonth] = useState<string>(() => monthOf(today));
+  const [mounted, setMounted] = useState<Record<SheetKey, boolean>>({
+    items: false,
+    line: false,
+    cheer: false,
+    dday: false,
+    quick: false,
+    card: false,
+    album: false,
+  });
   const openSheet = (k: SheetKey, day: string | null = null) => {
     setMounted((m) => (m[k] ? m : { ...m, [k]: true }));
     setSheetDay(day);
@@ -544,8 +583,24 @@ const WorkoutCalendarCard = ({
     ) : null;
   // 지난 달을 넘겨 보면 그 달 한 줄 · 새 달 첫 7일엔 지난달 한 줄 (이번 달 숫자는 홈 '내 운동'이 주인공 — 다시 쓰지 않는다)
   const pastRecap = open && month < monthOf(today) ? monthRecap(data, month) : null;
-  const freshLine = recap && !pastRecap ? freshStartLine(data, today) : null;
+  // 새 달 첫 7일 지난달 한 줄은 접힌 카드에만 — 펼치면 달마다 아래 한 줄(앨범 · 카드)이 있다 (2-4)
+  const freshLine = recap && !open ? freshStartLine(data, today) : null;
   const heading = open ? openTitle ?? title : title;
+  // (2-4) 일요일 주간 돌아보기 — 내 기록 · 이번 주가 보일 때 · 고른 날이 없을 때 (그날은 약속 한 줄을 접는다)
+  const weekly =
+    withChecks && !picked && (!open || month === monthOf(today)) ? weekRecap({ today, list: data.list, promise, starDay: starOf, partner }) : null;
+  // (2-4) 재등록 즈음 '153과 함께한 시간' — 보일 때는 머리 칸(첫 4주)을 접는다
+  const renewal = renewalEnd
+    ? renewalLine({ membershipEnd: renewalEnd, today, firstDay: data.firstDay, totalMinutes: data.totalMinutes })
+    : null;
+  // (2-4) 달 아래 '앨범 n · 카드' — 운동한 달만 카드 · 사진이 있는 달만 앨범
+  const albums = open && cal ? albumOf(cal.days, month) : [];
+  const monthHas = (ym: string) => data.list.some((d) => d.day.startsWith(`${ym}-`));
+  const lastMonth = shiftMonth(monthOf(today), -1);
+  const openCard = (ym: string) => {
+    setSheetMonth(ym);
+    openSheet("card");
+  };
 
   const toggle = () => {
     const next = !open;
@@ -583,7 +638,8 @@ const WorkoutCalendarCard = ({
       setOpen(true);
       setMonth(monthOf(focusDay));
     }
-    setPicked(focusDay);
+    // 오늘이면 고르지 않는다 — '오늘의 체크' 한 줄(코치 한마디 포함) · 일요일 주간 돌아보기가 그대로 보이게 (2-4)
+    setPicked(focusDay === today ? null : focusDay);
     window.setTimeout(() => sectionRef.current?.scrollIntoView({ block: "center", behavior: "smooth" }), 80);
     onFocusDone?.();
     // 알림 링크로 한 번 — 날짜가 바뀔 때만
@@ -615,7 +671,7 @@ const WorkoutCalendarCard = ({
           )}
         </div>
 
-        {header}
+        {renewal ? <RenewalBlock line={renewal} /> : header}
 
         {open ? (
           <div className="mt-3">
@@ -677,6 +733,7 @@ const WorkoutCalendarCard = ({
                       act={c.inMonth ? actFor(c.day) : null}
                       note={c.inMonth && noteFor(c.day)}
                       dday={c.inMonth && ddayFor(c.day)}
+                      together={c.inMonth && togetherFor(c.day)}
                       onLongPress={c.inMonth ? longPressFor(c.day) : undefined}
                       picked={picked === c.day}
                       onPick={pick}
@@ -704,6 +761,7 @@ const WorkoutCalendarCard = ({
                   act={actFor(d)}
                   note={noteFor(d)}
                   dday={ddayFor(d)}
+                  together={togetherFor(d)}
                   onLongPress={longPressFor(d)}
                   picked={picked === d}
                   onPick={pick}
@@ -728,25 +786,42 @@ const WorkoutCalendarCard = ({
             ? panelFor(picked, false)
             : showToday && panelFor(today, true)
           : pickedDay && <DayLine d={pickedDay} moment={moments.get(pickedDay.day)} />}
-        {promiseState && (
-          <PromiseLine
-            promise={promise}
-            today={today}
-            attended={byDay}
-            branch={promiseState.branch}
-            skip={closed}
-            onOpen={() => setPromiseOpen(true)}
+        {weekly ? (
+          <WeekRecapPanel recap={weekly} onPromise={promiseState ? () => setPromiseOpen(true) : undefined} />
+        ) : (
+          promiseState && (
+            <PromiseLine
+              promise={promise}
+              today={today}
+              attended={byDay}
+              branch={promiseState.branch}
+              skip={closed}
+              partner={partner}
+              onOpen={() => setPromiseOpen(true)}
+            />
+          )
+        )}
+        {open ? (
+          <MonthTools
+            text={pastRecap?.text}
+            gain={pastRecap?.gain}
+            albumCount={albums.length}
+            onAlbum={() => {
+              setSheetMonth(month);
+              openSheet("album");
+            }}
+            onCard={withChecks && monthHas(month) ? () => openCard(month) : undefined}
+            cardAria={`${Number(month.slice(5, 7))}월 운동 카드 만들기`}
           />
+        ) : (
+          freshLine && (
+            <MonthTools
+              text={freshLine}
+              onCard={withChecks && monthHas(lastMonth) ? () => openCard(lastMonth) : undefined}
+              cardAria={`${Number(lastMonth.slice(5, 7))}월 운동 카드 만들기`}
+            />
+          )
         )}
-        {pastRecap && (
-          <p className="mt-3 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-t border-border pt-3">
-            <span className="text-label font-bold tabular-nums text-foreground">{pastRecap.text}</span>
-            {pastRecap.gain && (
-              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-micro font-bold tabular-nums text-primary">{pastRecap.gain}</span>
-            )}
-          </p>
-        )}
-        {freshLine && <p className="mt-3 border-t border-border pt-3 text-label font-bold tabular-nums text-foreground">{freshLine}</p>}
         {!open && footer}
       </div>
       <button
@@ -767,6 +842,7 @@ const WorkoutCalendarCard = ({
           returnBonus={promiseState.returnBonus}
           eveAt={promiseState.eveAt}
           today={today}
+          partner={partner}
         />
       )}
       {cal && mounted.items && (
@@ -776,6 +852,29 @@ const WorkoutCalendarCard = ({
             onOpenChange={(v) => (v ? setSheet("items") : closeSheet())}
             items={cal.items.filter((i) => i.archivedOn == null)}
             nudge={cal.nudge}
+            recap={cal.recap}
+          />
+        </Suspense>
+      )}
+      {withChecks && mounted.card && (
+        <Suspense fallback={null}>
+          <MonthCardSheet
+            open={sheet === "card"}
+            onOpenChange={(v) => setSheet(v ? "card" : null)}
+            month={sheetMonth}
+            data={data}
+            today={today}
+          />
+        </Suspense>
+      )}
+      {cal && mounted.album && (
+        <Suspense fallback={null}>
+          <AlbumSheet
+            open={sheet === "album"}
+            onOpenChange={(v) => setSheet(v ? "album" : null)}
+            month={sheetMonth}
+            photos={albumOf(cal.days, sheetMonth)}
+            onPickDay={(d) => setPicked(d)}
           />
         </Suspense>
       )}
