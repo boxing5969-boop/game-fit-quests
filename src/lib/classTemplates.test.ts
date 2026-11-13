@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   CLASS_TEMPLATES,
+  STEP_TEACHING_POINT,
   TEMPLATE_OVERVIEW_STEP,
   classTemplateBlocks,
   classTemplateMinutes,
@@ -62,6 +63,27 @@ describe("153 수업 템플릿", () => {
     // 순서 영상 자리 = 블록 8개 + 수업 요약
     expect(templateVideoTitle(t!, 0)).toBe(`${t!.title} · 수업 요약`);
     expect(templateVideoTitle(t!, 8)).toBe("자율 운동");
+  });
+
+  it("두 그룹 · 처음 온 회원 · 단계별 티칭 (11/13 대표님 「추천대로 진행하자」)", () => {
+    const mitt = CLASS_TEMPLATES.find((x) => x.id === "mitt2-sandbag-call")!;
+    const weave = CLASS_TEMPLATES.find((x) => x.id === "weave-hook-call")!;
+    // 위빙 수업 — 기본 그룹은 ②의 훅 · ③의 양훅 자리를 원 · 투로
+    expect(weave.who).toMatch(/두 그룹/);
+    expect(weave.who).toMatch(/원 · 투/);
+    expect(weave.who).not.toMatch(/^모든 회원/);
+    for (const t of CLASS_TEMPLATES) {
+      // 처음 온 회원은 템플릿과 상관없이 1권 첫 수업
+      expect(t.who).toMatch(/처음 온 회원은 매뉴얼 1권 첫 수업/);
+      // 단계별 티칭 한 줄 — 설명 1분 안 · 티칭 10초
+      expect(t.points).toContain(STEP_TEACHING_POINT);
+      expect(classTemplateNote(t)).toMatch(/1분 안/);
+      expect(classTemplateNote(t)).toMatch(/10초/);
+      // 「충분히 설명」은 단계별 티칭과 맞지 않아 뺐다
+      expect(classTemplateNote(t)).not.toMatch(/충분히/);
+      for (const b of t.blocks) expect(b.note ?? "").not.toMatch(/충분히/);
+    }
+    expect(mitt.blocks[0].note).toMatch(/단계별/);
   });
 
   it("블록은 복사본 — 고쳐도 템플릿 원본은 그대로", () => {
