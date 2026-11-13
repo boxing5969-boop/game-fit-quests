@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>153 플리스 집업 · 회원 사전예약</title>
-<meta name="description" content="공장에 남은 물량을 받은 값 그대로 25,000원, 153이 남기는 이익은 0원이에요. 선착순 50벌 · 흰색 · 진회색 인쇄 중 고르고 11월 26일(목)까지 신청하면 데스크에서 결제해요.">
+<meta name="description" content="작업복 브랜드가 파는 것과 같은 플리스에 153 인쇄 2곳. 받은 값 그대로 25,000원, 153이 남기는 이익은 0원이에요. 선착순 50벌 · 11월 26일(목)까지 신청하고 데스크에서 결제해요.">
 <link rel="canonical" href="https://myboxer153.com/goods/fleece">
 <meta name="theme-color" content="#F6F6F4">
 
@@ -241,6 +241,67 @@ details p{margin:6px 0 0}
 .stock span{font-size:14px;font-weight:700;color:var(--warn)}
 .stock b{font-size:17px;font-weight:800;color:var(--warn);font-variant-numeric:tabular-nums}
 [hidden]{display:none !important}
+
+/* 가치 전달 · 전면 재설계 (2026-11-13 대표님 「가격이 너무 저렴해서 싸구려라고 생각할 수 있으니 가치 전달을 통해 … 상세 페이지 전면 디자인」)
+   전환 4칸: 훅(싸게 만든 옷이 아니라 남기지 않는 옷) → 증거(같은 옷 · 실물 마감 · 인쇄) → 의심 해소(가격 · 사이즈 · 궁금해요) → 행동 하나(신청) */
+.hook{margin:12px 0 0;font-size:22px;line-height:1.4;font-weight:800;letter-spacing:-.02em}
+.hook em{font-style:normal;color:var(--mint)}
+.proof{list-style:none;margin:14px 0 0;padding:0}
+.proof a{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:16px;font-weight:700;text-decoration:none;color:var(--ink)}
+.proof a:after{content:"\203A";margin-left:auto;padding-left:8px;font-size:22px;line-height:1;color:var(--ink3)}
+.proof a:active{opacity:.6}
+.proof svg{width:24px;height:24px;padding:5px;border-radius:50%;background:var(--mintSoft);color:var(--mint);flex:0 0 auto}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 20px 0}
+.split .col{border-radius:18px;padding:16px 14px 14px}
+.split .out{background:var(--sunk)}
+.split .keep{background:var(--mintSoft)}
+.split h3{margin:0 0 8px;font-size:15px;font-weight:800}
+.split .out h3{color:var(--ink2)}
+.split .keep h3{color:var(--mint)}
+.split ul{list-style:none;margin:0;padding:0}
+.split li{padding:10px 0;border-top:1px solid rgba(17,20,23,.08)}
+.split li:first-child{border-top:0;padding-top:2px}
+.split li b{display:block;font-size:16px;font-weight:800;color:var(--ink)}
+.split .out li b{color:var(--ink3);text-decoration:line-through;text-decoration-thickness:2px}
+.split li span{display:block;margin-top:2px;font-size:13px;line-height:1.45;color:var(--ink2)}
+.feats{list-style:none;margin:16px 20px 0;padding:0}
+.feats li{display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--line)}
+.feats li:last-child{border-bottom:0}
+.feats .ic{flex:0 0 46px;height:46px;border-radius:14px;background:var(--mintSoft);color:var(--mint);display:flex;align-items:center;justify-content:center}
+.feats .ic svg{width:26px;height:26px}
+.feats b{display:block;font-size:17px;font-weight:800}
+.feats span{display:block;margin-top:2px;font-size:15px;color:var(--ink2)}
+.real{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 20px 0}
+.real figure{margin:0}
+.real img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:16px;background:#151617}
+.real figcaption{margin-top:7px;font-size:14px;font-weight:800;color:var(--ink)}
+.real-note{margin:10px 20px 0;font-size:13px;color:var(--ink3)}
+.check{margin:20px 20px 0;padding:18px 18px 14px;border:1.5px solid var(--ink);border-radius:18px}
+.check h3{margin:0;font-size:18px;line-height:1.35;font-weight:800}
+.check p{margin:4px 0 0;font-size:14px;color:var(--ink2)}
+.check ol{list-style:none;margin:10px 0 0;padding:0;counter-reset:c}
+.check li{position:relative;padding:8px 0 8px 34px;font-size:15px;font-weight:700}
+.check li:before{counter-increment:c;content:counter(c);position:absolute;left:0;top:8px;width:24px;height:24px;border-radius:50%;
+  background:var(--mintSoft);color:var(--mint);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.sub-title{margin:30px 20px 0;font-size:19px;font-weight:800;letter-spacing:-.01em}
+.sub-lead{margin:4px 20px 0;font-size:15px;color:var(--ink2)}
+.care{display:flex;gap:12px;align-items:flex-start}
+.care svg{flex:0 0 22px;width:22px;height:22px;margin-top:1px;color:var(--mint)}
+.size-table{width:calc(100% - 40px);margin:18px 20px 0;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.size-table th,.size-table td{padding:12px 4px;border-bottom:1px solid var(--line);text-align:center;font-size:15px}
+.size-table thead th{font-size:15px;font-weight:800;border-bottom:2px solid var(--ink)}
+.size-table thead th:first-child{text-align:left;font-size:13px;font-weight:700;color:var(--ink3)}
+.size-table tbody th{text-align:left;font-size:14px;font-weight:700;color:var(--ink3);white-space:nowrap}
+.size-src{margin:10px 20px 0;font-size:13px;color:var(--ink3)}
+.faq{margin:12px 20px 0}
+.faq details{margin:0;border-bottom:1px solid var(--line);font-size:15px}
+.faq summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:14px;padding:17px 2px;
+  font-size:16px;font-weight:800;color:var(--ink);cursor:pointer}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary:after{content:"+";flex:0 0 auto;font-size:22px;line-height:1;font-weight:500;color:var(--ink3)}
+.faq details[open] summary:after{content:"\2212"}
+.faq details p{margin:0 0 17px;padding:0 2px;font-size:15px;color:var(--ink2)}
+.sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 </style>
 </head>
 <body>
@@ -258,13 +319,18 @@ details p{margin:6px 0 0}
   <section class="intro wrap">
     <p class="eyebrow">153 GOODS</p>
     <h1>153 플리스 집업</h1>
-    <p class="lead">운동 가는 길에도, 끝나고 집에 가는 길에도. 체육관 밖에서도 입고 싶은 153복싱짐 옷이에요.</p>
+    <p class="hook">싸게 만든 옷이 아니라,<br><em>153이 남기지 않는 옷</em>이에요.</p>
     <div class="price-row">
       <s class="list" data-list-price hidden></s>
       <span class="price" data-price>25,000원</span>
       <span class="chip" id="dday">D-14</span>
     </div>
-    <p class="sub">153이 남기는 이익 0원 · 앞뒤 인쇄 포함 · 인쇄 색 2가지 중 선택</p>
+    <p class="sub">153이 남기는 이익 0원 · 인쇄 색 2가지 중 선택</p>
+    <ul class="proof" aria-label="한눈에 보기">
+      <li><a href="#quality"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.2 8.4l3 3 6.6-7"/></svg>작업복 브랜드가 파는 것과 같은 옷</a></li>
+      <li><a href="#print"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.2 8.4l3 3 6.6-7"/></svg>앞뒤 인쇄 2곳까지 포함</a></li>
+      <li><a href="#size"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.2 8.4l3 3 6.6-7"/></svg>선릉역점에서 샘플 입어 보기</a></li>
+    </ul>
     <dl class="meta">
       <div data-stock-row><dt>수량</dt><dd data-stock-text>선착순 50벌</dd></div>
       <div><dt>샘플</dt><dd>선릉역점에서 사이즈별로 입어 보기</dd></div>
@@ -276,8 +342,26 @@ details p{margin:6px 0 0}
 
   <section class="block" id="story">
     <p class="sec-eyebrow">WHY 25,000</p>
-    <h2 class="sec-title">153이 남기는 이익은 0원이에요</h2>
-    <p class="sec-lead">공장에 남은 물량을 연말 세일가로 받아, 받은 값 그대로 드려요.</p>
+    <h2 class="sec-title">싼 이유는 옷이 아니라<br>이익에 있어요</h2>
+    <p class="sec-lead">공장에 남은 연말 물량을 받은 값 그대로 드려요. 옷에서 뺀 건 없어요.</p>
+    <div class="split">
+      <div class="col out">
+        <h3>가격에서 뺀 것</h3>
+        <ul>
+          <li><b>153 이익</b><span>0원, 받은 값 그대로</span></li>
+          <li><b>매장 · 중간 유통</b><span>공장에서 체육관으로 바로</span></li>
+          <li><b>택배비</b><span>지점 데스크에서 받기</span></li>
+        </ul>
+      </div>
+      <div class="col keep">
+        <h3>그대로인 것</h3>
+        <ul>
+          <li><b>원단</b><span>폴리에스터 100% 플리스</span></li>
+          <li><b>봉제 · 마감</b><span>끝단 테이프 마감</span></li>
+          <li><b>인쇄 2곳</b><span>가슴 3.8cm · 등판 29cm</span></li>
+        </ul>
+      </div>
+    </div>
     <ol class="ladder">
       <li class="was" data-list-row hidden><span>공장 정상가</span><b data-list-price></b></li>
       <li class="minus" data-list-row hidden><span>연말 세일 · 공장에 남은 물량만</span><b data-discount></b></li>
@@ -288,54 +372,51 @@ details p{margin:6px 0 0}
     <p class="story-note">남은 물량이라 <b data-stock-count>50벌</b>만 있어요. 신청한 순서대로 드려요.</p>
   </section>
 
-  <section class="block">
-    <p class="sec-eyebrow">DESIGN</p>
-    <h2 class="sec-title">디자인 포인트</h2>
+  <section class="block" id="quality">
+    <p class="sec-eyebrow">QUALITY</p>
+    <h2 class="sec-title">작업복 브랜드가 파는<br>그 옷이에요</h2>
+    <p class="sec-lead">작업 조끼 · 작업 바지를 만드는 브랜드 워크블록이 「플리스 집업 자켓」으로 파는 것과 같은 옷이에요. 원단 · 봉제 · 모양이 같아요.</p>
+    <ul class="feats">
+      <li><span class="ic"><svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 8c2.2-2 4.4-2 6.6 0s4.4 2 6.6 0 3.3-1.3 4.8-1"/><path d="M4 13c2.2-2 4.4-2 6.6 0s4.4 2 6.6 0 3.3-1.3 4.8-1"/><path d="M4 18c2.2-2 4.4-2 6.6 0s4.4 2 6.6 0 3.3-1.3 4.8-1"/></svg></span><div><b>부드럽고 촘촘한 플리스</b><span>폴리에스터 100%. 가볍고 따뜻해요.</span></div></li>
+      <li><span class="ic"><svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4.5h10l1.2 6.2L13 14 6.8 10.7z"/><path d="M13 14v8.5"/><path d="M6.8 10.7L4 12.5v9.5M19.2 10.7L22 12.5v9.5"/></svg></span><div><b>목까지 올라오는 칼라</b><span>지퍼를 끝까지 올리면 목을 감싸 바람을 막아요.</span></div></li>
+      <li><span class="ic"><svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 6h15v9.5a7.5 7.5 0 0 1-15 0z"/><path d="M5.5 10h15"/></svg></span><div><b>양옆 · 안쪽 주머니</b><span>양옆에 손을 넣고, 안쪽에는 작은 물건을 따로 넣어요.</span></div></li>
+      <li><span class="ic"><svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 9.5h18" stroke-dasharray="3 3"/><path d="M4 16.5h18" stroke-dasharray="3 3"/><rect x="2.5" y="6" width="21" height="14" rx="4"/></svg></span><div><b>테이프로 감싼 끝단</b><span>주머니 테두리 · 소매 끝 · 밑단을 테이프로 감싸 마감했어요.</span></div></li>
+    </ul>
+    <div class="real">
+      <figure><img src="/goods/fleece/img/real-collar.webp" width="600" height="600" loading="lazy" alt="스탠드 칼라와 지퍼 손잡이 실물 확대"><figcaption>칼라 · 지퍼</figcaption></figure>
+      <figure><img src="/goods/fleece/img/real-pocket.webp" width="600" height="600" loading="lazy" alt="옆 주머니 테두리와 소매 끝 테이프 마감 실물 확대"><figcaption>주머니 테두리 · 소매 끝</figcaption></figure>
+      <figure><img src="/goods/fleece/img/real-hem.webp" width="600" height="600" loading="lazy" alt="밑단 테이프 마감과 지퍼 끝 실물 확대"><figcaption>밑단 · 지퍼 끝</figcaption></figure>
+      <figure><img src="/goods/fleece/img/real-seam.webp" width="600" height="600" loading="lazy" alt="어깨선과 등판 곡선 절개 실물 확대"><figcaption>어깨 · 등판 곡선 절개</figcaption></figure>
+    </div>
+    <p class="real-note">실물 사진(업체 제공)이에요. 받는 옷의 목 상표는 다를 수 있어요.</p>
+    <div class="check" id="check">
+      <h3>선릉역점 샘플로 직접 확인해 보세요</h3>
+      <p>사이즈별 샘플이 있어요. 이 네 가지만 보면 돼요.</p>
+      <ol>
+        <li>지퍼를 끝까지 올렸다 내려 보기</li>
+        <li>주머니 테두리 · 소매 끝 만져 보기</li>
+        <li>원단 두께 · 촉감 느껴 보기</li>
+        <li>입어 보고 사이즈 고르기</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="block" id="print">
+    <p class="sec-eyebrow">PRINT</p>
+    <h2 class="sec-title">인쇄는 오래 입도록<br>굵게 다시 그렸어요</h2>
+    <p class="sec-lead">컷팅 필름으로 찍어요. 가는 선부터 들뜨기 쉬워서, 모든 획을 1.5mm 넘게 다시 그렸어요.</p>
     <div class="points">
       <figure class="point">
         <img src="/goods/fleece/img/detail-back-white.webp" width="750" height="310" loading="lazy" alt="등판 인쇄 확대: BOXER, 153, BOXING GYM">
-        <figcaption><b><span class="num">01</span>등판 · BOXER 153 BOXING GYM</b><span>목 아래 9cm, 등 위쪽에 가로 29cm 세리프 글씨. 크고 시원하게, 멀리서도 또렷하게.</span></figcaption>
+        <figcaption><b><span class="num">01</span>등판 · BOXER 153 BOXING GYM</b><span>목 아래 9cm, 등 위쪽에 가로 29cm. 멀리서도 또렷하게.</span></figcaption>
       </figure>
       <figure class="point">
         <img src="/goods/fleece/img/detail-chest-white.webp" width="900" height="620" loading="lazy" alt="가슴 153 심볼 확대">
         <figcaption><b><span class="num">02</span>가슴 · 153 심볼</b><span>왼쪽 가슴에 3.8cm. 앞은 작고 조용하게 153 하나만.</span></figcaption>
       </figure>
-      <figure class="point">
-        <img src="/goods/fleece/img/flat-back-white.webp?v=2" width="1100" height="1004" loading="lazy" alt="플리스 집업 뒷면 전체" style="background:#F3F2EF">
-        <figcaption><b><span class="num">03</span>굵게 다듬은 인쇄</b><span>컷팅 필름 인쇄라 가는 선이 없도록 모든 획을 1.5mm 넘게 다시 그렸어요.</span></figcaption>
-      </figure>
     </div>
-  </section>
-
-  <section class="block">
-    <p class="sec-eyebrow">LOOK</p>
-    <h2 class="sec-title">입으면 이런 느낌</h2>
-    <div class="rail" aria-label="착용 사진 넘기기">
-      <figure><img src="/goods/fleece/img/model-front.webp" width="952" height="1280" loading="lazy" alt="앞에서 본 모습, 왼쪽 가슴에 153 심볼"><figcaption>앞 · 지퍼를 끝까지 올렸을 때</figcaption></figure>
-      <figure><img src="/goods/fleece/img/model-woman.webp?v=2" width="952" height="1280" loading="lazy" alt="뒤를 돌아보는 여자 모델, 등판 인쇄"><figcaption>뒤 · 흰색 인쇄</figcaption></figure>
-      <figure><img src="/goods/fleece/img/model-street.webp?v=2" width="952" height="1280" loading="lazy" alt="저녁 거리를 걷는 모델의 뒷모습"><figcaption>운동 끝나고 가는 길</figcaption></figure>
-      <figure><img src="/goods/fleece/img/model-back-gray.webp?v=2" width="952" height="1280" loading="lazy" alt="진회색 인쇄 등판"><figcaption>뒤 · 진회색 인쇄</figcaption></figure>
-    </div>
-    <p class="ai-note">모델 사진은 이해를 돕기 위한 AI 예시 이미지예요. 실제 색감과 핏은 조금 다를 수 있어요.</p>
-  </section>
-
-  <section class="block">
-    <p class="sec-eyebrow">IN THE GYM</p>
-    <h2 class="sec-title">운동할 때도 이렇게</h2>
-    <p class="sec-lead">몸 풀 때 걸치고, 끝나면 그대로 입고 가요.</p>
-    <div class="rail" aria-label="운동하는 사진 넘기기">
-      <figure><img src="/goods/fleece/img/gym-bag.webp?v=2" width="952" height="1280" loading="lazy" alt="플리스 집업을 입고 샌드백을 치는 남자, 등판 흰색 인쇄"><figcaption>샌드백 · 흰색 인쇄</figcaption></figure>
-      <figure><img src="/goods/fleece/img/gym-mitt.webp" width="952" height="1280" loading="lazy" alt="플리스 집업을 입고 코치 미트에 잽을 치는 여자, 왼쪽 가슴에 153 심볼"><figcaption>미트 · 가슴 153 심볼</figcaption></figure>
-      <figure><img src="/goods/fleece/img/gym-rope.webp" width="952" height="1280" loading="lazy" alt="플리스 집업을 입고 줄넘기를 하는 남자"><figcaption>줄넘기로 몸 풀기</figcaption></figure>
-      <figure><img src="/goods/fleece/img/gym-shadow.webp?v=2" width="952" height="1280" loading="lazy" alt="플리스 집업을 입고 섀도복싱을 하는 여자, 등판 진회색 인쇄"><figcaption>섀도복싱 · 진회색 인쇄</figcaption></figure>
-    </div>
-    <p class="ai-note">운동 사진도 이해를 돕기 위한 AI 예시 이미지예요.</p>
-  </section>
-
-  <section class="block">
-    <p class="sec-eyebrow">COLOR</p>
-    <h2 class="sec-title">인쇄 색 2가지</h2>
-    <p class="sec-lead">옷은 검정 하나, 인쇄 색만 골라요.</p>
+    <h3 class="sub-title">인쇄 색 2가지</h3>
+    <p class="sub-lead">옷은 검정 하나, 인쇄 색만 골라요.</p>
     <div class="colors">
       <div class="color-card">
         <img src="/goods/fleece/img/detail-back-white.webp" width="750" height="310" loading="lazy" alt="흰색 인쇄 등판 확대">
@@ -348,21 +429,72 @@ details p{margin:6px 0 0}
         <div><b><i class="dot" style="background:#63666A"></i>진회색 인쇄</b><span>은은하게, 같은 톤으로 차분하게</span></div>
       </div>
     </div>
+    <p class="tip care"><svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6.5h16l-1.6 11.2a2 2 0 0 1-2 1.8H6.6a2 2 0 0 1-2-1.8z"/><path d="M5.5 10.5c1.4 1 2.8 1 4.2 0s2.8-1 4.2 0 2.8 1 2.6.6"/></svg><span><b>오래 입는 법</b> · 뒤집어서 빨고, 표백제 · 강한 세제는 피해요. 건조기 대신 그늘에 말리고, 인쇄 위로는 다림질하지 않아요.</span></p>
+  </section>
+
+  <section class="block">
+    <p class="sec-eyebrow">LOOK</p>
+    <h2 class="sec-title">체육관 안에서도, 밖에서도</h2>
+    <p class="sec-lead">몸 풀 때 걸치고, 끝나면 그대로 입고 가요.</p>
+    <div class="rail" aria-label="입은 사진 넘기기">
+      <figure><img src="/goods/fleece/img/gym-bag.webp?v=2" width="952" height="1280" loading="lazy" alt="플리스 집업을 입고 샌드백을 치는 남자, 등판 흰색 인쇄"><figcaption>샌드백 · 흰색 인쇄</figcaption></figure>
+      <figure><img src="/goods/fleece/img/model-front.webp" width="952" height="1280" loading="lazy" alt="앞에서 본 모습, 왼쪽 가슴에 153 심볼"><figcaption>앞 · 지퍼를 끝까지 올렸을 때</figcaption></figure>
+      <figure><img src="/goods/fleece/img/gym-mitt.webp" width="952" height="1280" loading="lazy" alt="플리스 집업을 입고 코치 미트에 잽을 치는 여자, 왼쪽 가슴에 153 심볼"><figcaption>미트 · 가슴 153 심볼</figcaption></figure>
+      <figure><img src="/goods/fleece/img/model-woman.webp?v=2" width="952" height="1280" loading="lazy" alt="뒤를 돌아보는 여자 모델, 등판 인쇄"><figcaption>뒤 · 흰색 인쇄</figcaption></figure>
+      <figure><img src="/goods/fleece/img/gym-rope.webp" width="952" height="1280" loading="lazy" alt="플리스 집업을 입고 줄넘기를 하는 남자"><figcaption>줄넘기로 몸 풀기</figcaption></figure>
+      <figure><img src="/goods/fleece/img/model-street.webp?v=2" width="952" height="1280" loading="lazy" alt="저녁 거리를 걷는 모델의 뒷모습"><figcaption>운동 끝나고 가는 길</figcaption></figure>
+      <figure><img src="/goods/fleece/img/gym-shadow.webp?v=2" width="952" height="1280" loading="lazy" alt="플리스 집업을 입고 섀도복싱을 하는 여자, 등판 진회색 인쇄"><figcaption>섀도복싱 · 진회색 인쇄</figcaption></figure>
+      <figure><img src="/goods/fleece/img/model-back-gray.webp?v=2" width="952" height="1280" loading="lazy" alt="진회색 인쇄 등판"><figcaption>뒤 · 진회색 인쇄</figcaption></figure>
+    </div>
+    <p class="ai-note">모델 · 운동 사진은 이해를 돕기 위한 AI 예시 이미지예요. 실제 색감과 핏은 조금 다를 수 있어요.</p>
+  </section>
+
+  <section class="block" id="size">
+    <p class="sec-eyebrow">SIZE</p>
+    <h2 class="sec-title">사이즈는 입어 보고 골라요</h2>
+    <p class="sec-lead">선릉역점에 사이즈별 샘플이 있어요. 평소 입는 상의 사이즈로 고르고, 넉넉하게 입고 싶다면 한 치수 크게요.</p>
+    <table class="size-table">
+      <caption class="sr">사이즈별 단면 실측, 단위 cm</caption>
+      <thead><tr><th scope="col">단위 cm</th><th scope="col">M</th><th scope="col">L</th><th scope="col">XL</th><th scope="col">2XL</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">총길이</th><td>65</td><td>67.5</td><td>70</td><td>72.5</td></tr>
+        <tr><th scope="row">가슴 단면</th><td>52</td><td>54.5</td><td>57</td><td>59.5</td></tr>
+        <tr><th scope="row">어깨너비</th><td>44</td><td>46.5</td><td>49</td><td>51.5</td></tr>
+        <tr><th scope="row">소매길이</th><td>60</td><td>62</td><td>64</td><td>66</td></tr>
+      </tbody>
+    </table>
+    <p class="size-src">같은 옷의 단면 실측이에요. 재는 방법에 따라 1~3cm 차이가 날 수 있어요.</p>
   </section>
 
   <section class="block">
     <p class="sec-eyebrow">DETAIL</p>
-    <h2 class="sec-title">제품 정보</h2>
+    <h2 class="sec-title">상품 정보</h2>
     <dl class="spec">
-      <div><dt>옷</dt><dd>검정 플리스 풀집업 · 스탠드 칼라 · 양옆 주머니</dd></div>
+      <div><dt>옷</dt><dd>검정 플리스 풀집업 · 스탠드 칼라 · 양옆 · 안쪽 주머니</dd></div>
+      <div><dt>소재</dt><dd>폴리에스터 100%</dd></div>
       <div><dt>인쇄</dt><dd>컷팅 필름 · 가슴 153 심볼 3.8cm · 등판 가로 29cm</dd></div>
       <div><dt>인쇄 색</dt><dd>흰색 · 진회색 중 하나</dd></div>
       <div><dt>사이즈</dt><dd data-sizes>M · L · XL · 2XL</dd></div>
+      <div><dt>제조국</dt><dd>중국(옷)</dd></div>
+      <div><dt>세탁</dt><dd>뒤집어서 세탁 · 표백제 쓰지 않기 · 그늘에 말리기</dd></div>
       <div><dt>가격</dt><dd><span data-price>25,000원</span> (앞뒤 인쇄 포함 · 원가 그대로)</dd></div>
       <div data-stock-row><dt>수량</dt><dd data-stock-text>선착순 50벌</dd></div>
       <div><dt>신청</dt><dd><span data-deadline>11월 26일(목)</span>까지</dd></div>
     </dl>
-    <p class="tip"><b>사이즈 고르기</b> · 선릉역점에 사이즈별 샘플이 있어 직접 보고 입어 볼 수 있어요. 평소 입는 상의 사이즈로 고르고, 넉넉하게 입고 싶다면 한 치수 크게 고르면 돼요.</p>
+  </section>
+
+  <section class="block" id="faq">
+    <p class="sec-eyebrow">Q&amp;A</p>
+    <h2 class="sec-title">이런 게 궁금하죠</h2>
+    <div class="faq">
+      <details><summary>25,000원이면 얇은 옷 아니에요?</summary><p>작업복 브랜드 워크블록이 파는 것과 같은 옷이에요. 부드럽고 촘촘한 폴리에스터 100% 플리스라 가볍고 따뜻해요. 두께는 선릉역점 샘플로 직접 만져 보세요.</p></details>
+      <details><summary>왜 이렇게 싸요?</summary><p>153이 이익을 붙이지 않았어요. 공장에 남은 연말 물량을 받은 값 그대로, 매장 · 택배 없이 지점 데스크에서 드려서 이 가격이에요.</p></details>
+      <details><summary>인쇄가 금방 떨어지진 않아요?</summary><p>컷팅 필름으로 찍고, 들뜨기 쉬운 가는 선이 없도록 모든 획을 1.5mm 넘게 다시 그렸어요. 뒤집어서 빨고, 건조기와 인쇄 위 다림질만 피해 주세요.</p></details>
+      <details><summary>153은 왜 남기지도 않고 팔아요?</summary><p>회원님들이 체육관 밖에서도 153을 같이 입었으면 해서요. 그래서 이번 50벌은 이익을 붙이지 않았어요.</p></details>
+      <details><summary>받는 옷의 목 상표가 워크블록이 아닐 수도 있어요?</summary><p>네, 목 상표는 다를 수 있어요. 원단 · 봉제 · 모양은 워크블록 플리스 집업과 같아요.</p></details>
+      <details><summary>돈을 먼저 내야 해요?</summary><p>아니요. 여기서 신청하고, 마감일까지 다니는 지점 데스크에서 카드나 계좌이체로 결제해요. 결제한 신청만 만들어요.</p></details>
+      <details><summary>취소할 수 있어요?</summary><p>마감 전에는 이 페이지나 데스크에서 취소할 수 있어요. 결제 뒤 제작이 시작되면 교환 · 취소가 어려워요.</p></details>
+    </div>
   </section>
 
   <section class="block">
@@ -461,7 +593,8 @@ details p{margin:6px 0 0}
       <li>주문 제작이라 결제 뒤 제작이 시작되면 교환 · 취소가 어려워요. 마감 전에는 이 페이지나 데스크에서 취소할 수 있어요.</li>
       <li>선착순 50벌이에요. 결제 전 신청도 순서에 들어가고, 취소하면 그 자리는 다음 분께 돌아가요.</li>
       <li>한 번호로 5건까지 신청할 수 있어요.</li>
-      <li>모델 사진은 AI 예시 이미지예요. 실제 색감과 핏은 조금 다를 수 있어요.</li>
+      <li>옷은 워크블록 플리스 집업과 같은 옷이고, 목 상표는 다를 수 있어요.</li>
+      <li>모델 · 운동 사진은 AI 예시 이미지예요. 실제 색감과 핏은 조금 다를 수 있어요.</li>
     </ul>
     <p class="sign"><span class="serif">BOXER 153</span>153 건강과 행복. 153복싱짐</p>
   </section>
