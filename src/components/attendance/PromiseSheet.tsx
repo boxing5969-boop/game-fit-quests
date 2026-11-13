@@ -10,7 +10,7 @@
  */
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CalendarPlus, Users } from "lucide-react";
+import { CalendarCheck, CalendarPlus, Users } from "lucide-react";
 
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Switch } from "@/components/ui/switch";
@@ -51,9 +51,21 @@ export interface PromiseSheetProps {
   today: string;
   /** (2-4) 운동 짝꿍 — 짝꿍 약속 한 줄 · 「같은 요일로」 */
   partner?: CalPartner | null;
+  /** (3-1) 휴대폰 캘린더에서 늘 보기(구독 주소) — 서버에 기능이 있을 때만 · 없으면 '한 번 받기' 하나만 */
+  onOpenFeed?: () => void;
 }
 
-const PromiseSheet = ({ open, onOpenChange, promise, branchShort, returnBonus, eveAt = "20:00", today, partner = null }: PromiseSheetProps) => {
+const PromiseSheet = ({
+  open,
+  onOpenChange,
+  promise,
+  branchShort,
+  returnBonus,
+  eveAt = "20:00",
+  today,
+  partner = null,
+  onOpenFeed,
+}: PromiseSheetProps) => {
   const [draft, setDraft] = useState<PromiseDraft>(() => draftFromPromise(promise));
   const [error, setError] = useState<string | null>(null);
   const [confirmStop, setConfirmStop] = useState(false);
@@ -264,22 +276,51 @@ const PromiseSheet = ({ open, onOpenChange, promise, branchShort, returnBonus, e
             </div>
           )}
 
-          {/* 휴대폰 캘린더 — 저장한 약속 그대로 (고친 것이 있으면 저장한 뒤 알림 창의 단추로) */}
-          {unchanged && (
-            <button
-              type="button"
-              onClick={() => {
-                if (!openPhoneCalendar(promise, today, branchShort)) toast.error("휴대폰 캘린더에 넣지 못했어요");
-              }}
-              className="flex w-full items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-left transition-transform active:scale-[0.99]"
-            >
-              <CalendarPlus className="h-5 w-5 shrink-0 text-primary" aria-hidden />
-              <span className="min-w-0 flex-1">
-                <span className="block text-body font-bold text-foreground">휴대폰 캘린더에 추가</span>
-                <span className="block text-label text-muted-foreground">앱 알림을 꺼 두어도 휴대폰 캘린더가 알려 줘요</span>
-              </span>
-            </button>
-          )}
+          {/* 휴대폰 캘린더 — 저장한 약속 그대로 (고친 것이 있으면 저장한 뒤 알림 창의 단추로)
+              (3-1) 늘 보기(구독) = 약속 · 153 일정 · D-day 가 저절로 · 한 번 받기 = 약속만 한 번(2-2 그대로) */}
+          {unchanged &&
+            (onOpenFeed ? (
+              <div className="divide-y divide-border rounded-xl border border-border bg-card">
+                <button
+                  type="button"
+                  onClick={onOpenFeed}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left transition-transform active:scale-[0.99]"
+                >
+                  <CalendarCheck className="h-5 w-5 shrink-0 text-primary" aria-hidden />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-body font-bold text-foreground">휴대폰 캘린더에서 늘 보기</span>
+                    <span className="block text-label text-muted-foreground">약속 · 153 일정 · D-day가 저절로 바뀌어요</span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!openPhoneCalendar(promise, today, branchShort)) toast.error("휴대폰 캘린더에 넣지 못했어요");
+                  }}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left transition-transform active:scale-[0.99]"
+                >
+                  <CalendarPlus className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-body font-bold text-foreground">한 번 받기</span>
+                    <span className="block text-label text-muted-foreground">약속만 · 캘린더가 대신 알려 줘요</span>
+                  </span>
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  if (!openPhoneCalendar(promise, today, branchShort)) toast.error("휴대폰 캘린더에 넣지 못했어요");
+                }}
+                className="flex w-full items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-left transition-transform active:scale-[0.99]"
+              >
+                <CalendarPlus className="h-5 w-5 shrink-0 text-primary" aria-hidden />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-body font-bold text-foreground">휴대폰 캘린더에 추가</span>
+                  <span className="block text-label text-muted-foreground">앱 알림을 꺼 두어도 휴대폰 캘린더가 알려 줘요</span>
+                </span>
+              </button>
+            ))}
 
           {error && (
             <p role="alert" className="text-label font-bold text-destructive">

@@ -30,6 +30,9 @@
  *     운동 짝꿍과 같은 요일 약속 한 줄 · 둘 다 온 날 쌍도장(도장 뒤에 하늘색 도장) · 달 아래 '앨범 n · 카드'(나의 153 앨범 ·
  *     이번 달 운동 카드 이미지 — 지난달 한 줄과 같은 줄) · 홈은 수강권 끝나기 14일 전부터 맨 위에 '153과 함께한 시간'(renewalEnd —
  *     그때는 첫 4주 칸을 접는다). 글 · 계산은 lib/calendarTogether.ts.
+ *   · 캘린더 3-1단계 (2026-11-13 대표님 「추천대로 3-1부터」 · 내 기록에서만): 약속 시트 '늘 보기(구독)' + '한 번 받기' ·
+ *     나만의 체크 시트 맨 아래 '휴대폰 캘린더에서 늘 보기' → CalendarFeedSheet(kind member — 약속 · 153 일정 · D-day 구독 주소).
+ *     서버에 기능이 없으면(DB 적용 전) 두 입구 모두 예전 그대로. 카드에는 아무것도 더하지 않았다(시트 안에서만).
  *   날짜 계산은 lib/attendanceCalendar.ts (주는 월요일 시작).
  */
 import {
@@ -84,6 +87,7 @@ import {
 import { albumOf, isTogetherDay, partnerPromiseLine, renewalLine, weekRecap, type CalPartner } from "@/lib/calendarTogether";
 import { useMyPromise } from "@/services/promiseService";
 import { CAL2_KEY, useMyCalendar, useSetCheckDone, useSetDaySticker } from "@/services/calendarCheckService";
+import { useCalendarFeed } from "@/services/calendarFeedService";
 import PromiseSheet from "@/components/attendance/PromiseSheet";
 import DayChecksPanel from "@/components/attendance/CalendarChecks";
 import { ActIcon, NoteIcon } from "@/components/attendance/CalendarMarkIcons";
@@ -98,6 +102,7 @@ const DdaySheet = lazy(() => import("@/components/attendance/DdaySheet"));
 const QuickDaySheet = lazy(() => import("@/components/attendance/QuickDaySheet"));
 const MonthCardSheet = lazy(() => import("@/components/attendance/MonthCardSheet"));
 const AlbumSheet = lazy(() => import("@/components/attendance/AlbumSheet"));
+const CalendarFeedSheet = lazy(() => import("@/components/calendar/CalendarFeedSheet"));
 
 const n = (v: number) => v.toLocaleString("ko-KR");
 
@@ -448,7 +453,7 @@ export interface WorkoutCalendarCardProps {
   renewalEnd?: string | null;
 }
 
-type SheetKey = "items" | "line" | "cheer" | "dday" | "quick" | "card" | "album";
+type SheetKey = "items" | "line" | "cheer" | "dday" | "quick" | "card" | "album" | "feed";
 
 const WorkoutCalendarCard = ({
   data,
@@ -515,6 +520,9 @@ const WorkoutCalendarCard = ({
     return out.length ? out : null;
   }, [cal, visibleDays, today, byDay]);
   const qc = useQueryClient();
+  // (3-1) 휴대폰 캘린더 구독 주소 — 서버에 기능이 있고 이 계정이 가질 수 있을 때만 입구가 보인다
+  const feedQ = useCalendarFeed("member", withChecks);
+  const feedOk = withChecks && !!feedQ.data?.available && !!feedQ.data?.can;
   const doneM = useSetCheckDone();
   const stickerM = useSetDaySticker();
   const [sheet, setSheet] = useState<SheetKey | null>(null);
@@ -528,6 +536,7 @@ const WorkoutCalendarCard = ({
     quick: false,
     card: false,
     album: false,
+    feed: false,
   });
   const openSheet = (k: SheetKey, day: string | null = null) => {
     setMounted((m) => (m[k] ? m : { ...m, [k]: true }));
@@ -843,6 +852,14 @@ const WorkoutCalendarCard = ({
           eveAt={promiseState.eveAt}
           today={today}
           partner={partner}
+          onOpenFeed={
+            feedOk
+              ? () => {
+                  setPromiseOpen(false);
+                  openSheet("feed");
+                }
+              : undefined
+          }
         />
       )}
       {cal && mounted.items && (
@@ -853,7 +870,13 @@ const WorkoutCalendarCard = ({
             items={cal.items.filter((i) => i.archivedOn == null)}
             nudge={cal.nudge}
             recap={cal.recap}
+            onOpenFeed={feedOk ? () => openSheet("feed") : undefined}
           />
+        </Suspense>
+      )}
+      {feedOk && mounted.feed && (
+        <Suspense fallback={null}>
+          <CalendarFeedSheet open={sheet === "feed"} onOpenChange={(v) => setSheet(v ? "feed" : null)} kind="member" />
         </Suspense>
       )}
       {withChecks && mounted.card && (

@@ -7,6 +7,7 @@
  */
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { ChevronRight } from "lucide-react";
 
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Switch } from "@/components/ui/switch";
@@ -37,9 +38,11 @@ export interface CheckItemsSheetProps {
   nudge?: { on: boolean; at: string };
   /** (2-4) 일요일 주간 돌아보기 알림 — 이 회원에게 가는 지점(sends)일 때만 칸이 보인다 */
   recap?: CalRecapPref;
+  /** (3-1) 휴대폰 캘린더에서 늘 보기(구독 주소) — 서버에 기능이 있을 때만 */
+  onOpenFeed?: () => void;
 }
 
-const CheckItemsSheet = ({ open, onOpenChange, items, nudge, recap }: CheckItemsSheetProps) => {
+const CheckItemsSheet = ({ open, onOpenChange, items, nudge, recap, onOpenFeed }: CheckItemsSheetProps) => {
   const [draft, setDraft] = useState<CheckItemDraft>(emptyCheckDraft);
   const [editId, setEditId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -311,6 +314,21 @@ const CheckItemsSheet = ({ open, onOpenChange, items, nudge, recap }: CheckItems
                 aria-label="일요일 주간 돌아보기 알림"
               />
             </label>
+          )}
+
+          {/* 휴대폰 캘린더에서 늘 보기 — 약속 · 153 일정 · D-day 가 저절로 (3-1) */}
+          {onOpenFeed && (
+            <button
+              type="button"
+              onClick={onOpenFeed}
+              className="flex w-full items-center justify-between gap-3 rounded-xl bg-muted/60 px-4 py-3 text-left active:scale-[0.99]"
+            >
+              <span className="min-w-0">
+                <span className="block text-body font-bold text-foreground">휴대폰 캘린더에서 늘 보기</span>
+                <span className="block text-label text-muted-foreground">약속 · 153 일정 · D-day가 저절로 들어가요</span>
+              </span>
+              <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+            </button>
           )}
         </div>
       </DrawerContent>

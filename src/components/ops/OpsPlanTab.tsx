@@ -17,6 +17,7 @@
  *   맨 위 「오늘 만날 회원」(2026-11-12 대표님 「추천하는대로 진행할게」 — 스케줄러는 회원을 맞이하는 도구): OpsMeetToday.
  *   맨 아래 「회원 달력」(2026-11-13 운동 달력 2-2단계 · 대표님 「다음」 → 153 일정은 「앱 운영본부에서」): OpsCalEvents —
  *     지점장님 · 대표님이 휴관 · 단축 운영 · 이벤트 · 대회 · 특강을 올리면 그 지점 회원 운동 달력에 바로 + 알림. 코치님은 보기만.
+ *   맨 끝 「휴대폰 캘린더」(2026-11-13 캘린더 3-1단계): OpsPhoneCalendar — 구독 주소(아이폰 · 구글 캘린더에 저절로) · .ics 가져오기.
  */
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, Rows3 } from "lucide-react";
@@ -60,6 +61,7 @@ import OpsPlanSheet, { type PlanSheetTarget } from "./OpsPlanSheet";
 import { MarkLegend, MonthSwitcher, PlanMonthGrid } from "./OpsPlanMonth";
 import OpsMeetToday from "./OpsMeetToday";
 import OpsCalEvents from "./OpsCalEvents";
+import OpsPhoneCalendar from "./OpsPhoneCalendar";
 import { OpsChip, kstToday } from "./OpsParts";
 
 const card = "rounded-2xl border border-border bg-card p-5";
@@ -225,6 +227,9 @@ const OpsPlanTab = () => {
 
       {/* 회원 달력 153 일정 — 올릴 수 있는 분(대표님 · 지점장님)은 늘, 코치님은 올라간 일정이 있을 때만 */}
       <OpsCalEvents branch={data.branch} date={day} />
+
+      {/* 휴대폰 캘린더 — 구독 주소 · .ics 가져오기 (3-1) */}
+      <OpsPhoneCalendar branch={data.branch} me={data.me} today={data.today} plans={data.plans} />
 
       <OpsPlanSheet target={sheet} today={data.today} onClose={() => setSheet(null)} />
     </div>

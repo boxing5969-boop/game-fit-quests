@@ -6,10 +6,11 @@
  *   · 서버 ops_cal_events · ops_cal_event_save · ops_cal_event_remove (services/calendarEventService) — 함수가 없으면 카드 없음.
  *   글 · 검사 · 알림 한 줄은 src/lib/calendarEvents.ts. 회원 화면은 WorkoutCalendar(칸 점) · CalendarChecks(그날 카드).
  *   · (2-3 · 2026-11-13) 종류 '승급 심사' — 알림 · D-day 는 타이틀매치 차례(레벨 10) 회원에게만 (DB 는 kind event + is_exam).
+ *   · (3-1 · 2026-11-13) 올릴 수 있는 분께 '공개 달력 주소 복사' — 그 지점 153 일정(승급 심사 빼고)을 홈페이지 · 블로그 · 손님 캘린더에서.
  */
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CalendarPlus, ChevronRight } from "lucide-react";
+import { CalendarPlus, ChevronRight, Link2 } from "lucide-react";
 
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
@@ -32,6 +33,9 @@ import {
 } from "@/lib/calendarEvents";
 import { shortBranch } from "@/services/opsService";
 import { useOpsCalEvents, useRemoveOpsCalEvent, useSaveOpsCalEvent } from "@/services/calendarEventService";
+import { useBranchCode } from "@/services/calendarFeedService";
+import { branchFeedUrl } from "@/lib/calendarFeed";
+import { copyText } from "@/lib/appInvite";
 import { OpsButton, OpsChip, OpsLabel, OpsSheet, kstToday, opsInput } from "./OpsParts";
 
 const SHOW = 4;
@@ -54,11 +58,14 @@ export const OpsCalEventsView = ({
   today,
   onAdd,
   onOpen,
+  onCopyPublic,
 }: {
   st: OpsCalState;
   today: string;
   onAdd: () => void;
   onOpen: (e: OpsCalEvent) => void;
+  /** (3-1) 지점 공개 달력 주소 복사 — 올릴 수 있는 분 · 지점 코드가 있을 때만 */
+  onCopyPublic?: () => void;
 }) => {
   const [all, setAll] = useState(false);
   const upcoming = upcomingEvents(st.events, today);
@@ -123,6 +130,19 @@ export const OpsCalEventsView = ({
           className="mt-1 flex h-11 w-full items-center justify-center rounded-xl text-label font-bold text-foreground active:bg-secondary/60"
         >
           {all ? "접기" : `${upcoming.length - SHOW}개 더 보기`}
+        </button>
+      )}
+      {st.canEdit && onCopyPublic && (
+        <button
+          type="button"
+          onClick={onCopyPublic}
+          className="mt-2 flex w-full items-center gap-2 rounded-xl bg-muted/60 px-3 py-2.5 text-left active:scale-[0.99]"
+        >
+          <Link2 className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+          <span className="min-w-0 flex-1">
+            <span className="block text-label font-bold text-foreground">공개 달력 주소 복사</span>
+            <span className="block text-label leading-snug text-muted-foreground">홈페이지 · 블로그 · 손님 캘린더에서 휴관 · 이벤트가 보여요 (승급 심사 빼고)</span>
+          </span>
         </button>
       )}
     </section>
@@ -318,8 +338,10 @@ const OpsCalEvents = ({ branch, date }: { branch: string; date: string }) => {
   const q = useOpsCalEvents(branch);
   const [target, setTarget] = useState<Target | null>(null);
   const st = q.data;
+  const codeQ = useBranchCode(st?.branch ?? null, !!st?.on && !!st?.canEdit);
   if (!st?.on) return null;
   const today = st.today ?? kstToday();
+  const publicUrl = branchFeedUrl(import.meta.env.VITE_SUPABASE_URL as string | undefined, codeQ.data);
   return (
     <>
       <OpsCalEventsView
@@ -327,6 +349,11 @@ const OpsCalEvents = ({ branch, date }: { branch: string; date: string }) => {
         today={today}
         onAdd={() => setTarget({ mode: "new", date: date >= today ? date : today })}
         onOpen={(e) => setTarget({ mode: "edit", event: e })}
+        onCopyPublic={
+          publicUrl
+            ? () => void copyText(publicUrl).then((ok) => (ok ? toast.success("공개 달력 주소를 복사했어요") : toast.error("복사하지 못했어요")))
+            : undefined
+        }
       />
       {st.canEdit && <EventSheet target={target} st={st} onClose={() => setTarget(null)} />}
     </>
