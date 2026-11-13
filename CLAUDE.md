@@ -979,7 +979,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 | 파일 | 역할 |
 |---|---|
 | [public/goods/fleece/index.html](public/goods/fleece/index.html) | 상세페이지(정적 HTML, `/goods/fleece` — `_redirects`). 문자 · 카카오 링크 미리보기(og.jpg) · 로그인 없이 신청(이름 · 휴대폰 · 지점 · 동의). 같은 브라우저에 마이복서153 로그인이 남아 있으면(localStorage `sb-whnczhxyjmyywhlfbgsd-auth-token`, 만료 전) 그 계정으로 채우고 '내 신청' · 결제 전 취소. 앱 카드에서 열면 `?from=app` → source app. 서버에 닿지 않으면(미리보기 주소 · 적용 전) 같은 값의 기본값으로 그린다 |
-| `public/goods/fleece/img/*.webp` | 모델 컷 5장(제미나이로 만든 AI 예시 — 페이지에 그렇게 적었다 · 가슴 로고는 정확한 벡터로 다시 얹음) · 앞/뒤 평면 컷(업체 사진 합성) · 인쇄 확대 |
+| `public/goods/fleece/img/*.webp` | 모델 컷 5장(제미나이로 만든 AI 예시 — 페이지에 그렇게 적었다 · 가슴 로고는 정확한 벡터로 다시 얹음) · 앞/뒤 평면 컷(업체 사진 합성) · 인쇄 확대 · **운동 컷 4장 `gym-*.webp`**(2026-11-13 대표님 「우리가 만든 옷을입고 복싱하고있는 이미지몇장 만들어서 올리자」 — LOOK 아래 「IN THE GYM · 운동할 때도 이렇게」 칸: 샌드백 흰색 인쇄 · 미트 가슴 심볼 · 줄넘기 · 섀도복싱 진회색 인쇄. 제미나이 웹(Pro · 이미지 · 3:4)에 실제 착용 컷 · 인쇄 원본을 붙여 만들고, 화면의 765×1024 미리보기를 떠서 952×1280 으로 키움(원본 내려받기는 PC 다운로드 폴더라 못 씀) · 샌드백 컷 링 바닥의 뭉개진 글자는 지움 · 미트 컷은 미트 위로 나온 손가락을 고쳐 다시 만듦 · 'AI 예시' 한 줄 같이) |
 | [supabase/migrations/20261112202433_goods_preorder.sql](supabase/migrations/20261112202433_goods_preorder.sql) | `goods_campaigns`(상품 한 줄 — 가격 · 색 · 사이즈 · 마감, 바꿀 땐 update) · `goods_orders` · 함수 6개(아래). 표는 anon · authenticated 모두 막음 |
 | [src/lib/goodsPreorder.ts](src/lib/goodsPreorder.ts) · [services/goodsService.ts](src/services/goodsService.ts) | 상태 이름 · 다음 단계(서버 허용 변화와 같게) · 색×사이즈 집계 · 업체 발주 문구 · 마감 날짜(한국 날짜) / 서버 호출 |
 | [components/admin/GoodsOrdersPanel.tsx](src/components/admin/GoodsOrdersPanel.tsx) | 운영진 신청 관리 — 전체관리자 대시보드 '굿즈' 탭 · 지점장/코치 홈 '굿즈 신청' 카드(`/manager?tab=goods`, 열린 동안 · 마감 뒤 45일). 결제 완료 · 받음 · 취소 · 되돌리기 · 옵션/메모 · 색×사이즈(결제 기준 / 신청 포함) · 업체 발주 문구 복사 · 링크 복사. `?demo=1` = 예시 |
