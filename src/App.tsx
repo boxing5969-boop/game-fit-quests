@@ -38,6 +38,7 @@ import ExitConfirm from "@/components/ExitConfirm";
 import PushBridge from "@/components/notifications/PushBridge";
 import { ViewAsMemberBar } from "@/components/admin/ViewAsMember";
 import { initBackExit } from "@/lib/androidBackExit";
+import { rememberDocCache } from "@/lib/docCache";
 
 // Route-level code splitting — every page below is fetched on demand.
 // LoginPage + NotFound stay eager: Login is the cold-start screen
@@ -254,7 +255,7 @@ const RoleBasedRedirect = () => {
 
 const AppRoutes = () => {
   const { user, loading } = useAuth();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
 
   // 사이니지(TV)·키오스크에서는 앱 UI를 통째로 끈다. 아래 전역 크롬 전부가 이 한 줄에 걸린다.
   const signage = isSignageRoute(pathname);
@@ -285,6 +286,13 @@ const AppRoutes = () => {
     if (window.self !== window.top) return;
     initBackExit(() => setExitAsk(true), ["/", "/login"]);
   }, []);
+
+  // 뒤로가기 흰 화면 막기 (2026-11-13) — 옮겨 온 화면 주소의 HTML 사본을 지금 배포 것으로 받아 둔다.
+  // 앱 밖 페이지(굿즈 상세 · 결제)에서 뒤로가면 브라우저가 그 사본을 검증 없이 꺼내기 때문 (src/lib/docCache.ts).
+  useEffect(() => {
+    if (signage) return;
+    rememberDocCache();
+  }, [pathname, search, signage]);
 
   if (loading) {
     // 사이니지는 153 로고 풀스크린이 깜빡이면 안 된다 — 배경색만 깔고 기다린다.

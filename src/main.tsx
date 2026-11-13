@@ -6,6 +6,10 @@ import { captureInviteCodeFromUrl } from "@/lib/appInvite";
 import { isIosApp, loadIosAppNative } from "@/lib/iosApp";
 import { applyTextScale, readTextScale } from "@/lib/textScale";
 
+// 화면 파일을 다 받았다는 표시 — index.html 의 '뒤로가기 흰 화면 복구'는 이 표시가 없을 때(첫 화면 파일을
+// 못 받았을 때)만 새로 받는다. 그 뒤 화면별 파일 실패는 lazyWithRetry 가 맡는다 (2026-11-13).
+(window as unknown as { __mb153Booted?: boolean }).__mb153Booted = true;
+
 // 설치형 앱(Capacitor)으로 켜면 랭킹앱 홈이 아니라 얼굴 키오스크로 진입한다 (안드로이드 키오스크 APK).
 // React Router 가 경로를 읽기 전에 바꿔야 하므로 렌더보다 먼저 실행.
 // 아이폰 회원 앱(App Store, 2026-10-19)도 Capacitor 지만 회원 앱이라 제외한다.
