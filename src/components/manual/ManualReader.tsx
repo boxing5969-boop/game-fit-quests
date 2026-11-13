@@ -17,10 +17,14 @@ import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { useLevelVideosByIds } from "@/hooks/useLevelVideos";
 import { overlayVariants } from "@/lib/missionVideos";
 import VideoOverlay, { type OverlayVideo } from "@/components/common/VideoOverlay";
+import TrainingDrillSheet from "@/components/TrainingDrillSheet";
 import { manualImg, type ManualBook, type ManualChapter, type ManualRead } from "@/lib/coachManual/types";
 import { chapterState, latestRead, manualDate, nextChapter, readerPages } from "@/lib/coachManual/progress";
+import { cardShelf, hasCardVideo, type TrainingCard } from "@/lib/trainingCards";
 import { useManualSign } from "@/services/coachManualService";
-import { ManualBlockView, ManualInline } from "./ManualBlocks";
+import { useCardPosters, useTrainingCards } from "@/services/trainingCardService";
+import { classTemplateVideoUrl, useClassTemplateVideos } from "@/services/classTemplateVideoService";
+import { ManualBlockView, ManualInline, type ManualBlockHooks } from "./ManualBlocks";
 
 const BIG_KEY = "153manual:big";
 const readBig = () => {
@@ -50,9 +54,10 @@ export default function ManualReader({ book, chapter, reads, reviewer, offline, 
   const [tries, setTries] = useState(0);
   const [big, setBig] = useState(readBig);
   const [playing, setPlaying] = useState<OverlayVideo | null>(null);
-  // Esc · 뒤로 — 영상 창이 떠 있으면 영상 창만 닫힌다(VideoOverlay 가 맡음)
+  const [openCard, setOpenCard] = useState<TrainingCard | null>(null);
+  // Esc · 뒤로 — 영상 창 · 카드 시트가 떠 있으면 그 창만 닫힌다(VideoOverlay · TrainingDrillSheet 가 맡음)
   useModalDismiss(true, () => {
-    if (!playing) onClose();
+    if (!playing && !openCard) onClose();
   });
   const scrollRef = useRef<HTMLDivElement>(null);
   const touch = useRef<{ x: number; y: number } | null>(null);
@@ -92,7 +97,7 @@ export default function ManualReader({ book, chapter, reads, reviewer, offline, 
   // 키보드(PC) — ← →
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (playing) return;
+      if (playing || openCard) return;
       if (e.key === "ArrowRight") go(page + 1);
       if (e.key === "ArrowLeft") go(page - 1);
     };
@@ -113,6 +118,42 @@ export default function ManualReader({ book, chapter, reads, reviewer, offline, 
       return;
     }
     setPlaying({ url: v.videoUrl, title: title || v.title, variants: overlayVariants(v.variants) });
+  };
+
+  // 카드 영상 · 순서 영상 (2권) — 이 장에 나오는 것만 받는다
+  const blocks = useMemo(() => chapter.cards.flatMap((c) => c.blocks), [chapter]);
+  const cardIds = useMemo(() => [...new Set(blocks.flatMap((b) => (b.t === "card" ? [b.cardId] : [])))], [blocks]);
+  const hasTpl = useMemo(() => blocks.some((b) => b.t === "tplvideo"), [blocks]);
+  const cardsQ = useTrainingCards(cardIds.length > 0);
+  const chapterCards = useMemo(
+    () => (cardsQ.data ?? []).filter((c) => cardIds.includes(c.id)),
+    [cardsQ.data, cardIds],
+  );
+  const posterOf = useCardPosters(chapterCards);
+  const tplQ = useClassTemplateVideos(hasTpl);
+  const hooks: ManualBlockHooks = {
+    card: (id) => {
+      if (!cardsQ.data) return cardsQ.isError ? null : undefined;
+      const c = chapterCards.find((x) => x.id === id);
+      if (!c) return null;
+      const shelf = cardShelf(c);
+      return { name: c.name, shelf: shelf.label, color: shelf.color, poster: posterOf(c), video: hasCardVideo(c) };
+    },
+    onOpenCard: (id) => {
+      const c = chapterCards.find((x) => x.id === id);
+      if (c) setOpenCard(c);
+    },
+    tplReady: (template, step) => {
+      if (!tplQ.data) return tplQ.isError ? false : undefined;
+      return tplQ.data.some((v) => v.template_id === template && v.step === step);
+    },
+    onPlayTemplate: (template, step, title) => {
+      const v = tplQ.data?.find((x) => x.template_id === template && x.step === step);
+      if (!v) return;
+      classTemplateVideoUrl(v.storage_path)
+        .then((url) => setPlaying({ url, title }))
+        .catch((e) => toast.error((e as Error).message));
+    },
   };
 
   const pick = (qi: number, oi: number) => {
@@ -273,7 +314,7 @@ export default function ManualReader({ book, chapter, reads, reviewer, offline, 
                   <h3 className="text-heading font-black text-foreground">{chapter.cards[cur.index].title}</h3>
                 )}
                 {chapter.cards[cur.index].blocks.map((b, i) => (
-                  <ManualBlockView key={i} block={b} big={big} onPlay={play} />
+                  <ManualBlockView key={i} block={b} big={big} onPlay={play} hooks={hooks} />
                 ))}
               </div>
             )}
@@ -417,6 +458,8 @@ export default function ManualReader({ book, chapter, reads, reviewer, offline, 
       </div>
 
       <VideoOverlay video={playing} onClose={() => setPlaying(null)} />
+      {/* 카드 시트 — 읽기 화면(z-115) 위에. 코치용 영상 창(z-120)은 시트보다 위 */}
+      <TrainingDrillSheet exercise={openCard} onClose={() => setOpenCard(null)} zClass="z-[118]" />
     </div>,
     document.body,
   );

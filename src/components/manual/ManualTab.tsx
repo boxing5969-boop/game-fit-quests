@@ -7,6 +7,8 @@
  *   · 주소 ?ch=<장> 이면 그 장을 바로 연다(알림 · 공유). 뒤로 가기로 닫힌다
  *   · 책 글은 DB(coach_manual_book — 코치진만) · 없으면 앱 안 예시 book1Sample(프롤로그~9장)과 안내 한 줄
  *   · 서명은 서버 coach_manual_* (함수가 없으면 이 기기에만 — coachManualService)
+ *   · 2권 「153 수업 진행」(2026-11-13 대표님 「추천대로」): DB 에 book2 줄이 생기면 맨 위 서재에 1권 · 2권 — 따로 열고 따로 서명(?book=book2,
+ *     장 이름 b2_… 이면 2권). 2권 글은 DB 에만(앱 안 예시 없음 — 책 줄이 없으면 서재에 1권만)
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -16,14 +18,14 @@ import { cn } from "@/lib/utils";
 import { SegmentedControl } from "@/components/ui/rankingup";
 import { manualImg } from "@/lib/coachManual/types";
 import { bookProgress, chapterState, latestRead, manualDate } from "@/lib/coachManual/progress";
-import { useManualBook, useManualMe } from "@/services/coachManualService";
+import { useManualBook, useManualMe, type ManualBookId } from "@/services/coachManualService";
 import ManualReader from "./ManualReader";
 import ManualBoard from "./ManualBoard";
 
 type View = "read" | "board";
 
-/** 지금 1권만 있다 — 서명 기록 · DB 책 줄 이름 */
-const BOOK_ID = "book1";
+/** 2권 장 이름은 b2_ 로 시작 — 주소에 ?book= 이 없어도 ?ch=b2_… 이면 2권 */
+const isBook2Chapter = (id: string | null) => !!id && id.startsWith("b2_");
 
 /** 예시 책 · 이 기기 서명일 때 안내 한 줄 */
 function sampleNote(bookSource: "server" | "offline" | "empty" | undefined, offlineSign: boolean): string | null {
@@ -38,9 +40,21 @@ function sampleNote(bookSource: "server" | "offline" | "empty" | undefined, offl
 
 export default function ManualTab({ reviewerFallback }: { reviewerFallback: boolean }) {
   const navigate = useNavigate();
-  const bookQ = useManualBook(BOOK_ID);
+  // 읽기 화면 = 주소 ?ch=<장> · 책 = ?book=book2 (없으면 1권)
+  const [params, setParams] = useSearchParams();
+  const chId = params.get("ch");
+
+  // 서재 — 1권은 늘, 2권은 DB 에 책 줄이 있을 때만
+  const book1Q = useManualBook("book1");
+  const book2Q = useManualBook("book2");
+  const book2 = book2Q.data?.source === "server" ? book2Q.data.book : null;
+  const wantBook2 = params.get("book") === "book2" || isBook2Chapter(chId);
+  const bookId: ManualBookId = wantBook2 && book2 ? "book2" : "book1";
+  const me1Q = useManualMe("book1");
+  const me2Q = useManualMe("book2", !!book2);
+  const bookQ = bookId === "book2" ? book2Q : book1Q;
+  const meQ = bookId === "book2" ? me2Q : me1Q;
   const book = bookQ.data?.book ?? null;
-  const meQ = useManualMe(BOOK_ID);
   const me = meQ.data;
   const reads = useMemo(() => me?.reads ?? [], [me]);
   // 서버 함수가 없을 때(미리보기)는 앱 권한(지점장 · 운영진)으로 검토자를 정한다
@@ -49,9 +63,26 @@ export default function ManualTab({ reviewerFallback }: { reviewerFallback: bool
   const [showGuide, setShowGuide] = useState(false);
   const progress = useMemo(() => (book ? bookProgress(book, reads) : null), [book, reads]);
 
-  // 읽기 화면 = 주소 ?ch=<장>
-  const [params, setParams] = useSearchParams();
-  const chId = params.get("ch");
+  // 서재 칸 — 책마다 내 서명 n/필독
+  const book1 = book1Q.data?.book ?? null;
+  const shelf = useMemo(() => {
+    if (!book1 || !book2) return [];
+    return [
+      { id: "book1" as const, book: book1, progress: bookProgress(book1, me1Q.data?.reads ?? []) },
+      { id: "book2" as const, book: book2, progress: bookProgress(book2, me2Q.data?.reads ?? []) },
+    ];
+  }, [book1, book2, me1Q.data, me2Q.data]);
+  const selectBook = (id: ManualBookId) => {
+    if (id === bookId) return;
+    setShowGuide(false);
+    setParams((p) => {
+      if (id === "book1") p.delete("book");
+      else p.set("book", id);
+      p.delete("ch");
+      return p;
+    }, { replace: true });
+  };
+
   const chapter = book && chId ? book.chapters.find((c) => c.id === chId) ?? null : null;
   const pushed = useRef(false);
   useEffect(() => {
@@ -102,17 +133,18 @@ export default function ManualTab({ reviewerFallback }: { reviewerFallback: bool
       }, { replace: true });
     }
   }, [chapterLocked, setParams]);
-  // 이 책에 없는 장 — 책을 받은 뒤에만 (예시 책으로 미리 지우지 않게)
+  // 이 책에 없는 장 — 책을 받은 뒤에만 (예시 책으로 미리 지우지 않게 · 2권을 아직 받는 중이면 기다린다)
+  const book2Pending = wantBook2 && book2Q.isLoading;
   useEffect(() => {
-    if (book && chId && !chapter) {
+    if (book && chId && !chapter && !book2Pending) {
       setParams((p) => {
         p.delete("ch");
         return p;
       }, { replace: true });
     }
-  }, [book, chId, chapter, setParams]);
+  }, [book, chId, chapter, book2Pending, setParams]);
 
-  if (meQ.isLoading || bookQ.isLoading) {
+  if (meQ.isLoading || bookQ.isLoading || book2Pending) {
     return (
       <div className="space-y-3" aria-hidden>
         <div className="h-48 animate-pulse rounded-3xl bg-card shadow-elev-1" />
@@ -147,6 +179,40 @@ export default function ManualTab({ reviewerFallback }: { reviewerFallback: bool
 
   return (
     <div className="space-y-4">
+      {/* 서재 — 2권이 생기면 책 고르기 (1권 · 2권 따로 서명) */}
+      {shelf.length > 1 && (
+        <div className="grid grid-cols-2 gap-2" role="group" aria-label="책 고르기">
+          {shelf.map((s) => {
+            const on = s.id === bookId;
+            return (
+              <button
+                key={s.id}
+                type="button"
+                aria-pressed={on}
+                onClick={() => selectBook(s.id)}
+                className={cn(
+                  "flex items-center gap-2.5 rounded-2xl border bg-card p-2.5 text-left active:scale-[0.99]",
+                  on ? "border-foreground ring-1 ring-foreground" : "border-border",
+                )}
+              >
+                <img
+                  src={manualImg(s.book.cover, true)}
+                  alt=""
+                  className="h-14 w-10 shrink-0 rounded-md border border-border object-cover"
+                />
+                <span className="min-w-0">
+                  <span className="block text-label font-black text-primary">{s.book.no}</span>
+                  <span className="block truncate text-label font-bold text-foreground">{s.book.title}</span>
+                  <span className="block text-micro font-bold tabular-nums text-muted-foreground">
+                    서명 {s.progress.done}/{s.progress.total}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {reviewer && (
         <SegmentedControl<View>
           value={view}
@@ -164,7 +230,7 @@ export default function ManualTab({ reviewerFallback }: { reviewerFallback: bool
         <ManualBoard book={book} />
       ) : (
         <>
-          {/* 서재 — 1권 */}
+          {/* 고른 책 — 표지 · 내 서명 · 이어 읽기 */}
           <div className="overflow-hidden rounded-2xl border bg-card">
             <div className="flex gap-4 p-5">
               <img

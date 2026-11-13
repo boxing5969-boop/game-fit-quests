@@ -15,6 +15,9 @@ import type { ManualBlock, ManualBook, ManualCard, ManualChapter, ManualQuiz } f
 const ID_RE = /^[a-z0-9_]{1,24}$/;
 const ASSET_RE = /^[a-z0-9-]{1,48}$/;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** 수업 템플릿 id (classTemplates — 소문자 · 숫자 · -) · 순서 영상 자리(DB step 0~20) */
+const TEMPLATE_RE = /^[a-z0-9-]{1,40}$/;
+const MAX_TEMPLATE_STEP = 20;
 
 type Obj = Record<string, unknown>;
 const isObj = (v: unknown): v is Obj => !!v && typeof v === "object" && !Array.isArray(v);
@@ -60,6 +63,20 @@ export function normalizeBlock(raw: unknown): ManualBlock | null {
       if (!UUID_RE.test(missionId) || !ASSET_RE.test(poster) || !title) return null;
       const caption = str(raw.caption);
       return caption ? { t: "video", missionId, poster, title, caption } : { t: "video", missionId, poster, title };
+    }
+    case "card": {
+      const cardId = str(raw.cardId);
+      if (!UUID_RE.test(cardId)) return null;
+      const caption = str(raw.caption);
+      return caption ? { t: "card", cardId, caption } : { t: "card", cardId };
+    }
+    case "tplvideo": {
+      const template = str(raw.template);
+      const title = str(raw.title);
+      const step = typeof raw.step === "number" && Number.isInteger(raw.step) ? raw.step : -1;
+      if (!TEMPLATE_RE.test(template) || step < 0 || step > MAX_TEMPLATE_STEP || !title) return null;
+      const caption = str(raw.caption);
+      return caption ? { t: "tplvideo", template, step, title, caption } : { t: "tplvideo", template, step, title };
     }
     default:
       return null;

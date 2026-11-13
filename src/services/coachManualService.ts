@@ -59,10 +59,15 @@ function writeLocalRead(book: string, chapter: string, version: number, tries: n
 }
 
 export interface ManualBookView {
-  book: ManualBook;
+  /** 1권은 늘 있다(없으면 앱 안 예시) · 2권부터는 DB 에 책 줄이 있을 때만 — 없으면 null(서재에 안 보임) */
+  book: ManualBook | null;
   /** server = DB 책 · offline = 서버 함수가 없어 앱 안 예시(미리보기) · empty = DB 에 책이 없거나 읽을 수 없어 앱 안 예시 */
   source: "server" | "offline" | "empty";
 }
+
+/** 서재에 꽂는 책 — 순서대로 (2권 = 「153 수업 진행」, 2026-11-13 대표님 「추천대로」 — 1권과 따로 열고 아홉 장 필독) */
+export const MANUAL_BOOK_IDS = ["book1", "book2"] as const;
+export type ManualBookId = (typeof MANUAL_BOOK_IDS)[number];
 
 export const useManualBook = (book: string, enabled = true) =>
   useQuery({
@@ -70,14 +75,16 @@ export const useManualBook = (book: string, enabled = true) =>
     enabled,
     staleTime: 10 * 60_000,
     queryFn: async (): Promise<ManualBookView> => {
+      // 앱 안 예시는 1권뿐 — 2권 글은 저장소에 두지 않는다(DB 에만)
+      const sample = book === BOOK1_SAMPLE.id ? BOOK1_SAMPLE : null;
       const { data, error } = await rpc("coach_manual_book", { p_book: book });
       if (error) {
-        if (isMissingFunction(error)) return { book: BOOK1_SAMPLE, source: "offline" };
+        if (isMissingFunction(error)) return { book: sample, source: "offline" };
         throw new Error(translateError(error, "매뉴얼을 불러오지 못했어요"));
       }
       // 일반 장은 DB 에 번호 · 판만 — 글은 앱 안 1권(book1Sample)에서
-      const parsed = normalizeBook(data, book === BOOK1_SAMPLE.id ? BOOK1_SAMPLE : null);
-      return parsed ? { book: parsed, source: "server" } : { book: BOOK1_SAMPLE, source: "empty" };
+      const parsed = normalizeBook(data, sample);
+      return parsed ? { book: parsed, source: "server" } : { book: sample, source: "empty" };
     },
   });
 

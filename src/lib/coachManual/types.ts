@@ -15,7 +15,11 @@ export type ManualBlock =
   /** src = public/assets/manual/<src>.webp */
   | { t: "image"; src: string; alt: string }
   /** 회원 앱 「153 영상」 미션 영상(missions.id) — 읽기만 한다. poster = public/assets/manual/<poster>.webp */
-  | { t: "video"; missionId: string; poster: string; title: string; caption?: string };
+  | { t: "video"; missionId: string; poster: string; title: string; caption?: string }
+  /** 153 콘텐츠 카드(training_exercises.id) — 카드 타일 → 카드 시트(코치진은 「코치용 영상」). 카드 영상을 바꾸면 매뉴얼도 같이 바뀐다 (2권 · 2026-11-13) */
+  | { t: "card"; cardId: string; caption?: string }
+  /** 수업 템플릿 순서 영상(class_template_videos) — template = classTemplates id · step 0 = 수업 요약, 1~ = 블록 순서 (2권 · 2026-11-13) */
+  | { t: "tplvideo"; template: string; step: number; title: string; caption?: string };
 
 export interface ManualCard {
   /** 카드 제목 — 장면 · 근거 · 이런 생각 드시죠? … (없으면 장 제목만 보인다) */

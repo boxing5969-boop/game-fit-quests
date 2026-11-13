@@ -13,6 +13,7 @@ import { ChevronRight, Mic, Square, Volume2, X } from "lucide-react";
 import type { TrainingExercise } from "@/hooks/useTrainingLibrary";
 import { useAuth } from "@/contexts/AuthContext";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
+import { cn } from "@/lib/utils";
 import { isManagerRole, toGlobalLevel } from "@/lib/rankLabels";
 import { strictYoutubeId } from "@/lib/videoUrl";
 import {
@@ -38,11 +39,13 @@ interface TrainingDrillSheetProps {
   onChange?: (next: TrainingCard) => void;
   /** 코치진 화면에서 맨 아래에 붙일 단추 (예: 「이 카드로 오늘 프로그램 만들기」) */
   footer?: (card: TrainingCard) => ReactNode;
+  /** 겹 순서 — 더 높은 창(153 매뉴얼 읽기 화면 z-115) 위에서 열 때 */
+  zClass?: string;
 }
 
 const hasSpeech = () => typeof window !== "undefined" && "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
 
-const TrainingDrillSheet = ({ exercise, onClose, list, onChange, footer }: TrainingDrillSheetProps) => {
+const TrainingDrillSheet = ({ exercise, onClose, list, onChange, footer, zClass = "z-[90]" }: TrainingDrillSheetProps) => {
   const { role, profile, progress } = useAuth();
   const staffViewer = isManagerRole(role) || !!(profile as { is_staff?: boolean } | null)?.is_staff;
   const myLevel = progress ? toGlobalLevel(progress.current_rank, progress.current_level) : 1;
@@ -130,7 +133,7 @@ const TrainingDrillSheet = ({ exercise, onClose, list, onChange, footer }: Train
   // 코치용 영상 창은 시트 바깥(형제)에 둔다 — 안에 두면 그 창을 닫는 누르기가 시트까지 닫는다(React 이벤트는 portal 을 건너 올라온다)
   return createPortal(
     <>
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/60" onClick={onClose}>
+    <div className={cn("fixed inset-0 flex items-end justify-center bg-black/60", zClass)} onClick={onClose}>
       <div
         ref={scrollRef}
         role="dialog"

@@ -151,4 +151,36 @@ describe("153 매뉴얼 — 블록 거르기", () => {
     expect(normalizeBlock({ t: "video", missionId: "not-a-uuid", poster: "v1-step", title: "x" })).toBeNull();
     expect(normalizeBlock({ t: "video", missionId: MISSION, poster: "V1 STEP", title: "x" })).toBeNull();
   });
+
+  it("카드 영상 — 카드 id(uuid)만 받는다 · 설명 한 줄은 있으면", () => {
+    expect(normalizeBlock({ t: "card", cardId: MISSION })).toEqual({ t: "card", cardId: MISSION });
+    expect(normalizeBlock({ t: "card", cardId: ` ${MISSION} `, caption: " 코치용 영상 " })).toEqual({
+      t: "card",
+      cardId: MISSION,
+      caption: "코치용 영상",
+    });
+    expect(normalizeBlock({ t: "card", cardId: "위빙" })).toBeNull();
+    expect(normalizeBlock({ t: "card" })).toBeNull();
+  });
+
+  it("순서 영상 — 템플릿 id 규칙 · 자리 0~20 · 제목이 있어야", () => {
+    expect(normalizeBlock({ t: "tplvideo", template: "weave-hook-call", step: 6, title: "샌드백 구령" })).toEqual({
+      t: "tplvideo",
+      template: "weave-hook-call",
+      step: 6,
+      title: "샌드백 구령",
+    });
+    expect(normalizeBlock({ t: "tplvideo", template: "mitt2-sandbag-call", step: 0, title: "수업 요약", caption: "3분" })).toEqual({
+      t: "tplvideo",
+      template: "mitt2-sandbag-call",
+      step: 0,
+      title: "수업 요약",
+      caption: "3분",
+    });
+    expect(normalizeBlock({ t: "tplvideo", template: "Weave Hook", step: 1, title: "x" })).toBeNull();
+    expect(normalizeBlock({ t: "tplvideo", template: "weave-hook-call", step: 21, title: "x" })).toBeNull();
+    expect(normalizeBlock({ t: "tplvideo", template: "weave-hook-call", step: 1.5, title: "x" })).toBeNull();
+    expect(normalizeBlock({ t: "tplvideo", template: "weave-hook-call", step: "3", title: "x" })).toBeNull();
+    expect(normalizeBlock({ t: "tplvideo", template: "weave-hook-call", step: 3, title: " " })).toBeNull();
+  });
 });
