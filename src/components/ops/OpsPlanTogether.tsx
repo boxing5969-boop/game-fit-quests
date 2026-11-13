@@ -616,7 +616,7 @@ export const PlanFindTimeSheet = ({
       {res && (
         <div className="mt-4">
           {res.slots.length === 0 ? (
-            <p className="text-body text-muted-foreground">7일 안에 모두 비는 시간이 없어요 — 사람을 줄이거나 30분으로 찾아 보세요</p>
+            <p className="text-body text-muted-foreground">7일 안에 모두 근무하면서 비는 시간이 없어요 — 근무 시간이 겹치는 사람으로 줄이거나 30분으로 찾아 보세요</p>
           ) : (
             <>
               <p className="text-label font-bold text-muted-foreground">누르면 그 시간 · 그 사람들로 일정을 넣어요</p>
