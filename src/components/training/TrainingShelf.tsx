@@ -24,6 +24,7 @@ import {
   hasMemberVideo,
   isMemberVisible,
   levelTag,
+  normalizeShelf,
   orderForMember,
   orderForStaff,
   searchCards,
@@ -53,8 +54,8 @@ const shelfKey = (aud: string) => `153learn:shelf:${aud}`;
 
 const readShelf = (aud: string, allowed: readonly Shelf[]): Shelf => {
   try {
-    const v = window.localStorage.getItem(shelfKey(aud)) as Shelf | null;
-    if (v && allowed.includes(v)) return v;
+    const v = normalizeShelf(window.localStorage.getItem(shelfKey(aud)), allowed);
+    if (v) return v;
   } catch {
     /* 무시 */
   }
@@ -70,8 +71,7 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
   const allowed = staff ? STAFF_SHELVES : MEMBER_SHELVES;
   const [params, setParams] = useSearchParams();
   const [shelf, setShelfState] = useState<Shelf>(() => {
-    const fromUrl = params.get("shelf") as Shelf | null;
-    return fromUrl && allowed.includes(fromUrl) ? fromUrl : readShelf(audience, allowed);
+    return normalizeShelf(params.get("shelf"), allowed) ?? readShelf(audience, allowed);
   });
   const [expanded, setExpanded] = useState(false);
   const [query, setQuery] = useState("");
@@ -94,8 +94,8 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
   const [scrollWanted, setScrollWanted] = useState(() => !staff && learnParam === "1");
   useEffect(() => {
     if (staff || learnParam !== "1") return;
-    const fromUrl = params.get("shelf") as Shelf | null;
-    if (fromUrl && allowed.includes(fromUrl)) setShelf(fromUrl);
+    const fromUrl = normalizeShelf(params.get("shelf"), allowed);
+    if (fromUrl) setShelf(fromUrl);
     setScrollWanted(true);
     const next = new URLSearchParams(params);
     next.delete("learn");

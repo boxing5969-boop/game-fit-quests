@@ -27,24 +27,31 @@ export interface TrainingCard extends TrainingExercise {
   equipment?: string | null;
 }
 
-/** 화면에서 묶는 칸 — 회원 칩 7개 + 준비(붕대 감기 한 줄) + 코치(코치진만) */
-export type Shelf = "warmup" | "step" | "skill" | "defense" | "mitt" | "fitness" | "cooldown" | "prep" | "coach";
+/**
+ * 화면에서 묶는 칸 — 회원 칩 8개 + 준비(붕대 감기 한 줄) + 코치(코치진만)
+ *   2026-11-13 대표님 「8칸으로 다시」: 거울 앞 자세 연습 같은 기본기는 '기본기' 칸으로 따로, 미트 · 샌드백 · 짝 연습(스파링 준비)은 '드릴' 칸으로.
+ *   옛 칸 id 'mitt'(미트·샌드백)는 주소 · 기기 기억값에서 'drill' 로 이어받는다(normalizeShelf).
+ */
+export type Shelf = "warmup" | "basics" | "step" | "skill" | "defense" | "drill" | "fitness" | "cooldown" | "prep" | "coach";
 
 export interface ShelfInfo {
   id: Shelf;
   label: string;
-  /** 칸 색 — 영상 템플릿 v2 와 같은 색(워밍업 주황 · 스텝 파랑 · 기술 민트 · 방어 보라 · 미트·샌드백 코랄) */
+  /** 칸 색 — 영상 템플릿 v2 와 같은 색(워밍업 주황 · 스텝 파랑 · 기술 민트 · 방어 보라 · 드릴(옛 미트·샌드백) 코랄) · 기본기 금색 */
   color: string;
   /** minutes 칸이 비었을 때 오늘 프로그램 블록 분 */
   minutes: number;
+  /** 검색에 같이 보는 말 — 칸 이름 밖의 말(옛 칸 이름 '미트·샌드백' 등) */
+  words?: string;
 }
 
 export const SHELF_INFO: Record<Shelf, ShelfInfo> = {
   warmup: { id: "warmup", label: "워밍업", color: "#FF8A3D", minutes: 8 },
+  basics: { id: "basics", label: "기본기", color: "#A87400", minutes: 8, words: "거울 앞 자세 · 기본 동작" },
   step: { id: "step", label: "스텝", color: "#3D7BFF", minutes: 5 },
   skill: { id: "skill", label: "기술", color: "#1FB58F", minutes: 5 },
   defense: { id: "defense", label: "방어", color: "#8B5CF6", minutes: 6 },
-  mitt: { id: "mitt", label: "미트·샌드백", color: "#FF5A5F", minutes: 8 },
+  drill: { id: "drill", label: "드릴", color: "#FF5A5F", minutes: 8, words: "미트·샌드백 · 짝 연습 · 스파링 준비" },
   fitness: { id: "fitness", label: "체력", color: "#D6336C", minutes: 6 },
   cooldown: { id: "cooldown", label: "쿨다운", color: "#1098AD", minutes: 5 },
   prep: { id: "prep", label: "준비", color: "#6B7684", minutes: 5 },
@@ -52,21 +59,24 @@ export const SHELF_INFO: Record<Shelf, ShelfInfo> = {
 };
 
 /** 회원 훈련 탭 칩 순서 (준비 = 맨 위 '붕대 감기' 한 줄 · 코치 = 코치진만) */
-export const MEMBER_SHELVES: readonly Shelf[] = ["warmup", "step", "skill", "defense", "mitt", "fitness", "cooldown"];
+export const MEMBER_SHELVES: readonly Shelf[] = ["warmup", "basics", "step", "skill", "defense", "drill", "fitness", "cooldown"];
 /** 전략 회의(코치진) 칩 순서 */
 export const STAFF_SHELVES: readonly Shelf[] = [...MEMBER_SHELVES, "coach"];
 
-/** DB 분류 → 칸 (설계 문서 「지금 분류 → 회원 칸 · 수업 블록」 표). 표에 없는 새 분류는 기술 칸 */
+/**
+ * DB 분류 → 칸 (설계 문서 「지금 분류 → 회원 칸 · 수업 블록」 표 + 11/13 8칸). 표에 없는 새 분류는 기술 칸.
+ *   기본기 = 잽 · 원투 · 훅 · 어퍼 · 거울 스탠스 체크 · 가드 · 번호 콜 / 드릴 = 미트 · 샌드백 · 스파링 준비(짝과 주고받는 연습)
+ */
 const CATEGORY_SHELF: Record<string, Shelf> = {
   워밍업: "warmup",
+  기본기: "basics",
   풋워크: "step",
-  기본기: "skill",
   콤비네이션: "skill",
   카운터: "skill",
-  스파링준비: "skill",
   방어: "defense",
-  미트: "mitt",
-  샌드백: "mitt",
+  미트: "drill",
+  샌드백: "drill",
+  스파링준비: "drill",
   컨디셔닝: "fitness",
   줄넘기: "fitness",
   쿨다운: "cooldown",
@@ -95,6 +105,16 @@ const CATEGORY_BLOCK: Record<string, BlockKind> = {
 };
 
 export const KNOWN_CATEGORIES = Object.keys(CATEGORY_SHELF);
+
+/** 예전 칸 id → 지금 칸 (11/13 '미트·샌드백' mitt → '드릴' drill) — 주소 ?shelf= · 기기에 기억한 칸 */
+const LEGACY_SHELF: Readonly<Record<string, Shelf>> = { mitt: "drill" };
+
+/** 주소 · 기기 기억값을 칸으로 — 고를 수 있는 칸이 아니면 null */
+export function normalizeShelf(v: string | null | undefined, allowed: readonly Shelf[]): Shelf | null {
+  if (!v) return null;
+  const s = (LEGACY_SHELF[v] ?? v) as Shelf;
+  return allowed.includes(s) ? s : null;
+}
 
 export const categoryToShelf = (category: string | null | undefined): Shelf => CATEGORY_SHELF[(category ?? "").trim()] ?? "skill";
 
@@ -237,7 +257,8 @@ export function cardMatchRank(card: TrainingCard, q: string): number {
   if (!n) return 0;
   if (norm(card.name).includes(n)) return 0;
   if ([card.summary, card.target, card.equipment ?? ""].some((s) => norm(s).includes(n))) return 1;
-  if ([card.category, cardShelf(card).label].some((s) => norm(s).includes(n))) return 2;
+  const shelf = cardShelf(card);
+  if ([card.category, shelf.label, shelf.words ?? ""].some((s) => norm(s).includes(n))) return 2;
   return 3;
 }
 

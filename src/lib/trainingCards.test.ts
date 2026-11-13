@@ -18,6 +18,7 @@ import {
   matchesCardQuery,
   nextCard,
   normalizeCard,
+  normalizeShelf,
   orderForMember,
   placeCardInBlocks,
   searchCards,
@@ -42,10 +43,10 @@ describe("153 콘텐츠 카드 — 분류 → 칸 · 블록", () => {
     }
   });
 
-  it("설계 문서 표 그대로 — 풋워크 = 스텝 · 본운동, 샌드백 = 미트·샌드백 칸 · 마무리운동", () => {
+  it("설계 문서 표 그대로 — 풋워크 = 스텝 · 본운동, 샌드백 = 드릴 칸 · 마무리운동", () => {
     expect(categoryToShelf("풋워크")).toBe("step");
     expect(categoryToBlockKind("풋워크")).toBe("skill");
-    expect(categoryToShelf("샌드백")).toBe("mitt");
+    expect(categoryToShelf("샌드백")).toBe("drill");
     expect(categoryToBlockKind("샌드백")).toBe("conditioning");
     expect(categoryToShelf("줄넘기")).toBe("fitness");
     expect(categoryToShelf("회복")).toBe("cooldown");
@@ -56,10 +57,32 @@ describe("153 콘텐츠 카드 — 분류 → 칸 · 블록", () => {
     expect(categoryToBlockKind(undefined)).toBe("skill");
   });
 
-  it("회원 칩 7개 · 코치진은 코치 칸까지 — 준비는 칩이 아니라 붕대 감기 한 줄", () => {
-    expect(MEMBER_SHELVES.map((s) => SHELF_INFO[s].label)).toEqual(["워밍업", "스텝", "기술", "방어", "미트·샌드백", "체력", "쿨다운"]);
+  it("회원 칩 8개 · 코치진은 코치 칸까지 — 준비는 칩이 아니라 붕대 감기 한 줄", () => {
+    expect(MEMBER_SHELVES.map((s) => SHELF_INFO[s].label)).toEqual(["워밍업", "기본기", "스텝", "기술", "방어", "드릴", "체력", "쿨다운"]);
     expect(STAFF_SHELVES).toContain("coach");
     expect(MEMBER_SHELVES).not.toContain("prep");
+  });
+
+  it("8칸 (11/13 대표님) — 기본기는 따로, 미트 · 샌드백 · 스파링 준비는 드릴 · 기술은 콤비 · 카운터", () => {
+    expect(categoryToShelf("기본기")).toBe("basics");
+    expect(categoryToBlockKind("기본기")).toBe("skill");
+    expect(categoryToShelf("미트")).toBe("drill");
+    expect(categoryToBlockKind("미트")).toBe("mitt");
+    expect(categoryToShelf("스파링준비")).toBe("drill");
+    expect(categoryToShelf("콤비네이션")).toBe("skill");
+    expect(categoryToShelf("카운터")).toBe("skill");
+    // 칸 색은 모두 다르다
+    const colors = MEMBER_SHELVES.map((s) => SHELF_INFO[s].color);
+    expect(new Set(colors).size).toBe(colors.length);
+  });
+
+  it("예전 칸 id 이어받기 — ?shelf=mitt 은 드릴, 모르는 값 · 고를 수 없는 칸은 null", () => {
+    expect(normalizeShelf("mitt", MEMBER_SHELVES)).toBe("drill");
+    expect(normalizeShelf("basics", MEMBER_SHELVES)).toBe("basics");
+    expect(normalizeShelf("coach", MEMBER_SHELVES)).toBeNull();
+    expect(normalizeShelf("coach", STAFF_SHELVES)).toBe("coach");
+    expect(normalizeShelf("nope", STAFF_SHELVES)).toBeNull();
+    expect(normalizeShelf(null, STAFF_SHELVES)).toBeNull();
   });
 
   it("코칭 카드는 회원에게 안 보이고, 꺼진 카드도 안 보인다", () => {
