@@ -31,7 +31,9 @@ const OpsPlanYear = ({
     const from = `${year}-01-01`;
     const to = `${year}-12-31`;
     for (const p of data.plans) {
-      if (!meUid || p.user_id !== meUid) continue;
+      // 내 일정 + 참석 · 아마 · 답 기다림인 초대 (겹쳐 그린 153 일정 · 정기 회의는 빼고 — 매주 회의가 모든 주를 채우지 않게)
+      if (!meUid || p.layer) continue;
+      if (p.user_id !== meUid && !(p.guests ?? []).some((g) => g.user_id === meUid && g.response !== "no")) continue;
       for (const d of recurDates(p, from, to)) set.add(d);
     }
     return set;

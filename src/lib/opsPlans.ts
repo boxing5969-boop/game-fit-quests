@@ -7,8 +7,11 @@
  *   · 일정 = 수업 · PT · 업무 · 외부 · 휴무 · 개인. 매주 반복(요일 · 언제까지 · 이 날만 빼기) · 하루 종일 · 여러 날(한 번 하는 일정)
  *   · 「근무」 탭 시간표(ops_shift_rules)는 '근무 시간'으로, 승인된 쉰 날은 그 지점 시간표 대신 '쉰 날'로 함께 그린다
  *   · 일정은 근무 시간 · 급여와 따로다 — 쉰 날 인정 · 대타 · 연장은 「근무」 탭
+ *   · 캘린더 3-3(2026-11-13 「남은거 진행하자」) — 초대 · 응답 · 팀 바쁨 · 캘린더 켜고 끄기(153 일정 · 정기 회의 겹쳐 그리기) ·
+ *     회의 링크 · 집중 시간 · 첨부 · 시간 인사이트 · 휴무 기간의 수업 · 근무 (서버 20261113184138_calendar_stage33.sql)
  */
 import { OPS_WEEKDAY, hmToMin, weekdayOf } from "@/lib/opsWork";
+import { MEETING_LINK_BAD, extractMeetingLink } from "@/lib/meetingLink";
 import {
   RECUR_COUNT_MAX,
   countUntil,
@@ -110,6 +113,67 @@ export interface OpsPlan {
   location?: string | null;
   reminders?: number[];
   series_id?: string | null;
+  /** 3-3 — 회의 링크 · 집중 시간(내 것만) · 첨부 · 손님(만든 사람 · 손님 · 관리자에게) · 초대받았나 · 내 답 · 만든 사람 이름 */
+  meet_url?: string | null;
+  focus?: boolean;
+  attachments?: PlanAttachment[];
+  guests?: PlanGuest[];
+  invited?: boolean;
+  my_response?: GuestResponse;
+  owner_name?: string | null;
+  /** 답할 초대 목록 — 오늘부터 처음 있는 날 */
+  next_on?: string | null;
+  /** 3-3 — 내 달력에 겹쳐 그린 다른 캘린더(153 일정 · 정기 회의) · 고칠 수 없다 */
+  layer?: PlanLayer;
+  /** 153 일정 종류 이름(휴관 · 이벤트 …) */
+  layer_kind?: string;
+  /** 정기 회의 줌 · 미트 링크 */
+  layer_url?: string | null;
+}
+
+// ───────────────────────── 3-3 함께 쓰기 ─────────────────────────
+export type GuestResponse = "yes" | "no" | "maybe" | null;
+
+export interface PlanGuest {
+  user_id: string;
+  name: string;
+  response: GuestResponse;
+  note: string | null;
+  /** 휴무라 저절로 '아니요' */
+  auto: boolean;
+  proposed_on: string | null;
+  proposed_start: string | null;
+  proposed_end: string | null;
+  responded_at: string | null;
+}
+
+export interface PlanAttachment {
+  path: string;
+  name: string;
+  size: number;
+  type: string;
+}
+
+export type PlanLayer = "event" | "meeting";
+
+/** 켜고 끄는 캘린더 (pt · todo 는 3-4 · 3-6 — 서버가 받아 두지만 화면은 아직 숨김) */
+export type CalKey = "mine" | "invited" | "team" | "work" | "events" | "meetings" | "pt" | "todo";
+
+/** 초대할 수 있는 사람 (그 지점 팀) */
+export interface TeamPerson {
+  user_id: string;
+  name: string;
+  title: string;
+  me: boolean;
+}
+
+/** 팀원 바쁜 시간 — 제목 · 종류 없이 */
+export interface PlanBusy {
+  user_id: string;
+  date: string;
+  start: string | null;
+  end: string | null;
+  all_day: boolean;
 }
 
 export interface PlanBirthday {
@@ -171,10 +235,16 @@ export interface PlansWeek {
   shifts: PlanShift[];
   offs: PlanOff[];
   recent: PlanRecent[];
-  /** 3-2 — 아침 8시 브리핑 (없으면 켬) */
-  prefs?: { brief_on: boolean };
+  /** 3-2 — 아침 8시 브리핑 (없으면 켬) · 3-3 — 꺼 둔 캘린더 · 기본 알림 */
+  prefs?: { brief_on: boolean; cals_off?: CalKey[]; remind_default?: number[] };
   /** 3-2 — 그 지점 회원 생일(「오늘 만날 회원」과 같은 범위 · 62일 넘는 범위는 비어 있음) */
   birthdays?: PlanBirthday[];
+  /** 3-3 — 초대할 수 있는 사람 · 팀원 바쁜 시간(7일 안 범위만) · 답할 초대 */
+  team?: TeamPerson[];
+  busy?: PlanBusy[];
+  invites?: OpsPlan[];
+  /** 3-3 함수가 있는 DB 인가 (서버가 설정 칸 cals_off 를 보냈나) — 없으면 함께 쓰기 화면을 숨긴다 */
+  together?: boolean;
 }
 
 // ───────────────────────── 날짜 ─────────────────────────
@@ -267,7 +337,9 @@ export type DayItem =
       plan: OpsPlan;
     }
   | { type: "shift"; id: string; date: string; allDay: false; start: string; end: string; branch: string }
-  | { type: "shiftOff"; id: string; date: string; allDay: true; start: null; end: null; branch: string };
+  | { type: "shiftOff"; id: string; date: string; allDay: true; start: null; end: null; branch: string }
+  /** 3-3 — 팀원 바쁜 시간 (제목 없이) */
+  | { type: "busy"; id: string; date: string; allDay: boolean; start: string | null; end: string | null; branch: string };
 
 /** 그날 그 사람에게 걸리는 「근무」 탭 시간표 */
 export const shiftsOn = (shifts: readonly PlanShift[], key: string, date: string): PlanShift[] => {
@@ -311,7 +383,10 @@ export const dayItems = (
   }
   if (member.user_id) {
     for (const p of week.plans) {
-      if (p.user_id !== member.user_id || !occursOn(p, date)) continue;
+      // 내가 만든 일정 + 손님으로 부른 일정(못 가요는 빼고 · 답 기다림은 그린다)
+      const own = p.user_id === member.user_id;
+      if (!own && !(p.guests ?? []).some((g) => g.user_id === member.user_id && g.response !== "no")) continue;
+      if (!occursOn(p, date)) continue;
       items.push({
         type: "plan",
         id: p.id,
@@ -328,14 +403,31 @@ export const dayItems = (
   return items.sort(compareItems);
 };
 
+/** 3-3 — 겹쳐 그린 캘린더 · 팀원 바쁨 */
+export const EVENT_LAYER_META = {
+  label: "153 일정",
+  dot: "bg-orange-500",
+  chip: "bg-orange-100 text-orange-900 dark:bg-orange-500/20 dark:text-orange-200",
+} as const;
+export const MEETING_LAYER_META = {
+  label: "정기 회의",
+  dot: "bg-indigo-500",
+  chip: "bg-indigo-100 text-indigo-800 dark:bg-indigo-500/20 dark:text-indigo-200",
+} as const;
+export const BUSY_META = { label: "바쁨", dot: "bg-zinc-400", chip: "bg-zinc-100 text-zinc-700 dark:bg-zinc-500/25 dark:text-zinc-200" } as const;
+
+/** 일정 한 줄의 이름 · 점 · 칩 — 겹쳐 그린 캘린더면 그 이름 */
+export const planMeta = (p: Pick<OpsPlan, "kind" | "layer">): { label: string; dot: string; chip: string } =>
+  p.layer === "event" ? EVENT_LAYER_META : p.layer === "meeting" ? MEETING_LAYER_META : PLAN_KIND_META[p.kind];
+
 export const itemLabel = (i: DayItem): string =>
-  i.type === "shift" ? SHIFT_META.label : i.type === "shiftOff" ? SHIFT_OFF_META.label : PLAN_KIND_META[i.kind].label;
+  i.type === "shift" ? SHIFT_META.label : i.type === "shiftOff" ? SHIFT_OFF_META.label : i.type === "busy" ? BUSY_META.label : planMeta(i.plan).label;
 
 export const itemChip = (i: DayItem): string =>
-  i.type === "shift" ? SHIFT_META.chip : i.type === "shiftOff" ? SHIFT_OFF_META.chip : PLAN_KIND_META[i.kind].chip;
+  i.type === "shift" ? SHIFT_META.chip : i.type === "shiftOff" ? SHIFT_OFF_META.chip : i.type === "busy" ? BUSY_META.chip : planMeta(i.plan).chip;
 
 export const itemDot = (i: DayItem): string =>
-  i.type === "shift" ? SHIFT_META.dot : i.type === "shiftOff" ? SHIFT_OFF_META.dot : PLAN_KIND_META[i.kind].dot;
+  i.type === "shift" ? SHIFT_META.dot : i.type === "shiftOff" ? SHIFT_OFF_META.dot : i.type === "busy" ? BUSY_META.dot : planMeta(i.plan).dot;
 
 /** 일정판 칸 하나 — 점(막대) 3개까지 + 넘는 수 */
 export const cellDots = (items: readonly DayItem[], max = 3): { dots: string[]; more: number } => ({
@@ -447,9 +539,17 @@ export interface PlanDraft {
   color: string | null;
   location: string;
   reminders: number[];
+  /** 3-3 — 회의 링크(붙여 넣은 글 그대로 · 서버가 첫 링크만) · 집중 시간 · 첨부 · 손님(사람 user_id) */
+  meet_url: string;
+  focus: boolean;
+  attachments: PlanAttachment[];
+  guests: string[];
 }
 
 export const PLAN_TITLE_MAX = 40;
+/** 3-3 — 손님 20명 · 첨부 5개 (서버와 같은 수) */
+export const PLAN_GUEST_MAX = 20;
+export const PLAN_ATTACH_MAX = 5;
 export const PLAN_MEMO_MAX = 300;
 export const PLAN_LOCATION_MAX = 80;
 
@@ -458,6 +558,7 @@ export const newDraft = (
   date: string,
   kind: PlanKind = "class",
   time?: { start: string; end: string },
+  opts?: { reminders?: readonly number[]; guests?: readonly string[] },
 ): PlanDraft => ({
   branch,
   kind,
@@ -479,7 +580,11 @@ export const newDraft = (
   private: false,
   color: null,
   location: "",
-  reminders: [...REMINDER_DEFAULT],
+  reminders: [...(opts?.reminders ?? REMINDER_DEFAULT)],
+  meet_url: "",
+  focus: false,
+  attachments: [],
+  guests: [...(opts?.guests ?? [])],
 });
 
 export const draftFromPlan = (p: OpsPlan): PlanDraft => {
@@ -507,6 +612,10 @@ export const draftFromPlan = (p: OpsPlan): PlanDraft => {
     color: p.color ?? null,
     location: p.location ?? "",
     reminders: p.all_day ? [] : [...(p.reminders ?? [])],
+    meet_url: p.meet_url ?? "",
+    focus: !p.all_day && !!p.focus,
+    attachments: [...(p.attachments ?? [])],
+    guests: (p.guests ?? []).map((g) => g.user_id),
   };
 };
 
@@ -540,6 +649,11 @@ export const draftError = (d: PlanDraft, today: string, oneOff?: boolean | strin
   if (d.title.trim().length > PLAN_TITLE_MAX) return `제목은 ${PLAN_TITLE_MAX}자까지예요`;
   if (d.memo.trim().length > PLAN_MEMO_MAX) return `메모는 ${PLAN_MEMO_MAX}자까지예요`;
   if (d.location.trim().length > PLAN_LOCATION_MAX) return `장소는 ${PLAN_LOCATION_MAX}자까지예요`;
+  if (extractMeetingLink(d.meet_url) === "bad") return MEETING_LINK_BAD;
+  if (d.attachments.length > PLAN_ATTACH_MAX) return `첨부는 ${PLAN_ATTACH_MAX}개까지예요`;
+  if (d.guests.length > PLAN_GUEST_MAX) return `초대는 ${PLAN_GUEST_MAX}명까지예요`;
+  if (d.guests.length > 0 && d.kind === "off") return "휴무 일정에는 초대할 수 없어요";
+  if (d.guests.length > 0 && d.kind === "personal" && d.private) return "시간만 보이는 개인 일정에는 초대할 수 없어요";
   if (d.repeat && !oneOff) {
     if (d.freq === "WEEKLY" && d.repeat_weekdays.length === 0) return "반복할 요일을 골라 주세요";
     const rule = draftRule(d) as RecurRule;
@@ -595,6 +709,10 @@ export const draftPayload = (d: PlanDraft, scopeOrOnly?: PlanScope | string | nu
     color: d.color,
     location: d.location.trim(),
     reminders: d.all_day ? [] : [...new Set(d.reminders)].sort((a, b) => a - b),
+    meet_url: d.meet_url.trim(),
+    focus: !d.all_day && d.focus,
+    attachments: d.attachments.map((a) => ({ path: a.path, name: a.name })),
+    guests: [...new Set(d.guests)],
   };
 };
 
@@ -706,8 +824,8 @@ export const mergeWeeks = (weeks: readonly PlansWeek[]): PlansWeek | null => {
 };
 
 /** 달력 칸 표시 — 휴무(승인된 쉰 날 포함) → 외부 → 수업 → PT → 업무 → 개인 → 근무 시간 */
-export type MarkKey = PlanKind | "shift";
-export const MARK_ORDER: readonly MarkKey[] = ["off", "out", "class", "pt", "work", "personal", "shift"];
+export type MarkKey = PlanKind | "shift" | "event" | "meeting";
+export const MARK_ORDER: readonly MarkKey[] = ["off", "out", "class", "pt", "work", "personal", "meeting", "event", "shift"];
 export const MARK_META: Record<MarkKey, { label: string; dot: string }> = {
   off: { label: PLAN_KIND_META.off.label, dot: PLAN_KIND_META.off.dot },
   out: { label: PLAN_KIND_META.out.label, dot: PLAN_KIND_META.out.dot },
@@ -715,10 +833,13 @@ export const MARK_META: Record<MarkKey, { label: string; dot: string }> = {
   pt: { label: PLAN_KIND_META.pt.label, dot: PLAN_KIND_META.pt.dot },
   work: { label: PLAN_KIND_META.work.label, dot: PLAN_KIND_META.work.dot },
   personal: { label: PLAN_KIND_META.personal.label, dot: PLAN_KIND_META.personal.dot },
+  meeting: { label: MEETING_LAYER_META.label, dot: MEETING_LAYER_META.dot },
+  event: { label: EVENT_LAYER_META.label, dot: EVENT_LAYER_META.dot },
   shift: { label: SHIFT_META.label, dot: SHIFT_META.dot },
 };
 
-const markOf = (i: DayItem): MarkKey => (i.type === "shift" ? "shift" : i.type === "shiftOff" ? "off" : i.kind);
+const markOf = (i: DayItem): MarkKey | null =>
+  i.type === "shift" ? "shift" : i.type === "shiftOff" ? "off" : i.type === "busy" ? null : i.plan.layer ? i.plan.layer : i.kind;
 
 export interface DayMark {
   key: MarkKey;
@@ -736,7 +857,7 @@ export const dayMarks = (perMember: readonly (readonly DayItem[])[], withShift: 
   const count = new Map<MarkKey, number>();
   for (const items of perMember) {
     for (const k of new Set(items.map(markOf))) {
-      if (k === "shift" && !withShift) continue;
+      if (k === null || (k === "shift" && !withShift)) continue;
       count.set(k, (count.get(k) ?? 0) + 1);
     }
   }
@@ -792,4 +913,239 @@ export const ddayLabel = (date: string, today: string): string | null => {
   const n = Math.round((Date.parse(`${date}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 86_400_000);
   if (n < 0) return null;
   return n === 0 ? "D-day" : `D-${n}`;
+};
+
+// ───────────────────────── 3-3 초대 · 응답 ─────────────────────────
+export type ResponseKey = "yes" | "maybe" | "no" | "wait";
+export const responseKey = (r: GuestResponse | undefined): ResponseKey => r ?? "wait";
+export const RESPONSE_META: Record<ResponseKey, { label: string; chip: string; mark: string }> = {
+  yes: { label: "참석", chip: "bg-primary/10 text-primary", mark: "✓" },
+  maybe: { label: "아마", chip: "bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200", mark: "?" },
+  no: { label: "못 가요", chip: "bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-200", mark: "✕" },
+  wait: { label: "답 기다림", chip: "bg-secondary text-muted-foreground", mark: "…" },
+};
+export const RESPONSE_ORDER: readonly ResponseKey[] = ["yes", "maybe", "no", "wait"];
+export const PLAN_NOTE_MAX = 60;
+
+/** 손님 답 셈 — "참석 2 · 답 기다림 1" (0 은 빼고) */
+export const guestCounts = (guests: readonly PlanGuest[] | undefined): Record<ResponseKey, number> => {
+  const c: Record<ResponseKey, number> = { yes: 0, maybe: 0, no: 0, wait: 0 };
+  for (const g of guests ?? []) c[responseKey(g.response)] += 1;
+  return c;
+};
+export const guestLine = (guests: readonly PlanGuest[] | undefined): string => {
+  const c = guestCounts(guests);
+  return RESPONSE_ORDER.filter((k) => c[k] > 0)
+    .map((k) => `${RESPONSE_META[k].label} ${c[k]}`)
+    .join(" · ");
+};
+
+/** 다른 시간을 제안한 손님들 (만든 사람 화면 — 「이 시간으로 바꾸기」) */
+export const guestProposals = (guests: readonly PlanGuest[] | undefined): PlanGuest[] =>
+  (guests ?? []).filter((g) => !!g.proposed_on);
+
+/** 제안 한 줄 — "11월 18일 (수) 18:00~19:00" · 하루 종일 일정은 날짜만 */
+export const proposalLabel = (g: Pick<PlanGuest, "proposed_on" | "proposed_start" | "proposed_end">): string =>
+  g.proposed_on ? `${planDay(g.proposed_on)}${g.proposed_start && g.proposed_end ? ` ${g.proposed_start}~${g.proposed_end}` : ""}` : "";
+
+/** 초대받은 일정인가 (내가 만든 것 · 겹쳐 그린 캘린더 빼고) */
+export const isInvitedPlan = (p: Pick<OpsPlan, "invited" | "mine" | "layer">): boolean => !!p.invited && !p.mine && !p.layer;
+
+// ───────────────────────── 3-3 팀 바쁨 ─────────────────────────
+/** 그 사람 그날 바쁜 시간 — 겹치는 칸은 하나로 (하루 종일이면 그것 하나) */
+export const busyItems = (week: Pick<PlansWeek, "busy" | "branch">, userId: string, date: string): DayItem[] => {
+  const rows = (week.busy ?? []).filter((b) => b.user_id === userId && b.date === date);
+  if (rows.some((b) => b.all_day)) return [{ type: "busy", id: `busy:${userId}:${date}:all`, date, allDay: true, start: null, end: null, branch: week.branch }];
+  const spans = rows
+    .filter((b) => b.start && b.end)
+    .map((b) => ({ a: hmToMin(b.start as string), b: hmToMin(b.end as string) }))
+    .sort((x, y) => x.a - y.a);
+  const merged: Array<{ a: number; b: number }> = [];
+  for (const sp of spans) {
+    const last = merged[merged.length - 1];
+    if (last && sp.a <= last.b) last.b = Math.max(last.b, sp.b);
+    else merged.push({ ...sp });
+  }
+  const hm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+  return merged.map((m) => ({ type: "busy", id: `busy:${userId}:${date}:${m.a}`, date, allDay: false, start: hm(m.a), end: hm(m.b), branch: week.branch }));
+};
+
+/** 코치님 팀 보기 한 칸 — 나는 내 일정 그대로, 다른 분은 바쁨만 */
+export const teamDayItems = (week: PlansWeek, person: TeamPerson, me: Pick<PlanMember, "key" | "user_id">, date: string): DayItem[] =>
+  person.me ? dayItems(week, me, date) : busyItems(week, person.user_id, date);
+
+// ───────────────────────── 3-3 캘린더 켜고 끄기 · 겹쳐 그리기 ─────────────────────────
+export const CAL_LAYERS: ReadonlyArray<{ key: CalKey; label: string; hint: string; dot: string }> = [
+  { key: "mine", label: "내 일정", hint: "내가 넣은 일정", dot: PLAN_KIND_META.class.dot },
+  { key: "invited", label: "초대받은 일정", hint: "참석 · 아마 · 답 기다림", dot: "bg-sky-500" },
+  { key: "work", label: "근무 시간", hint: "「근무」 탭 시간표 · 쉰 날", dot: SHIFT_META.dot },
+  { key: "events", label: "153 일정", hint: "회원 달력 휴관 · 이벤트 · 대회 · 승급 심사", dot: EVENT_LAYER_META.dot },
+  { key: "meetings", label: "정기 회의", hint: "사무실 정기 회의 (1시간으로)", dot: MEETING_LAYER_META.dot },
+  { key: "team", label: "팀 바쁜 시간", hint: "하루 보기에 팀원 바쁜 시간 — 제목 없이", dot: BUSY_META.dot },
+];
+export const DEFAULT_CALS_OFF: readonly CalKey[] = ["team"];
+export const calsOff = (week: Pick<PlansWeek, "prefs">): Set<CalKey> => new Set(week.prefs?.cals_off ?? DEFAULT_CALS_OFF);
+
+/** 꺼 둔 캘린더를 뺀 자료 — 내 일정 · 초대 · 근무(시간표 · 쉰 날) · 153 일정 · 회의 · 팀 바쁨 */
+export const filterByCals = <W extends PlansWeek>(week: W, off: ReadonlySet<CalKey>): W => ({
+  ...week,
+  plans: week.plans.filter((p) => {
+    if (p.layer === "event") return !off.has("events");
+    if (p.layer === "meeting") return !off.has("meetings");
+    if (p.mine) return !off.has("mine");
+    if (p.invited) return !off.has("invited");
+    return true;
+  }),
+  shifts: off.has("work") ? [] : week.shifts,
+  offs: off.has("work") ? [] : week.offs,
+  busy: off.has("team") ? [] : (week.busy ?? []),
+});
+
+/** 153 일정(회원 달력) → 내 달력에 겹쳐 그릴 하루 종일 줄 */
+export const eventLayerPlans = (
+  events: ReadonlyArray<{ id: string; title: string; startOn: string; endOn: string; kindLabel: string }>,
+  meUid: string,
+  branch: string,
+): OpsPlan[] =>
+  events.map((e) => ({
+    id: `ev:${e.id}`,
+    user_id: meUid,
+    branch,
+    kind: "work" as PlanKind,
+    title: e.title || e.kindLabel,
+    memo: null,
+    masked: false,
+    private: false,
+    start_on: e.startOn,
+    end_on: e.endOn < e.startOn ? e.startOn : e.endOn,
+    repeat_weekdays: [],
+    until_on: null,
+    skip_dates: [],
+    all_day: true,
+    start_time: null,
+    end_time: null,
+    mine: false,
+    layer: "event" as PlanLayer,
+    layer_kind: e.kindLabel,
+  }));
+
+/** 정기 회의 끝 — 1시간 (23시 넘으면 23:59) */
+export const meetingEnd = (at: string): string => {
+  const m = hmToMin(at) + 60;
+  return m >= 24 * 60 ? "23:59" : `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+};
+
+/** 사무실 정기 회의 → 내 달력에 겹쳐 그릴 줄 (매주 = 요일 반복 · 한 번 = 그날 · 다음 한 번 쉬기 = 그날 빼기) */
+export const meetingLayerPlans = (
+  rows: ReadonlyArray<{ id: string; title: string; weekdays: number[]; once_on: string | null; at: string; video_url: string | null; skip_day: string | null }>,
+  meUid: string,
+  branch: string,
+): OpsPlan[] =>
+  rows
+    .filter((m) => /^\d{2}:\d{2}/.test(m.at) && (m.weekdays.length > 0 || !!m.once_on))
+    .map((m) => {
+      const weekly = m.weekdays.length > 0;
+      const day = weekly ? "2000-01-03" : (m.once_on as string);
+      const at = m.at.slice(0, 5);
+      return {
+        id: `mt:${m.id}`,
+        user_id: meUid,
+        branch,
+        kind: "work" as PlanKind,
+        title: m.title || "정기 회의",
+        memo: null,
+        masked: false,
+        private: false,
+        start_on: day,
+        end_on: day,
+        repeat_weekdays: weekly ? [...m.weekdays] : [],
+        until_on: null,
+        skip_dates: weekly && m.skip_day ? [m.skip_day] : [],
+        all_day: false,
+        start_time: at,
+        end_time: meetingEnd(at),
+        mine: false,
+        layer: "meeting" as PlanLayer,
+        layer_url: m.video_url,
+      };
+    });
+
+// ───────────────────────── 3-3 시간 인사이트 ─────────────────────────
+export interface InsightRow {
+  user_id: string;
+  name: string;
+  title: string;
+  me: boolean;
+  class: number;
+  pt: number;
+  work: number;
+  meeting: number;
+  out: number;
+  shift: number;
+}
+export type InsightKey = "class" | "pt" | "work" | "meeting" | "out";
+export const INSIGHT_KEYS: readonly InsightKey[] = ["class", "pt", "work", "meeting", "out"];
+export const INSIGHT_META: Record<InsightKey, { label: string; dot: string }> = {
+  class: { label: "수업", dot: PLAN_KIND_META.class.dot },
+  pt: { label: "PT", dot: PLAN_KIND_META.pt.dot },
+  work: { label: "업무", dot: PLAN_KIND_META.work.dot },
+  meeting: { label: "회의", dot: MEETING_LAYER_META.dot },
+  out: { label: "외부", dot: PLAN_KIND_META.out.dot },
+};
+/** "6시간" · "50분" · "1시간 30분" */
+export const minutesLabel = (min: number): string => {
+  const m = Math.max(0, Math.round(min));
+  if (m < 60) return `${m}분`;
+  return m % 60 === 0 ? `${m / 60}시간` : `${Math.floor(m / 60)}시간 ${m % 60}분`;
+};
+/** 한 사람 그 주 일정 시간 합 (근무 시간은 빼고) */
+export const insightTotal = (r: Pick<InsightRow, InsightKey>): number => INSIGHT_KEYS.reduce((n, k) => n + (r[k] ?? 0), 0);
+
+// ───────────────────────── 3-3 휴무 기간 — 겹친 수업 · PT · 근무 ─────────────────────────
+/** 휴무 기간에 잡혀 있던 내 수업 · PT 일정과 근무 시간표 (날마다) — 「근무」 탭 대타 요청으로 */
+export const offOverlaps = (
+  week: Pick<PlansWeek, "plans" | "shifts" | "offs">,
+  me: Pick<PlanMember, "key" | "user_id">,
+  start: string,
+  end: string,
+): Array<{ date: string; items: DayItem[] }> => {
+  const out: Array<{ date: string; items: DayItem[] }> = [];
+  for (let d = start, n = 0; d <= end && n < 63; d = addDays(d, 1), n++) {
+    const items = dayItems(week, me, d).filter(
+      (i) => i.type === "shift" || (i.type === "plan" && i.plan.mine && !i.plan.layer && (i.kind === "class" || i.kind === "pt")),
+    );
+    if (items.length) out.push({ date: d, items });
+  }
+  return out;
+};
+
+/** 일정 이름 — 남의 '시간만' 개인 일정은 '개인 일정' · 제목이 없으면 종류(겹쳐 그린 캘린더면 그 이름) */
+export const planTitle = (p: Pick<OpsPlan, "masked" | "title" | "kind" | "layer">): string =>
+  p.masked ? "개인 일정" : p.title || planMeta(p).label;
+
+/** 눌러서 열 수 있나 — 내 일정(고치기) · 초대받은 일정(답하기) · 겹쳐 그린 캘린더(보기) */
+export const planOpenable = (p: Pick<OpsPlan, "mine" | "invited" | "layer">): boolean => p.mine || !!p.invited || !!p.layer;
+
+/** 초대받은 일정 한 줄 — "사람A님 초대 · 답 기다림" */
+export const inviteLine = (p: Pick<OpsPlan, "owner_name" | "my_response">): string =>
+  `${p.owner_name ?? "팀원"}님 초대 · ${RESPONSE_META[responseKey(p.my_response)].label}`;
+
+// ───────────────────────── 3-3 첨부 파일 검사 (저장소 ops-plan-files 설정과 같은 값) ─────────────────────────
+export const PLAN_FILE_MAX_BYTES = 10 * 1024 * 1024;
+export const PLAN_FILE_TYPES: Readonly<Record<string, string>> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  heic: "image/heic",
+  heif: "image/heif",
+  pdf: "application/pdf",
+};
+/** 올릴 수 있는 파일인가 — 사진(jpg · png · webp · heic) · PDF · 10MB 아래. 틀리면 화면 글 */
+export const planFileError = (file: { name: string; size: number; type: string }): string | null => {
+  const ext = (file.name.split(".").pop() ?? "").toLowerCase();
+  const type = file.type || PLAN_FILE_TYPES[ext] || "";
+  if (!Object.values(PLAN_FILE_TYPES).includes(type)) return "사진(jpg · png · webp · heic) · PDF 만 넣을 수 있어요";
+  if (file.size > PLAN_FILE_MAX_BYTES) return "10MB 아래 파일만 넣을 수 있어요";
+  return null;
 };

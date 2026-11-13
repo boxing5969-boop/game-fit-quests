@@ -2,6 +2,7 @@
  * 153운영본부 · 「일정」 — 목록 보기 · 캘린더 3-2단계 (2026-11-13 대표님 「3-2 시작」)
  *   고른 날부터 60일 — 일정이 있는 날만 날짜별로 · 한 번 하는 일정은 D-n · 공휴일(빨간 글씨 · 대표님 · 지점장님은 「휴관으로 올리기」) ·
  *   회원 생일(누르면 회원 카드). 근무 시간은 날마다 있어 빼고(일 · 주 보기에서).
+ *   3-3 — 초대받은 일정(누가 · 내 답) · 손님 답 셈 · 겹쳐 그린 153 일정 · 정기 회의도 (누르면 답하기 · 보기)
  */
 import { useMemo } from "react";
 import { ChevronRight } from "lucide-react";
@@ -11,14 +12,19 @@ import { openMemberCard } from "@/lib/appEvents";
 import { holidayOn } from "@/lib/krHolidays";
 import {
   PLAN_AGENDA_DAYS as AGENDA_DAYS,
-  PLAN_KIND_META,
   addDays,
   dayItems,
   ddayLabel,
+  guestLine,
+  inviteLine,
+  isInvitedPlan,
   isRepeat,
   planColorHex,
   planDay,
+  planMeta,
+  planOpenable,
   planRepeatLabel,
+  planTitle,
   timeLabel,
   type DayItem,
   type OpsPlan,
@@ -75,19 +81,29 @@ const OpsPlanAgenda = ({
               {g.items.map((it) => {
                 const p = it.plan;
                 const hex = planColorHex(p.color);
-                const title = p.masked ? "개인 일정" : p.title || PLAN_KIND_META[p.kind].label;
-                const sub = [isRepeat(p) ? planRepeatLabel(p) : null, p.location].filter(Boolean).join(" · ");
+                const title = planTitle(p);
+                const sub = [
+                  p.layer === "event" ? (p.layer_kind ?? null) : null,
+                  isInvitedPlan(p) ? inviteLine(p) : null,
+                  p.focus ? "집중 시간" : null,
+                  p.mine && (p.guests ?? []).length ? guestLine(p.guests) : null,
+                  isRepeat(p) && !p.layer ? planRepeatLabel(p) : null,
+                  p.location,
+                ]
+                  .filter(Boolean)
+                  .join(" · ");
+                const open = planOpenable(p);
                 // 여러 날 일정은 첫날에만 (둘째 날에 D-9 가 또 붙지 않게)
                 const dday = !isRepeat(p) && g.date > today && g.date === p.start_on ? ddayLabel(g.date, today) : null;
                 return (
                   <li key={`${p.id}:${g.date}`}>
                     <button
                       type="button"
-                      onClick={() => p.mine && onOpenPlan(p, isRepeat(p) ? g.date : null)}
+                      onClick={() => open && onOpenPlan(p, isRepeat(p) ? g.date : null)}
                       className="flex w-full items-start gap-2 rounded-xl px-1 py-1 text-left active:bg-secondary/60"
                     >
                       <span
-                        className={cn("mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full", !hex && PLAN_KIND_META[p.kind].dot)}
+                        className={cn("mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full", !hex && planMeta(p).dot)}
                         style={hex ? { backgroundColor: hex } : undefined}
                         aria-hidden
                       />
@@ -99,7 +115,7 @@ const OpsPlanAgenda = ({
                         {sub && <span className="block truncate text-label text-muted-foreground">{sub}</span>}
                       </span>
                       {dday && <span className="mt-0.5 shrink-0 rounded-full bg-secondary px-2 text-label font-black tabular-nums text-foreground">{dday}</span>}
-                      {p.mine && <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />}
+                      {open && <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />}
                     </button>
                   </li>
                 );
