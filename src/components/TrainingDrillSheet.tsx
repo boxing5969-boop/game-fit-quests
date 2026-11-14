@@ -5,6 +5,8 @@
 //   · 코치진이 보면 「코치용 영상(목소리)」 단추가 하나 더 (코치용 영상이 붙은 카드만)
 //   · 같은 시트를 훈련 탭 「영상으로 배우기」 · 레벨 자세히 › 필수 훈련 · 전략 회의 영상 칸 · 훈련 라이브러리가 같이 쓴다
 //   · 회원 글에는 몸에 좋다는 효과 말(benefits)을 보여 주지 않는다 — 동작과 포인트만 (회원용 글 규칙)
+//   · 2026-11-15 영상으로 배우기 3단계: 제목 옆 ♥(숫자는 5명 넘을 때만) · 맨 아래 반응 칸(쉬워요/딱 좋아요/어려워요 ·
+//     코치님께 의견 · 영상 없는 카드는 「영상 찍어 주세요」) — 코치진은 같은 자리에 회원 반응 숫자 · 의견에 답 (training/react)
 // body 로 portal 한다 (2026-09-28): 상세 화면 루트의 animate-slide-up 이 끝난 뒤에도 transform 을 남겨
 // 그 안의 fixed 시트가 화면이 아니라 긴 루트의 맨 아래에 붙었다 → 드릴을 눌러도 화면만 어두워지고 시트가 안 보였다.
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -21,6 +23,7 @@ import {
   cardShelf,
   cardSpeech,
   hasCoachVideo,
+  hasMemberVideo,
   levelTag,
   nextCard,
   normalizeCard,
@@ -28,6 +31,8 @@ import {
 } from "@/lib/trainingCards";
 import { useCardPosters, useCardVideo, useTrainingCards } from "@/services/trainingCardService";
 import { logCardEvent } from "@/services/shelfLayoutService";
+import { useCardSocial } from "@/services/cardReactService";
+import { CardHeartButton, CardReactSection } from "@/components/training/react/CardReact";
 import { pickKoreanVoice, speak, stopSpeech, type SpeakHandle } from "@/features/myboxer-visualization/mindAudio";
 import VideoOverlay from "@/components/common/VideoOverlay";
 
@@ -82,6 +87,10 @@ const TrainingDrillSheet = ({
 
   const video = useCardVideo(card, "member", !!card);
   const posterOf = useCardPosters(card ? [card] : []);
+  // 반응 · 의견 (2026-11-15 3단계) — 서버에 함수가 없거나(옛 DB) 못 읽으면 칸을 그리지 않는다
+  const reactItem = card ? `c:${card.id}` : null;
+  const socialQ = useCardSocial(reactItem, !!card && !!user, staffViewer);
+  const social = socialQ.data?.available ? socialQ.data.social : null;
   const [coachOpen, setCoachOpen] = useState(false);
   const coachVideo = useCardVideo(card, "coach", !!card && coachOpen);
   const [slow, setSlow] = useState(false);
@@ -280,7 +289,10 @@ const TrainingDrillSheet = ({
             )}
           </div>
 
-          <h3 className="mt-2 text-title font-black text-foreground">{card.name}</h3>
+          <div className="mt-2 flex items-start gap-3">
+            <h3 className="min-w-0 flex-1 text-title font-black text-foreground">{card.name}</h3>
+            {social && reactItem && social.viewer === "member" && <CardHeartButton item={reactItem} social={social} />}
+          </div>
           {card.summary && <p className="mt-1 text-body font-bold text-primary">{card.summary}</p>}
 
           {/* 🔊 설명 듣기 · 🎙 코치용 영상 */}
@@ -374,6 +386,9 @@ const TrainingDrillSheet = ({
           )}
 
           {footer?.(card)}
+
+          {/* 반응 · 의견 — 회원님: 쉬워요/어려워요 · 코치님께 의견 · 영상 찍어 주세요 / 코치진: 회원 반응 · 의견에 답 */}
+          {social && reactItem && <CardReactSection item={reactItem} social={social} noVideo={!hasMemberVideo(card)} />}
 
           {/* 같은 동작 — 대표님이 이 카드에 합친 카드 · 영상 (다른 영상 · 다른 설명) */}
           {related && related.length > 0 && (
