@@ -13,6 +13,11 @@
  *   · onCardClick 이 오면 카드 전체가 버튼 — 내 카드는 누르면 닉네임 바꾸기.
  *   · onPhotoClick 이 오면 사진이 따로 버튼 (2026-10-14) — 내 카드는 누르면 프로필 사진 올리기·바꾸기.
  *     photoBadge 가 오면 사진 위에 금색 알약 (처음 올리면 받는 챔피언 머니).
+ *   · 💎 PT 프리미엄 (2026-11-14 대표님 「PT 회원님들은 프리미엄 서비스 — 복서카드도 프리미엄 카드로」):
+ *     pt 회원 카드는 플래티넘(백금) 카드 — 밝은 금속 결 바탕 · 가는 물결 무늬 · 샴페인 골드 '153 PREMIUM' ·
+ *     승급 막대는 153 민트 한 줄. 휴대폰은 빛이 천천히 스치고 TV(isLive)는 멈춘 그림.
+ *     카드에 쓰는 글은 '153 PREMIUM' · 'PERSONAL TRAINING' 뿐(혜택 문구는 쓰지 않는다 — 9/29 원칙).
+ *     리그 · 레벨 · 사진 테두리는 그대로. 생일 · 153 레코드 연출이 뜨는 날은 그 연출이 먼저. 카드 키는 그대로.
  *
  * Size:
  *   · hero      — 홈 메인 (큰 사이즈, 모든 정보)
@@ -111,6 +116,17 @@ const RECORD_GLOW =
 /** 153 레코드 머리 띠 — 금빛 리본 */
 const RECORD_BAND = "linear-gradient(90deg, #fff1b8 0%, #f6c453 28%, #e0a326 62%, #f6c453 85%, #fff1b8 100%)";
 
+/** 💎 PT 프리미엄 — 플래티넘 카드 (2026-11-14) */
+const PREMIUM_FACE = "linear-gradient(135deg, #f7f8fa 0%, #dde2e8 30%, #f5f7f9 52%, #ccd3db 78%, #e9edf1 100%)";
+/** 고급 카드의 가는 물결 무늬(기요셰) — 밝은 선 + 아주 옅은 어두운 선 */
+const PREMIUM_GUILLOCHE =
+  "repeating-radial-gradient(circle at 0% 100%, rgba(255,255,255,0) 0 9px, rgba(255,255,255,0.42) 9px 10px), repeating-radial-gradient(circle at 100% 0%, rgba(110,122,136,0) 0 11px, rgba(110,122,136,0.055) 11px 12px)";
+/** 테두리 — 백금에 샴페인 골드가 한 번 스친다 */
+const PREMIUM_EDGE = "linear-gradient(135deg, #ffffff 0%, #b4bec9 20%, #c8a96a 44%, #fafbfc 60%, #98a4b1 82%, #dcc089 100%)";
+const PREMIUM_GLOW = "0 12px 30px rgba(20, 24, 29, 0.22), 0 2px 6px rgba(20, 24, 29, 0.12), 0 0 0 1px rgba(20, 24, 29, 0.10)";
+/** 샴페인 골드 글씨(밝은 카드 위 — 대비 5:1 넘게) */
+const PREMIUM_GOLD_TEXT = "text-[#7d5f24]";
+
 /** user_id 해시 → 6자리 라이센스 번호 */
 function licenseNumber(userId?: string): string {
   if (!userId) return "------";
@@ -177,8 +193,9 @@ export interface BoxerLicenseCardProps {
   elapsedMinutes?: number;
   /** 지도진 카드 (2026-09-22): 리그·레벨·승급 막대 대신 직함("지점장님")을 보인다. name 에는 이름+직함을 넘긴다. */
   staff?: { title: string } | null;
-  /** PT(퍼스널 트레이닝) 회원 (2026-09-29) — 이름 옆 파란 배지만. 경험치 2배는 서버(DB 트리거)가 조용히 준다 —
-   *  화면에 "경험치 2배" 같은 글은 쓰지 않는다(대표님: 일반 회원님들이 차별로 느낄 수 있다). */
+  /** PT(퍼스널 트레이닝) 회원 — 플래티넘 프리미엄 카드 (2026-11-14 대표님 「복서카드도 프리미엄 카드로」).
+   *  경험치 2배는 서버(DB 트리거)가 조용히 준다 — 카드에 "경험치 2배" · 마일리지 같은 혜택 글은 쓰지 않는다
+   *  (2026-09-29 대표님: 일반 회원님들이 차별로 느낄 수 있다). 지도진 · 생일 · 153 레코드 카드에는 적용하지 않는다. */
   pt?: boolean;
   /** 받은 하트 수 (2026-09-29) — 있으면 아래 줄 오른쪽에 하트 알약. 없으면 예전처럼 "· OFFICIAL ·" */
   likes?: number;
@@ -255,13 +272,19 @@ const BoxerLicenseCard = ({
     (birthdayCongrats > 0
       ? `축하 ${birthdayCongrats.toLocaleString("ko-KR")}개 · 앱에서 축하해 주세요!`
       : "오늘 생일이에요 · 앱에서 축하해 주세요!");
+  // 💎 PT 프리미엄 — 회원 카드, 생일 · 153 레코드가 아닐 때
+  const premium = pt && !staff && !birthday && !record;
+  // 밝은 카드 위 글자색(프리미엄) / 검은 카드 위 글자색(그 밖)
+  const tx = premium
+    ? { strong: "text-[#14181d]", sub: "text-[#4b5560]", dim: "text-[#5a6370]", line: "border-black/10", track: "bg-black/10" }
+    : { strong: "text-white", sub: "text-gray-400", dim: "text-gray-500", line: "border-white/10", track: "bg-black/40" };
   // 지도진 카드는 블랙 리그 모양 (2026-10-19 대표님: "코치님은 블랙으로")
   const rankKey = staff ? "black" : (league || "white").toLowerCase();
   const lic = licenseNumber(userId);
   const issuedFmt = formatIssueDate(issueDate);
   const rankLabelKR = isMaster ? "마스터" : RANK_LABELS_KR[rankKey] ?? rankKey;
   const rankLabelEN = isMaster ? (masterTitle || "MASTER") : (RANK_LABELS[rankKey] ?? rankKey.toUpperCase());
-  const accentText = isMaster ? "text-yellow-300" : RANK_ACCENT_TEXT[rankKey] ?? "text-gray-300";
+  const accentText = premium ? "text-[#3d4651]" : isMaster ? "text-yellow-300" : RANK_ACCENT_TEXT[rankKey] ?? "text-gray-300";
   const borderGrad = isMaster ? RANK_BORDER.black : RANK_BORDER[rankKey] ?? RANK_BORDER.white;
   const bgGrad = isMaster ? RANK_BG.black : RANK_BG[rankKey] ?? RANK_BG.white;
   // 막대 — promotion(승급 진행도)이 오면 그것, 아니면 예전 XP 막대.
@@ -366,28 +389,33 @@ const BoxerLicenseCard = ({
         onCardClick ? "cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary/70" : ""
       }`}
       style={{
-        background: `linear-gradient(135deg, hsla(0, 0%, 6%, 0.97) 0%, hsla(0, 0%, 10%, 0.95) 100%)`,
+        background: premium ? PREMIUM_FACE : `linear-gradient(135deg, hsla(0, 0%, 6%, 0.97) 0%, hsla(0, 0%, 10%, 0.95) 100%)`,
         boxShadow: birthday
           ? BIRTHDAY_GLOW
           : record
             ? RECORD_GLOW
             : isFresh
             ? "0 8px 24px hsla(160, 80%, 50%, 0.4), 0 0 0 2px hsla(160, 80%, 50%, 0.6)"
-            : CARD_GLOW[isMaster ? "black" : rankKey] ?? CARD_GLOW.white,
+            : premium
+              ? PREMIUM_GLOW
+              : CARD_GLOW[isMaster ? "black" : rankKey] ?? CARD_GLOW.white,
       }}
     >
       {/* ── 골드 트림 (얇은 외곽 그라디언트 라인) — 생일이면 흐르는 오로라 테두리 ── */}
       <div
-        className={`absolute inset-0 rounded-2xl ${birthday ? "bday-aurora-ring" : record ? "record-gold-ring" : `bg-gradient-to-br ${borderGrad} opacity-50`} ${still ? "still" : ""}`}
-        style={{ padding: birthday || record ? "2px" : "1.5px", WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)", WebkitMaskComposite: "xor", maskComposite: "exclude" }}
+        className={`absolute inset-0 rounded-2xl ${birthday ? "bday-aurora-ring" : record ? "record-gold-ring" : premium ? "" : `bg-gradient-to-br ${borderGrad} opacity-50`} ${still ? "still" : ""}`}
+        style={{ padding: birthday || record || premium ? "2px" : "1.5px", ...(premium ? { background: PREMIUM_EDGE } : null), WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)", WebkitMaskComposite: "xor", maskComposite: "exclude" }}
         aria-hidden="true"
       />
 
       {/* ── 배경 그라디언트 — 생일이면 오로라 빛이 은은하게 ── */}
       <div
-        className={`absolute inset-[2px] rounded-2xl bg-gradient-to-br ${birthday ? "from-gray-900 via-emerald-950/50 to-violet-950/50" : bgGrad}`}
+        className={`absolute inset-[2px] rounded-2xl ${premium ? "" : `bg-gradient-to-br ${birthday ? "from-gray-900 via-emerald-950/50 to-violet-950/50" : bgGrad}`}`}
+        style={premium ? { background: `${PREMIUM_GUILLOCHE}, ${PREMIUM_FACE}` } : undefined}
         aria-hidden="true"
       />
+      {/* 💎 프리미엄 — 빛이 천천히 스친다(TV 는 멈춘 그림) */}
+      {premium && <div className={`pt-premium-sheen pointer-events-none absolute inset-[2px] rounded-2xl ${still ? "still" : ""}`} aria-hidden="true" />}
 
       {/* ── 마스터 hologram 효과 (블랙 + 마스터만) ── */}
       {isMaster && (
@@ -431,11 +459,26 @@ const BoxerLicenseCard = ({
         <div className="mb-2 flex items-center justify-between">
           {/* 생일 — 왼쪽은 사진 위 케이크 자리라 비우고, 오른쪽(번호 자리)에 금빛 HAPPY BIRTHDAY */}
           <div className="flex items-center gap-1.5">
-            {!birthday && (
-              <span className={`font-black uppercase tracking-[0.2em] ${cfg.headerText} ${accentText}`}>
-                {staff ? "153 COACHING STAFF" : isMaster ? "★ MASTER LICENSE" : "153 BOXER LICENSE"}
-              </span>
-            )}
+            {!birthday &&
+              (premium ? (
+                // 💎 샴페인 골드 각인 — 일반 머리줄 글자를 보이지 않게 깔아 자리(줄바꿈 · 높이)를 똑같이 잡고 그 위에 얹는다.
+                //    TV 카드가 좁아 머리줄이 두 줄이 되는 너비에서도 일반 카드와 키가 같다.
+                <span className={`relative inline-block font-black uppercase tracking-[0.2em] ${cfg.headerText}`}>
+                  <span className="invisible" aria-hidden="true">
+                    {isMaster ? "★ MASTER LICENSE" : "153 BOXER LICENSE"}
+                  </span>
+                  <span className={`absolute inset-0 flex items-start gap-1 ${PREMIUM_GOLD_TEXT}`}>
+                    <svg viewBox="0 0 10 10" width="0.7em" height="0.7em" aria-hidden="true" className="mt-[0.4em] shrink-0">
+                      <path d="M5 0 10 5 5 10 0 5Z" fill="currentColor" />
+                    </svg>
+                    153 PREMIUM
+                  </span>
+                </span>
+              ) : (
+                <span className={`font-black uppercase tracking-[0.2em] ${cfg.headerText} ${accentText}`}>
+                  {staff ? "153 COACHING STAFF" : isMaster ? "★ MASTER LICENSE" : "153 BOXER LICENSE"}
+                </span>
+              ))}
           </div>
           {birthday ? (
             // 번호와 같은 글자 크기 — 머리줄 높이가 그대로라 카드 키가 같다. 받은 축하가 있으면 앞에 🎉 N
@@ -450,7 +493,7 @@ const BoxerLicenseCard = ({
               </span>
             </span>
           ) : (
-            <span className={`font-mono font-black ${cfg.licText} text-gray-400 tabular-nums`}>
+            <span className={`font-mono font-black ${cfg.licText} ${premium ? tx.dim : "text-gray-400"} tabular-nums`}>
               #{lic}
             </span>
           )}
@@ -507,7 +550,7 @@ const BoxerLicenseCard = ({
 
             {/* 사진 frame + 회전 aurora ring (리그별 강도) */}
             <div
-              className={`${cfg.photoBox} relative flex items-center justify-center rounded-xl`}
+              className={`${cfg.photoBox} relative flex items-center justify-center rounded-xl ${premium ? "overflow-hidden shadow-[0_2px_8px_rgba(20,24,29,0.28)]" : ""}`}
             >
               {/* 외곽 회전 aurora — 리그별 conic-gradient (등급↑ 빠르게). 생일이면 오로라 색 */}
               <motion.div
@@ -662,21 +705,26 @@ const BoxerLicenseCard = ({
           <div className="flex-1 min-w-0">
             {/* 이름은 길면 말줄임, 리그 버튼은 항상 보인다 */}
             <div className="flex min-w-0 items-center gap-1">
-              <p className={`min-w-0 truncate font-black text-white ${cfg.nameText}`}>
+              <p className={`min-w-0 truncate font-black ${tx.strong} ${cfg.nameText}`}>
                 {name}
               </p>
               {/* 리그 버튼 (2026-10-15 대표님) — 모든 회원, 색 = 내 리그 (화이트·블루·레드·골드). PT 전용 배지는 없앰.
                   지도진(코치님)은 '챔피언' 표기라 버튼 없음 */}
               {/* 생일이면 황금 버튼 (2026-10-16 대표님) — 리그는 아래 'WHITE · 방패 · Lv' 줄에 그대로 보인다 */}
               {!staff && (
-                <NameBadge league={rankKey} birthday={birthday} className={`${cfg.ptBadge} shrink-0`} glow={size === "hero" || birthday} />
+                <NameBadge
+                  league={rankKey}
+                  birthday={birthday}
+                  className={`${cfg.ptBadge} shrink-0 ${premium ? "drop-shadow-[0_1px_1px_rgba(20,24,29,0.5)]" : ""}`}
+                  glow={!premium && (size === "hero" || birthday)}
+                />
               )}
               {/* 대회 메달 — 리그 버튼 다음 자리 (2026-10-16 대표님: "이름 옆 버튼, 메달은 그 옆") */}
               <MedalMark userId={userId} className={cfg.nameText} />
-              {onCardClick && <PenLine className="ml-0.5 h-3.5 w-3.5 shrink-0 text-white/40" aria-hidden="true" />}
+              {onCardClick && <PenLine className={`ml-0.5 h-3.5 w-3.5 shrink-0 ${premium ? "text-black/35" : "text-white/40"}`} aria-hidden="true" />}
             </div>
             {branch && size !== "compact" && (
-              <p className={`mt-0.5 truncate text-gray-400 ${cfg.metaText}`}>
+              <p className={`mt-0.5 truncate ${tx.sub} ${cfg.metaText}`}>
                 {branch}
               </p>
             )}
@@ -703,15 +751,17 @@ const BoxerLicenseCard = ({
                         ? "bg-red-500 text-white"
                         : rankKey === "black"
                           ? "bg-gray-900 text-yellow-400 border border-yellow-600"
-                          : "bg-gray-300 text-gray-900"
+                          : premium
+                            ? "bg-white text-gray-900 ring-1 ring-inset ring-gray-400/70"
+                            : "bg-gray-300 text-gray-900"
                 }`}
               >
                 {isMaster && <Crown className="inline h-3 w-3 -mt-0.5 mr-0.5" />}
                 {rankLabelEN}
               </span>
               {/* 리그 방패 — 'WHITE / 방패 / Lv.10' 줄 (2026-10-15 대표님) */}
-              <LeagueBadge league={rankKey} className={`${cfg.ptBadge} shrink-0`} />
-              <span className={`font-black text-white ${cfg.levelText}`}>
+              <LeagueBadge league={rankKey} className={`${cfg.ptBadge} shrink-0 ${premium ? "drop-shadow-[0_1px_1px_rgba(20,24,29,0.5)]" : ""}`} />
+              <span className={`font-black ${tx.strong} ${cfg.levelText}`}>
                 {/* 누적 레벨 표시 — 마스터 트랙의 전체 레벨(>10)은 그대로, 블랙 10 은 40 */}
                 Lv.{toGlobalLevel(rankKey, level)}
               </span>
@@ -722,7 +772,7 @@ const BoxerLicenseCard = ({
             {!staff && (cfg.showStreak || elapsedMinutes !== undefined) && size !== "compact" && (
               <div className={`mt-2 flex flex-wrap items-center gap-2 ${cfg.metaText}`}>
                 {streakDays > 0 && cfg.showStreak && (
-                  <span className="inline-flex items-center gap-1 text-orange-300">
+                  <span className={`inline-flex items-center gap-1 ${premium ? "text-orange-700" : "text-orange-300"}`}>
                     <CalendarCheck className="h-3 w-3" />
                     <span className="number-font tabular-nums font-black">
                       출석 {streakDays}일
@@ -730,7 +780,7 @@ const BoxerLicenseCard = ({
                   </span>
                 )}
                 {elapsedMinutes !== undefined && (
-                  <span className="inline-flex items-center gap-1 text-emerald-300">
+                  <span className={`inline-flex items-center gap-1 ${premium ? "text-emerald-700" : "text-emerald-300"}`}>
                     <span className="number-font tabular-nums font-black">
                       {elapsedMinutes}분 운동중
                     </span>
@@ -741,7 +791,7 @@ const BoxerLicenseCard = ({
 
             {/* 발급일 (hero 만) */}
             {cfg.showIssued && (
-              <p className={`mt-1.5 ${cfg.licText} font-mono text-gray-500`}>
+              <p className={`mt-1.5 ${cfg.licText} font-mono ${tx.dim}`}>
                 ISSUED {issuedFmt}
               </p>
             )}
@@ -752,7 +802,7 @@ const BoxerLicenseCard = ({
              onPromotionClick 이 오면 막대 영역이 버튼 — 누르면 랭크업 로드맵 (하단 탭 대체, 2026-10-10) */}
         {!staff && cfg.showXp && (bar.show) && (
           <div
-            className={`mt-3 ${onPromotionClick ? "-m-1.5 cursor-pointer rounded-lg p-1.5 transition-colors hover:bg-white/5 active:bg-white/10" : ""}`}
+            className={`mt-3 ${onPromotionClick ? `-m-1.5 cursor-pointer rounded-lg p-1.5 transition-colors ${premium ? "hover:bg-black/5 active:bg-black/10" : "hover:bg-white/5 active:bg-white/10"}` : ""}`}
             role={onPromotionClick ? "button" : undefined}
             tabIndex={onPromotionClick ? 0 : undefined}
             aria-label={onPromotionClick ? "승급 진행도 — 눌러서 랭크업 로드맵 보기" : undefined}
@@ -783,13 +833,15 @@ const BoxerLicenseCard = ({
               </span>
               <span className="font-mono font-black tabular-nums">{bar.value}</span>
             </div>
-            <div className={`overflow-hidden rounded-full bg-black/40 ${cfg.xpHeight}`}>
+            <div className={`overflow-hidden rounded-full ${tx.track} ${cfg.xpHeight}`}>
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.min(100, bar.ratio * 100)}%` }}
                 transition={{ duration: 1, ease: "easeOut" }}
                 className={`h-full ${
-                  isMaster
+                  premium
+                    ? "bg-primary" // 💎 153 민트 한 줄
+                    : isMaster
                     ? "bg-gradient-to-r from-yellow-400 to-orange-400"
                     : rankKey === "blue"
                       ? "bg-gradient-to-r from-blue-400 to-cyan-300"
@@ -814,7 +866,7 @@ const BoxerLicenseCard = ({
 
         {/* ── Footer — 153 OFFICIAL 마크 ── */}
         {cfg.showFooter && (
-          <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-2">
+          <div className={`mt-3 flex items-center justify-between border-t ${tx.line} pt-2`}>
             {birthday ? (
               // 생일 — 다른 회원님들께 축하를 부탁하는 한 줄 (같은 높이: 이모지 text-body 한 칸)
               <div className="flex min-w-0 items-center gap-1">
@@ -824,9 +876,17 @@ const BoxerLicenseCard = ({
             ) : (
               <div className="flex items-center gap-1">
                 <span className="text-body">🥊</span>
-                <span className={`font-black uppercase tracking-[0.2em] ${cfg.headerText} ${accentText}`}>
-                  MY BOXER 153
-                </span>
+                {premium ? (
+                  // 💎 일반 발 줄 글자('MY BOXER 153')를 보이지 않게 깔아 자리를 똑같이 잡고 그 위에 얹는다(카드 키 그대로)
+                  <span className={`relative font-black uppercase tracking-[0.2em] ${cfg.headerText}`}>
+                    <span className="invisible" aria-hidden="true">
+                      MY BOXER 153
+                    </span>
+                    <span className={`absolute left-0 top-0 whitespace-nowrap tracking-[0.08em] ${PREMIUM_GOLD_TEXT}`}>PERSONAL TRAINING</span>
+                  </span>
+                ) : (
+                  <span className={`font-black uppercase tracking-[0.2em] ${cfg.headerText} ${accentText}`}>MY BOXER 153</span>
+                )}
               </div>
             )}
             {likes !== undefined ? (
@@ -842,18 +902,19 @@ const BoxerLicenseCard = ({
                 aria-pressed={onLikeClick ? liked : undefined}
                 aria-label={liked ? `하트 ${likes}개 · 내가 하트를 보냈어요` : `받은 하트 ${likes}개`}
                 className={`-my-1.5 inline-flex min-h-[34px] items-center gap-1.5 rounded-full px-3 transition-transform active:scale-95 disabled:cursor-default ${
-                  liked ? "bg-[#F5C542] text-[#1A1206]" : "bg-white/10 text-white ring-1 ring-inset ring-white/15"
+                  liked ? "bg-[#F5C542] text-[#1A1206]" : premium ? "bg-black/5 text-[#14181d] ring-1 ring-inset ring-black/10" : "bg-white/10 text-white ring-1 ring-inset ring-white/15"
                 }`}
               >
                 <Heart
-                  className={`h-3.5 w-3.5 ${liked ? "fill-current" : "fill-[#F5C542]/25 text-[#F5C542]"} ${likeBusy ? "animate-pulse" : ""}`}
+                  className={`h-3.5 w-3.5 ${liked ? "fill-current" : premium ? "fill-[#c8962a]/30 text-[#a8791c]" : "fill-[#F5C542]/25 text-[#F5C542]"} ${likeBusy ? "animate-pulse" : ""}`}
                   aria-hidden="true"
                 />
                 <span className="text-label font-black tabular-nums">{likes.toLocaleString("ko-KR")}</span>
               </button>
             ) : birthday ? null : (
               // 생일이면 축하 문구가 길어 이 자리를 비워 준다
-              <span className={`font-mono ${cfg.licText} text-gray-500 uppercase`}>
+              // 프리미엄은 발 줄 글자가 길어 이 자리를 비운다(자리는 그대로 — 카드 키가 같게)
+              <span className={`font-mono ${cfg.licText} ${tx.dim} uppercase ${premium ? "invisible" : ""}`}>
                 · OFFICIAL ·
               </span>
             )}

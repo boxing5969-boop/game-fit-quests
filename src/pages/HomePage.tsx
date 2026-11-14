@@ -45,6 +45,7 @@ import TodayActionCard, { type TodayActionState } from "@/components/home/TodayA
 import WorkoutFinishCard from "@/components/home/WorkoutFinishCard";
 import MileageCard from "@/components/home/MileageCard";
 import HomeWorkoutCard from "@/components/home/HomeWorkoutCard";
+import HomePtCard from "@/components/pt/HomePtCard";
 import HomeWorkoutCalendar from "@/components/home/HomeWorkoutCalendar";
 import { useLevelCycleProgress, promotionHint } from "@/hooks/useLevelCycleProgress";
 import {
@@ -79,6 +80,7 @@ import { useAvatarUpload } from "@/hooks/useAvatarUpload";
 import { useAvatarRewardAutoClaim, useAvatarRewardState } from "@/hooks/useAvatarReward";
 import { rewardHint } from "@/lib/avatarReward";
 import { isPtMember } from "@/lib/ptMember";
+import { isPtDemo } from "@/services/ptBookingService";
 import { useLevelUpNotifications } from "@/hooks/useLevelUpNotifications";
 import { useHofRewardsAutoClaim } from "@/hooks/useHofRewardsAutoClaim";
 import { useMemberLicense } from "@/hooks/use153King";
@@ -122,6 +124,7 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
   const checkedInToday = !!workoutToday?.checked_in;
   // 지도진(profiles.is_staff)은 리그·레벨 대신 "이름 직함님" + 챔피언 · Lv.77 로 — 승급 막대도 없다 (2026-09-22, 09-23).
   const staffCard = isStaffProfile(profile) ? { title: staffTitleLabel(profile ?? {}) } : null;
+  const ptDemo = isPtDemo();
   // 내 라이센스의 받은 하트 수 (MY복서 카드 아래 줄) — 지도진 카드는 하트·닉네임 바꾸기가 없다
   // 내 카드가 첫 화면(/home)에도 그려지므로 두 보기 모두에서 하트 수를 읽는다 (2026-10-10)
   const { data: myLicense } = useMemberLicense(!staffCard ? user?.id : null);
@@ -440,8 +443,9 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
           )
         }
         name={staffCard ? staffDisplayName(profile) : (profile.nickname || profile.name || "복서")}
-        staff={staffCard}
-        pt={!staffCard && isPtMember(profile)}
+        // PT 예시(?ptdemo=1 — 이 창을 닫을 때까지): 어느 계정이든 PT 회원의 프리미엄 카드로 보여 준다(운영진 미리 보기)
+        staff={ptDemo ? null : staffCard}
+        pt={ptDemo || (!staffCard && isPtMember(profile))}
         likes={staffCard ? undefined : (myLicense?.likes ?? 0)}
         onLikeClick={staffCard ? undefined : () => setLikeListOpen(true)}
         onCardClick={staffCard ? undefined : () => setNickEditOpen(true)}
@@ -619,6 +623,9 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
         //     (2026-09-29 "첫 화면 = 전체 메뉴만" 결정은 이 결정으로 대체)
         <div className="space-y-5">
           {renderHero(true)}
+          {/* 🥊 PT 수업 — PT 회원에게만: 다음 수업 · 「수업 받았어요」 · 남은 횟수 · 예약 · 취소 (2026-11-14 대표님
+              「홈화면에 PT 회원님들을 위한 스케줄관리」). PT 예약을 켠 지점의 PT 회원이 아니면 아무것도 그리지 않는다 */}
+          <HomePtCard />
           {/* 👊 오늘 우리 체육관 — 커뮤니티 입구 한 줄 (2026-10-27 대표님 "니가 추천해주는대로 진행", 커뮤니티 보고서 1단계) */}
           <CommunityTodayStrip />
           {/* 🎂 오늘 생일인 동료가 운동하러 왔거나 오늘 내 생일일 때만 보인다 (2026-10-16 대표님) */}

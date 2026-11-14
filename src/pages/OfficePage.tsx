@@ -46,6 +46,7 @@ import { MeetingSummaryCard, MinutesSheet, OpenMeetingSheet } from "@/components
 import { ScheduleSection } from "@/components/office/OfficeSchedule";
 import StrategyRoom from "@/components/strategy/StrategyRoom";
 import OpsWorkTab from "@/components/ops/OpsWorkTab";
+import { OpsPtBookDemo } from "@/components/ops/OpsPtBook";
 import { OpsPtRecordDemo } from "@/components/ops/OpsPtRecord";
 import OpsPlanTab from "@/components/ops/OpsPlanTab";
 import OpsSalesTab from "@/components/ops/OpsSalesTab";
@@ -284,7 +285,10 @@ const OfficePage = () => {
         )}
 
       {tab === "work" && ptDemoOnly ? (
-        <OpsPtRecordDemo />
+        <div className="space-y-4">
+          <OpsPtBookDemo />
+          <OpsPtRecordDemo />
+        </div>
       ) : tab === "work" && opsMe ? (
         <OpsWorkTab me={opsMe} />
       ) : tab === "sales" ? (

@@ -81,6 +81,11 @@ describe("마일리지 내역 — 이름 · 월별", () => {
     expect(mileageRowTitle({ kind: "adjust", reason: "결제 할인 사용 · 주5회 기간권 1개월", amount: -22000 })).toBe("결제 할인에 사용");
     expect(mileageRowSub({ kind: "adjust", reason: "결제 할인 사용 · 주5회 기간권 1개월", amount: -22000 })).toBe("주5회 기간권 1개월");
     expect(mileageRowTitle({ kind: "adjust", reason: "결제 취소로 돌려받음 · 주5회", amount: 22000 })).toBe("결제 취소로 돌려받음");
+    // PT 수업 적립(2026-11-14) — 제목은 종류, 아래 줄은 수업한 날
+    expect(mileageRowTitle({ kind: "pt", reason: "PT 수업 · 11월 14일", amount: 1000 })).toBe("PT 수업");
+    expect(mileageRowSub({ kind: "pt", reason: "PT 수업 · 11월 14일 (2회)", amount: 2000 })).toBe("11월 14일 (2회) 수업");
+    expect(mileageRowTitle({ kind: "pt", reason: "PT 수업 기록 정정 · 11월 14일", amount: -1000 })).toBe("PT 수업 기록 정정");
+    expect(mileageRowSub({ kind: "pt", reason: "PT 수업", amount: 1000 })).toBeNull();
     expect(mileageRowSub({ kind: "attendance", reason: "출석 (10.23)", amount: 500 })).toBeNull();
     expect(mileageRowSub({ kind: "level_up", reason: "레벨업 (블루 Lv.3)", amount: 500 })).toBe("레벨업 (블루 Lv.3)");
   });
