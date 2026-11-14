@@ -127,6 +127,8 @@ const DIRECT: [string, string][] = [
   ["타이틀매치 영상 어디서 봐요", "tr-title-videos"],
   ["내 수업은 어떻게 만들어요", "tr-myclass"],
   ["카드 담기가 뭐예요", "tr-myclass"],
+  ["코치님께 의견 보내는 법", "tr-react"],
+  ["찾는 동작 영상이 없어요", "tr-react"],
   ["붕대 감는 법", "tr-handwrap"],
   ["붕대 어떻게 감아요?", "tr-handwrap"],
   ["핸드랩 감는 법", "tr-handwrap"],
