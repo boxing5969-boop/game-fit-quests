@@ -96,7 +96,21 @@ const Tile = ({ emoji, label, value, unit }: { emoji: string; label: string; val
   </div>
 );
 
-const AchievementCard = ({ className, userId, showInvite = true }: { className?: string; userId?: string | null; showInvite?: boolean }) => {
+/**
+ * hideBodyGains — '내 운동 기록'처럼 위 '153과 함께하며'가 몸무게 · 153 PB 가 얼마나 좋아졌는지를 이미 보여 줄 때 (2026-11-14)
+ *   몸무게가 줄어든 한 줄 · 153 PB '첫 기록보다 빨라졌어요' 한 줄을 빼서 같은 말이 두 번 나오지 않게 (153 PB 최고 기록 · 들어가기는 그대로)
+ */
+const AchievementCard = ({
+  className,
+  userId,
+  showInvite = true,
+  hideBodyGains = false,
+}: {
+  className?: string;
+  userId?: string | null;
+  showInvite?: boolean;
+  hideBodyGains?: boolean;
+}) => {
   const navigate = useNavigate();
   const { user, profile, role, viewAsMember } = useAuth();
   const staffView = !!userId;
@@ -196,7 +210,7 @@ const AchievementCard = ({ className, userId, showInvite = true }: { className?:
               : `한 주에 ${n(needPerWeek)}번 오면 권장 운동량을 채워요`}
           </Signal>
         )}
-        {lost != null && (
+        {lost != null && !hideBodyGains && (
           <Signal emoji="⚖️">
             처음 잰 몸무게보다 <b>{oneDecimal(lost)}kg</b> 가벼워졌어요
           </Signal>
@@ -205,7 +219,9 @@ const AchievementCard = ({ className, userId, showInvite = true }: { className?:
           <Signal emoji="🏁" onClick={staffView ? undefined : () => navigate("/halloffame?tab=test153")}>
             {TEST153_NAME} {who ? `${who} ` : "내 "}최고 <b className="tabular-nums">{fmtMs(pb.bestMs)}</b>
             <span className="text-muted-foreground"> · {DIVISION_LABEL[pb.division as Test153Division] ?? pb.division}</span>
-            {pb.improvedMs != null && <span className="block text-label font-bold text-primary">첫 기록보다 {spokenDuration(pb.improvedMs)} 빨라졌어요</span>}
+            {pb.improvedMs != null && !hideBodyGains && (
+              <span className="block text-label font-bold text-primary">첫 기록보다 {spokenDuration(pb.improvedMs)} 빨라졌어요</span>
+            )}
           </Signal>
         ) : staffView ? (
           <Signal emoji="🏁">{TEST153_NAME} 기록이 아직 없어요</Signal>
