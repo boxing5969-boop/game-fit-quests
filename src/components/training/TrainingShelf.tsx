@@ -20,13 +20,18 @@
  *   · 담기: 타일 오른쪽 아래 + · 카드 시트 「내 수업에 담기」 · 길게 누르기(대표님 편집 계정은 길게 누르기 = 편집 그대로)
  *   · 칩 맨 앞 「내 수업」(담은 게 있을 때만 — 코치진은 회원님이 보여 준 수업이 있어도) → 카드 칸 대신 내 수업 목록
  *   · 주소 ?shelf=mine(&class=<id>) — 알림에서 들어오면 그 수업 편집 창(회원) · 보기 창(코치진)
+ *
+ *   2026-11-15 대표님 「3단계시작」 — 반응 · 의견 (training/react · lib/cardReact · services/cardReactService)
+ *   · 카드 시트 아래 반응 칸(♥ · 쉬워요/어려워요 · 코치님께 의견 · 영상 찍어 주세요)은 TrainingDrillSheet 가 그린다
+ *   · 회원: 머리 「찾기」 → 찾기 칸 · 결과가 0이면 「영상 찍어 주세요」 + 찾았는데 없는 동작 기록(보이지 않게)
+ *   · 코치진: 찾기 칸 아래 「회원님 의견 n · 답 기다려요 m」 → 창 · 알림 ?opinion=<id> / 코치님 답 알림 ?card=<id> → 그 카드 시트
  */
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { Check, ChevronDown, ChevronRight, ChevronUp, Minus, Plus, Search, X } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, ChevronUp, MessageCircle, Minus, Plus, Search, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toGlobalLevel } from "@/lib/rankLabels";
 import { cn } from "@/lib/utils";
@@ -82,6 +87,9 @@ import { primeAudio, useMyClassFlow } from "@/components/training/myClass/useMyC
 import { toPlanBlocks, type ClassItem } from "@/lib/myClass";
 import { buzz } from "@/features/myboxer-visualization/mindAudio";
 import type { ProgramBlock } from "@/services/strategyService";
+import { askKey, cleanQuery } from "@/lib/cardReact";
+import { logSearchMiss, useCardOpinions, useCardReactActions } from "@/services/cardReactService";
+import OpinionsSheet from "@/components/training/react/OpinionsSheet";
 
 export interface ShelfWarmup {
   id: string;
@@ -169,6 +177,11 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
   const [upperOpen, setUpperOpen] = useState(false);
   const [openFolder, setOpenFolder] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  // 회원 찾기 (2026-11-15 3단계) — 머리 「찾기」를 누르면 찾기 칸이 열린다(코치진은 늘)
+  const [memberSearch, setMemberSearch] = useState(false);
+  const [askedQueries, setAskedQueries] = useState<ReadonlySet<string>>(() => new Set());
+  const [opinionsOpen, setOpinionsOpen] = useState(false);
+  const [opinionFocus, setOpinionFocus] = useState<string | null>(null);
   const [open, setOpen] = useState<OpenCard | null>(null);
   const [sheet, setSheet] = useState<EditSheet>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
@@ -335,9 +348,72 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
   const briefQ = useCardBrief(editing, allKeys);
   const brief = briefQ.data ?? null;
 
-  const searching = staff && query.trim().length > 0;
-  const searchList = useMemo(() => (searching ? searchCards(visible, query) : []), [searching, visible, query]);
+  const searching = (staff || (memberSearch && !editing)) && query.trim().length > 0;
+  // 회원 찾기는 회원에게 보이는 카드만(숨김 · 합친 카드 빼고 — 접힌 위 리그 · 묶음 안 카드는 포함)
+  const searchPool = useMemo(
+    () =>
+      staff
+        ? visible
+        : [...leafByKey.values()]
+            .filter((x): x is Extract<ShelfLeaf, { kind: "card" }> => x.kind === "card" && !x.hidden && !x.mergedInto)
+            .map((x) => x.card),
+    [staff, visible, leafByKey],
+  );
+  const searchList = useMemo(() => (searching ? searchCards(searchPool, query) : []), [searching, searchPool, query]);
   const hiddenSet = useMemo(() => new Set(layout.hidden ?? []), [layout.hidden]);
+
+  // 찾았는데 없는 동작 — 회원 찾기 결과가 0이면 잠깐 기다렸다 한 번(보이지 않게 · 같은 검색어는 이 창에서 한 번)
+  const missKey = !staff && searching && searchList.length === 0 && !cardsQ.isLoading ? askKey(query) : null;
+  useEffect(() => {
+    if (!missKey || !user) return;
+    const q = query;
+    const t = window.setTimeout(() => logSearchMiss(q), 1500);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [missKey, user]);
+  const reactActions = useCardReactActions();
+  const askFilmForQuery = async () => {
+    const k = askKey(query);
+    if (!k) return;
+    try {
+      await reactActions.askFilm({ query: cleanQuery(query) });
+      setAskedQueries((s) => new Set(s).add(k));
+      toast.success("요청했어요", { description: "많이 요청한 동작부터 찍어요" });
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+  const closeMemberSearch = () => {
+    setMemberSearch(false);
+    setQuery("");
+  };
+
+  // 코치진 — 회원님 의견 목록(지난 60일 · 그 지점) · 알림 ?opinion=<id> 이면 창을 열고 그 의견으로
+  const opinionsQ = useCardOpinions(branch, staff && !!user);
+  const opinionState = opinionsQ.data?.available ? opinionsQ.data : null;
+  const opinionParam = params.get("opinion");
+  useEffect(() => {
+    if (!staff || !opinionParam || opinionsQ.isLoading) return;
+    setOpinionFocus(opinionParam);
+    setOpinionsOpen(true);
+    const next = new URLSearchParams(params);
+    next.delete("opinion");
+    setParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [staff, opinionParam, opinionsQ.isLoading]);
+
+  // 알림 ?card=<id> (코치님 답) — 그 카드 시트를 연다
+  const cardParam = params.get("card");
+  useEffect(() => {
+    if (!cardParam || cardsQ.isLoading) return;
+    const c = (cardsQ.data ?? []).find((x) => x.id === cardParam);
+    if (c && (staff ? c.is_active !== false : isMemberVisible(c))) setOpen({ card: c, list: [c] });
+    const next = new URLSearchParams(params);
+    next.delete("card");
+    next.delete("learn");
+    setParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cardParam, cardsQ.isLoading]);
 
   // 「영상으로 배우기」를 본 날 — 하루 한 번 (회원 화면 · 보이게 된 때)
   useEffect(() => {
@@ -696,6 +772,20 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-heading font-black text-foreground">{staff ? "153 콘텐츠 카드" : editing ? "영상으로 배우기 · 정리" : "영상으로 배우기"}</h2>
         {staff && visible.length > 0 && <span className="text-label font-bold text-muted-foreground">{visible.length}장</span>}
+        {!staff && !editing && (
+          <button
+            type="button"
+            onClick={() => (memberSearch ? closeMemberSearch() : setMemberSearch(true))}
+            aria-pressed={memberSearch}
+            aria-label={memberSearch ? "찾기 닫기" : "동작 찾기"}
+            className={cn(
+              "ml-auto flex h-9 shrink-0 items-center gap-1 rounded-full border px-3.5 text-label font-bold active:scale-95",
+              memberSearch ? "border-transparent bg-foreground text-background" : "border-border bg-card text-foreground",
+            )}
+          >
+            <Search className="h-4 w-4" aria-hidden /> 찾기
+          </button>
+        )}
         {canEdit && !editing && (
           <button
             type="button"
@@ -750,22 +840,52 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
         </button>
       )}
 
-      {staff && (
+      {(staff || (memberSearch && !editing)) && (
         <label className="flex h-12 items-center gap-2 rounded-2xl border border-border bg-card px-4">
           <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="동작 이름 · 준비물로 찾기"
-            aria-label="카드 찾기"
+            placeholder={staff ? "동작 이름 · 준비물로 찾기" : "동작 이름으로 찾기 (예: 훅 · 스텝)"}
+            aria-label={staff ? "카드 찾기" : "동작 찾기"}
+            autoFocus={!staff}
+            enterKeyHint="search"
             className="min-w-0 flex-1 bg-transparent text-body text-foreground outline-none placeholder:text-muted-foreground"
           />
-          {query && (
-            <button type="button" onClick={() => setQuery("")} aria-label="찾기 지우기" className="text-muted-foreground active:scale-90">
+          {(query || !staff) && (
+            <button
+              type="button"
+              onClick={() => (staff ? setQuery("") : closeMemberSearch())}
+              aria-label={staff ? "찾기 지우기" : "찾기 닫기"}
+              className="text-muted-foreground active:scale-90"
+            >
               <X className="h-4 w-4" />
             </button>
           )}
         </label>
+      )}
+
+      {/* 코치진 — 회원님 의견 (지난 60일 · 답 기다리는 것 수) */}
+      {staff && !searching && opinionState && opinionState.list.opinions.length > 0 && (
+        <button
+          type="button"
+          onClick={() => {
+            setOpinionFocus(null);
+            setOpinionsOpen(true);
+          }}
+          className="flex h-14 w-full items-center justify-between gap-2 rounded-2xl border border-border bg-card px-5 text-left transition-all active:scale-[0.99]"
+        >
+          <span className="flex min-w-0 items-center gap-2 text-body font-bold text-foreground">
+            <MessageCircle className="h-5 w-5 shrink-0 text-primary" aria-hidden />
+            <span className="truncate">회원님 의견 {opinionState.list.opinions.length}</span>
+          </span>
+          <span className="flex shrink-0 items-center gap-1.5">
+            {opinionState.list.waiting > 0 && (
+              <span className="rounded-full bg-primary px-2.5 py-1 text-micro font-bold text-primary-foreground">답 기다려요 {opinionState.list.waiting}</span>
+            )}
+            <ChevronRight className="h-5 w-5 text-muted-foreground" aria-hidden />
+          </span>
+        </button>
       )}
 
       {/* 칸 칩 — 회원 튜토리얼 2일차 2단계가 이 줄을 가리킨다 */}
@@ -833,7 +953,29 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
         />
       ) : searching ? (
         searchList.length === 0 ? (
-          <p className="rounded-2xl bg-secondary px-4 py-6 text-center text-body text-muted-foreground">찾는 카드가 없어요</p>
+          staff ? (
+            <p className="rounded-2xl bg-secondary px-4 py-6 text-center text-body text-muted-foreground">찾는 카드가 없어요</p>
+          ) : (
+            // 찾았는데 없는 동작 — 「영상 찍어 주세요」 (요청이 많은 동작부터 찍는다)
+            <div className="rounded-2xl bg-secondary px-4 py-6 text-center">
+              <p className="break-words text-body font-bold text-foreground">‘{cleanQuery(query)}’ 영상이 아직 없어요</p>
+              <p className="mt-1 text-label text-muted-foreground">요청이 많은 동작부터 찍어요</p>
+              {askKey(query) &&
+                (askedQueries.has(askKey(query) ?? "") ? (
+                  <p className="mt-3 flex items-center justify-center gap-1.5 text-body font-bold text-primary">
+                    <Check className="h-4 w-4" strokeWidth={3} aria-hidden /> 요청했어요
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => void askFilmForQuery()}
+                    className="mt-3 h-12 rounded-2xl bg-foreground px-5 text-body font-bold text-background transition-all active:scale-[0.98]"
+                  >
+                    영상 찍어 주세요
+                  </button>
+                ))}
+            </div>
+          )
         ) : (
           <div className="grid grid-cols-2 gap-2.5">
             {searchList.map((c, i) => {
@@ -894,6 +1036,22 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
       />
 
       <MyClassLayer flow={flow} posterOf={posterOf} sections={arranged} onToPlan={toPlan} />
+
+      {staff && (
+        <OpinionsSheet
+          open={opinionsOpen}
+          list={opinionState?.list ?? null}
+          demo={!!opinionState?.demo}
+          focusId={opinionFocus}
+          onClose={() => setOpinionsOpen(false)}
+          onOpenCard={(item) => {
+            const c = item.startsWith("c:") ? (cardsQ.data ?? []).find((x) => x.id === item.slice(2)) : undefined;
+            if (!c) return;
+            setOpinionsOpen(false);
+            setOpen({ card: c, list: [c] });
+          }}
+        />
+      )}
 
       {canEdit && (
         <ShelfEditSheets
