@@ -15,13 +15,18 @@
  *   · 대표님 · 운영진(회원 화면에서만): 「편집」 또는 카드 길게 누르기 → 아이폰처럼 흔들림 · 끌어서 순서 ·
  *     다른 카드 위에 잠깐 = 합치기 · 묶기 · − = 회원에게 숨기기 · 카드 누르기 = 칸 옮기기 · 고정 … (shelfEdit/)
  *   · 보이지 않는 이용 기록: 영상으로 배우기를 본 날 · 칸 칩 · 묶음 · 레벨 미션 영상 열기(카드는 카드 시트가 남긴다)
+ *
+ *   2026-11-14 대표님 「다음 2단계진행」 — 내 수업 (training/myClass · lib/myClass · services/myClassService)
+ *   · 담기: 타일 오른쪽 아래 + · 카드 시트 「내 수업에 담기」 · 길게 누르기(대표님 편집 계정은 길게 누르기 = 편집 그대로)
+ *   · 칩 맨 앞 「내 수업」(담은 게 있을 때만 — 코치진은 회원님이 보여 준 수업이 있어도) → 카드 칸 대신 내 수업 목록
+ *   · 주소 ?shelf=mine(&class=<id>) — 알림에서 들어오면 그 수업 편집 창(회원) · 보기 창(코치진)
  */
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { ChevronDown, ChevronRight, ChevronUp, Minus, Plus, Search, X } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, ChevronUp, Minus, Plus, Search, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toGlobalLevel } from "@/lib/rankLabels";
 import { cn } from "@/lib/utils";
@@ -71,6 +76,12 @@ import { DRAG_ROOT, useMenuDrag, type MenuDrop } from "@/components/home/menuEdi
 import { FadeTag, FolderThumb, Thumb } from "@/components/training/ShelfTiles";
 import { useShelfEditor } from "@/components/training/shelfEdit/useShelfEditor";
 import { ShelfEditBar, ShelfEditSheets, type EditSheet } from "@/components/training/shelfEdit/ShelfEditUi";
+import MyClassPanel from "@/components/training/myClass/MyClassPanel";
+import MyClassLayer from "@/components/training/myClass/MyClassLayer";
+import { primeAudio, useMyClassFlow } from "@/components/training/myClass/useMyClassFlow";
+import { toPlanBlocks, type ClassItem } from "@/lib/myClass";
+import { buzz } from "@/features/myboxer-visualization/mindAudio";
+import type { ProgramBlock } from "@/services/strategyService";
 
 export interface ShelfWarmup {
   id: string;
@@ -85,11 +96,23 @@ interface TrainingShelfProps {
   onOpenWarmup?: (id: string) => void;
   /** 카드 시트 맨 아래 단추 (코치진) — close = 카드 시트 닫기 */
   sheetFooter?: (card: TrainingCard, close: () => void) => ReactNode;
+  /** 코치진 — 회원님이 보여 준 수업을 볼 지점 (전략 회의의 지점) */
+  branch?: string | null;
+  /** 코치진 — 내 수업 편집 창 「이 수업으로 수업안 만들기」 → 전략 회의 「내 수업 짜기」 */
+  onClassToPlan?: (plan: { title: string; blocks: ProgramBlock[] }) => void;
 }
 
 const FIRST_COUNT = 6;
 const COLS = 2;
 const shelfKey = (aud: string) => `153learn:shelf:${aud}`;
+const MINE = "mine";
+const readMine = (aud: string): boolean => {
+  try {
+    return window.localStorage.getItem(shelfKey(aud)) === MINE;
+  } catch {
+    return false;
+  }
+};
 const FOLDER_PREFIX = "fold:";
 const LAYOUT_SPRING = { type: "spring", stiffness: 520, damping: 40, mass: 0.7 } as const;
 
@@ -123,7 +146,7 @@ interface OpenCard {
   list: TrainingCard[];
 }
 
-const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetFooter }: TrainingShelfProps) => {
+const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetFooter, branch, onClassToPlan }: TrainingShelfProps) => {
   const staff = audience === "staff";
   const navigate = useNavigate();
   const { progress, role, user } = useAuth();
@@ -141,6 +164,7 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
   const [shelf, setShelfState] = useState<Shelf>(() => {
     return normalizeShelf(params.get("shelf"), allowed) ?? readShelf(audience, allowed);
   });
+  const [mine, setMineState] = useState<boolean>(() => params.get("shelf") === MINE || readMine(audience));
   const [expanded, setExpanded] = useState(false);
   const [upperOpen, setUpperOpen] = useState(false);
   const [openFolder, setOpenFolder] = useState<string | null>(null);
@@ -151,6 +175,7 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
 
   const setShelf = (s: Shelf, byTap = false) => {
     setShelfState(s);
+    setMineState(false);
     setExpanded(false);
     setUpperOpen(false);
     setOpenFolder(null);
@@ -161,6 +186,16 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
     }
     if (byTap && !staff && !editing && user) logCardEvent(`s:${s}`, "open", { daily: true });
   };
+  const openMine = () => {
+    setMineState(true);
+    setOpenFolder(null);
+    try {
+      window.localStorage.setItem(shelfKey(audience), MINE);
+    } catch {
+      /* 무시 */
+    }
+    if (!staff && user) logCardEvent(`s:${MINE}`, "open", { daily: true });
+  };
 
   // 기능 검색 · 옛 훈련 라이브러리 주소 → /missions?learn=1 (&shelf=step) 이면 이 칸으로 내려온다.
   // 주소를 지우면 이 효과가 다시 돌므로 내려가기는 따로 기억해 둔다(예전엔 지우는 순간 내려가기 예약까지 취소됐다).
@@ -170,6 +205,7 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
     if (staff || learnParam !== "1") return;
     const fromUrl = normalizeShelf(params.get("shelf"), allowed);
     if (fromUrl) setShelf(fromUrl);
+    else if (params.get("shelf") === MINE) setMineState(true);
     setScrollWanted(true);
     const next = new URLSearchParams(params);
     next.delete("learn");
@@ -205,6 +241,86 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
   const current: Shelf = shelfIds.includes(shelf) ? shelf : shelfIds[0] ?? allowed[0];
   const cur = arranged.find((s) => s.id === current) ?? null;
   const posterOf = useCardPosters(visible);
+
+  // ── 내 수업 (2단계) ──
+  const flow = useMyClassFlow({
+    audience,
+    userId: user?.id ?? null,
+    cards: cardsQ.data ?? [],
+    missions,
+    branch,
+    paused: editing,
+  });
+  const mineChip = flow.available && !editing && (flow.classes.length > 0 || (staff && flow.shared.length > 0));
+  const showMine = mine && mineChip;
+  // 알림에서 ?shelf=mine&class=<id> — 내 수업이면 편집 창, 코치진이 보는 회원 수업이면 보기 창
+  const classParam = params.get("class");
+  useEffect(() => {
+    if (!classParam || !flow.ready) return;
+    if (flow.available) {
+      if (flow.classes.some((c) => c.id === classParam)) flow.openEditor(classParam);
+      else if (staff && flow.shared.some((c) => c.id === classParam)) flow.openShared(classParam);
+      setMineState(true);
+    }
+    const next = new URLSearchParams(params);
+    next.delete("class");
+    next.delete("learn");
+    if (next.get("shelf") === MINE) next.delete("shelf");
+    setParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classParam, flow.ready, flow.available]);
+
+  // 길게 누르기 = 담기 (대표님 편집 계정은 길게 누르기가 편집이라 + 단추 · 카드 시트로)
+  const holdOn = flow.available && !canEdit;
+  const holdRef = useRef<{ timer: number | null; x: number; y: number; fired: boolean }>({ timer: null, x: 0, y: 0, fired: false });
+  const holdEnd = () => {
+    const h = holdRef.current;
+    if (h.timer) window.clearTimeout(h.timer);
+    h.timer = null;
+  };
+  const holdStart = (ev: React.PointerEvent, leaf: ShelfLeaf) => {
+    const h = holdRef.current;
+    holdEnd();
+    h.fired = false;
+    h.x = ev.clientX;
+    h.y = ev.clientY;
+    h.timer = window.setTimeout(() => {
+      h.timer = null;
+      h.fired = true;
+      buzz(15);
+      void flow.save(leaf);
+    }, 450);
+  };
+  const holdMove = (ev: React.PointerEvent) => {
+    const h = holdRef.current;
+    if (h.timer && (Math.abs(ev.clientX - h.x) > 10 || Math.abs(ev.clientY - h.y) > 10)) holdEnd();
+  };
+  const holdConsume = () => {
+    const h = holdRef.current;
+    if (!h.fired) return false;
+    h.fired = false;
+    return true;
+  };
+
+  // 코치님 「이 수업으로 수업안 만들기」 — 내 수업 항목 → 수업안 블록
+  const cardById = useMemo(() => new Map((cardsQ.data ?? []).map((c) => [c.id, c])), [cardsQ.data]);
+  const toPlan = onClassToPlan
+    ? (c: { name: string; items: ClassItem[] }) => {
+        const blocks = toPlanBlocks(c.items, {
+          card: (id) => cardById.get(id),
+          mission: (id) => {
+            const r = flow.resolve(missionKey(id));
+            return r?.kind === "mission" ? { id, title: r.mission.title } : undefined;
+          },
+        });
+        if (!blocks.length) {
+          toast.error("수업안에 넣을 카드가 없어요");
+          return;
+        }
+        flow.closeEditor();
+        onClassToPlan({ title: c.name, blocks });
+      }
+    : undefined;
 
   // 모든 잎 (key → 잎) — 「같은 동작」 · 편집 창 · 끄는 그림
   const leafByKey = useMemo(() => {
@@ -354,6 +470,7 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
 
   const onTileClick = (t: ShelfTile, list: TrainingCard[]) => {
     if (drag.consumeClick()) return;
+    if (holdConsume()) return;
     if (t.kind === "folder") {
       const next = openFolder === t.id ? null : t.id;
       setOpenFolder(next);
@@ -443,9 +560,15 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
       >
         <button
           type="button"
-          onPointerDown={canEdit ? (ev) => drag.onPointerDown(ev, t.key, container) : undefined}
+          onPointerDown={
+            canEdit ? (ev) => drag.onPointerDown(ev, t.key, container) : holdOn && t.kind !== "folder" ? (ev) => holdStart(ev, t) : undefined
+          }
+          onPointerMove={holdOn ? holdMove : undefined}
+          onPointerUp={holdOn ? holdEnd : undefined}
+          onPointerCancel={holdOn ? holdEnd : undefined}
+          onPointerLeave={holdOn ? holdEnd : undefined}
           onClick={() => onTileClick(t, list)}
-          onContextMenu={canEdit ? (ev) => ev.preventDefault() : undefined}
+          onContextMenu={canEdit || holdOn ? (ev) => ev.preventDefault() : undefined}
           aria-expanded={t.kind === "folder" ? isOpenFolder : undefined}
           aria-label={editing ? `${title} — 끌어서 옮기기, 누르면 고치기` : undefined}
           className={cn(
@@ -469,6 +592,25 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
             </span>
           </span>
         </button>
+        {flow.available && !editing && t.kind !== "folder" && (
+          <div className="pointer-events-none absolute inset-x-0 top-0 aspect-square">
+            <button
+              type="button"
+              data-no-drag
+              onClick={(ev) => {
+                ev.stopPropagation();
+                void flow.save(t);
+              }}
+              aria-label={flow.savedKeys.has(t.key) ? `${title} — 내 수업에 담겨 있어요 · 다른 수업에도 담기` : `${title} 내 수업에 담기`}
+              className={cn(
+                "pointer-events-auto absolute bottom-2 right-2 flex h-9 w-9 items-center justify-center rounded-full shadow-elev-1 transition-transform active:scale-90",
+                flow.savedKeys.has(t.key) ? "bg-primary text-primary-foreground" : "bg-white/95 text-foreground",
+              )}
+            >
+              {flow.savedKeys.has(t.key) ? <Check className="h-4 w-4" strokeWidth={3} aria-hidden /> : <Plus className="h-4 w-4" strokeWidth={3} aria-hidden />}
+            </button>
+          </div>
+        )}
         {editing && !dragging && (
           <button
             type="button"
@@ -634,8 +776,23 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
           aria-label="칸 고르기"
           className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
+          {mineChip && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={showMine}
+              onClick={openMine}
+              className={cn(
+                "shrink-0 rounded-full border px-3.5 py-2 text-label font-bold transition-all active:scale-95",
+                showMine ? "border-transparent bg-foreground text-background" : "border-foreground/30 bg-card text-foreground",
+              )}
+            >
+              내 수업
+              {flow.classes.some((c) => c.newNotes > 0) && <span aria-label="새 한마디" className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-primary align-middle" />}
+            </button>
+          )}
           {arranged.map((s) => {
-            const on = s.id === current;
+            const on = !showMine && s.id === current;
             return (
               <button
                 key={s.id}
@@ -663,6 +820,17 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
             <div key={i} className="aspect-[4/5] animate-pulse rounded-2xl bg-secondary" />
           ))}
         </div>
+      ) : showMine && !searching ? (
+        <MyClassPanel
+          flow={flow}
+          posterOf={posterOf}
+          onStart={(id) => {
+            const c = flow.classes.find((x) => x.id === id);
+            if (!c) return;
+            primeAudio();
+            flow.openPlayer({ id: c.id, name: c.name, items: c.items, mine: true });
+          }}
+        />
       ) : searching ? (
         searchList.length === 0 ? (
           <p className="rounded-2xl bg-secondary px-4 py-6 text-center text-body text-muted-foreground">찾는 카드가 없어요</p>
@@ -683,7 +851,7 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
         grid(shownTiles, DRAG_ROOT, mainCards)
       )}
 
-      {!searching && more > 0 && (
+      {!searching && !showMine && more > 0 && (
         <button
           type="button"
           onClick={() => setExpanded(true)}
@@ -694,7 +862,7 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
       )}
 
       {/* 위 리그 — 칸마다 한 줄로 접힘 (결정 3번) */}
-      {!searching && !editing && upper.length > 0 && (
+      {!searching && !editing && !showMine && upper.length > 0 && (
         <div className="space-y-2.5">
           <button
             type="button"
@@ -717,7 +885,15 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
         onChange={(c) => setOpen((o) => (o ? { ...o, card: c } : { card: c, list: [c] }))}
         onClose={() => setOpen(null)}
         footer={sheetFooter ? (c) => sheetFooter(c, () => setOpen(null)) : undefined}
+        onSaveToClass={
+          flow.available
+            ? (c) => void flow.save(leafByKey.get(cardKey(c.id)) ?? { kind: "card", key: cardKey(c.id), card: c, hidden: false, pinned: false, mergedInto: null })
+            : undefined
+        }
+        savedToClass={(c) => flow.savedKeys.has(cardKey(c.id))}
       />
+
+      <MyClassLayer flow={flow} posterOf={posterOf} sections={arranged} onToPlan={toPlan} />
 
       {canEdit && (
         <ShelfEditSheets

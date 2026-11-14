@@ -294,6 +294,7 @@ export const ProgramComposer = ({
   initial,
   initialTemplate,
   initialCard,
+  initialClass,
   missions = [],
   mode = "program",
 }: {
@@ -309,6 +310,8 @@ export const ProgramComposer = ({
   initialTemplate?: ClassTemplate | null;
   /** 153 콘텐츠 카드에서 시작 (영상 칸 카드 시트 「이 카드로 오늘 프로그램 만들기」) */
   initialCard?: TrainingCard | null;
+  /** 코치님 「내 수업」에서 시작 (영상으로 배우기 2단계 「이 수업으로 수업안 만들기」) — 이름 · 블록 */
+  initialClass?: { title: string; blocks: ProgramBlock[] } | null;
   /** 카드 서랍의 「레벨 미션」 칸 */
   missions?: DrawerMission[];
   /** program = 오늘 프로그램(대표님 · 지점장님 → 코치님께 보내기) · plan = 코치님 「내 수업 짜기」(수업안 저장) */
@@ -353,9 +356,12 @@ export const ProgramComposer = ({
         if (!isPlan) setNote(classTemplateNote(initialTemplate));
       } else if (!initial && initialCard) {
         setBlocks(placeCardInBlocks(DEFAULT_BLOCKS, initialCard));
+      } else if (!initial && initialClass?.blocks.length) {
+        setTitle(initialClass.title);
+        setBlocks(initialClass.blocks.map((b) => ({ ...b })));
       }
     }
-  }, [open, initial, initialTemplate, initialCard, isPlan]);
+  }, [open, initial, initialTemplate, initialCard, initialClass, isPlan]);
 
   // 카드 서랍에서 고른 것 — 블록마다 붙는 것은 셋 중 하나(153 카드 · 레벨 미션 · 우리 지점 영상)
   const pick = (i: number, p: DrawerPick) => {

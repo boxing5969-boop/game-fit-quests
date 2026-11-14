@@ -9,7 +9,7 @@
 // 그 안의 fixed 시트가 화면이 아니라 긴 루트의 맨 아래에 붙었다 → 드릴을 눌러도 화면만 어두워지고 시트가 안 보였다.
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { ChevronRight, Mic, Square, Volume2, X } from "lucide-react";
+import { Check, ChevronRight, Mic, Plus, Square, Volume2, X } from "lucide-react";
 import type { TrainingExercise } from "@/hooks/useTrainingLibrary";
 import { useAuth } from "@/contexts/AuthContext";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
@@ -46,11 +46,26 @@ interface TrainingDrillSheetProps {
   footer?: (card: TrainingCard) => ReactNode;
   /** 겹 순서 — 더 높은 창(153 매뉴얼 읽기 화면 z-115) 위에서 열 때 */
   zClass?: string;
+  /** 「내 수업에 담기」 (2026-11-14 영상으로 배우기 2단계) — 없으면 단추 없음 */
+  onSaveToClass?: (card: TrainingCard) => void;
+  /** 이미 내 수업에 담긴 카드인가 */
+  savedToClass?: (card: TrainingCard) => boolean;
 }
 
 const hasSpeech = () => typeof window !== "undefined" && "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
 
-const TrainingDrillSheet = ({ exercise, onClose, list, listIsShelf, related, onChange, footer, zClass = "z-[90]" }: TrainingDrillSheetProps) => {
+const TrainingDrillSheet = ({
+  exercise,
+  onClose,
+  list,
+  listIsShelf,
+  related,
+  onChange,
+  footer,
+  zClass = "z-[90]",
+  onSaveToClass,
+  savedToClass,
+}: TrainingDrillSheetProps) => {
   const { role, profile, progress, user } = useAuth();
   const staffViewer = isManagerRole(role) || !!(profile as { is_staff?: boolean } | null)?.is_staff;
   const myLevel = progress ? toGlobalLevel(progress.current_rank, progress.current_level) : 1;
@@ -293,6 +308,27 @@ const TrainingDrillSheet = ({ exercise, onClose, list, listIsShelf, related, onC
               </button>
             )}
           </div>
+
+          {/* 내 수업에 담기 — 담긴 카드면 ✓ (눌러서 다른 수업에도) */}
+          {onSaveToClass && (
+            <button
+              type="button"
+              onClick={() => onSaveToClass(card)}
+              className={`mt-2 flex h-12 w-full items-center justify-center gap-1.5 rounded-2xl text-body font-bold transition-all active:scale-[0.98] ${
+                savedToClass?.(card) ? "bg-primary/10 text-primary" : "border border-border bg-card text-foreground"
+              }`}
+            >
+              {savedToClass?.(card) ? (
+                <>
+                  <Check className="h-4 w-4" strokeWidth={3} aria-hidden /> 내 수업에 있어요 · 다른 수업에도
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4" strokeWidth={3} aria-hidden /> 내 수업에 담기
+                </>
+              )}
+            </button>
+          )}
 
           {card.description && <p className="mt-4 text-body leading-relaxed text-muted-foreground">{card.description}</p>}
 

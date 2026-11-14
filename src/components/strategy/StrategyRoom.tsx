@@ -45,6 +45,7 @@ import {
   useStrategyFeed,
   useStrategyMe,
   useStrategyVideos,
+  type ProgramBlock,
   type StrategyItem,
   type StrategyVideo,
 } from "@/services/strategyService";
@@ -152,6 +153,8 @@ const StrategyRoom = () => {
   const [programInit, setProgramInit] = useState<StrategyItem | null>(null);
   const [programTpl, setProgramTpl] = useState<ClassTemplate | null>(null);
   const [programCard, setProgramCard] = useState<TrainingCard | null>(null);
+  // 코치님 「내 수업」 → 수업안 (영상으로 배우기 2단계)
+  const [programClass, setProgramClass] = useState<{ title: string; blocks: ProgramBlock[] } | null>(null);
   // program = 오늘 프로그램(대표님 · 지점장님) · plan = 코치님 「내 수업 짜기」
   const [programMode, setProgramMode] = useState<"program" | "plan">("program");
   const [logPlan, setLogPlan] = useState<StrategyItem | null>(null);
@@ -228,11 +231,17 @@ const StrategyRoom = () => {
   const { mine: myPlans, others: otherPlans } = plansForBoard(logRows, today);
   const classLogs = onlyClassLogs(logRows);
   const planWaiting = me.can_direct ? plansAwaitingFeedback(logRows, today) : 0;
-  const openPlan = (init: { item?: StrategyItem | null; tpl?: ClassTemplate | null; card?: TrainingCard | null }) => {
+  const openPlan = (init: {
+    item?: StrategyItem | null;
+    tpl?: ClassTemplate | null;
+    card?: TrainingCard | null;
+    cls?: { title: string; blocks: ProgramBlock[] } | null;
+  }) => {
     setProgramMode("plan");
     setProgramInit(init.item ?? null);
     setProgramTpl(init.tpl ?? null);
     setProgramCard(init.card ?? null);
+    setProgramClass(init.cls ?? null);
     setProgramOpen(true);
   };
   const openProgram = (init: { item?: StrategyItem | null; tpl?: ClassTemplate | null; card?: TrainingCard | null }) => {
@@ -240,6 +249,7 @@ const StrategyRoom = () => {
     setProgramInit(init.item ?? null);
     setProgramTpl(init.tpl ?? null);
     setProgramCard(init.card ?? null);
+    setProgramClass(null);
     setProgramOpen(true);
   };
 
@@ -510,6 +520,8 @@ const StrategyRoom = () => {
           {/* 153 콘텐츠 카드 — 모든 지점이 같이 보는 카드(코치용 영상 · 포인트 · 실수) · 「이 카드로 오늘 프로그램 만들기」 */}
           <TrainingShelf
             audience="staff"
+            branch={b}
+            onClassToPlan={(cls) => openPlan({ cls })}
             sheetFooter={(card, close) => (
               <>
                 {me.can_direct && (
@@ -559,6 +571,7 @@ const StrategyRoom = () => {
         initial={programInit}
         initialTemplate={programTpl}
         initialCard={programCard}
+        initialClass={programClass}
         missions={drawerMissions}
         mode={programMode}
       />
