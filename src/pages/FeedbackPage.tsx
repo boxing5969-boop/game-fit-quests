@@ -34,7 +34,11 @@ const FeedbackPage = () => {
   }, [inboxParam, focusId]);
   const showInbox = isHq && tab === "inbox";
   const inboxCounts = useAppFeedbackInbox(isHq).data?.counts;
-  const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("오류");
+  // ?cat=제안 — 공지사항 「앱 업데이트」 맨 아래 '이런 기능이 있으면 좋겠어요'에서 (2026-11-15)
+  const [category, setCategory] = useState<(typeof CATEGORIES)[number]>(() => {
+    const c = params.get("cat");
+    return (CATEGORIES as readonly string[]).includes(c ?? "") ? (c as (typeof CATEGORIES)[number]) : "오류";
+  });
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);

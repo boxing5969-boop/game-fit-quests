@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDmSummary } from "@/hooks/useDm";
+import { useAppUpdates } from "@/hooks/useAppUpdates";
 import { useMenuLayout } from "@/hooks/useMenuLayout";
 import { useStrategyBadge } from "@/services/strategyService";
 import { useOfficeMe } from "@/services/officeService";
@@ -93,6 +94,11 @@ const Badge = ({ n }: { n: number }) =>
       {n > 99 ? "99+" : n}
     </span>
   ) : null;
+
+/** 숫자 없이 빨간 점 — 공지사항: 아직 안 본 앱 업데이트(2026-11-15 · 휴대폰 알림은 안 보냄) */
+const Dot = ({ label }: { label: string }) => (
+  <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-destructive ring-2 ring-card" aria-label={label} />
+);
 
 const AddTile = ({ size, label, onClick }: { size: number; label: string; onClick: () => void }) => (
   <button
@@ -169,6 +175,8 @@ const HomeMenuGrid = ({ variant = "card", onNavigate }: Props) => {
   const { data: officeMe } = useOfficeMe(staff);
   const office = (officeMe?.offices.length ?? 0) > 0;
   const officeLive = !!officeMe?.offices.some((o) => o.meeting);
+  // 공지사항 칸 — 아직 안 본 앱 업데이트가 있으면 빨간 점 (lib/appUpdates · 2026-11-15)
+  const { hasNew: updatesNew } = useAppUpdates();
 
   const viewer: MenuViewer = useMemo(
     () => ({
@@ -283,6 +291,7 @@ const HomeMenuGrid = ({ variant = "card", onNavigate }: Props) => {
         : path === "/office?tab=strategy"
           ? strategyBadge
           : 0;
+  const dotOf = (path: string) => path === "/notices" && updatesNew;
 
   const remove = (id: string) => {
     const prev = entries;
@@ -348,6 +357,7 @@ const HomeMenuGrid = ({ variant = "card", onNavigate }: Props) => {
     const inside = isFolder && e.items.some((m) => isActive(m.path));
     const isOpen = isFolder && open === e.id;
     const badge = isFolder ? e.items.reduce((n, m) => n + badgeOf(m.path), 0) : badgeOf(e.path);
+    const dot = badge === 0 && (isFolder ? e.items.some((m) => dotOf(m.path)) : dotOf(e.path));
     const strong = active || inside || isOpen;
     return (
       <motion.div
@@ -397,6 +407,7 @@ const HomeMenuGrid = ({ variant = "card", onNavigate }: Props) => {
               )}
             </span>
             <Badge n={badge} />
+            {dot && <Dot label="새 앱 업데이트" />}
           </span>
           <span
             className={cn(

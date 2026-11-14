@@ -4,14 +4,22 @@
  *   /notices      목록 — 고정 먼저 · 최신순, 우리 지점 공지 + 전 지점 공지(153OS 가 게시 중인 것만 보낸다)
  *   /notices/:id  한 글 — 153OS 공지 알림(notice:<id>)을 누르면 여기로
  * 글은 153OS 에만 있다 — Edge Function os-app-content(op notices · notice)가 그 회원 지점 것만 가져온다.
+ *
+ *   (2026-11-15 선릉역점 봄 회원 제안 · 대표님 「공지사항 안 '앱 업데이트' 칸」) 목록 위 두 칸 [지점 공지 | 앱 업데이트]
+ *   · 앱 업데이트 = src/data/appUpdates.ts(앱과 함께 배포 — 153OS 와 안 이어진 회원도 보인다) · components/notices/AppUpdatesList
+ *   · /notices?tab=updates 로 바로 · 아직 안 본 업데이트가 있으면 처음부터 그 칸(빨간 점 — 휴대폰 알림은 안 보낸다)
  */
-import { useNavigate, useParams } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ChevronRight, Megaphone, Pin } from "lucide-react";
 import { AppPage, PageHeader } from "@/components/ui/rankingup";
 import { OsBackButton, OsChip, OsEmpty, OsErrorState, OsLoading } from "@/components/os/OsParts";
+import AppUpdatesList from "@/components/notices/AppUpdatesList";
+import { useAppUpdates } from "@/hooks/useAppUpdates";
 import { useOsNotice, useOsNotices } from "@/services/osContentService";
 import { dmDayLabel, dmListTime } from "@/lib/dmTime";
 import type { OsNotice } from "@/lib/osContent";
+import { cn } from "@/lib/utils";
 
 function NoticeChips({ n }: { n: Pick<OsNotice, "pinned" | "scope"> }) {
   if (!n.pinned && n.scope !== "all") return null;
@@ -107,6 +115,55 @@ function NoticeDetail({ id }: { id: string }) {
   );
 }
 
+type NoticeTab = "notices" | "updates";
+const TABS: readonly (readonly [NoticeTab, string])[] = [
+  ["notices", "지점 공지"],
+  ["updates", "앱 업데이트"],
+];
+
+/** 목록 — [지점 공지 | 앱 업데이트] */
+function NoticeTabs() {
+  const [params, setParams] = useSearchParams();
+  const { hasNew } = useAppUpdates();
+  // 처음 칸은 한 번만 정한다 — 앱 업데이트 칸을 열면 본 것으로 남아 빨간 점이 꺼지기 때문
+  const [tab, setTab] = useState<NoticeTab>(() => {
+    const q = params.get("tab");
+    return q === "updates" || (q !== "notices" && hasNew) ? "updates" : "notices";
+  });
+  const pick = (t: NoticeTab) => {
+    setTab(t);
+    const next = new URLSearchParams(params);
+    if (t === "updates") next.set("tab", "updates");
+    else next.delete("tab");
+    setParams(next, { replace: true });
+  };
+  return (
+    <>
+      <div className="mb-4 grid grid-cols-2 gap-1 rounded-2xl bg-secondary p-1" role="tablist" aria-label="공지사항">
+        {TABS.map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={tab === key}
+            onClick={() => pick(key)}
+            className={cn(
+              "flex h-10 items-center justify-center gap-1.5 rounded-xl text-label font-bold transition-colors",
+              tab === key ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground",
+            )}
+          >
+            {label}
+            {key === "updates" && hasNew && tab !== "updates" && (
+              <span className="h-2 w-2 rounded-full bg-destructive" aria-label="새 업데이트" />
+            )}
+          </button>
+        ))}
+      </div>
+      {tab === "updates" ? <AppUpdatesList /> : <NoticeList />}
+    </>
+  );
+}
+
 const NoticesPage = () => {
   const { id } = useParams<{ id?: string }>();
   return (
@@ -119,7 +176,7 @@ const NoticesPage = () => {
         />
       }
     >
-      {id ? <NoticeDetail id={id} /> : <NoticeList />}
+      {id ? <NoticeDetail id={id} /> : <NoticeTabs />}
     </AppPage>
   );
 };

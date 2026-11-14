@@ -13,6 +13,7 @@ import { Bell, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { AppPage, PageHeader } from "@/components/ui/rankingup";
 import PushOptInCard from "@/components/notifications/PushOptInCard";
 import { useMarkNotificationsRead, useMyNotifications, useUnreadNotificationCount } from "@/hooks/useNotifications";
+import { useAppUpdates } from "@/hooks/useAppUpdates";
 import { groupNotificationsByDay, notificationTime, type AppNotification } from "@/lib/notifications";
 import { cn } from "@/lib/utils";
 
@@ -73,6 +74,7 @@ const NotificationRow = ({
 
 const NotificationsPage = () => {
   const navigate = useNavigate();
+  const { hasNew: updatesNew } = useAppUpdates();
   const list = useMyNotifications();
   const unread = useUnreadNotificationCount();
   const { mutate: markAllRead } = useMarkNotificationsRead();
@@ -129,10 +131,13 @@ const NotificationsPage = () => {
           rightAction={
             <button
               type="button"
-              onClick={() => navigate("/notices")}
-              className="flex h-9 items-center rounded-full bg-secondary px-3.5 text-label font-bold text-secondary-foreground transition-transform active:scale-95"
+              onClick={() => navigate(updatesNew ? "/notices?tab=updates" : "/notices")}
+              aria-label={updatesNew ? "공지사항 — 새 앱 업데이트" : undefined}
+              className="relative flex h-9 items-center rounded-full bg-secondary px-3.5 text-label font-bold text-secondary-foreground transition-transform active:scale-95"
             >
               공지사항
+              {/* 아직 안 본 앱 업데이트 — 빨간 점만(휴대폰 알림 없음 · 2026-11-15) */}
+              {updatesNew && <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-background" aria-hidden />}
             </button>
           }
         />
