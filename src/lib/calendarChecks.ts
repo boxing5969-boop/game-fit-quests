@@ -11,6 +11,8 @@
  *     여기서 읽는다(글 · 계산은 lib/calendarTogether.ts).
  *   · (3-4 · 2026-11-14) 나만의 체크 '주 n번'(week_goal — 아무 날이나 · 금색 별에 세지 않음 = flex) · get_my_calendar 'todos'
  *     (보이는 날짜가 마감인 할 일) 도 여기서 읽는다(습관 · 할 일 글 · 계산은 lib/memberHabits.ts).
+ *   · (3-5 · 2026-11-14) get_my_calendar 'mine'(내 일정 · 기념일) · 'birthday'(내 생일 MM-DD) · 'league'(리그) · 'view'(켜고 끄기 ·
+ *     리그 테마) · 한 줄 'photos'(다이어리 사진 3장)도 여기서 읽는다(글 · 계산은 lib/memberEvents.ts) · 기분 스티커 8 → 20.
  */
 import { weekdayOfYmd } from "@/lib/promise153";
 import { normalizeCalls, normalizeEvents, type CalCall, type CalEvent } from "@/lib/calendarEvents";
@@ -26,6 +28,7 @@ import {
 } from "@/lib/calendarMarks";
 import { RECAP_PREF_OFF, normalizePartner, normalizeRecapPref, type CalPartner, type CalRecapPref } from "@/lib/calendarTogether";
 import { WEEK_GOAL_MAX, normalizeCalTodos, type CalTodo } from "@/lib/memberHabits";
+import { CAL_VIEW_DEFAULT, normalizeCalView, normalizeMyEvents, type CalView, type MyEvent } from "@/lib/memberEvents";
 
 const YMD = /^\d{4}-\d{2}-\d{2}$/;
 const n = (v: number) => v.toLocaleString("ko-KR");
@@ -39,8 +42,29 @@ export const CHECK_EDIT_DAYS = 6;
 export const CHECK_UNITS = ["번", "분", "라운드", "세트", "km", "개"] as const;
 export type CheckUnit = (typeof CHECK_UNITS)[number];
 
-export type StickerKey = "strong" | "fire" | "proud" | "mitt" | "sweat" | "tired" | "hurt" | "rest";
-/** 그날 기분 스티커 — 글자 속 이모지는 그릴 때 153 입체 아이콘이 된다(lib/emoji3d) */
+export type StickerKey =
+  | "strong"
+  | "fire"
+  | "proud"
+  | "mitt"
+  | "sweat"
+  | "tired"
+  | "hurt"
+  | "rest"
+  | "best"
+  | "party"
+  | "energy"
+  | "champ"
+  | "focus"
+  | "clap"
+  | "laugh"
+  | "stretch"
+  | "rope"
+  | "together"
+  | "perfect"
+  | "thanks";
+/** 그날 기분 스티커 — 글자 속 이모지는 그릴 때 153 입체 아이콘이 된다(lib/emoji3d · 표에 있는 이모지만 고른다)
+ *  (3-5) 8 → 20 · 서버 set_my_day_sticker · 제약 member_check_days_sticker_chk 와 같은 목록 · 처음 8개가 늘 보이는 줄 */
 export const STICKERS: readonly { key: StickerKey; emoji: string; label: string }[] = [
   { key: "strong", emoji: "💪", label: "좋음" },
   { key: "fire", emoji: "🔥", label: "불태움" },
@@ -50,7 +74,21 @@ export const STICKERS: readonly { key: StickerKey; emoji: string; label: string 
   { key: "tired", emoji: "😮‍💨", label: "피곤" },
   { key: "hurt", emoji: "🤕", label: "통증" },
   { key: "rest", emoji: "😴", label: "쉬는 날" },
+  { key: "best", emoji: "👍", label: "최고" },
+  { key: "party", emoji: "🎉", label: "신남" },
+  { key: "energy", emoji: "⚡", label: "에너지" },
+  { key: "champ", emoji: "🏆", label: "챔피언" },
+  { key: "focus", emoji: "🎯", label: "집중" },
+  { key: "clap", emoji: "👏", label: "박수" },
+  { key: "laugh", emoji: "😂", label: "즐거움" },
+  { key: "stretch", emoji: "🧘", label: "스트레칭" },
+  { key: "rope", emoji: "🪢", label: "줄넘기" },
+  { key: "together", emoji: "🤝", label: "함께" },
+  { key: "perfect", emoji: "💯", label: "완벽" },
+  { key: "thanks", emoji: "🙏", label: "감사" },
 ];
+/** 늘 보이는 첫 줄 (나머지는 '스티커 더 보기') */
+export const STICKER_FIRST_ROW = 8;
 const STICKER_MAP = new Map(STICKERS.map((s) => [s.key, s]));
 export const stickerOf = (key: string | null | undefined) => (key ? STICKER_MAP.get(key as StickerKey) ?? null : null);
 
@@ -82,6 +120,8 @@ export interface JournalLine {
   content: string;
   mood: string | null;
   photoUrl: string | null;
+  /** (3-5) 다이어리 사진 — 3장까지 (첫 장 = photoUrl · 없으면 photoUrl 한 장으로 본다) */
+  photos?: string[];
   visibility: JournalVisibility;
   at: string;
 }
@@ -122,6 +162,14 @@ export interface CalState {
   partner: CalPartner | null;
   /** (3-4) 보이는 날짜가 마감인 할 일 */
   todos: CalTodo[];
+  /** (3-5) 보이는 날짜에 걸친 내 일정 · 기념일 (반복 · 음력은 lib/memberEvents 가 날마다 펼친다) */
+  mine: MyEvent[];
+  /** (3-5) 내 생일 'MM-DD' (모르면 null) */
+  birthday: string | null;
+  /** (3-5) 내 리그 white · blue · red · black (리그 테마 도장 색) */
+  league: string | null;
+  /** (3-5) 캘린더 켜고 끄기 · 리그 테마 (계정마다) */
+  view: CalView;
 }
 
 export const CAL_OFF: CalState = {
@@ -139,6 +187,10 @@ export const CAL_OFF: CalState = {
   recap: RECAP_PREF_OFF,
   partner: null,
   todos: [],
+  mine: [],
+  birthday: null,
+  league: null,
+  view: CAL_VIEW_DEFAULT,
 };
 
 type Raw = Record<string, unknown>;
@@ -182,11 +234,14 @@ function normalizeJournal(raw: unknown): JournalLine | null {
   const content = str(r?.content);
   if (!r || !id || !content) return null;
   const vis = str(r.visibility);
+  const photoUrl = str(r.photo_url);
+  const photos = Array.isArray(r.photos) ? [...new Set(r.photos.map(str).filter((x): x is string => !!x))].slice(0, 3) : [];
   return {
     id,
     content,
     mood: str(r.mood),
-    photoUrl: str(r.photo_url),
+    photoUrl: photoUrl ?? photos[0] ?? null,
+    photos: photos.length ? photos : photoUrl ? [photoUrl] : [],
     visibility: vis === "partners" || vis === "private" ? vis : "branch",
     at: str(r.at) ?? "",
   };
@@ -228,6 +283,10 @@ export function normalizeCalendar(raw: unknown): CalState {
     recap: normalizeRecapPref(r.recap),
     partner: normalizePartner(r.partner),
     todos: normalizeCalTodos(r.todos),
+    mine: normalizeMyEvents(r.mine),
+    birthday: typeof r.birthday === "string" && /^\d{2}-\d{2}$/.test(r.birthday) ? r.birthday : null,
+    league: str(r.league),
+    view: normalizeCalView(r.view),
   };
 }
 
@@ -401,3 +460,6 @@ export function checkItemPayload(d: CheckItemDraft, id?: string | null) {
 
 /** (3-4) 저장 뒤 주 n번 — 'goal' 이면 그 수, 'daily' · 'days' 면 비우기(null). 예전 항목에 원래 없었으면 부르지 않아도 된다 */
 export const checkGoalOf = (d: CheckItemDraft): number | null => (scheduleOf(d) === "goal" ? (d.goal ?? null) : null);
+
+/** (3-5) 한 줄의 사진들 — photos 가 없으면(예전 자료) photoUrl 한 장 */
+export const journalPhotos = (j: Pick<JournalLine, "photoUrl" | "photos">): string[] => (j.photos?.length ? j.photos : j.photoUrl ? [j.photoUrl] : []);

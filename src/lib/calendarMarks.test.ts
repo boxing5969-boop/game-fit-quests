@@ -201,5 +201,9 @@ describe("밀기 · 길게 누르기 · 알림 링크", () => {
     expect(focusDayOf("2026-02-01", T, "2026-02-02")).toBe("2026-02-01");
     expect(focusDayOf(null, T, null)).toBeNull();
     expect(focusDayOf("13-11-2026", T, null)).toBeNull();
+    // (3-5) 내 일정 알림 링크 — 앞날도 aheadDays 안이면
+    expect(focusDayOf("2026-11-20", T, "2026-02-02", 366)).toBe("2026-11-20");
+    expect(focusDayOf("2028-01-01", T, "2026-02-02", 366)).toBeNull();
+    expect(focusDayOf("2026-11-20", T, "2026-02-02")).toBeNull();
   });
 });

@@ -19,6 +19,7 @@ import {
   VISIBILITY_LABEL,
   VISIBILITY_STAFF_NOTE,
   setJournalEntryOptions,
+  setJournalEntryPhotos,
   uploadCommunityPhoto,
   type JournalVisibility,
 } from "@/services/communityFeedService";
@@ -55,6 +56,8 @@ interface Props {
   defaultVisibility?: JournalVisibility;
   /** 공개 범위 기억 칸 — 운동 달력은 'cal'(커뮤니티 글쓰기와 따로 기억) */
   rememberKey?: string;
+  /** (캘린더 3-5) 사진 몇 장까지 — 운동 달력 다이어리는 3장(첫 장 = 피드 사진 · 모두 = set_journal_entry_photos). 없으면 한 장 */
+  maxPhotos?: number;
 }
 
 function conditionToMoodLabel(c: BoxingConditionType | null): string | null {
@@ -106,7 +109,7 @@ function saveLastVisibility(uid: string | undefined, v: JournalVisibility, slot?
   }
 }
 
-const ChampionJournalSheet = ({ open, onClose, defaultVisibility = "branch", rememberKey }: Props) => {
+const ChampionJournalSheet = ({ open, onClose, defaultVisibility = "branch", rememberKey, maxPhotos = 1 }: Props) => {
   const submit = useSubmitChampionJournalEntry();
   const submitCondition = useSubmitBoxingCondition();
   // open=false 일 때는 SELECT 가 발사되지 않도록 enabled gate.
@@ -126,9 +129,16 @@ const ChampionJournalSheet = ({ open, onClose, defaultVisibility = "branch", rem
   const { user } = useAuth();
   const qc = useQueryClient();
   const [visibility, setVisibility] = useState<JournalVisibility>("branch");
-  const [photo, setPhoto] = useState<File | null>(null);
-  const photoPreview = useMemo(() => (photo ? URL.createObjectURL(photo) : null), [photo]);
-  useEffect(() => () => { if (photoPreview) URL.revokeObjectURL(photoPreview); }, [photoPreview]);
+  // (캘린더 3-5) 사진 여러 장 — 운동 달력 다이어리는 3장까지, 그 밖은 예전처럼 한 장
+  const photoMax = Math.max(1, Math.min(3, maxPhotos));
+  const [photos, setPhotos] = useState<File[]>([]);
+  const photoPreviews = useMemo(() => photos.map((f) => URL.createObjectURL(f)), [photos]);
+  useEffect(() => () => photoPreviews.forEach((u) => URL.revokeObjectURL(u)), [photoPreviews]);
+  const addPhotos = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const picked = Array.from(files);
+    setPhotos((prev) => (photoMax === 1 ? picked.slice(0, 1) : [...prev, ...picked].slice(0, photoMax)));
+  };
 
   useEffect(() => {
     if (open) {
@@ -140,7 +150,7 @@ const ChampionJournalSheet = ({ open, onClose, defaultVisibility = "branch", rem
       setResult(null);
       setPending(false);
       setVisibility(readLastVisibility(user?.id, rememberKey, defaultVisibility));
-      setPhoto(null);
+      setPhotos([]);
     }
   }, [open, todayCondition?.condition_type, todayCondition?.pain_area, user?.id, rememberKey, defaultVisibility]);
 
@@ -167,7 +177,9 @@ const ChampionJournalSheet = ({ open, onClose, defaultVisibility = "branch", rem
       // 일기와 컨디션을 함께 저장. 일기는 필수 결과(result) 라 await 필수.
       // 컨디션은 오늘 첫 기록일 때만 새로 저장 (중복 방지).
       // 사진은 글보다 먼저 올린다 — 실패하면 글도 안 올라가게 (사진 없는 글이 올라가 버리는 일 방지)
-      const photoUrl = photo && user ? await uploadCommunityPhoto(user.id, photo) : null;
+      const photoUrls: string[] = [];
+      if (user) for (const f of photos) photoUrls.push(await uploadCommunityPhoto(user.id, f));
+      const photoUrl = photoUrls[0] ?? null;
       // 공개 범위는 글과 함께 저장된다 (전체 공개로 먼저 올라갔다 바뀌는 일 없음 — 2026-10-18)
       const data = await submit.mutateAsync({
         prompt,
@@ -179,6 +191,14 @@ const ChampionJournalSheet = ({ open, onClose, defaultVisibility = "branch", rem
       if (photoUrl) {
         try {
           await setJournalEntryOptions(data.entry_id, visibility, photoUrl);
+          // (캘린더 3-5) 두 장 넘으면 모두 — 서버 함수가 없는 DB 면 첫 장만 남는다
+          if (photoUrls.length > 1) {
+            try {
+              await setJournalEntryPhotos(data.entry_id, photoUrls);
+            } catch {
+              toast("첫 사진만 붙었어요 · 글은 올라갔어요");
+            }
+          }
         } catch {
           toast.error("사진을 붙이지 못했어요. 글은 올라갔어요.");
         }
@@ -471,24 +491,47 @@ const ChampionJournalSheet = ({ open, onClose, defaultVisibility = "branch", rem
       {/* 사진 한 장 + 공개 범위 (153 커뮤니티 개편 2026-10-15) */}
       <div className="space-y-2 rounded-card border border-border bg-card p-3">
         <div className="flex items-center gap-2">
-          <label className="flex cursor-pointer items-center gap-1.5 rounded-pill border border-border px-3 py-1.5 text-label font-bold text-foreground active:scale-[0.98]">
-            <ImagePlus className="h-4 w-4 text-primary" />
-            {photo ? "사진 바꾸기" : "사진 한 장 (선택)"}
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
-            />
-          </label>
-          {photo && (
-            <button type="button" onClick={() => setPhoto(null)} className="h-9 px-2 text-label font-bold text-muted-foreground underline">
+          {(photoMax === 1 || photos.length < photoMax) && (
+            <label className="flex cursor-pointer items-center gap-1.5 rounded-pill border border-border px-3 py-1.5 text-label font-bold text-foreground active:scale-[0.98]">
+              <ImagePlus className="h-4 w-4 text-primary" />
+              {photoMax === 1 ? (photos.length ? "사진 바꾸기" : "사진 한 장 (선택)") : photos.length ? `사진 더하기 ${photos.length}/${photoMax}` : `사진 ${photoMax}장까지 (선택)`}
+              <input
+                type="file"
+                accept="image/*"
+                multiple={photoMax > 1}
+                className="hidden"
+                onChange={(e) => {
+                  addPhotos(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+          )}
+          {photoMax === 1 && photos.length > 0 && (
+            <button type="button" onClick={() => setPhotos([])} className="h-9 px-2 text-label font-bold text-muted-foreground underline">
               빼기
             </button>
           )}
         </div>
-        {photoPreview && (
-          <img src={photoPreview} alt="올릴 사진 미리보기" className="max-h-44 w-full rounded-xl object-cover" />
+        {photoMax === 1 && photoPreviews[0] && (
+          <img src={photoPreviews[0]} alt="올릴 사진 미리보기" className="max-h-44 w-full rounded-xl object-cover" />
+        )}
+        {photoMax > 1 && photoPreviews.length > 0 && (
+          <div className="flex gap-2">
+            {photoPreviews.map((u, i) => (
+              <div key={u} className="relative">
+                <img src={u} alt={`올릴 사진 ${i + 1}`} className="h-24 w-24 rounded-xl object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setPhotos((prev) => prev.filter((_, j) => j !== i))}
+                  aria-label={`사진 ${i + 1} 빼기`}
+                  className="absolute -right-1.5 -top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-foreground text-background shadow-elev-1"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
         )}
         {/* 공개 범위 3가지 (2026-10-18) — 누가 보는지 한 줄로 바로 보여 준다 */}
         <div>

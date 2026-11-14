@@ -33,6 +33,11 @@
  *   · 캘린더 3-1단계 (2026-11-13 대표님 「추천대로 3-1부터」 · 내 기록에서만): 약속 시트 '늘 보기(구독)' + '한 번 받기' ·
  *     나만의 체크 시트 맨 아래 '휴대폰 캘린더에서 늘 보기' → CalendarFeedSheet(kind member — 약속 · 153 일정 · D-day 구독 주소).
  *     서버에 기능이 없으면(DB 적용 전) 두 입구 모두 예전 그대로. 카드에는 아무것도 더하지 않았다(시트 안에서만).
+ *   · 캘린더 3-5단계 (2026-11-14 대표님 「진행하자」 · 같은 자료 get_my_calendar 의 mine · birthday · league · view):
+ *     칸 아래 점 = 내 일정 색(2개까지) · 내 생일(장미색) · 공휴일 = 빨간 날짜 · 리그 테마면 출석 도장이 리그 색 ·
+ *     '이날은 쉬어요' 날은 휴관일처럼 약속 점선 · 약속한 날 셈 · 체육관 체크에서 뺀다 · 펼친 달력 맨 위 [달력 · 목록 · 한 해] +
+ *     찾기 · 보일 것(켜고 끄기 · 리그 테마) · 내 일정이 있어 앞으로 12달까지 넘겨 본다. 접힌 주 보기(홈 첫 화면)의 줄 수는 그대로.
+ *     글 · 계산은 lib/memberEvents.ts · lib/calendarViews.ts · 시트 · 보기는 누를 때 받는 조각.
  *   날짜 계산은 lib/attendanceCalendar.ts (주는 월요일 시작).
  */
 import {
@@ -50,7 +55,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ChevronDown, ChevronLeft, ChevronRight, Handshake, Star } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Handshake, Search, SlidersHorizontal, Star } from "lucide-react";
 import {
   WEEKDAY_KO,
   dayLabel,
@@ -85,6 +90,10 @@ import {
   type CalAct,
 } from "@/lib/calendarMarks";
 import { albumOf, isTogetherDay, partnerPromiseLine, renewalLine, weekRecap, type CalPartner } from "@/lib/calendarTogether";
+import { holidayOn } from "@/lib/krHolidays";
+import { birthdayOn, layerOn, leagueStampOf, myEventHex, myEventsOn, restDaySet, type MyEvent } from "@/lib/memberEvents";
+import { listRange } from "@/lib/calendarViews";
+import type { MyEventTarget } from "@/components/attendance/MyEventSheet";
 import { useMyPromise } from "@/services/promiseService";
 import { CAL2_KEY, useMyCalendar, useSetCheckDone, useSetDaySticker, useSetTodoDone } from "@/services/calendarCheckService";
 import { useCalendarFeed } from "@/services/calendarFeedService";
@@ -103,6 +112,23 @@ const QuickDaySheet = lazy(() => import("@/components/attendance/QuickDaySheet")
 const MonthCardSheet = lazy(() => import("@/components/attendance/MonthCardSheet"));
 const AlbumSheet = lazy(() => import("@/components/attendance/AlbumSheet"));
 const CalendarFeedSheet = lazy(() => import("@/components/calendar/CalendarFeedSheet"));
+// (3-5) 내 일정 · 찾기 · 보일 것 · 목록 · 한 해 — 누를 때만
+const MyEventSheet = lazy(() => import("@/components/attendance/MyEventSheet"));
+const CalendarSearchSheet = lazy(() => import("@/components/attendance/CalendarSearchSheet"));
+const CalendarViewSheet = lazy(() => import("@/components/attendance/CalendarViewSheet"));
+const CalendarListView = lazy(() => import("@/components/attendance/CalendarListView"));
+const CalendarYearView = lazy(() => import("@/components/attendance/CalendarYearView"));
+
+/** (3-5) 펼친 달력 보기 */
+type CalMode = "month" | "list" | "year";
+const CAL_MODES: ReadonlyArray<{ key: CalMode; label: string }> = [
+  { key: "month", label: "달력" },
+  { key: "list", label: "목록" },
+  { key: "year", label: "한 해" },
+];
+/** (3-5) 칸 아래 내 일정 점 — 2개까지 */
+const MINE_DOTS = 2;
+const DOT_BIRTHDAY = "bg-rose-500";
 
 const n = (v: number) => v.toLocaleString("ko-KR");
 
@@ -149,6 +175,14 @@ interface CellProps {
   dday?: boolean;
   /** (2-4) 쌍도장 — 운동 짝꿍과 둘 다 온 날 (도장 뒤에 하늘색 도장이 겹친다) */
   together?: boolean;
+  /** (3-5) 칸 아래 내 일정 점 색 (2개까지) */
+  mine?: readonly string[];
+  /** (3-5) 공휴일 — 빨간 날짜 */
+  holiday?: string | null;
+  /** (3-5) 내 생일 — 장미색 점 */
+  birthday?: boolean;
+  /** (3-5) 리그 테마 — 출석 도장 색 */
+  stampHex?: string | null;
   /** (2-3) 길게 누르기 — 바로 넣기 (없으면 길게 눌러도 아무 일 없음) */
   onLongPress?: (day: string) => void;
   picked: boolean;
@@ -231,6 +265,10 @@ const DayCell = ({
   note = false,
   dday = false,
   together = false,
+  mine = [],
+  holiday = null,
+  birthday = false,
+  stampHex = null,
   onLongPress,
   picked,
   onPick,
@@ -240,7 +278,7 @@ const DayCell = ({
   const lp = useLongPress(day, faint ? undefined : onLongPress);
   const base = "flex h-10 w-10 items-center justify-center rounded-full text-label tabular-nums";
   const gold = on && !!moment?.gold;
-  const label = `${dayLabel(day)}${on ? " 출석" : ""}${on && together ? " · 짝꿍과 같이" : ""}${on && moment ? ` · ${moment.text}` : ""}${!on && promised ? " · 약속한 날" : ""}${star ? " · 금색 별" : ""}${act ? ` · ${actShort(act)}` : ""}${note ? " · 코치 한마디" : ""}${dday ? " · D-day" : ""}${dot === "closed" ? " · 휴관" : dot === "event" ? " · 153 일정" : ""}${call ? " · 같이 운동" : ""}${isToday ? " · 오늘" : ""}`;
+  const label = `${dayLabel(day)}${on ? " 출석" : ""}${on && together ? " · 짝꿍과 같이" : ""}${on && moment ? ` · ${moment.text}` : ""}${!on && promised ? " · 약속한 날" : ""}${star ? " · 금색 별" : ""}${act ? ` · ${actShort(act)}` : ""}${note ? " · 코치 한마디" : ""}${dday ? " · D-day" : ""}${dot === "closed" ? " · 휴관" : dot === "event" ? " · 153 일정" : ""}${call ? " · 같이 운동" : ""}${mine.length ? ` · 내 일정 ${mine.length}` : ""}${birthday ? " · 내 생일" : ""}${holiday ? ` · ${holiday}` : ""}${isToday ? " · 오늘" : ""}`;
   const pickedRing = picked && "ring-2 ring-foreground ring-offset-2 ring-offset-card";
   // 길게 누를 때 아이폰 글자 고르기 · 메뉴가 뜨지 않게
   const pressCls = onLongPress ? "select-none [-webkit-touch-callout:none]" : "";
@@ -277,8 +315,12 @@ const DayCell = ({
           {sticker}
         </span>
       )}
-      {(dot || call || dday) && (
+      {(dot || call || dday || mine.length > 0 || birthday) && (
         <span className="pointer-events-none absolute -bottom-2 left-1/2 flex -translate-x-1/2 gap-0.5" aria-hidden>
+          {mine.slice(0, MINE_DOTS).map((hex, i) => (
+            <span key={`m${i}`} className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: hex }} />
+          ))}
+          {birthday && <span className={cn("h-1.5 w-1.5 rounded-full", DOT_BIRTHDAY)} />}
           {dot && <span className={cn("h-1.5 w-1.5 rounded-full", dot === "closed" ? DOT_CLOSED : DOT_EVENT)} />}
           {call && <span className={cn("h-1.5 w-1.5 rounded-full", DOT_CALL)} />}
           {dday && <span className={cn("h-1.5 w-1.5 rounded-full", DOT_DDAY)} />}
@@ -292,10 +334,12 @@ const DayCell = ({
       promised && day >= today
         ? "border-2 border-dashed border-primary font-bold text-primary"
         : isToday
-          ? "font-bold text-foreground ring-2 ring-primary/60"
-          : day > today
-            ? "text-muted-foreground/60"
-            : "text-foreground",
+          ? cn("font-bold ring-2 ring-primary/60", holiday ? "text-rose-600 dark:text-rose-300" : "text-foreground")
+          : holiday
+            ? cn("font-bold text-rose-600 dark:text-rose-300", day > today && "opacity-80")
+            : day > today
+              ? "text-muted-foreground/60"
+              : "text-foreground",
       pickable && pickedRing,
     );
     return (
@@ -334,9 +378,10 @@ const DayCell = ({
           base,
           pressCls,
           "relative font-extrabold transition-transform active:scale-95",
-          gold ? "bg-reward text-reward-foreground" : "bg-primary text-primary-foreground",
+          gold ? "bg-reward text-reward-foreground" : stampHex ? "text-white" : "bg-primary text-primary-foreground",
           pickedRing,
         )}
+        style={!gold && stampHex ? { backgroundColor: stampHex } : undefined}
       >
         {num}
       </button>
@@ -453,7 +498,7 @@ export interface WorkoutCalendarCardProps {
   renewalEnd?: string | null;
 }
 
-type SheetKey = "items" | "line" | "cheer" | "dday" | "quick" | "card" | "album" | "feed";
+type SheetKey = "items" | "line" | "cheer" | "dday" | "quick" | "card" | "album" | "feed" | "event" | "search" | "view";
 
 const WorkoutCalendarCard = ({
   data,
@@ -474,6 +519,10 @@ const WorkoutCalendarCard = ({
   const [month, setMonth] = useState(() => monthOf(today));
   const [slide, setSlide] = useState<1 | -1>(1);
   const [picked, setPicked] = useState<string | null>(null);
+  // (3-5) 펼친 달력 보기 — 달력 · 목록 · 한 해
+  const [mode, setMode] = useState<CalMode>("month");
+  const [year, setYear] = useState(() => Number(today.slice(0, 4)));
+  const [eventTarget, setEventTarget] = useState<MyEventTarget | null>(null);
   const byDay = useMemo(() => attendanceByDay(data.list), [data.list]);
   const baseMoments = useMemo(() => dayMoments(data, today), [data, today]);
   const sectionRef = useRef<HTMLElement | null>(null);
@@ -493,11 +542,28 @@ const WorkoutCalendarCard = ({
   const range = withChecks ? calendarRange(visibleDays) : null;
   const calQ = useMyCalendar(range?.from ?? null, range?.to ?? null, withChecks);
   const cal = withChecks && calQ.data?.on ? calQ.data : null;
+  // (3-5) 내 일정이 있어 앞으로 12달 · 두 달 전까지 넘겨 본다 (내 일정을 쓸 수 있는 계정만)
+  const calBounds = cal
+    ? { min: [bounds.min, shiftMonth(monthOf(today), -2)].sort()[0], max: shiftMonth(monthOf(today), 12) }
+    : bounds;
+  // (3-5) 켜고 끄기 · 리그 테마
+  const view = cal?.view ?? null;
+  const on153 = !view || layerOn(view, "153");
+  const onMine = !!view && layerOn(view, "mine");
+  const onHoliday = !view || layerOn(view, "holiday");
+  const onMarks = !view || layerOn(view, "marks");
+  const stamp = cal ? leagueStampOf(cal.league, cal.view) : null;
   // (2-2) 153 일정 · 저요 한 모집 — 휴관일은 약속한 날로 치지 않고 체육관 체크도 뺀다
   const closed = useMemo(() => (cal ? closedDaySet(cal.events) : new Set<string>()), [cal]);
-  const promisedFor = (d: string) => !byDay.has(d) && d >= today && isPromisedDay(promise, d) && !closed.has(d);
-  const dotFor = (d: string) => (cal ? eventDot(cal.events, d) : null);
-  const callFor = (d: string) => !!cal && callsOn(cal.calls, d).length > 0;
+  // (3-5) '이날은 쉬어요' 날 — 휴관일과 같은 곳에서 뺀다(약속 점선 · 약속한 날 셈 · 체육관 체크)
+  const rest = useMemo(() => (cal ? restDaySet(cal.mine, visibleDays) : new Set<string>()), [cal, visibleDays]);
+  const skip = useMemo(() => new Set([...closed, ...rest]), [closed, rest]);
+  const promisedFor = (d: string) => !byDay.has(d) && d >= today && isPromisedDay(promise, d) && !skip.has(d);
+  const dotFor = (d: string) => (cal && on153 ? eventDot(cal.events, d) : null);
+  const callFor = (d: string) => !!cal && on153 && callsOn(cal.calls, d).length > 0;
+  const mineFor = (d: string): string[] => (cal && onMine ? myEventsOn(cal.mine, d).map(myEventHex) : []);
+  const holidayFor = (d: string) => (onHoliday ? holidayOn(d) : null);
+  const birthdayFor = (d: string) => !!cal && onMine && birthdayOn(cal.birthday, d);
   const hasAgenda = (d: string) => !!cal && (eventsOn(cal.events, d).length > 0 || callsOn(cal.calls, d).length > 0);
   // (2-4) 운동 짝꿍 — 둘 다 온 날 = 쌍도장
   const partner = cal?.partner ?? null;
@@ -510,10 +576,16 @@ const WorkoutCalendarCard = ({
       (d) => d >= today && (ddaysOn(cal.ddays, d, today).length > 0 || (!byDay.has(d) && !!annivOn(cal.anniv, d))),
     );
     const together = visibleDays.some((d) => byDay.has(d) && isTogetherDay(cal.partner, d));
+    const show153 = layerOn(cal.view, "153");
+    const showMine = layerOn(cal.view, "mine");
+    const mine = showMine && visibleDays.some((d) => myEventsOn(cal.mine, d).length > 0);
+    const bday = showMine && visibleDays.some((d) => birthdayOn(cal.birthday, d));
     const out = [
-      ...(dots.has("event") ? [{ cls: DOT_EVENT, label: "153 일정" }] : []),
-      ...(dots.has("closed") ? [{ cls: DOT_CLOSED, label: "휴관" }] : []),
-      ...(calls ? [{ cls: DOT_CALL, label: "같이 운동" }] : []),
+      ...(mine ? [{ cls: "bg-[#3F51B5]", label: "내 일정" }] : []),
+      ...(bday ? [{ cls: DOT_BIRTHDAY, label: "내 생일" }] : []),
+      ...(show153 && dots.has("event") ? [{ cls: DOT_EVENT, label: "153 일정" }] : []),
+      ...(show153 && dots.has("closed") ? [{ cls: DOT_CLOSED, label: "휴관" }] : []),
+      ...(show153 && calls ? [{ cls: DOT_CALL, label: "같이 운동" }] : []),
       ...(dday ? [{ cls: DOT_DDAY, label: "D-day" }] : []),
       ...(together ? [{ cls: "bg-sky-300 dark:bg-sky-500/70", label: "짝꿍과 같이" }] : []),
     ];
@@ -538,6 +610,9 @@ const WorkoutCalendarCard = ({
     card: false,
     album: false,
     feed: false,
+    event: false,
+    search: false,
+    view: false,
   });
   const openSheet = (k: SheetKey, day: string | null = null) => {
     setMounted((m) => (m[k] ? m : { ...m, [k]: true }));
@@ -553,12 +628,14 @@ const WorkoutCalendarCard = ({
     () => (cal ? withAnnivMoments(baseMoments, cal.anniv, (d) => byDay.has(d)) : baseMoments),
     [baseMoments, cal, byDay],
   );
-  const starOf = (d: string) => !!cal && d <= today && isStarDay(dayChecks(d, byDay.has(d), cal.days.get(d), cal.items, closed.has(d)));
-  const stickerFor = (d: string) => (cal ? stickerOf(cal.days.get(d)?.sticker)?.emoji ?? null : null);
+  const starOf = (d: string) => !!cal && d <= today && isStarDay(dayChecks(d, byDay.has(d), cal.days.get(d), cal.items, closed.has(d) || rest.has(d)));
+  const stickerFor = (d: string) => (cal && onMarks ? stickerOf(cal.days.get(d)?.sticker)?.emoji ?? null : null);
   // (2-3) 앞날도 누를 수 있다 — 그날 일정 · D-day · '이 날을 목표일로'
   const pickableFor = (d: string) => !!cal && (d <= today || hasAgenda(d) || quickModeOf(d, today) === "future");
-  const actFor = (d: string) => (cal ? topActOn(cal.acts, d) : null);
-  const noteFor = (d: string) => !!cal && notesOn(cal.notes, d).length > 0;
+  const actFor = (d: string) => (cal && onMarks ? topActOn(cal.acts, d) : null);
+  const noteFor = (d: string) => !!cal && onMarks && notesOn(cal.notes, d).length > 0;
+  // 금색 별도 '운동 표시'를 끄면 칸에서 숨긴다(그날 카드에는 그대로)
+  const starFor = (d: string) => onMarks && starOf(d);
   const ddayFor = (d: string) =>
     !!cal && (ddaysOn(cal.ddays, d, today).length > 0 || (d >= today && !byDay.has(d) && !!annivOn(cal.anniv, d)));
   const nextD = cal ? nextDday(cal.ddays, today) : null;
@@ -572,9 +649,26 @@ const WorkoutCalendarCard = ({
   };
   const longPressFor = (d: string) => (cal && quickModeOf(d, today) ? onLongPress : undefined);
   const showToday = !!cal && !picked && (!open || month === monthOf(today));
+  // (3-5) 내 일정 시트 — 새로 · 고치기(반복이면 그 회차)
+  const newEvent = (day: string) => {
+    setEventTarget({ mode: "new", day: day < today ? today : day });
+    openSheet("event");
+  };
+  const openEvent = (e: MyEvent, day: string) => {
+    setEventTarget({ mode: "edit", day, event: e });
+    openSheet("event");
+  };
+  const clampMonth = (ym: string) => (ym < calBounds.min ? calBounds.min : ym > calBounds.max ? calBounds.max : ym);
+  const jumpToDay = (day: string) => {
+    setMode("month");
+    setOpen(true);
+    setMonth(clampMonth(monthOf(day)));
+    setPicked(day === today ? null : day);
+  };
   const panelFor = (day: string, compact: boolean) =>
     cal ? (
       <DayChecksPanel
+        key={day}
         day={day}
         today={today}
         attended={byDay.get(day) ?? null}
@@ -589,6 +683,9 @@ const WorkoutCalendarCard = ({
         onManage={() => openSheet("items")}
         onOpenCalls={() => navigate("/myboxer/community?together=1")}
         onGoal={(d) => openSheet("dday", d)}
+        onAddEvent={day >= today ? newEvent : undefined}
+        onOpenEvent={openEvent}
+        onExpand={compact ? () => setPicked(day) : undefined}
         onTodo={(id, done) =>
           todoM.mutate(
             { id, done, today },
@@ -616,6 +713,12 @@ const WorkoutCalendarCard = ({
     : null;
   // (2-4) 달 아래 '앨범 n · 카드' — 운동한 달만 카드 · 사진이 있는 달만 앨범
   const albums = open && cal ? albumOf(cal.days, month) : [];
+  // (3-5) 목록 보기 — 오늘부터 30일 (보일 때만 서버에 묻는다) · 접혔거나 달력 보기면 예전 그대로
+  const monthMode = !open || !cal || mode === "month";
+  const listR = listRange(today);
+  const listQ = useMyCalendar(listR.from, listR.to, withChecks && open && mode === "list");
+  const listCal = listQ.data?.on ? listQ.data : null;
+  const attendedSet = useMemo(() => new Set(byDay.keys()), [byDay]);
   const monthHas = (ym: string) => data.list.some((d) => d.day.startsWith(`${ym}-`));
   const lastMonth = shiftMonth(monthOf(today), -1);
   const openCard = (ym: string) => {
@@ -629,10 +732,11 @@ const WorkoutCalendarCard = ({
     writeOpen(storageKey, next);
     setMonth(monthOf(today));
     setPicked(null);
+    setMode("month");
   };
   const goMonth = (delta: number) => {
     const next = shiftMonth(month, delta);
-    if (next < bounds.min || next > bounds.max) return;
+    if (next < calBounds.min || next > calBounds.max) return;
     setSlide(delta > 0 ? 1 : -1);
     setMonth(next);
     setPicked(null);
@@ -659,6 +763,7 @@ const WorkoutCalendarCard = ({
       setOpen(true);
       setMonth(monthOf(focusDay));
     }
+    setMode("month");
     // 오늘이면 고르지 않는다 — '오늘의 체크' 한 줄(코치 한마디 포함) · 일요일 주간 돌아보기가 그대로 보이게 (2-4)
     setPicked(focusDay === today ? null : focusDay);
     window.setTimeout(() => sectionRef.current?.scrollIntoView({ block: "center", behavior: "smooth" }), 80);
@@ -694,13 +799,88 @@ const WorkoutCalendarCard = ({
 
         {renewal ? <RenewalBlock line={renewal} /> : header}
 
-        {open ? (
+        {/* (3-5) 펼친 달력 — 보기 고르기(달력 · 목록 · 한 해) + 찾기 + 보일 것 (내 일정을 쓸 수 있는 계정만) */}
+        {open && cal && (
+          <div className="mt-3 flex items-center gap-1.5">
+            <div className="flex min-w-0 flex-1 rounded-full bg-muted p-1" role="tablist" aria-label="달력 보기">
+              {CAL_MODES.map((m) => (
+                <button
+                  key={m.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={mode === m.key}
+                  onClick={() => {
+                    setMode(m.key);
+                    setPicked(null);
+                    if (m.key === "year") setYear(Number(month.slice(0, 4)) > Number(today.slice(0, 4)) ? Number(today.slice(0, 4)) : Number(month.slice(0, 4)));
+                  }}
+                  className={cn(
+                    "h-9 min-w-0 flex-1 rounded-full text-label font-bold transition-colors",
+                    mode === m.key ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground",
+                  )}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => openSheet("search")}
+              aria-label="달력에서 찾기"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-foreground active:bg-muted"
+            >
+              <Search className="h-5 w-5" aria-hidden />
+            </button>
+            <button
+              type="button"
+              onClick={() => openSheet("view")}
+              aria-label="달력에 보일 것"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-foreground active:bg-muted"
+            >
+              <SlidersHorizontal className="h-5 w-5" aria-hidden />
+            </button>
+          </div>
+        )}
+
+        {open && cal && mode === "list" ? (
+          <Suspense fallback={<p className="mt-3 text-label text-muted-foreground">불러오는 중…</p>}>
+            <CalendarListView
+              cal={listCal}
+              view={cal.view}
+              from={listR.from}
+              to={listR.to}
+              today={today}
+              promise={promise}
+              attended={attendedSet}
+              loading={listQ.isLoading}
+              onOpenEvent={openEvent}
+              onPickDay={jumpToDay}
+              onNew={newEvent}
+            />
+          </Suspense>
+        ) : open && cal && mode === "year" ? (
+          <Suspense fallback={<p className="mt-3 text-label text-muted-foreground">불러오는 중…</p>}>
+            <CalendarYearView
+              year={year}
+              list={data.list}
+              firstDay={data.firstDay}
+              today={today}
+              stampHex={stamp?.hex ?? null}
+              onYear={setYear}
+              onPickMonth={(ym) => {
+                setMode("month");
+                setMonth(clampMonth(ym));
+                setPicked(null);
+              }}
+            />
+          </Suspense>
+        ) : open ? (
           <div className="mt-3">
             <div className="flex items-center justify-center gap-2">
               <button
                 type="button"
                 onClick={() => goMonth(-1)}
-                disabled={month <= bounds.min}
+                disabled={month <= calBounds.min}
                 aria-label="지난달"
                 className="flex h-10 w-10 items-center justify-center rounded-full text-foreground active:bg-muted disabled:opacity-30"
               >
@@ -710,7 +890,7 @@ const WorkoutCalendarCard = ({
               <button
                 type="button"
                 onClick={() => goMonth(1)}
-                disabled={month >= bounds.max}
+                disabled={month >= calBounds.max}
                 aria-label="다음 달"
                 className="flex h-10 w-10 items-center justify-center rounded-full text-foreground active:bg-muted disabled:opacity-30"
               >
@@ -746,7 +926,7 @@ const WorkoutCalendarCard = ({
                       faint={!c.inMonth}
                       moment={moments.get(c.day)}
                       promised={c.inMonth && promisedFor(c.day)}
-                      star={c.inMonth && starOf(c.day)}
+                      star={c.inMonth && starFor(c.day)}
                       sticker={c.inMonth ? stickerFor(c.day) : null}
                       pickable={c.inMonth && pickableFor(c.day)}
                       dot={c.inMonth ? dotFor(c.day) : null}
@@ -755,6 +935,10 @@ const WorkoutCalendarCard = ({
                       note={c.inMonth && noteFor(c.day)}
                       dday={c.inMonth && ddayFor(c.day)}
                       together={c.inMonth && togetherFor(c.day)}
+                      mine={c.inMonth ? mineFor(c.day) : []}
+                      holiday={c.inMonth ? holidayFor(c.day) : null}
+                      birthday={c.inMonth && birthdayFor(c.day)}
+                      stampHex={stamp?.hex ?? null}
                       onLongPress={c.inMonth ? longPressFor(c.day) : undefined}
                       picked={picked === c.day}
                       onPick={pick}
@@ -774,7 +958,7 @@ const WorkoutCalendarCard = ({
                   today={today}
                   moment={moments.get(d)}
                   promised={promisedFor(d)}
-                  star={starOf(d)}
+                  star={starFor(d)}
                   sticker={stickerFor(d)}
                   pickable={pickableFor(d)}
                   dot={dotFor(d)}
@@ -783,6 +967,10 @@ const WorkoutCalendarCard = ({
                   note={noteFor(d)}
                   dday={ddayFor(d)}
                   together={togetherFor(d)}
+                  mine={mineFor(d)}
+                  holiday={holidayFor(d)}
+                  birthday={birthdayFor(d)}
+                  stampHex={stamp?.hex ?? null}
                   onLongPress={longPressFor(d)}
                   picked={picked === d}
                   onPick={pick}
@@ -792,7 +980,7 @@ const WorkoutCalendarCard = ({
           </ol>
         )}
 
-        {legend && (
+        {legend && monthMode && (
           <p className="mt-3 flex flex-wrap items-center justify-end gap-x-3 gap-y-1" aria-hidden>
             {legend.map((x) => (
               <span key={x.label} className="flex items-center gap-1 text-micro text-muted-foreground">
@@ -802,12 +990,13 @@ const WorkoutCalendarCard = ({
             ))}
           </p>
         )}
-        {cal
-          ? picked
-            ? panelFor(picked, false)
-            : showToday && panelFor(today, true)
-          : pickedDay && <DayLine d={pickedDay} moment={moments.get(pickedDay.day)} />}
-        {weekly ? (
+        {monthMode &&
+          (cal
+            ? picked
+              ? panelFor(picked, false)
+              : showToday && panelFor(today, true)
+            : pickedDay && <DayLine d={pickedDay} moment={moments.get(pickedDay.day)} />)}
+        {!monthMode ? null : weekly ? (
           <WeekRecapPanel recap={weekly} onPromise={promiseState ? () => setPromiseOpen(true) : undefined} />
         ) : (
           promiseState && (
@@ -816,13 +1005,13 @@ const WorkoutCalendarCard = ({
               today={today}
               attended={byDay}
               branch={promiseState.branch}
-              skip={closed}
+              skip={skip}
               partner={partner}
               onOpen={() => setPromiseOpen(true)}
             />
           )
         )}
-        {open ? (
+        {!monthMode ? null : open ? (
           <MonthTools
             text={pastRecap?.text}
             gain={pastRecap?.gain}
@@ -932,6 +1121,30 @@ const WorkoutCalendarCard = ({
             today={today}
             initialDay={sheetDay}
           />
+        </Suspense>
+      )}
+      {cal && mounted.event && (
+        <Suspense fallback={null}>
+          <MyEventSheet open={sheet === "event"} onOpenChange={(v) => setSheet(v ? "event" : null)} target={eventTarget} today={today} />
+        </Suspense>
+      )}
+      {cal && mounted.search && (
+        <Suspense fallback={null}>
+          <CalendarSearchSheet
+            open={sheet === "search"}
+            onOpenChange={(v) => setSheet(v ? "search" : null)}
+            today={today}
+            onOpenEvent={(e, d) => openEvent(e, d)}
+            onPickDay={(d) => {
+              setSheet(null);
+              jumpToDay(d);
+            }}
+          />
+        </Suspense>
+      )}
+      {cal && mounted.view && (
+        <Suspense fallback={null}>
+          <CalendarViewSheet open={sheet === "view"} onOpenChange={(v) => setSheet(v ? "view" : null)} view={cal.view} league={cal.league} />
         </Suspense>
       )}
       {cal && mounted.quick && (

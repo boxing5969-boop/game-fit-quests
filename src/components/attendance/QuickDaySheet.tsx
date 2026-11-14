@@ -92,7 +92,8 @@ const QuickDaySheet = ({ open, onOpenChange, day, today, cal, busy = false, onTo
               {isToday ? "오늘 기분" : "그날 기분"}
               {sticker ? ` · ${sticker.label}` : ""}
             </p>
-            <div className="mt-2 grid grid-cols-4 gap-2">
+            {/* (3-5) 스티커 20 — 5칸씩 4줄 */}
+            <div className="mt-2 grid grid-cols-5 gap-1.5">
               {STICKERS.map((s) => {
                 const on = info?.sticker === s.key;
                 return (

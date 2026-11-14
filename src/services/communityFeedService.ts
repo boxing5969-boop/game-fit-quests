@@ -146,6 +146,10 @@ export const setJournalEntryOptions = (entryId: string, visibility: JournalVisib
     p_photo_url: photoUrl,
   });
 
+/** (캘린더 3-5) 다이어리 사진 3장 — 첫 장 = photo_url(피드는 첫 장 그대로) · 모두 = metadata.photos (DB 20261114101236) */
+export const setJournalEntryPhotos = (entryId: string, urls: readonly string[]) =>
+  rpc<{ success: boolean; photos: string[] }>("set_journal_entry_photos", { p_entry_id: entryId, p_urls: [...urls] });
+
 export const setJournalEntryVisibility = (entryId: string, visibility: JournalVisibility) =>
   rpc<{ success: boolean; visibility: JournalVisibility }>("set_journal_entry_visibility", {
     p_entry_id: entryId,

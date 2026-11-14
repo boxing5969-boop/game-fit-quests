@@ -12,6 +12,7 @@
  *   2026-11-13 2-4단계(대표님 「시작하자」): 일요일 주간 돌아보기 · 운동 짝꿍 쌍도장 · 앨범 · 이번 달 운동 카드 + 회원은 수강권 끝나기
  *   14일 전부터 맨 위 '153과 함께한 시간'(renewalEnd — 권유 문구 없이 · 코치님 · 운영진 계정엔 없음).
  *   주간 돌아보기 알림 링크도 '/home?cal=그 일요일'.
+ *   2026-11-14 캘린더 3-5단계(대표님 「진행하자」): 내 일정 알림 링크 '/home?cal=그 일정 날'(앞날도) — 달력이 그 달로 펼친다.
  */
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,7 +28,8 @@ const HomeWorkoutCalendar = () => {
   const { profile, role } = useAuth();
   const [params, setParams] = useSearchParams();
   if (!data || data.total === 0) return null;
-  const focusDay = focusDayOf(params.get("cal"), kstToday(), data.firstDay);
+  // (3-5) 내 일정 알림 링크는 그 일정 날 — 앞날도 1년까지
+  const focusDay = focusDayOf(params.get("cal"), kstToday(), data.firstDay, 366);
   // 회원만 — 코치님 · 운영진 계정엔 수강권 이야기를 하지 않는다 (RenewalStoryCard 와 같은 기준)
   const renewalEnd =
     role === "member" && !isStaffProfile(profile) ? ((profile as { membership_end?: string | null } | null)?.membership_end ?? null) : null;

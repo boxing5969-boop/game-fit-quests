@@ -393,9 +393,12 @@ export function quickModeOf(day: string, today: string): QuickMode | null {
   return dayDiff(day, today) <= QUICK_PAST_DAYS ? "past" : null;
 }
 
-/** 알림 링크 '/home?cal=2026-11-13' 의 날짜 — 첫 기록 달 ~ 오늘 안만 */
-export function focusDayOf(raw: string | null | undefined, today: string, firstDay: string | null): string | null {
-  if (!raw || !YMD.test(raw) || raw > today) return null;
+/** 알림 링크 '/home?cal=2026-11-13' 의 날짜 — 첫 기록 달 ~ 오늘 안만
+ *  (3-5) aheadDays = 앞날도 받기 — 내 일정 알림 링크는 그 일정 날(내일 · 일주일 뒤 기념일)이라 홈은 1년 앞까지 */
+export function focusDayOf(raw: string | null | undefined, today: string, firstDay: string | null, aheadDays = 0): string | null {
+  if (!raw || !YMD.test(raw)) return null;
+  if (raw > today && (aheadDays <= 0 || dayDiff(today, raw) > aheadDays)) return null;
+  if (raw > today) return raw;
   if (firstDay && YMD.test(firstDay) && raw.slice(0, 7) < firstDay.slice(0, 7)) return null;
   return raw;
 }

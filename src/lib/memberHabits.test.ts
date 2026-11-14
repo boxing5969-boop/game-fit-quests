@@ -203,7 +203,21 @@ describe("회원 화면 글 — 쓰지 않는 낱말 (못 · 빠진 · 밀린 ·
         .filter((l) => !l.includes("export const MEMBER_BANNED"))
         .map((l) => l.replace(/(^|[^:])\/\/.*$/, "$1"))
         .join("\n");
-    for (const f of ["src/components/attendance/CheckItemsSheet.tsx", "src/components/attendance/CalendarChecks.tsx", "src/lib/memberHabits.ts"]) {
+    // (3-5) 내 일정 · 찾기 · 보일 것 · 목록 · 한 해 · 음력 · 달력 카드도
+    for (const f of [
+      "src/components/attendance/CheckItemsSheet.tsx",
+      "src/components/attendance/CalendarChecks.tsx",
+      "src/lib/memberHabits.ts",
+      "src/components/attendance/WorkoutCalendar.tsx",
+      "src/components/attendance/MyEventSheet.tsx",
+      "src/components/attendance/CalendarSearchSheet.tsx",
+      "src/components/attendance/CalendarViewSheet.tsx",
+      "src/components/attendance/CalendarListView.tsx",
+      "src/components/attendance/CalendarYearView.tsx",
+      "src/lib/memberEvents.ts",
+      "src/lib/calendarViews.ts",
+      "src/lib/lunar.ts",
+    ]) {
       const code = strip(readFileSync(resolve(process.cwd(), f), "utf8"));
       const hits = MEMBER_BANNED.filter((w) => w !== "못" && code.includes(w));
       // '못' 은 단어 사이에 들어가는 글자라 문장 단위로 본다 — 화면 글(따옴표 · JSX 글)만

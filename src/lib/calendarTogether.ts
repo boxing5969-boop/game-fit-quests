@@ -274,7 +274,9 @@ export function albumOf(days: ReadonlyMap<string, CalDay>, month: string): Album
   for (const [day, info] of days) {
     const j = info.journal;
     if (!day.startsWith(`${month}-`) || !j?.photoUrl) continue;
-    out.push({ day, url: j.photoUrl, content: j.content, mood: j.mood, visibility: j.visibility });
+    // (3-5) 다이어리 사진 3장 — 한 장씩 (예전 한 줄은 photoUrl 한 장)
+    const urls = j.photos?.length ? j.photos : [j.photoUrl];
+    for (const url of urls) out.push({ day, url, content: j.content, mood: j.mood, visibility: j.visibility });
   }
   return out.sort((a, b) => b.day.localeCompare(a.day));
 }

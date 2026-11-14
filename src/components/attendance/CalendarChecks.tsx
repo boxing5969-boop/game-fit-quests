@@ -12,8 +12,12 @@
  *   · (2-4 · 2026-11-13) 운동 짝꿍과 둘 다 온 날(쌍도장)은 들어온 시각 아래 '짝꿍 ○○님과 같이 운동한 날이에요' (lib/calendarTogether.ts).
  *   · (3-4 · 2026-11-14) 주 n번 체크 칩은 '줄넘기 10분 · 2/3'(그 주 채운 수 · 채우면 '이번 주 채움') — 금색 별 · 한 줄에는 안 셈 ·
  *     오늘이 마감인 할 일은 체크 아래 한 줄씩(누르면 끝냈어요) · 앞날은 그날 마감인 할 일 이름만 (lib/memberHabits.ts).
+ *   · (3-5 · 2026-11-14) 그날의 내 일정 · 기념일 한 줄씩(누르면 고치기 · '이날은 쉬어요' 이름표) · 공휴일 · 내 생일 한 줄 ·
+ *     '+ 내 일정'(오늘 · 앞날) · 쉬어요 날은 휴관일처럼 체육관 체크를 뺀다 · 기분 스티커 20(첫 줄 8 + '스티커 더 보기') ·
+ *     한 줄은 다이어리처럼 — 사진 3장 · 길면 '더 보기'. 켜고 끄기(view)를 따른다 (lib/memberEvents.ts).
  */
-import { Check, ChevronRight, Flag, Lock, Plus, Star, UserRound, Users } from "lucide-react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { CalendarDays, Check, ChevronRight, Flag, Gift, Lock, Plus, Star, UserRound, Users } from "lucide-react";
 import { ActIcon, NoteIcon } from "@/components/attendance/CalendarMarkIcons";
 import {
   GOAL_MAX,
@@ -37,10 +41,12 @@ import { dayLabel, durationLabel, kstTime, type AttendanceDay } from "@/lib/atte
 import type { DayMoment } from "@/lib/calendarMoments";
 import {
   STICKERS,
+  STICKER_FIRST_ROW,
   canEditDay,
   checkProgress,
   dayChecks,
   isStarDay,
+  journalPhotos,
   stickerOf,
   type CalState,
   type DayCheck,
@@ -50,6 +56,19 @@ import {
 import { EVENT_KIND_META, callLine, callsOn, eventUntil, eventsOn, isClosedDay, type CalCall, type CalEvent } from "@/lib/calendarEvents";
 import { isTogetherDay, togetherText } from "@/lib/calendarTogether";
 import { flexChipLabel, mondayOfYmd, todosOn, weekDoneOf, weekGoalOf, type CalTodo } from "@/lib/memberHabits";
+import { holidayOn } from "@/lib/krHolidays";
+import {
+  BIRTHDAY_LINE,
+  BIRTHDAY_TODAY,
+  REST_LABEL,
+  birthdayOn,
+  layerOn,
+  myEventHex,
+  myEventOn,
+  myEventsOn,
+  mySubLine,
+  type MyEvent,
+} from "@/lib/memberEvents";
 import { cn } from "@/lib/utils";
 
 const VIS_LABEL: Record<JournalVisibility, string> = { private: "나만 보기", partners: "친구만", branch: "전체 공개" };
@@ -75,7 +94,75 @@ export interface DayChecksPanelProps {
   onGoal?: (day: string) => void;
   /** (3-4) 오늘 마감인 할 일 끝냈어요 · 되돌리기 */
   onTodo?: (id: string, done: boolean) => void;
+  /** (3-5) '+ 내 일정' — 그 날로 내 일정 시트 */
+  onAddEvent?: (day: string) => void;
+  /** (3-5) 내 일정 한 줄을 누르면 — 고치기 시트(반복이면 그 회차) */
+  onOpenEvent?: (e: MyEvent, day: string) => void;
+  /** (3-5) 오늘의 체크 한 줄(compact)의 내 일정 요약을 누르면 — 그날 카드를 펼친다 */
+  onExpand?: () => void;
 }
+
+/** (3-5) 오늘의 체크 한 줄 — 오늘 내 일정은 한 줄 요약만(홈 카드가 길어지지 않게) · 누르면 그날 카드 */
+const CompactMine = ({ events, onExpand }: { events: readonly MyEvent[]; onExpand?: () => void }) => {
+  if (events.length === 0) return null;
+  const text = events.map((e) => (e.allDay || !e.startTime ? e.title : `${e.title} ${e.startTime}`)).join(" · ");
+  return (
+    <button
+      type="button"
+      onClick={onExpand}
+      disabled={!onExpand}
+      aria-label={`오늘 내 일정 ${events.length}개 · ${text}`}
+      className="mt-2 flex w-full items-center gap-2 rounded-lg bg-card px-3 py-2 text-left active:bg-secondary/60 disabled:active:bg-card"
+    >
+      <span className="flex shrink-0 gap-0.5" aria-hidden>
+        {events.slice(0, 3).map((e) => (
+          <span key={e.id} className="h-2 w-2 rounded-full" style={{ backgroundColor: myEventHex(e) }} />
+        ))}
+      </span>
+      <span className="min-w-0 flex-1 truncate text-label font-bold text-foreground">{text}</span>
+      {events.some((e) => e.rest) && <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-micro font-bold text-primary">{REST_LABEL}</span>}
+      {onExpand && <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />}
+    </button>
+  );
+};
+
+/** (3-5) 그날의 내 일정 · 기념일 — 색 막대 · 이름 · 시각 · 장소 · 반복 + '이날은 쉬어요' (없으면 그리지 않음) */
+const MineList = ({ events, day, onOpen }: { events: readonly MyEvent[]; day: string; onOpen?: (e: MyEvent, day: string) => void }) => {
+  if (events.length === 0) return null;
+  return (
+    <ul className="mt-2 space-y-1.5" aria-label="내 일정">
+      {events.map((e) => (
+        <li key={e.id}>
+          <button
+            type="button"
+            onClick={() => onOpen?.(e, day)}
+            disabled={!onOpen}
+            className="flex w-full items-center gap-2.5 rounded-lg bg-card px-3 py-2 text-left active:bg-secondary/60 disabled:active:bg-card"
+          >
+            <span className="h-8 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: myEventHex(e) }} aria-hidden />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-label font-bold text-foreground">{e.title}</span>
+              <span className="block truncate text-micro text-muted-foreground">{mySubLine(e)}</span>
+            </span>
+            {e.rest && <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-micro font-bold text-primary">{REST_LABEL}</span>}
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+};
+
+/** (3-5) '+ 내 일정' 작은 단추 */
+const AddEvent = ({ day, onAdd }: { day: string; onAdd?: (day: string) => void }) =>
+  onAdd ? (
+    <button
+      type="button"
+      onClick={() => onAdd(day)}
+      className="inline-flex h-9 items-center gap-1 text-label font-bold text-primary active:opacity-70"
+    >
+      <Plus className="h-4 w-4" aria-hidden />내 일정
+    </button>
+  ) : null;
 
 /** (3-4) 그날이 마감인 할 일 — 오늘은 눌러서 끝냈어요 · 앞날은 이름만 (없으면 그리지 않음) */
 const Todos = ({ todos, canCheck, onTodo }: { todos: readonly CalTodo[]; canCheck: boolean; onTodo?: (id: string, done: boolean) => void }) => {
@@ -151,17 +238,30 @@ const Acts = ({ acts }: { acts: readonly CalAct[] }) => {
   );
 };
 
-/** (2-3) 그날의 D-day · 기념일 한 줄씩 */
-const Marks = ({ marks }: { marks: readonly { key: string; text: string; gold?: boolean }[] }) => {
+type MarkLine = { key: string; text: string; gold?: boolean; tone?: "holiday" | "birthday" };
+
+/** (2-3) 그날의 D-day · 기념일 한 줄씩 · (3-5) 공휴일 · 내 생일 */
+const Marks = ({ marks }: { marks: readonly MarkLine[] }) => {
   if (marks.length === 0) return null;
   return (
     <ul className="mt-2 space-y-1" aria-label="D-day">
       {marks.map((m) => (
         <li
           key={m.key}
-          className={cn("flex items-center gap-1.5 text-label font-bold tabular-nums", m.gold ? "text-reward" : "text-violet-700 dark:text-violet-300")}
+          className={cn(
+            "flex items-center gap-1.5 text-label font-bold tabular-nums",
+            m.tone ? "text-rose-600 dark:text-rose-300" : m.gold ? "text-reward" : "text-violet-700 dark:text-violet-300",
+          )}
         >
-          {m.gold ? <Star className="h-4 w-4 shrink-0" fill="currentColor" aria-hidden /> : <Flag className="h-4 w-4 shrink-0" aria-hidden />}
+          {m.tone === "birthday" ? (
+            <Gift className="h-4 w-4 shrink-0" aria-hidden />
+          ) : m.tone === "holiday" ? (
+            <CalendarDays className="h-4 w-4 shrink-0" aria-hidden />
+          ) : m.gold ? (
+            <Star className="h-4 w-4 shrink-0" fill="currentColor" aria-hidden />
+          ) : (
+            <Flag className="h-4 w-4 shrink-0" aria-hidden />
+          )}
           <span className="min-w-0">{m.text}</span>
         </li>
       ))}
@@ -305,14 +405,27 @@ export const DayChecksPanel = ({
   onOpenCalls,
   onGoal,
   onTodo,
+  onAddEvent,
+  onOpenEvent,
+  onExpand,
 }: DayChecksPanelProps) => {
+  const [moreStickers, setMoreStickers] = useState(false);
+  const [fullLine, setFullLine] = useState(false);
+  const [lineClamped, setLineClamped] = useState(false);
+  const lineRef = useRef<HTMLParagraphElement | null>(null);
   const isToday = day === today;
   const future = day > today;
   const editable = canEditDay(day, today);
   const info = cal.days.get(day);
-  const events = eventsOn(cal.events, day);
-  const calls = callsOn(cal.calls, day);
-  const rawChecks = dayChecks(day, !!attended, info, cal.items, isClosedDay(cal.events, day));
+  // (3-5) 켜고 끄기 — 153 일정 · 같이 운동 / 내 일정 · 생일 / 공휴일 (휴관 · 쉬어요로 체크를 빼는 것은 끈 것과 상관없이)
+  const view = cal.view;
+  const events = layerOn(view, "153") ? eventsOn(cal.events, day) : [];
+  const calls = layerOn(view, "153") ? callsOn(cal.calls, day) : [];
+  const mine = layerOn(view, "mine") ? myEventsOn(cal.mine, day) : [];
+  const rest = cal.mine.some((e) => e.rest && e.kind === "plan" && myEventOn(e, day));
+  const holiday = layerOn(view, "holiday") ? holidayOn(day) : null;
+  const bday = layerOn(view, "mine") && birthdayOn(cal.birthday, day);
+  const rawChecks = dayChecks(day, !!attended, info, cal.items, isClosedDay(cal.events, day) || rest);
   // (3-4) 주 n번 칩 — 그 주 채운 수 / 그 주 목표
   const monday = mondayOfYmd(day);
   const checks = rawChecks.map((c) => {
@@ -325,7 +438,14 @@ export const DayChecksPanel = ({
   const star = isStarDay(checks);
   const progress = checkProgress(checks, isToday);
   const sticker = stickerOf(info?.sticker);
+  const stickerExtended = !!sticker && STICKERS.findIndex((x) => x.key === sticker.key) >= STICKER_FIRST_ROW;
+  const showAllStickers = moreStickers || stickerExtended;
   const journal = info?.journal ?? null;
+  // (3-5) 다이어리 — 세 줄로 잘렸는지 재어 '더 보기'를 낸다 (줄 수는 글씨 크기 · 화면 폭마다 달라서)
+  useLayoutEffect(() => {
+    const el = lineRef.current;
+    setLineClamped(!!el && !fullLine && el.scrollHeight > el.clientHeight + 1);
+  }, [journal?.content, journal?.mood, fullLine, compact, day]);
   const VisIcon = journal ? VIS_ICON[journal.visibility] : null;
   const activeItems = cal.items.filter((i) => i.archivedOn == null).length;
   // (2-3) 코치 한마디 · 그날 한 일 · D-day · 기념일
@@ -333,7 +453,9 @@ export const DayChecksPanel = ({
   const acts = actsOn(cal.acts, day);
   const anniv = annivOn(cal.anniv, day);
   const dd = ddaysOn(cal.ddays, day, today);
-  const marks: { key: string; text: string; gold?: boolean }[] = [];
+  const marks: MarkLine[] = [];
+  if (holiday) marks.push({ key: "holiday", text: `공휴일 · ${holiday}`, tone: "holiday" });
+  if (bday) marks.push({ key: "birthday", text: isToday ? BIRTHDAY_TODAY : BIRTHDAY_LINE, tone: "birthday" });
   // 기념일 — 출석한 날은 금색 도장 한 줄(moment)이 말한다 · 오늘 아직 안 왔거나 앞날이면 여기서 · 지난 날 안 온 기념일은 말하지 않는다
   if (anniv && ((isToday && !attended) || future)) {
     marks.push({ key: "anniv", text: isToday ? annivText(anniv, true) : `${ddayCount(anniv, today)} · ${annivShort(anniv)}`, gold: true });
@@ -353,16 +475,22 @@ export const DayChecksPanel = ({
       <div className="mt-3 rounded-xl bg-muted/60 px-4 py-3" aria-label={`${dayLabel(day)} 일정`}>
         <p className="text-body font-bold text-foreground">{dayLabel(day)}</p>
         <Marks marks={marks} />
+        <MineList events={mine} day={day} onOpen={onOpenEvent} />
         <Agenda day={day} today={today} events={events} calls={calls} onOpenCalls={onOpenCalls} />
         <Todos todos={dayTodos.filter((t) => !t.done)} canCheck={false} />
-        {canGoal && (
-          <button
-            type="button"
-            onClick={() => onGoal?.(day)}
-            className="mt-2 inline-flex h-9 items-center gap-1 text-label font-bold text-primary active:opacity-70"
-          >
-            <Flag className="h-4 w-4" aria-hidden />이 날을 목표일로
-          </button>
+        {(canGoal || onAddEvent) && (
+          <div className="mt-2 flex flex-wrap items-center gap-x-4">
+            <AddEvent day={day} onAdd={onAddEvent} />
+            {canGoal && (
+              <button
+                type="button"
+                onClick={() => onGoal?.(day)}
+                className="inline-flex h-9 items-center gap-1 text-label font-bold text-primary active:opacity-70"
+              >
+                <Flag className="h-4 w-4" aria-hidden />이 날을 목표일로
+              </button>
+            )}
+          </div>
         )}
       </div>
     );
@@ -414,8 +542,10 @@ export const DayChecksPanel = ({
       {/* (2-3) 코치 한마디는 오늘의 체크 한 줄에도 — "코치님이 나를 봤다" */}
       <Notes notes={notes} />
       {!compact && <Acts acts={acts} />}
-      {!compact && <Marks marks={marks} />}
+      {!compact ? <Marks marks={marks} /> : bday && <Marks marks={marks.filter((m) => m.tone === "birthday")} />}
 
+      {/* (3-5) 그날의 내 일정 — 오늘의 체크 한 줄에는 한 줄 요약(있을 때만) */}
+      {compact ? <CompactMine events={mine} onExpand={onExpand} /> : <MineList events={mine} day={day} onOpen={onOpenEvent} />}
       <Agenda day={day} today={today} events={events} calls={calls} onOpenCalls={onOpenCalls} />
 
       <div className="mt-2 flex flex-wrap gap-1.5" role="group" aria-label="체크">
@@ -441,24 +571,47 @@ export const DayChecksPanel = ({
           <p className="flex items-center gap-1 text-micro font-bold text-muted-foreground">
             {VisIcon && <VisIcon className="h-3.5 w-3.5" aria-hidden />}한 줄 · {VIS_LABEL[journal.visibility]}
           </p>
-          <p className="mt-1 line-clamp-3 whitespace-pre-line text-body leading-snug text-foreground">
+          <p ref={lineRef} className={cn("mt-1 whitespace-pre-line text-body leading-snug text-foreground", !fullLine && "line-clamp-3")}>
             {journal.mood ? `${journal.mood} · ` : ""}
             {journal.content}
           </p>
-          {journal.photoUrl && (
-            <img src={journal.photoUrl} alt="그날 올린 사진" loading="lazy" className="mt-2 h-20 w-20 rounded-lg object-cover" />
+          {/* (3-5) 다이어리 — 세 줄을 넘으면 더 보기 */}
+          {!fullLine && lineClamped && (
+            <button type="button" onClick={() => setFullLine(true)} className="mt-1 h-8 text-label font-bold text-primary active:opacity-70">
+              더 보기
+            </button>
+          )}
+          {journalPhotos(journal).length > 0 && (
+            <div className="mt-2 grid max-w-[16rem] grid-cols-3 gap-1.5">
+              {journalPhotos(journal).map((url, i) => (
+                <img key={url} src={url} alt={`그날 올린 사진 ${i + 1}`} loading="lazy" className="aspect-square w-full rounded-lg object-cover" />
+              ))}
+            </div>
           )}
         </div>
       )}
 
       {!compact && editable && (
         <div className="mt-3">
-          <p className="text-micro font-bold text-muted-foreground">
-            {isToday ? "오늘 기분" : "그날 기분"}
-            {sticker ? ` · ${sticker.label}` : ""}
+          <p className="flex items-center justify-between gap-2 text-micro font-bold text-muted-foreground">
+            <span>
+              {isToday ? "오늘 기분" : "그날 기분"}
+              {sticker ? ` · ${sticker.label}` : ""}
+            </span>
+            {/* (3-5) 스티커 20 — 첫 줄 8 + 더 보기 (고른 스티커가 뒤쪽이면 펼쳐 둔다) */}
+            {!stickerExtended && (
+              <button
+                type="button"
+                aria-expanded={moreStickers}
+                onClick={() => setMoreStickers((v) => !v)}
+                className="h-7 text-micro font-bold text-primary active:opacity-70"
+              >
+                {moreStickers ? "접기" : `스티커 더 보기 ${STICKERS.length - STICKER_FIRST_ROW}`}
+              </button>
+            )}
           </p>
           <div className="mt-1.5 grid grid-cols-8 gap-1">
-            {STICKERS.map((s) => {
+            {(showAllStickers ? STICKERS : STICKERS.slice(0, STICKER_FIRST_ROW)).map((s) => {
               const on = info?.sticker === s.key;
               return (
                 <button
@@ -481,14 +634,13 @@ export const DayChecksPanel = ({
       )}
 
       {isToday && !compact && (
-        <button
-          type="button"
-          onClick={onManage}
-          className="mt-2 inline-flex h-9 items-center gap-0.5 text-label font-bold text-primary active:opacity-70"
-        >
-          {activeItems > 0 ? "나만의 체크 고치기" : "나만의 체크 만들기"}
-          <ChevronRight className="h-4 w-4" aria-hidden />
-        </button>
+        <div className="mt-2 flex flex-wrap items-center gap-x-4">
+          <button type="button" onClick={onManage} className="inline-flex h-9 items-center gap-0.5 text-label font-bold text-primary active:opacity-70">
+            {activeItems > 0 ? "나만의 체크 고치기" : "나만의 체크 만들기"}
+            <ChevronRight className="h-4 w-4" aria-hidden />
+          </button>
+          <AddEvent day={day} onAdd={onAddEvent} />
+        </div>
       )}
     </div>
   );

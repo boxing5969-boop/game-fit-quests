@@ -78,7 +78,7 @@ const AlbumSheet = ({ open, onOpenChange, month, photos, onPickDay }: AlbumSheet
           ) : (
             <ul className="grid grid-cols-3 gap-1.5" aria-label="사진">
               {photos.map((ph) => (
-                <li key={ph.day}>
+                <li key={`${ph.day}:${ph.url}`}>
                   <button
                     type="button"
                     onClick={() => setSel(ph)}

@@ -13,6 +13,9 @@
  *   나만의 체크 시트의 이번 주 · 이어 간 주 · 할 일 = get_my_habits (useMyHabits — 캐시 키 "153habits", 달력 키와 따로) ·
  *   마감 있는 할 일 = set_my_todo · set_my_todo_done · remove_my_todo (useSaveTodo · useSetTodoDone · useRemoveTodo).
  *   함수가 없는 DB 면 습관은 꺼짐(시트는 예전 그대로) · 주 n번 저장은 '아직 쓸 수 없어요'.
+ *   (3-5 · DB 20261114101236_calendar_stage35.sql) 내 일정 · 기념일 = set_my_cal_event · remove_my_cal_event (useSaveMyEvent ·
+ *   useRemoveMyEvent) · 검색 = search_my_calendar (useCalendarSearch) · 캘린더 켜고 끄기 · 리그 테마 = set_my_calendar_view
+ *   (useSetCalendarView — 누르는 순간 바뀌고 실패하면 되돌림). 글 · 검사는 lib/memberEvents.ts.
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,6 +34,7 @@ import {
 } from "@/lib/calendarChecks";
 import { HABITS_OFF, applyTodoDone, normalizeHabits, todoPayload, type Habits } from "@/lib/memberHabits";
 import { goalPayload, normalizeDdays, type GoalDraft } from "@/lib/calendarMarks";
+import { SEARCH_OFF, normalizeCalSearch, type CalSearch, type CalView, type MyScope } from "@/lib/memberEvents";
 
 export const CAL2_KEY = ["153cal2"] as const;
 /** (3-4) 나만의 체크 시트 — 이번 주 · 이어 간 주 · 할 일 (달력 캐시와 모양이 달라 따로) */
@@ -295,6 +299,81 @@ export function useSetCalendarNudge() {
       await qc.cancelQueries({ queryKey: CAL2_KEY });
       const snapshot = qc.getQueriesData<CalState>({ queryKey: CAL2_KEY });
       patchAll(qc, (s) => ({ ...s, nudge: { ...s.nudge, on } }));
+      return { snapshot };
+    },
+    onError: (_e, _v, ctx) => {
+      for (const [key, val] of ctx?.snapshot ?? []) qc.setQueryData(key, val);
+    },
+    onSettled: () => void qc.invalidateQueries({ queryKey: CAL2_KEY }),
+  });
+}
+
+/** (3-5) 내 일정 · 기념일 넣기 · 고치기 — p = lib/memberEvents myEventPayload */
+export function useSaveMyEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (p: Record<string, unknown>) => {
+      const { data, error } = await rpc("set_my_cal_event", { p });
+      if (error) {
+        if (isMissingFn(error)) throw new Error("내 일정은 아직 쓸 수 없어요 — 곧 열려요");
+        throw new Error(translateError(error, "잠시 뒤 다시 해 주세요"));
+      }
+      return (data as { id?: string } | null)?.id ?? null;
+    },
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: CAL2_KEY });
+      void qc.invalidateQueries({ queryKey: ["153calsearch"] });
+    },
+  });
+}
+
+/** (3-5) 내 일정 빼기 — 이 날만(반복 · 음력 기념일) · 이후 모두(반복) · 전체 (지우지 않고) */
+export function useRemoveMyEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { id: string; scope: MyScope; date?: string | null }) => {
+      const { error } = await rpc("remove_my_cal_event", { p_id: v.id, p_scope: v.scope, p_date: v.date ?? null });
+      if (error) throw new Error(translateError(error, "잠시 뒤 다시 해 주세요"));
+    },
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: CAL2_KEY });
+      void qc.invalidateQueries({ queryKey: ["153calsearch"] });
+    },
+  });
+}
+
+/** (3-5) 검색 — 내 일정(이름 · 장소 · 메모) + 내 한 줄 글 · 함수가 없는 DB 면 꺼짐 */
+export function useCalendarSearch(q: string | null) {
+  const { user } = useAuth();
+  return useQuery<CalSearch>({
+    // 달력 캐시(CAL2_KEY)와 모양이 달라 따로 — patchAll 이 검색 결과를 달력으로 고치지 않게
+    queryKey: ["153calsearch", user?.id ?? "anon", q],
+    enabled: !!user?.id && !!q,
+    staleTime: 30_000,
+    retry: false,
+    queryFn: async () => {
+      const { data, error } = await rpc("search_my_calendar", { p_q: q });
+      if (error) {
+        if (isMissingFn(error)) return SEARCH_OFF;
+        throw new Error(translateError(error, "잠시 뒤 다시 해 주세요"));
+      }
+      return normalizeCalSearch(data);
+    },
+  });
+}
+
+/** (3-5) 캘린더 켜고 끄기 · 리그 테마 — 누르는 순간 바뀌고 실패하면 되돌린다 */
+export function useSetCalendarView() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (view: CalView) => {
+      const { error } = await rpc("set_my_calendar_view", { p_cals_off: view.off, p_theme: view.theme });
+      if (error) throw new Error(translateError(error, "잠시 뒤 다시 해 주세요"));
+    },
+    onMutate: async (view) => {
+      await qc.cancelQueries({ queryKey: CAL2_KEY });
+      const snapshot = qc.getQueriesData<CalState>({ queryKey: CAL2_KEY });
+      patchAll(qc, (s) => ({ ...s, view }));
       return { snapshot };
     },
     onError: (_e, _v, ctx) => {
