@@ -756,6 +756,26 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - '건강 나이'라는 말은 쓰지 않는다 — 건강검진(혈압 · 혈당 등)으로 매기는 말이라, 앱이 가진 자료로 만든 것은 '체력 나이(심폐 체력 기준)'. 국민체력100 공식 체력 나이(윤동현 외 2024 BMC — 윗몸일으키기 · 앉아윗몸앞으로굽히기 필요)는 앱에 없는 종목이라 쓰지 않았다.
 - 오삼코치 안내 osamiFaq `att-peer`(체력 나이 · 심폐 체력 포함) — 문구를 바꾸면 같이.
 
+### 마음 능력치 — 자신감 · 힘(활력) · 운동 습관 (2026-11-14 대표님 「마이복서 153 정신적인 향상도 넣자 운동을 통한 자신감 힘 과학적이고 설득력이 정말 중요해 왜냐면 사람들이 이거 신뢰할수있는 데이터인가 생각하기때문에」)
+
+몸의 변화(「같은 나이와 비교」) 다음에 마음의 변화를 같은 카드 모양으로 — 지어낸 점수 없이 세계에서 오래 쓴 심리 검사 3가지를 그대로 쓰고, 출처 · 계산법 · 연구를 카드 안 '근거 · 계산 방법'에 다 펼쳐 둔다(믿을 수 있는 숫자인가가 이 기능의 핵심). 새 페이지 없음 — 내 운동 기록 「같은 나이와 비교」 바로 아래 카드 하나.
+
+| 파일 | 역할 |
+|---|---|
+| [supabase/migrations/20261114105414_mind_checks.sql](supabase/migrations/20261114105414_mind_checks.sql) | 새 표 `mind_settings`(동의 시각 · 판 · 만 14세 확인 · 알림) · `mind_checks`(답 배열 · 점수 · 한국 날짜 · 알림 보낸 때 · 지운 때 — RLS · anon/authenticated 막음) · 채점 `_mind_score_conf` · `_vital` · `_habit` · 나이 `_mind_age` · 153 평균 `_mind_brand` · 화면 함수 `mind_state` · `mind_consent(p_on, p_adult)` · `mind_check_save(p_conf, p_vital, p_habit)` · `mind_remind_set` · `mind_clear` · 예약 `mind-remind`(매일 12:20 KST) → `_mind_remind_tick` |
+| [src/data/mindScales.ts](src/data/mindScales.ts) | 문항 정본 — 원래 순서 · 역문항 · 보기(보기 번호 = 원 척도 번호) |
+| [src/lib/mind153.ts](src/lib/mind153.ts) | 채점(서버와 같은 식) · 화면 모양 `buildMindView`(주인공 = 가장 많이 오른 것) · 글 · 연구 `MIND_RESEARCH` · 계산 방법 `MIND_HOW` — 시험 mind153.test.ts |
+| [src/services/mindService.ts](src/services/mindService.ts) | `["153mind", 회원]` · 함수가 없는 DB(적용 전 · 옛 DB 미리보기)면 null → 카드 숨김 |
+| [MindStatsCard](src/components/attendance/MindStatsCard.tsx) · [MindCheckSheet](src/components/attendance/MindCheckSheet.tsx) | 카드(처음 = 초대 · 첫 기록 = 숫자 셋 · 오른 것 = 주인공 '+N점' · 66일 막대 · 다음 체크) · 18문항 시트(동의 → 한 화면 한 문항 · 고르면 다음 → 결과) — 시험 MindStatsCard.test.tsx |
+
+- 척도: 자신감 = **로젠버그 자존감 척도** 10문항 4점(공개 저작물 · 한국판 문장 전병재 1974 · 역문항 2 · 5 · 6 · 8 · 9) / 힘(활력) = **RAND-36 활력** 4문항(23 · 27 · 29 · 31 · 지난 4주 · 6점 · RAND 공개 문항 · RAND 채점) / 운동 습관 = **SRBAI 습관 자동성 지수** 4문항 7점(CC BY · 문장 앞 '153에 운동하러 가는 건'). **WHO-5 는 안 쓴다** — 2024 부터 CC BY-NC-SA 3.0 IGO 라 상업 앱은 WHO 허락이 따로 필요(넣으려면 허락부터). 문항 글을 바꾸면 검사가 달라지므로 바꾸지 않는다(판을 올릴 땐 `MIND_VERSION` · `consent_ver`).
+- 점수 0~100(자존감 · 습관 = POMP, 활력 = RAND 채점) · **의미 있는 변화 = 10점 이상**(활력 Bjorner 2007 · 자존감 10점 ≈ 표준편차 4.82(Schmitt & Allik 2005)의 0.6배 — 흔히 쓰는 '표준편차 절반'(Norman 2003)보다 엄격) · 다시 재기 28일 · 마지막 체크 14일 안에 다시 하면 그 기록을 고쳐 씀 · 66일 막대(Lally 2010 — 가운데 값 66일 · 사람마다 18~254일). 연구 줄 숫자(Singh 2023 1,039개 실험 · Spence 2005 113개 · Wender 2022 81개 · Moore 2020 · Bozdarov 2023 등)는 원 논문 그대로 — 바꾸면 osamiFaq `att-mind` 도.
+- 보이는 범위: 답 · 점수 = **본인만**(코치님 · 지점장 · 대표님도 못 봄 — 함수가 본인 줄만 읽고 표는 막힘) · 153 전체 평균 = 4주(21일) 넘게 두 번 잰 회원이 20명 넘을 때만 이름 없는 숫자(코치진 · 합쳐진 계정 빼고 · 부호 그대로 · '비교군 없는 설문 결과'라고 함께) · AI 로 보내지 않음.
+- 개인정보: 민감정보(건강 — 개인정보보호법 23조) 별도 동의 · 만 14세 이상(동의 때 '만 14세 이상이에요' 칸을 늘 받고, 생일을 아는 14세 미만은 서버가 막음) · 동의를 거두거나 '지우기' = 줄은 남고 답 · 점수를 비움 · 개인정보 처리방침 목적 · 선택 항목 · 보관 기간에 추가(2026-11-14).
+- 감정 설계: 오른 것만 크게(내려간 점수는 화살표 없이 지금 값만 · 모든 기록은 '지난 기록'에) · 같은 숫자는 한 번(주인공 줄은 아래 목록에서 오른 점수를 다시 안 씀) · 자신감 20 이하면 상담 전화 한 줄(1577-0199 · 109, 24시간) · 활력 20 이하면 '이번 주는 강도를 낮춰도 괜찮아요'.
+- 알림: 마지막 체크 28일 뒤 '🧠 마음 체크할 때예요' → `/mypage/attendance?mind=1`(카드로 내려가고, 처음이거나 때가 됐으면 시트가 열림) · 한 기록에 한 번 · 알림 끈 회원 · 승인 전 빼고 · 한 번에 300명. 끄기 `select cron.unschedule('mind-remind');`.
+- 예시 화면 `/mypage/attendance?demo=1&mindDemo=none|first|steady|growth`(서버를 안 부름 · 저장도 이 기기 안에서만) · 오삼 FAQ `att-mind` · 기능 검색 `mind-stats`.
+
 ### 붕대 감기 — 실제 영상 + 12단계 설명서 (2026-10-30 그림 애니메이션 · 2026-11-12 대표님 "내가 찍어 논 영상도 나오게 · 현재 있는 메뉴얼도 있게 · 글과 영상 이미지 활용해서 최대한 쉽게")
 
 - /handwrap 는 배우는 순서대로다 ([HandWrapGuidePage](src/pages/HandWrapGuidePage.tsx)): ① **영상으로 먼저 보기**([HandWrapFullVideo](src/components/handwrap/HandWrapFullVideo.tsx) — 전체 44초 · 화면 안에서 재생 · '내 눈으로' ↔ '옆에서' · 천천히 · 아래 '순서는 3 · 3 · 3' 네 칸(손목 3바퀴 → 정권 3바퀴 → 손가락 사이 3번 → 손목에서 마무리): 영상이 지나가는 칸에 불 + 왜 하는지 한 줄, 칸을 누르면 그 부분부터 · '○단계 … 이 단계만 ›' = 그 단계 상세) → ② **12단계 설명서**([HandWrapStepViewer](src/components/handwrap/HandWrapStepViewer.tsx) — 한눈에 12칸 + 완성, 그림 그대로) → ③ **다 감았으면 확인**([HandWrapDoneCheck](src/components/handwrap/HandWrapDoneCheck.tsx) — 실제 사진 2장 + 다섯 가지 체크, 저장 안 함) → ④ 집에서 혼자 감아 보기 → 이것만 조심해요(실수마다 '○단계 보기' = 바르게 하는 단계 영상).
