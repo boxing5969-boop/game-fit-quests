@@ -68,6 +68,10 @@ verify_jwt = true
 [functions.title-video-cleanup]
 verify_jwt = false
 
+# 캘린더 3-5 날씨 도장 — 기상청 실황 · 단기예보 · ASOS 일자료를 지점마다 받아 둔다, 크론이 매시 45분 x-auto-key 로 호출 (2026-11-14)
+[functions.kma-weather]
+verify_jwt = false
+
 [functions.calendar-ics]
 verify_jwt = false
 
