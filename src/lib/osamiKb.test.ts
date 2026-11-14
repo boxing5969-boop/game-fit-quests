@@ -55,6 +55,10 @@ const DIRECT: [string, string][] = [
   ["나는 또래 중에 몇 번째예요", "att-peer"],
   ["체력 나이는 어떻게 계산해요", "att-peer"],
   ["건강 나이가 실제보다 몇 살 젊어요", "att-peer"],
+  // 마음 능력치 (2026-11-14)
+  ["마음 능력치는 어떻게 재요", "att-mind"],
+  ["마음 체크 믿을 수 있어요", "att-mind"],
+  ["자존감 검사 결과는 누가 봐요", "att-mind"],
   ["첫 4주 8번이 뭐예요", "att-starter"],
   ["출석 10번째 축하는 언제 와요", "att-starter"],
   ["출석 50회 보상 뭐예요", "rw-attendance-milestone"],

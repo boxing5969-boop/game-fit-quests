@@ -9,6 +9,8 @@
  *     → 153과 함께하며 다음에 '같은 나이와 비교'(PeerCompareCard — 국민체력100 나이 · 성별 백분위).
  *   2026-11-13 대표님 「심폐지구력 근력 건강나이등등도 모두 같은나이 평균과 비교 … 153복싱짐의 가치 전달」
  *     → 같은 카드에 체력 나이(심폐 기준 · 추정 — '153 운동 −N살') · 심폐 체력 상위 %(추정) · 악력(근력) · 체지방률.
+ *   2026-11-14 대표님 「마이복서 153 정신적인 향상도 넣자 · 운동을 통한 자신감 힘 · 과학적이고 설득력이 정말 중요해」
+ *     → 같은 나이와 비교 다음에 '마음 능력치'(MindStatsCard — 로젠버그 자존감 척도 · RAND-36 활력 · 습관 자동성 지수, 4주마다 2분 체크).
  */
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
@@ -17,6 +19,7 @@ import AttendanceHistoryPanel from "@/components/attendance/AttendanceHistoryPan
 import RenewalStoryCard from "@/components/attendance/RenewalStoryCard";
 import AttendanceMilestoneCard from "@/components/attendance/AttendanceMilestoneCard";
 import PeerCompareCard from "@/components/attendance/PeerCompareCard";
+import MindStatsCard from "@/components/attendance/MindStatsCard";
 import HealthGainsCard from "@/components/home/HealthGainsCard";
 import AchievementCard from "@/components/profile/AchievementCard";
 
@@ -58,6 +61,8 @@ const MyAttendancePage = () => {
             <HealthGainsCard />
             {/* 같은 나이와 비교 — 체력 나이 · 심폐 체력(추정) · 체지방률 · 악력 상위 % · 처음보다 (2026-11-12 · 11-13 대표님) */}
             <PeerCompareCard />
+            {/* 마음 능력치 — 자신감 · 힘(활력) · 운동 습관, 검증된 척도로 4주마다 (2026-11-14 대표님) */}
+            <MindStatsCard />
             {/* 지금까지 이룬 것 (2026-10-21 대표님: "주평균 빼 주고 지금까지 이룬 것들을 보여 줘") */}
             <AchievementCard showInvite={false} />
           </>
