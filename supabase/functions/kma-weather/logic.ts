@@ -28,7 +28,7 @@ export function addDays(day: string, n: number): string {
   const t = Date.UTC(Number(day.slice(0, 4)), Number(day.slice(5, 7)) - 1, Number(day.slice(8, 10))) + n * 864e5;
   return new Date(t).toISOString().slice(0, 10);
 }
-export const ymdOf = (day: string) => day.replaceAll("-", "");
+export const ymdOf = (day: string) => day.replace(/-/g, "");
 export const dayOf = (ymd: string) => `${ymd.slice(0, 4)}-${ymd.slice(4, 6)}-${ymd.slice(6, 8)}`;
 
 /** 기상청 발표 날짜(YYYYMMDD) · 시각(HHMM, 한국 시간) → UTC ISO */
@@ -131,6 +131,8 @@ export type FcDay = {
   /** 1 맑음 · 3 구름많음 · 4 흐림 (낮 9 ~ 18시에 가장 많은 것) */
   sky: number | null;
   snow: boolean;
+  /** 그날 시간별 기온(TMP)이 몇 시간치 있나 — 마지막 날은 몇 시간뿐이라 걸러 낸다 */
+  hours: number;
 };
 
 const PTY_RANK: Record<number, number> = { 3: 4, 2: 3, 1: 2, 4: 1, 0: 0 };
@@ -205,6 +207,7 @@ export function fcstDays(items: readonly KmaItem[]): FcDay[] {
       pty: a.pty.reduce((best, x) => ((PTY_RANK[x] ?? 0) > (PTY_RANK[best] ?? 0) ? x : best), 0),
       sky: mode(a.skyDay) ?? mode(a.skyAll),
       snow: a.snow || a.pty.includes(3),
+      hours: a.tmp.length,
     }));
 }
 

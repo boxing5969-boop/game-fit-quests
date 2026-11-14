@@ -92,7 +92,10 @@ Deno.serve(async (req) => {
     return json({ ok: r.ok, code: r.code, msg: r.msg, base, n: r.items.length, t1h: hour?.t1h ?? null, rn1: hour?.rn1 ?? null, pty: hour?.pty ?? null });
   }
 
-  const { data: setting } = await app.from("app_settings").select("value").eq("key", "weather_sites").maybeSingle();
+  // 받기만 하는 시험(dry_run)은 설정 대신 body.sites 로도 — 표가 생기기 전 확인용
+  const { data: setting } = dryRun && Array.isArray(body?.sites)
+    ? { data: { value: { sites: body.sites } } }
+    : await app.from("app_settings").select("value").eq("key", "weather_sites").maybeSingle();
   const sites = readSites(setting?.value);
   if (sites.length === 0) return json({ ok: false, code: "NO_SITES", msg: "app_settings.weather_sites 가 비었어요" });
 
@@ -141,7 +144,8 @@ Deno.serve(async (req) => {
       continue;
     }
     for (const d of fcstDays(r.items)) {
-      if (d.day < k.day) continue;
+      // 지난 날은 버리고, 앞날은 하루치(12시간 넘게)가 있는 날만 — 예보 끝 날은 몇 시간뿐이다
+      if (d.day < k.day || (d.day > k.day && d.hours < 12)) continue;
       for (const s of list) {
         fcRows.push({
           branch_name: s.branch,
@@ -236,5 +240,7 @@ Deno.serve(async (req) => {
     asos,
     obs: obsRows.length,
     errors,
+    // 받기만 하는 시험이면 모양을 볼 수 있게 몇 줄
+    ...(dryRun ? { sample: { hour: hourRows.slice(0, 2), fcst: fcRows.slice(0, 5), obs: obsRows.slice(-3) } } : {}),
   });
 });

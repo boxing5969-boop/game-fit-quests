@@ -119,9 +119,9 @@ describe("kma-weather 바꾸기", () => {
       f("20261116", "1200", "SKY", "3"),
     ];
     expect(fcstDays(items)).toEqual([
-      { day: "2026-11-14", tmin: 11, tmax: 12, pop: 60, pty: 1, sky: 4, snow: false },
-      { day: "2026-11-15", tmin: -1, tmax: 8, pop: null, pty: 3, sky: 1, snow: true },
-      { day: "2026-11-16", tmin: 5, tmax: 5, pop: null, pty: 0, sky: 3, snow: false },
+      { day: "2026-11-14", tmin: 11, tmax: 12, pop: 60, pty: 1, sky: 4, snow: false, hours: 2 },
+      { day: "2026-11-15", tmin: -1, tmax: 8, pop: null, pty: 3, sky: 1, snow: true, hours: 2 },
+      { day: "2026-11-16", tmin: 5, tmax: 5, pop: null, pty: 0, sky: 3, snow: false, hours: 1 },
     ]);
   });
 
