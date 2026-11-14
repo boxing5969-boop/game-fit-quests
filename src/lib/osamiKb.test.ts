@@ -147,6 +147,10 @@ const DIRECT: [string, string][] = [
   ["153 뜻이 뭐예요", "gd-153"],
   ["운동하다 어지러우면 어떡해요", "gd-safety"],
   ["PT 배지가 뭐예요", "mb-pt"],
+  ["프리미엄 카드가 뭐예요", "mb-pt"],
+  ["PT 예약 어떻게 해요", "mb-pt-book"],
+  ["PT 당일 취소하면 차감돼요?", "mb-pt-book"],
+  ["PT 시간 바꾸고 싶어요", "mb-pt-book"],
   ["입단식 보상 뭐예요", "rw-induction"],
   ["마인드셋이 뭐예요", "md-what"],
 ];
