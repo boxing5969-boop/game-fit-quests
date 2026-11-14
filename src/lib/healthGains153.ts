@@ -36,6 +36,7 @@
  *      Chekroud SR 외, Lancet Psychiatry 2018 (미국 120만 명) — 운동하는 사람은 마음이 힘든 날이
  *      한 달에 1.49일(43%) 적었다. '꾸준히 운동한 달' = 한 달에 4번 이상(주 1번 꼴) 온 달.
  *   ⑧ 153 PB(실측) — 첫 완주 기록보다 빨라진 비율. 추정이 아니라 실제로 잰 값이라 따로 보여 준다.
+ *   2026-11-14 — 화면의 '내 몸이 좋아진 정도' 줄(몇 % · 숫자 · 얼마나 · 기준 · 실측/추정)은 lib/bodyGains153 이 이 값들로 만든다.
  */
 import {
   DEFAULT_SESSION_MINUTES,
@@ -72,8 +73,19 @@ export const STRENGTH_WEEK_MIN_DAYS = 2;
 /** 지방 1kg 에너지 (kcal) */
 export const KCAL_PER_FAT_KG = 7700;
 
+/**
+ * 확실한 변화 — 측정 오차보다 큰 변화 (같은 사람을 다른 날 다시 재면 생기는 차이를 넘을 때만 금색 '확실한 변화', lib/bodyGains153)
+ *   악력 5kg — Bohannon RW, J Phys Ther Sci 2019;31:75–78 (악력 연구 모음): 의미 있는 변화 5.0~6.5kg, 95% 측정 오차 5.1~5.2kg.
+ *   체지방률 2.8%p — Siedler MR 외 2021 (Int J Exerc Sci Conf Proc 2(13):18): InBody 770 날마다 오차 1.0% · 최소 유의 변화 2.8%.
+ *   153 PB 11% — Engel FA 외, Frontiers in Physiology 2019;10:460: 크로스핏식 12분 운동의 날마다 변동계수 3.9~7.3%
+ *     → 95% 기준 최소 변화 = 2.77 × 3.9% ≈ 11%.
+ */
+export const SURE_GRIP_KG = 5;
+export const SURE_BODY_FAT_PP = 2.8;
+export const SURE_PB_PCT = 11;
+
 /** 화면 맨 아래 한 줄 (대표님: "개인 상태에 따라 다를 수 있다고 하자") */
-export const HEALTH_GAIN_NOTE = "연구 평균으로 추정한 값이에요 · 개인 상태에 따라 다를 수 있어요";
+export const HEALTH_GAIN_NOTE = "추정은 연구 평균이라 개인 상태에 따라 다를 수 있어요";
 
 export interface HealthDay {
   /** 'YYYY-MM-DD' (KST) */

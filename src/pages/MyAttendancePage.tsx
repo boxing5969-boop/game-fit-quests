@@ -63,8 +63,9 @@ const MyAttendancePage = () => {
             <PeerCompareCard />
             {/* 마음 능력치 — 자신감 · 힘(활력) · 운동 습관, 검증된 척도로 4주마다 (2026-11-14 대표님) */}
             <MindStatsCard />
-            {/* 지금까지 이룬 것 (2026-10-21 대표님: "주평균 빼 주고 지금까지 이룬 것들을 보여 줘") */}
-            <AchievementCard showInvite={false} />
+            {/* 지금까지 이룬 것 (2026-10-21 대표님: "주평균 빼 주고 지금까지 이룬 것들을 보여 줘")
+                — 몸무게 · 153 PB 가 얼마나 좋아졌는지는 위 '153과 함께하며'가 보여 줘서 뺀다 (2026-11-14) */}
+            <AchievementCard showInvite={false} hideBodyGains />
           </>
         }
       />

@@ -15,29 +15,32 @@
  *   2026-10-28 대표님 "정확도 80% 이라고만 표기되어있어서 사람들이 정보입력해야하는건지 모를것같아 — 버튼에 홀로그램 임펙트 효과 ·
  *     클릭해서 정보입력하라는 카톡 메시지 같이 팝업": 넣을 정보가 남았으면 정확도 칩이 홀로그램(index.css holo-chip) + 안 읽은 '1'
  *     → 누르면 오삼코치 카톡 메시지(BodyInfoCoachNote) → '지금 넣기' = 내 신체 정보. '1'은 남은 정보가 바뀔 때까지 이 기기에서 한 번만.
- *   숫자는 lib/healthGains153(효과 · 피드백) · lib/fitnessProfile153(정확도 · 남녀 평균) · lib/achievement153(펀치 · 칼로리) 한 곳.
+ *   2026-11-14 대표님 「기존에 운동을 향한 신체적 향상도 몇% 좋아졌는지도 있고 숫자로 몇인지 또 얼마나 향상 되었는지 알수있게 해줘
+ *     이것도 과학적인 신뢰성이 중요해 사람들이 어떤 기준인지 의심해」: '내 몸이 좋아진 정도' 줄마다 몇 % + 숫자 줄(처음 → 지금 · 얼마나)
+ *     + 실측/추정 이름표 + 누르면 그 줄의 기준(연구 · 153 계산 · 숫자가 나온 길 · 직접 재는 법) — lib/bodyGains153 · BodyGainRows.
+ *     잰 기록이 있으면 그것(153 PB 구간 · 총 시간 · 악력 · 체지방률 · 몸무게), 없으면 추정. 예전 '실측' 이름표가 추정인 심폐지구력에
+ *     붙던 것을 바로잡았다. 몸무게 피드백 한 줄은 몸무게 줄로 옮겼다(같은 말 두 번 없이).
+ *   숫자는 lib/healthGains153(효과 · 피드백) · lib/bodyGains153(줄마다 % · 숫자 · 기준) · lib/fitnessProfile153(정확도 · 남녀 평균) · lib/achievement153(펀치 · 칼로리) 한 곳.
  *   앱이 몸을 직접 재지 않으므로 '연구 평균으로 추정'을 늘 같이 쓰고, 153 PB · 인바디처럼 실제로 잰 기록이 있으면 그걸 먼저 보여 준다.
  *   잘한 것만 — 줄어든 것 · 손해 · 진단 · 의료 표현은 쓰지 않는다.
  */
 import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { ChevronDown, Flame, Gauge, Zap } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAttendanceHistory } from "@/hooks/useAttendanceHistory";
-import { useMyBodyInfo, useMyFitnessExtra } from "@/hooks/useMyBodyInfo";
-import { bodyInfoEmpty, weightLost } from "@/lib/achievement153";
+import { useMyBodyInfo, useMyFitnessExtra, useMyFitnessProfile } from "@/hooks/useMyBodyInfo";
+import { bodyInfoEmpty, pbView } from "@/lib/achievement153";
 import { kstToday } from "@/lib/attendanceCheer";
-import { accuracyNote, bodyFatDrop, reportAccuracy, weightBasis } from "@/lib/fitnessProfile153";
+import { GAIN_SECTION_HINT, MEASURED_VS_ESTIMATE_NOTE, SURE_CHANGE_NOTE, bodyGainRows } from "@/lib/bodyGains153";
+import { buildBodyCompare } from "@/lib/fitnessAge153";
+import { accuracyNote, reportAccuracy, weightBasis } from "@/lib/fitnessProfile153";
 import {
-  BODY_FAT_MAX_PP,
-  CARDIO_MAX_PCT,
-  ENDURANCE_MAX_PCT,
   HEALTH_GAIN_NOTE,
   KCAL_PER_FAT_KG,
   LIFE_HOURS_PER_EXERCISE_HOUR,
   MOOD_DAYS_PER_ACTIVE_MONTH,
-  STRENGTH_MAX_PCT,
-  formatPct,
   PREVIEW_PER_WEEK,
   PREVIEW_WEEKS,
   healthGains,
@@ -46,9 +49,11 @@ import {
   valueFeedback,
   valueTotals,
 } from "@/lib/healthGains153";
+import type { Test153Division } from "@/lib/test153";
 import { fetchTest153Summary } from "@/services/test153Service";
 import BodyInfoSheet from "@/components/profile/BodyInfoSheet";
 import BodyInfoInvite, { BodyInfoCoachNote } from "@/components/profile/BodyInfoInvite";
+import BodyGainRows from "@/components/home/BodyGainRows";
 import { cn } from "@/lib/utils";
 
 /** 오삼코치 메시지를 읽었나 — 그때 남아 있던 정보(몸무게,나이 …)를 이 기기에 남긴다. 남은 정보가 바뀌면 다시 '1' */
@@ -71,14 +76,7 @@ const writeNoteSeen = (uid: string | undefined, sig: string) => {
 const n = (v: number) => v.toLocaleString("ko-KR");
 /** 칸이 좁은 큰 숫자 — 1만 넘으면 '3.1만' (내림) */
 const compact = (v: number) => (v >= 10_000 ? `${(Math.floor(v / 1000) / 10).toLocaleString("ko-KR", { maximumFractionDigits: 1 })}만` : n(v));
-/** 체지방률 -%p — 0이면 '0%p' */
-const ppLabel = (v: number) => (v > 0 ? `-${one(v)}%p` : "0%p");
 const one = (v: number) => (Math.floor(v * 10) / 10).toLocaleString("ko-KR", { maximumFractionDigits: 1 });
-/** '2026-10-21' → '10월 21일' */
-const md = (d: string | null) => {
-  const m = /^\d{4}-(\d{2})-(\d{2})/.exec(d ?? "");
-  return m ? `${Number(m[1])}월 ${Number(m[2])}일` : "";
-};
 
 /** 지금까지 얻은 것 — 숫자 칸 (이름표 + 숫자만) */
 const Counter = ({ icon, label, value, unit }: { icon: ReactNode; label: string; value: string; unit: string }) => (
@@ -96,34 +94,14 @@ const Counter = ({ icon, label, value, unit }: { icon: ReactNode; label: string;
   </div>
 );
 
-/** 내 몸이 좋아진 정도 — 이름 + % 와 막대 하나 (채움 = 연구 상한 대비) · 상한의 80% 넘으면 금색 */
-const GainBar = ({ label, value, ratio, measured }: { label: string; value: string; ratio: number; measured?: boolean }) => {
-  const r = Math.max(0, Math.min(1, Number.isFinite(ratio) ? ratio : 0));
-  const high = r >= 0.8;
-  return (
-    <li>
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="min-w-0 truncate text-body text-foreground">
-          {label}
-          {measured && <span className="ml-1.5 rounded-full bg-reward/20 px-2 py-0.5 align-middle text-micro font-black text-reward">실측</span>}
-        </span>
-        <span className={cn("shrink-0 text-body font-black tabular-nums", high ? "text-reward" : "text-foreground")}>{value}</span>
-      </div>
-      <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-muted" aria-hidden>
-        <div
-          className={cn("h-full rounded-full transition-[width] duration-700", high ? "bg-reward" : "bg-primary")}
-          style={{ width: `${Math.max(r > 0 ? 3 : 0, Math.round(r * 100))}%` }}
-        />
-      </div>
-    </li>
-  );
-};
-
 const HealthGainsCard = ({ className }: { className?: string }) => {
   const { user, profile } = useAuth();
   const { data, isLoading, isError } = useAttendanceHistory(null);
   const { data: body } = useMyBodyInfo();
   const { data: extra } = useMyFitnessExtra();
+  // 악력(코치 측정 포함) · 안정시 심박 · 153 PB 구간 — '같은 나이와 비교'와 같은 캐시
+  const { data: fitness } = useMyFitnessProfile();
+  const navigate = useNavigate();
   // 153 PB — 지금까지 이룬 것 카드와 같은 캐시 키
   const { data: pb } = useQuery({
     queryKey: ["test153", "summary", user?.id],
@@ -146,9 +124,10 @@ const HealthGainsCard = ({ className }: { className?: string }) => {
   const g = has ? healthGains(data.list, data.totalMinutes, pb?.records) : previewGains();
   const totals = valueTotals(data.total, data.totalMinutes, wb.kg);
   const per = perVisit(data.total, data.totalMinutes, wb.kg);
+  const today = kstToday();
   const feedback = valueFeedback({
     days: data.list,
-    today: kstToday(),
+    today,
     total: data.total,
     totalMinutes: data.totalMinutes,
     monthMinutes: data.monthMinutes,
@@ -156,8 +135,34 @@ const HealthGainsCard = ({ className }: { className?: string }) => {
     per,
     punches: totals.punches,
   });
-  const lost = weightLost(body);
-  if (lost != null) feedback.unshift({ emoji: "⚖️", text: `처음 잰 몸무게보다 ${one(lost)}kg 가벼워졌어요 (${md(body?.firstWeightOn ?? null)} → ${md(body?.weightOn ?? null)})` });
+  // 내 몸이 좋아진 정도 — 줄마다 몇 % · 숫자 · 기준 (잰 기록이 있으면 실측, 없으면 추정 · 몸무게가 줄었으면 몸무게 줄)
+  const grip = fitness?.grip ?? null;
+  const compare = extra
+    ? buildBodyCompare({
+        gender: extra.gender,
+        birthYear: extra.birthYear,
+        bodyFat: { pct: extra.bodyFatPct, on: extra.bodyFatOn, firstPct: extra.firstBodyFatPct, firstOn: extra.firstBodyFatOn },
+        grip: grip ? { kg: grip.kg, on: grip.on, firstKg: grip.firstKg, firstOn: grip.firstOn } : null,
+        restHr: fitness?.restHr?.bpm ?? null,
+        days: data.list,
+        firstDay: data.firstDay,
+        today,
+      })
+    : null;
+  const pbDivision = pbView(pb?.records)?.division as Test153Division | undefined;
+  const rows = bodyGainRows({
+    gains: g,
+    days: data.list,
+    preview: !has,
+    cardio: compare?.cardio ?? null,
+    sex: compare?.peer.sex ?? null,
+    band: compare?.peer.band ?? null,
+    pbRecords: pb?.records ?? null,
+    pbDivision: pbDivision ? fitness?.divisions[pbDivision] ?? null : null,
+    grip: grip ? { value: grip.kg, on: grip.on, firstValue: grip.firstKg, firstOn: grip.firstOn } : null,
+    bodyFat: extra ? { value: extra.bodyFatPct, on: extra.bodyFatOn, firstValue: extra.firstBodyFatPct, firstOn: extra.firstBodyFatOn } : null,
+    weight: body ? { value: body.weightKg, on: body.weightOn, firstValue: body.firstWeightKg, firstOn: body.firstWeightOn } : null,
+  });
   const acc = reportAccuracy({
     days: data.list,
     gender: extra?.gender,
@@ -182,7 +187,6 @@ const HealthGainsCard = ({ className }: { className?: string }) => {
     }
     setNoteOpen(true);
   };
-  const fatDrop = bodyFatDrop(extra);
   // 태운 지방 — 1kg 아래는 g 으로 (첫 운동 전이면 한 번 올 때 기준)
   const fatKg = has ? totals.kcal / KCAL_PER_FAT_KG : per.kcal / KCAL_PER_FAT_KG;
   const top = feedback[0];
@@ -245,23 +249,16 @@ const HealthGainsCard = ({ className }: { className?: string }) => {
         <Counter icon={<Zap className="h-4 w-4" />} label="태운 지방" value={fatKg >= 1 ? one(fatKg) : n(Math.floor(fatKg * 1000))} unit={fatKg >= 1 ? "kg" : "g"} />
       </div>
 
-      {/* ─── 내 몸이 좋아진 정도 ─── */}
-      <p className="mt-6 text-label font-bold text-foreground">{has ? "내 몸이 좋아진 정도" : `주 ${PREVIEW_PER_WEEK}번씩 ${PREVIEW_WEEKS}주 하면`}</p>
-      <ul className="mt-3 space-y-3.5">
-        <GainBar label="심폐지구력" value={`+${formatPct(g.cardioPct)}%`} ratio={g.cardioPct / CARDIO_MAX_PCT} measured={g.pbFasterPct != null} />
-        <GainBar label="근지구력" value={`+${formatPct(g.endurancePct)}%`} ratio={g.endurancePct / ENDURANCE_MAX_PCT} />
-        <GainBar label="근력" value={`+${formatPct(g.strengthPct)}%`} ratio={g.strengthPct / STRENGTH_MAX_PCT} />
-        <GainBar
-          label="체력 (종합)"
-          value={`+${formatPct(g.fitnessPct)}%`}
-          ratio={g.fitnessPct / ((CARDIO_MAX_PCT + ENDURANCE_MAX_PCT + STRENGTH_MAX_PCT) / 3)}
-        />
-        {fatDrop != null ? (
-          <GainBar label="체지방률" value={`-${one(fatDrop)}%p`} ratio={fatDrop / BODY_FAT_MAX_PP} measured />
-        ) : (
-          <GainBar label="체지방률" value={ppLabel(g.bodyFatPp)} ratio={g.bodyFatPp / BODY_FAT_MAX_PP} />
-        )}
-      </ul>
+      {/* ─── 내 몸이 좋아진 정도 — 줄마다 몇 % · 숫자 · 얼마나 · 누르면 기준 (2026-11-14) ─── */}
+      <div className="mt-6 flex items-baseline justify-between gap-2">
+        <p className="min-w-0 truncate text-label font-bold text-foreground">{has ? "내 몸이 좋아진 정도" : `주 ${PREVIEW_PER_WEEK}번씩 ${PREVIEW_WEEKS}주 하면`}</p>
+        <p className="shrink-0 text-label text-muted-foreground">{GAIN_SECTION_HINT}</p>
+      </div>
+      <BodyGainRows
+        rows={rows}
+        className="mt-1"
+        onMeasure={(m) => (m === "pb" ? navigate("/halloffame?tab=test153") : setSheetOpen(true))}
+      />
 
       {/* ─── 오삼코치 피드백 — 한 줄 ─── */}
       {top && (
@@ -289,16 +286,12 @@ const HealthGainsCard = ({ className }: { className?: string }) => {
       </button>
       {howOpen && (
         <ul className="mt-3 space-y-2 rounded-xl bg-muted/50 px-4 py-3 text-label leading-relaxed text-foreground">
-          {g.pbFasterPct != null && (
-            <li>
-              <b>심폐지구력 실측</b> — 153 PB 첫 기록보다 {formatPct(g.pbFasterPct)}% 빨라졌어요
-            </li>
-          )}
-          {fatDrop != null && (
-            <li>
-              <b>체지방률 실측</b> — 내가 잰 체지방률 {md(extra?.firstBodyFatOn ?? null)} {one(extra?.firstBodyFatPct ?? 0)}% → {md(extra?.bodyFatOn ?? null)} {one(extra?.bodyFatPct ?? 0)}%
-            </li>
-          )}
+          <li>
+            <b>실측 · 추정</b> — {MEASURED_VS_ESTIMATE_NOTE}
+          </li>
+          <li>
+            <b>확실한 변화</b> — {SURE_CHANGE_NOTE}
+          </li>
           {has && (
             <li>
               <b>한 번 올 때마다</b> — 펀치 약 {n(per.punches)}번 · 약 {n(per.kcal)}kcal · 건강 수명 +{one(per.lifeHours)}시간
@@ -312,18 +305,6 @@ const HealthGainsCard = ({ className }: { className?: string }) => {
           </li>
           <li>
             <b>태운 지방</b> — 쓴 칼로리 ÷ 7,700kcal(지방 1kg 에너지)로 환산한 양이에요
-          </li>
-          <li>
-            <b>심폐지구력</b> — 꾸준한 유산소 운동으로 보통 10~15% 좋아져요. 쌓일수록 최대 {CARDIO_MAX_PCT}%까지 · 연구 모음(2015)
-          </li>
-          <li>
-            <b>근지구력 · 근력</b> — 팔굽혀펴기 · 윗몸일으키기 버티는 힘, 악력 · 펀치에 실리는 힘. 복싱 + 맨몸 운동 8주에 팔굽혀펴기 +6% · 윗몸일으키기 +8% · 악력 +4%(2025 연구) · 최대 근지구력 +{ENDURANCE_MAX_PCT}% · 근력 +{STRENGTH_MAX_PCT}%
-          </li>
-          <li>
-            <b>체력 (종합)</b> — 심폐지구력 · 근지구력 · 근력의 평균이에요
-          </li>
-          <li>
-            <b>체지방률</b> — 식단 조절 없이 운동만으로 8~24주에 약 2~3%p 내려갔다는 연구 모음(메타분석) 기준, 보수적으로 최대 {BODY_FAT_MAX_PP}%p · 인바디 값을 넣으면 실측으로
           </li>
           <li>
             <b>건강 수명</b> — 운동 1시간 ≈ 기대 수명 {LIFE_HOURS_PER_EXERCISE_HOUR}시간 (최대 약 3년) · 미국 연구(2017) · 대만 41만 명 연구(2011)
