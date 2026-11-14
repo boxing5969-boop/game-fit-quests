@@ -140,6 +140,9 @@ const levelOf = (card: Pick<TrainingCard, "level_min">): number => {
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
 };
 
+/** 카드 레벨(없으면 0) — 정리표(shelfLayout)의 위 리그 접기도 같은 값 */
+export const cardLevel = (card: Pick<TrainingCard, "level_min">): number => levelOf(card);
+
 /**
  * 레벨 표시 — 내 레벨까지는 '레벨 n', 위 레벨은 '레벨 n부터'(잠그지 않는다 · 결정 7번).
  * 레벨이 없는 카드(붕대 감기 등)는 표시 없음.
@@ -177,10 +180,18 @@ export function groupByShelf<T extends TrainingCard>(cards: readonly T[]): Parti
   return out;
 }
 
-/** 「다음 동작 →」 — 보고 있던 목록에서 같은 칸의 다음 카드 (끝이면 없음) */
-export function nextCard<T extends Pick<TrainingCard, "id" | "category">>(list: readonly T[], current: Pick<TrainingCard, "id" | "category">): T | null {
+/**
+ * 「다음 동작 →」 — 보고 있던 목록에서 같은 칸의 다음 카드 (끝이면 없음).
+ * anyShelf: 목록이 이미 한 칸(대표님 정리로 다른 칸에서 옮겨 온 카드도 있음)이면 분류와 상관없이 바로 다음 카드.
+ */
+export function nextCard<T extends Pick<TrainingCard, "id" | "category">>(
+  list: readonly T[],
+  current: Pick<TrainingCard, "id" | "category">,
+  opts?: { anyShelf?: boolean },
+): T | null {
   const i = list.findIndex((c) => c.id === current.id);
   if (i < 0) return null;
+  if (opts?.anyShelf) return list[i + 1] ?? null;
   const shelf = categoryToShelf(current.category);
   for (let j = i + 1; j < list.length; j++) {
     if (categoryToShelf(list[j].category) === shelf) return list[j];

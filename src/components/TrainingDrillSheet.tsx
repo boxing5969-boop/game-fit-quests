@@ -27,6 +27,7 @@ import {
   type TrainingCard,
 } from "@/lib/trainingCards";
 import { useCardPosters, useCardVideo, useTrainingCards } from "@/services/trainingCardService";
+import { logCardEvent } from "@/services/shelfLayoutService";
 import { pickKoreanVoice, speak, stopSpeech, type SpeakHandle } from "@/features/myboxer-visualization/mindAudio";
 import VideoOverlay from "@/components/common/VideoOverlay";
 
@@ -35,6 +36,10 @@ interface TrainingDrillSheetProps {
   onClose: () => void;
   /** 보던 목록 — 같은 칸의 다음 카드가 있으면 맨 아래 「다음 동작 →」 */
   list?: ReadonlyArray<TrainingExercise | TrainingCard>;
+  /** 목록이 이미 한 칸(대표님 정리로 옮겨 온 카드도 있음) — 분류와 상관없이 바로 다음 카드 */
+  listIsShelf?: boolean;
+  /** 대표님이 이 카드에 합친 카드 · 영상 — 「같은 동작」으로 이어서 보기 (2026-11-14 정리 편집) */
+  related?: { key: string; label: string; onOpen: () => void }[];
   /** 「다음 동작」을 누르면 그 카드로 바꾼다 (없으면 단추 없음) */
   onChange?: (next: TrainingCard) => void;
   /** 코치진 화면에서 맨 아래에 붙일 단추 (예: 「이 카드로 오늘 프로그램 만들기」) */
@@ -45,8 +50,8 @@ interface TrainingDrillSheetProps {
 
 const hasSpeech = () => typeof window !== "undefined" && "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
 
-const TrainingDrillSheet = ({ exercise, onClose, list, onChange, footer, zClass = "z-[90]" }: TrainingDrillSheetProps) => {
-  const { role, profile, progress } = useAuth();
+const TrainingDrillSheet = ({ exercise, onClose, list, listIsShelf, related, onChange, footer, zClass = "z-[90]" }: TrainingDrillSheetProps) => {
+  const { role, profile, progress, user } = useAuth();
   const staffViewer = isManagerRole(role) || !!(profile as { is_staff?: boolean } | null)?.is_staff;
   const myLevel = progress ? toGlobalLevel(progress.current_rank, progress.current_level) : 1;
   const cardsQ = useTrainingCards(!!exercise);
@@ -94,6 +99,34 @@ const TrainingDrillSheet = ({ exercise, onClose, list, onChange, footer, zClass 
     scrollRef.current?.scrollTo({ top: 0 });
     return stop;
   }, [cardId, stop]);
+
+  // 보이지 않는 이용 기록 (2026-11-14 · 결정 8번 1년 보관) — 연 것 · 영상이 돈 것 · 끝까지 · 다시 본 것.
+  // 회원용 영상은 반복 재생이라 'ended' 가 안 온다 → 시간이 처음으로 돌아가면 한 바퀴. 한 번 열 때 종류마다 한 번만.
+  const seenRef = useRef<{ id: string | null; play: boolean; loops: number; last: number }>({ id: null, play: false, loops: 0, last: 0 });
+  const userId = user?.id;
+  useEffect(() => {
+    seenRef.current = { id: cardId ?? null, play: false, loops: 0, last: 0 };
+    if (cardId && userId) logCardEvent(`c:${cardId}`, "open");
+  }, [cardId, userId]);
+  const onVideoPlaying = () => {
+    const s = seenRef.current;
+    if (!s.id || !userId || s.play) return;
+    s.play = true;
+    logCardEvent(`c:${s.id}`, "play");
+  };
+  const onLoopDone = () => {
+    const s = seenRef.current;
+    if (!s.id || !userId) return;
+    s.loops += 1;
+    if (s.loops === 1) logCardEvent(`c:${s.id}`, "complete");
+    if (s.loops === 2) logCardEvent(`c:${s.id}`, "replay");
+  };
+  const onVideoTime = (v: HTMLVideoElement) => {
+    const s = seenRef.current;
+    const d = v.duration;
+    if (Number.isFinite(d) && d > 0 && v.currentTime + 0.5 < s.last && s.last > d * 0.8) onLoopDone();
+    s.last = v.currentTime;
+  };
   useEffect(() => {
     if (videoRef.current) videoRef.current.playbackRate = slow ? 0.5 : 1;
   }, [slow, video.data]);
@@ -102,7 +135,8 @@ const TrainingDrillSheet = ({ exercise, onClose, list, onChange, footer, zClass 
 
   const shelf = cardShelf(card);
   const tag = levelTag(card, myLevel);
-  const next = list && onChange ? nextCard(list.map((x) => normalizeCard(x as unknown as Record<string, unknown>)), card) : null;
+  const next =
+    list && onChange ? nextCard(list.map((x) => normalizeCard(x as unknown as Record<string, unknown>)), card, { anyShelf: !!listIsShelf }) : null;
   const nextFull = next ? cardsQ.data?.find((c) => c.id === next.id) ?? next : null;
   const poster = posterOf(card);
   const url = video.data ?? null;
@@ -164,6 +198,8 @@ const TrainingDrillSheet = ({ exercise, onClose, list, onChange, footer, zClass 
               loop
               playsInline
               preload="auto"
+              onPlaying={onVideoPlaying}
+              onTimeUpdate={(e) => onVideoTime(e.currentTarget)}
               onClick={(e) => {
                 const v = e.currentTarget;
                 if (v.paused) void v.play();
@@ -184,7 +220,7 @@ const TrainingDrillSheet = ({ exercise, onClose, list, onChange, footer, zClass 
             />
           </div>
         ) : url ? (
-          <video src={url} controls playsInline className="aspect-video w-full rounded-t-3xl bg-black" />
+          <video src={url} controls playsInline onPlaying={onVideoPlaying} onEnded={onLoopDone} className="aspect-video w-full rounded-t-3xl bg-black" />
         ) : poster ? (
           <img
             src={poster}
@@ -302,6 +338,25 @@ const TrainingDrillSheet = ({ exercise, onClose, list, onChange, footer, zClass 
           )}
 
           {footer?.(card)}
+
+          {/* 같은 동작 — 대표님이 이 카드에 합친 카드 · 영상 (다른 영상 · 다른 설명) */}
+          {related && related.length > 0 && (
+            <div className="mt-4">
+              <p className="mb-2 text-label font-bold text-muted-foreground">같은 동작 · 다른 영상</p>
+              <div className="flex flex-wrap gap-1.5">
+                {related.map((r) => (
+                  <button
+                    key={r.key}
+                    type="button"
+                    onClick={r.onOpen}
+                    className="max-w-full truncate rounded-full border border-border bg-card px-3.5 py-2 text-label font-bold text-foreground active:scale-95"
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* 다음 동작 → (같은 칸) */}
           {nextFull && onChange && (

@@ -2,6 +2,7 @@
  * 🃏 카드 서랍 — 전략 회의 세 칸(오늘 프로그램 · 수업 기록 · 영상)이 같이 쓰는 고르기 시트 (2026-11-13 대표님 「추천대로 진행」)
  *
  *   맨 위 검색 · 칩(워밍업 · 기본기 · 스텝 · 기술 · 방어 · 드릴 · 체력 · 쿨다운 · 코치 · 레벨 미션 · 우리 지점 — 11/13 8칸) → 목록(첫 장면 · 이름 · 분)
+ *   · 11/14 대표님 정리(lib/shelfLayout)를 따른다 — 칸 순서 · 이름 · 옮긴 카드 · 순서, 회원에게 숨긴 · 합친 카드는 맨 뒤에 흐리게(코치진은 계속 고른다)
  *   · 153 카드 = 훈련 라이브러리(training_exercises) · 레벨 미션 = missions(읽기만) · 우리 지점 = 전략 회의 영상(strategy_videos)
  *   · 153플레이(boxing_programs)는 넣지 않는다 — 다른 크리에이터 영상이라 153 방식과 다를 수 있다 (결정 4번)
  *   · 고르면 onPick 하나 — 받는 쪽(오늘 프로그램 블록 · 수업 기록 칩)이 이름 · 분 · 블록 종류를 채운다
@@ -12,18 +13,17 @@ import { Film, Play, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DmSheet } from "@/components/dm/DmParts";
 import {
-  SHELF_INFO,
   STAFF_SHELVES,
   cardMinutes,
   cardShelf,
-  groupByShelf,
   hasCardVideo,
-  orderForStaff,
   searchCards,
   type Shelf,
   type TrainingCard,
 } from "@/lib/trainingCards";
+import { EMPTY_LAYOUT, arrangeShelves, flattenLeaves, leafName } from "@/lib/shelfLayout";
 import { useCardPosters, useTrainingCards } from "@/services/trainingCardService";
+import { useShelfLayout } from "@/services/shelfLayoutService";
 import type { StrategyVideo } from "@/services/strategyService";
 
 /** 서랍에 보이는 레벨 미션 — useMissions 줄에서 필요한 것만 */
@@ -101,19 +101,36 @@ export const CardDrawer = ({
 }) => {
   const cardsQ = useTrainingCards(open);
   const cards = useMemo(() => (cardsQ.data ?? []).filter((c) => c.is_active !== false && c.category !== "준비"), [cardsQ.data]);
-  const groups = useMemo(() => groupByShelf(cards), [cards]);
-  const shelves = STAFF_SHELVES.filter((s) => (groups[s]?.length ?? 0) > 0);
+  // 대표님 정리(2026-11-14)를 따른다 — 칸 순서 · 이름 · 옮긴 카드 · 칸 안 순서 · 묶음은 펼쳐서 · 회원에게 숨긴 카드 · 합친 카드는 맨 뒤(코치진은 계속 쓴다)
+  const layout = useShelfLayout().data?.layout ?? EMPTY_LAYOUT;
+  const arranged = useMemo(() => arrangeShelves(cards, [], layout, { audience: "staff", myLevel: 40 }), [cards, layout]);
+  const shelves = arranged.map((s) => s.id).filter((s) => STAFF_SHELVES.includes(s));
+  const labelOf = (s: Shelf) => arranged.find((x) => x.id === s)?.label ?? s;
   const tabs: Tab[] = [...shelves, ...(cardsOnly || missions.length === 0 ? [] : (["mission"] as Tab[])), ...(cardsOnly ? [] : (["ours"] as Tab[]))];
   const [tab, setTab] = useState<Tab>("warmup");
   const [query, setQuery] = useState("");
   const current: Tab = tabs.includes(tab) ? tab : tabs[0] ?? "warmup";
   const q = query.trim();
 
+  const shelfLeaves = useMemo(() => {
+    if (current === "mission" || current === "ours") return [];
+    return flattenLeaves(arranged.find((s) => s.id === current)?.tiles ?? []).filter((x) => x.kind === "card");
+  }, [arranged, current]);
+  const muteNote = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const s of arranged)
+      for (const x of flattenLeaves(s.tiles)) {
+        if (x.kind !== "card") continue;
+        const main = x.mergedInto ? flattenLeaves(arranged.flatMap((a) => a.tiles)).find((y) => y.key === x.mergedInto) : null;
+        if (x.mergedInto) m.set(x.card.id, `‘${main ? leafName(main) : "다른 카드"}’에 합침`);
+        else if (x.hidden) m.set(x.card.id, "회원에게 숨김");
+      }
+    return m;
+  }, [arranged]);
   const cardList = useMemo(() => {
     if (q) return searchCards(cards, q);
-    if (current === "mission" || current === "ours") return [];
-    return orderForStaff(groups[current] ?? []);
-  }, [q, cards, current, groups]);
+    return shelfLeaves.map((x) => (x.kind === "card" ? x.card : null)).filter((c): c is TrainingCard => !!c);
+  }, [q, cards, shelfLeaves]);
   const missionList = useMemo(() => {
     if (cardsOnly) return [];
     if (q) return missions.filter((m) => norm(`${m.title}${m.label}`).includes(norm(q)));
@@ -128,7 +145,7 @@ export const CardDrawer = ({
   const picked = new Set(pickedIds);
   const empty = cardList.length + missionList.length + videoList.length === 0;
 
-  const tabLabel = (t: Tab) => (t === "mission" ? "레벨 미션" : t === "ours" ? "우리 지점" : SHELF_INFO[t].label);
+  const tabLabel = (t: Tab) => (t === "mission" ? "레벨 미션" : t === "ours" ? "우리 지점" : labelOf(t));
 
   return (
     <DmSheet
@@ -158,7 +175,7 @@ export const CardDrawer = ({
         <div className="-mx-1 mt-2 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {tabs.map((t) => {
             const on = t === current;
-            const color = t === "mission" ? "#191F28" : t === "ours" ? "#6B7684" : SHELF_INFO[t].color;
+            const color = t === "mission" ? "#191F28" : t === "ours" ? "#6B7684" : arranged.find((x) => x.id === t)?.color ?? "#6B7684";
             return (
               <button
                 key={t}
@@ -196,13 +213,14 @@ export const CardDrawer = ({
           {cardList.map((c) => {
             const info = cardShelf(c);
             const src = posterOf(c);
+            const mute = muteNote.get(c.id);
             return (
-              <li key={c.id}>
+              <li key={c.id} className={mute ? "opacity-60" : undefined}>
                 <Row
                   thumb={src}
                   color={info.color}
                   title={c.name}
-                  sub={`${info.label} · ${cardMinutes(c)}분${c.level_min ? ` · 레벨 ${c.level_min}` : ""}`}
+                  sub={`${mute ? `${mute} · ` : ""}${info.label} · ${cardMinutes(c)}분${c.level_min ? ` · 레벨 ${c.level_min}` : ""}`}
                   video={hasCardVideo(c)}
                   picked={picked.has(c.id)}
                   onClick={() => onPick({ kind: "card", card: c })}

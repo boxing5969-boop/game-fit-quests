@@ -26,7 +26,8 @@ import {
   trainingVideoPath,
   type TrainingCard,
 } from "./trainingCards";
-import { NEW_CARDS_1112, SAMPLE_TRAINING_CARDS, WEAVING_POLISHED } from "./trainingCardsSample";
+import { NEW_CARDS_1112, NEW_CARDS_1114, SAMPLE_TRAINING_CARDS, WEAVING_POLISHED } from "./trainingCardsSample";
+import { readFileSync } from "node:fs";
 
 // strategyService 의 BlockKind 와 같게 (서비스를 불러오면 Supabase 연결이 필요해서 여기 적어 둔다)
 const BLOCK_KINDS = ["warmup", "skill", "mitt", "defense", "conditioning", "cooldown", "etc"];
@@ -225,6 +226,25 @@ describe("예시 · 새 카드 글 (마이그레이션과 같은 글)", () => {
     const sb = NEW_CARDS_1112.find((c) => c.name === "샌드백 구령")!;
     expect(sb.summary).toMatch(/어이/);
     expect(sb.summary).toMatch(/대시/);
+  });
+
+  it("화이트 기술 카드 4장 (11/14) — 기술 칸 · 화이트 레벨 · 글 규칙 · 마이그레이션과 같은 글", () => {
+    expect(NEW_CARDS_1114.map((c) => c.name)).toEqual(["인앤아웃 잽 → 카운터", "원투 → 리드 피벗", "원투쓱빡", "더킹 → 카운터"]);
+    const sql = readFileSync("supabase/migrations/20261114143623_training_shelf_layout.sql", "utf8");
+    for (const c of NEW_CARDS_1114) {
+      expect(categoryToShelf(c.category)).toBe("skill");
+      expect(c.level_min).toBeGreaterThanOrEqual(1);
+      expect(c.level_min).toBeLessThanOrEqual(10);
+      expect(c.difficulty).toBe("초급");
+      expect(c.benefits).toBe("");
+      expect(c.cues).toHaveLength(3);
+      for (const m of c.mistakes) expect(m).toContain("→");
+      const all = [c.summary, c.description, ...c.cues, ...c.mistakes].join(" ");
+      expect(all).not.toMatch(/살이 빠|다이어트|부상을 막|예방|국가대표|칼로리|건강해/);
+      // 마이그레이션 글과 한 글자도 다르지 않게
+      for (const s of [c.id, c.name, c.summary, c.description, c.target, ...c.cues, ...c.mistakes]) expect(sql).toContain(s);
+    }
+    expect(SAMPLE_TRAINING_CARDS.filter((c) => NEW_CARDS_1114.some((n) => n.id === c.id))).toHaveLength(4);
   });
 
   it("예시 카드 id 는 겹치지 않고 모두 uuid 모양", () => {
