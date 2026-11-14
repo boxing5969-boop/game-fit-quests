@@ -1164,6 +1164,7 @@ const MILEAGE_KIND_LABEL: Record<string, string> = {
   title_match: "타이틀매치",
   record: "153 레코드",
   milestone: "출석 축하",
+  pt: "PT 수업",
   adjust: "사용·조정",
 };
 

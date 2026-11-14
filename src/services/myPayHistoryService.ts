@@ -226,6 +226,8 @@ export function mileageRowTitle(r: Pick<MileageRow, "kind" | "reason" | "amount"
       return "153 기록";
     case "milestone":
       return "출석 기념";
+    case "pt":
+      return r.amount >= 0 ? "PT 수업" : "PT 수업 기록 정정";
     default:
       if (/결제 할인 사용/.test(r.reason)) return "결제 할인에 사용";
       if (/결제 취소로 돌려받음/.test(r.reason)) return "결제 취소로 돌려받음";
@@ -238,6 +240,11 @@ export function mileageRowSub(r: Pick<MileageRow, "kind" | "reason" | "amount">)
   const reason = r.reason.trim();
   // 출석은 날짜가 이미 줄 앞에 있다 — '출석 (10.26)'을 또 쓰지 않는다
   if (!reason || r.kind === "attendance") return null;
+  // PT 수업 — 'PT 수업 · 11월 14일 (2회)' 에서 수업한 날만(적립이 며칠 뒤에 잡힐 수 있다)
+  if (r.kind === "pt") {
+    const day = reason.split(" · ")[1]?.trim();
+    return day ? `${day} 수업` : null;
+  }
   const title = mileageRowTitle(r);
   const rest = reason.replace(/^결제 할인 사용 · |^결제 취소로 돌려받음 · /, "");
   if (rest === title || reason === title) return null;

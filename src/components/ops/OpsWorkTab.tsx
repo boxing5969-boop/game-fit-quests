@@ -19,6 +19,9 @@
  *   출근 확정 (2026-11-12 1단계 — 보고서 「코치 근무·PT 정직 체크 방법 보고서」): 코치님 화면 위쪽 "오늘 출근 기록이 아직 없어요" ·
  *     출근 기록 없는 날 · 내 출근 신고, 하루 시트 「출근 신고」 → 관리자 '확인할 것' 맨 위 출근 신고(승인 · 반려) · 대표님 출근 알림 켜기.
  *     알림 링크 ?duty=<날짜> 로 오면 그날 시트를 「출근 신고」로 연다 — OpsDuty · src/lib/opsDuty.ts
+ *   PT 예약 (2026-11-14 PT 프리미엄 1단계): 켠 지점만 — 코치님 화면 「오늘 PT」 위 · 관리자 화면 '확인할 것' 아래에 「PT 예약」 판
+ *     (예약 넣기 · 날짜별 수업 · 결과 고르기 · 예약 가능 시간 · PT 회원). 알림 링크 ?pt=book 으로 오면 그 판으로 내려온다.
+ *     ?demo=1 예시도 맨 위에 — OpsPtBook · src/lib/ptBooking.ts
  *   계산은 src/lib/opsWork.ts 한 곳 — 서버는 자료만.
  */
 import { useEffect, useMemo, useState } from "react";
@@ -73,6 +76,7 @@ import { useOpsPtReports } from "@/services/opsPtReportService";
 import OpsContractSheet from "./OpsContractSheet";
 import OpsDaySheet from "./OpsDaySheet";
 import OpsPtPanel, { PtCheckItem } from "./OpsPtPanel";
+import OpsPtBook, { OpsPtBookDemo } from "./OpsPtBook";
 import OpsPtRecord, { OpsPtRecordDemo } from "./OpsPtRecord";
 import OpsStaffSheet, { type OpsStaffTab } from "./OpsStaffSheet";
 import { DayRow, MonthSwitcher, OpsChip, StatusPill, fmtDay, kstToday, monthOf } from "./OpsParts";
@@ -170,6 +174,7 @@ const OpsWorkTab = ({ me }: { me: OpsMe }) => {
     <div className="space-y-4">
       {/* 예시(?demo=1) — 출근 확정 · PT 기록의 코치 · 관리자 화면을 맨 위에서 바로 눌러 본다(어느 계정으로 들어와도 보이게) */}
       {ptDemo && <OpsDutyDemo />}
+      {ptDemo && <OpsPtBookDemo />}
       {ptDemo && <OpsPtRecordDemo />}
       <div className="flex flex-wrap items-center justify-between gap-2">
         {branches.length > 1 ? (
@@ -509,6 +514,9 @@ const ManagerView = ({ data, ptDemo }: { data: OpsMonthData; ptDemo: boolean }) 
         </section>
       )}
 
+      {/* PT 예약판 — 지점 전체(2026-11-14). PT 코치가 있는 지점만 읽고, 꺼진 지점은 대표님에게만 「켜기」 카드 */}
+      {ptCoaches.length > 0 && !ptDemo && <OpsPtBook branch={data.branch} />}
+
       {/* 근무자 */}
       <section className="overflow-hidden rounded-2xl border border-border bg-card">
         <div className="flex items-center justify-between px-5 pb-2 pt-5">
@@ -746,7 +754,8 @@ const CoachView = ({ data, onOpenContract, ptDemo }: { data: OpsMonthData; onOpe
         />
       )}
 
-      {/* PT 위탁 코치 — 오늘 PT · 확인 필요 (켠 지점만 그린다, 2026-11-11) */}
+      {/* PT 위탁 코치 — PT 예약판(2026-11-14 · 켠 지점만) → 오늘 PT · 확인 필요 (켠 지점만 그린다, 2026-11-11) */}
+      {mine.pt_freelancer && !ptDemo && <OpsPtBook branch={data.branch} />}
       {mine.pt_freelancer && !ptDemo && <OpsPtRecord branch={data.branch} coachId={mine.id} />}
 
       {/* 주인공 — 이번 달 내 근무 */}

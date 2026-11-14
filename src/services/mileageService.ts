@@ -16,7 +16,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import { translateError } from "@/lib/errorMessages";
 
-export type MileageKind = "attendance" | "level_up" | "title_match" | "adjust" | "record" | "milestone";
+/** pt = PT 수업 1회 적립(2026-11-14 PT 프리미엄 — 서버 트리거가 수업 기록마다 넣는다) */
+export type MileageKind = "attendance" | "level_up" | "title_match" | "adjust" | "record" | "milestone" | "pt";
 
 export interface MileageRules {
   enabled: boolean;

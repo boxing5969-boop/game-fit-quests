@@ -974,6 +974,30 @@ html:not(.dark) .animate-pulse-glow { animation: none !important; box-shadow: va
 .still.bday-aurora-ring, .still.record-gold-ring, .still.bday-halo { animation: none; }
 .still.bday-gold-text { animation: none; background-position: 50% 0; }
 
+/* 💎 PT 프리미엄 복서카드 — 플래티넘 카드 위로 빛이 천천히 스친다 (2026-11-14 대표님 「복서카드도 프리미엄 카드로」).
+   transform 만 움직여 다시 칠하지 않는다. TV(.still) · 움직임 줄이기 설정에서는 빛을 한 자리에 멈춰 둔다. */
+.pt-premium-sheen { overflow: hidden; }
+.pt-premium-sheen::after {
+  content: "";
+  position: absolute;
+  top: -30%;
+  bottom: -30%;
+  left: 0;
+  width: 42%;
+  background: linear-gradient(100deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.85) 50%, rgba(255,255,255,0) 100%);
+  transform: translateX(-180%) skewX(-18deg);
+  animation: pt-premium-sheen 6s ease-in-out infinite;
+  will-change: transform;
+}
+@keyframes pt-premium-sheen {
+  0%, 58% { transform: translateX(-180%) skewX(-18deg); }
+  100% { transform: translateX(420%) skewX(-18deg); }
+}
+.pt-premium-sheen.still::after { animation: none; transform: translateX(120%) skewX(-18deg); opacity: 0.6; }
+@media (prefers-reduced-motion: reduce) {
+  .pt-premium-sheen::after { animation: none !important; transform: translateX(120%) skewX(-18deg); opacity: 0.6; }
+}
+
 /* 이모지 → 153 입체 아이콘 (src/lib/emoji3d, 2026-10-16 대표님: "이모지는 모두 빼고 … 퀄리티있는 디자인")
    JSX 글자 속 이모지가 이 그림으로 바뀐다. 글자 크기를 따라 1.2em — text-3xl 자리면 크게, 본문이면 본문만큼. */
 img.emo3d {
