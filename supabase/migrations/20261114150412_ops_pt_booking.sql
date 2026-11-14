@@ -23,6 +23,7 @@
 --   예약과 PT 기록 맞추기(5분 예약): 수업 시간이 된 예약에 그날 기록이 있으면 그 결과로 닫고, 그 기록이 지워지면 예약을 다시 열거나
 --     (같은 날 다른 차감 기록이 있으면 그 기록에 잇고) 코치 사정으로 닫는다 · 기록을 다시 적으면 다시 잇는다.
 --   회원 홈의 '팀 수업' 표시는 같은 팀 · 같은 시각에 다른 회원의 살아 있는 예약이 있을 때만(혼자 남으면 뺀다).
+--   코치가 예약 가능 시간을 바꾸면 예전 칸은 지우지 않고 닫은 시각만 남긴다(ops_pt_slots.removed_at) — 이 파일에 줄을 지우는 문장(delete)은 없다.
 --
 --   새 표 4 · 새 함수 · 새 예약 1개 · 새 트리거 1개(ops_pt_sessions 적립 — 실패해도 기록 저장을 막지 않는다) ·
 --   mileage_ledger 종류에 'pt' 한 칸. 기존 함수 · 표 정의 · 예약은 건드리지 않는다.
@@ -60,6 +61,8 @@ create table if not exists public.ops_pt_slots (
   created_at timestamptz not null default now(),
   check (end_min > start_min)
 );
+-- 시간을 바꾸면 예전 칸은 지우지 않고 닫은 시각만 남긴다(다시 열면 새 줄) — 읽는 쪽은 removed_at is null 인 칸만 본다.
+alter table public.ops_pt_slots add column if not exists removed_at timestamptz;
 create index if not exists ops_pt_slots_coach_idx on public.ops_pt_slots (coach_staff_id, weekday);
 alter table public.ops_pt_slots enable row level security;
 
@@ -196,7 +199,7 @@ language sql stable security definer set search_path = public as $$
   with cand as (
     select distinct ((d::date)::timestamp + make_interval(mins => m)) at time zone 'Asia/Seoul' as s
       from generate_series(_from::timestamp, _to::timestamp, interval '1 day') d
-      join public.ops_pt_slots sl on sl.coach_staff_id = _coach and sl.weekday = extract(dow from d)::int
+      join public.ops_pt_slots sl on sl.coach_staff_id = _coach and sl.removed_at is null and sl.weekday = extract(dow from d)::int
       cross join lateral generate_series(sl.start_min::int, sl.end_min::int - _slot_min, ((_slot_min + 29) / 30) * 30) m
   )
   select c.s,
@@ -324,8 +327,7 @@ begin
   return new;
 end $$;
 
-drop trigger if exists ops_pt_sessions_mileage on public.ops_pt_sessions;
-create trigger ops_pt_sessions_mileage
+create or replace trigger ops_pt_sessions_mileage
   after insert or update of status, kind, uses on public.ops_pt_sessions
   for each row execute function public._ops_pt_mileage_sync();
 
@@ -369,7 +371,7 @@ begin
       'mileage', case when v_set.mileage_on then v_set.lesson_mileage else 0 end, 'grace_minutes', 10),
     'room', greatest(v_room, 0),
     'can_book', coalesce(me.active, false) and v_coach is not null and v_room > 0
-                and exists (select 1 from public.ops_pt_slots s where s.coach_staff_id = v_coach),
+                and exists (select 1 from public.ops_pt_slots s where s.coach_staff_id = v_coach and s.removed_at is null),
     -- 살아 있는 예약 — 앞으로의 것 + 시작이 지났는데 아직 결과가 없는 것(이틀 안 · 「수업 받았어요」 대상)
     'bookings', coalesce((
       select jsonb_agg(jsonb_build_object(
@@ -711,7 +713,7 @@ begin
                                           'start_min', s.start_min, 'end_min', s.end_min)
              order by s.weekday, s.start_min)
         from public.ops_pt_slots s
-       where s.branch_name = p_branch and (v_manage or s.coach_staff_id = v_mine)), '[]'::jsonb),
+       where s.branch_name = p_branch and s.removed_at is null and (v_manage or s.coach_staff_id = v_mine)), '[]'::jsonb),
     -- 최근 사흘 입장(예약 줄의 '입장' 표시)
     'attendance', coalesce((
       select jsonb_agg(jsonb_build_object('user_id', a.user_id, 'date', a.d, 'at', a.first_at)) from (
@@ -998,6 +1000,7 @@ begin
 end $$;
 
 -- 예약 가능 시간(매주) 통째로 바꾸기 — p_slots: [{weekday 0~6, start_min, end_min}] (30분 단위 · 28칸까지 · 빈 배열 = 닫기)
+--   예전 칸은 지우지 않고 닫은 시각(removed_at)만 남긴다 — 이미 잡힌 예약은 그대로다.
 create or replace function public.ops_pt_slots_save(p_branch text, p_coach uuid, p_slots jsonb)
 returns integer language plpgsql security definer set search_path = public as $$
 declare
@@ -1024,7 +1027,7 @@ begin
   if p_slots is null or jsonb_typeof(p_slots) <> 'array' then raise exception '시간 형식이 올바르지 않아요'; end if;
   if jsonb_array_length(p_slots) > 28 then raise exception '시간대는 28칸까지 넣을 수 있어요'; end if;
 
-  delete from public.ops_pt_slots where coach_staff_id = v_coach;
+  update public.ops_pt_slots set removed_at = now() where coach_staff_id = v_coach and removed_at is null;
   for r in
     select (x->>'weekday')::int as wd, (x->>'start_min')::int as s, (x->>'end_min')::int as e
       from jsonb_array_elements(p_slots) x
