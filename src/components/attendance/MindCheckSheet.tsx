@@ -73,7 +73,7 @@ const Intro = ({
   return (
     <div className="pb-2">
       <p className="text-title font-black leading-snug text-foreground">운동이 내 마음을 어떻게 바꾸는지, 내 답으로 재요</p>
-      <p className="mt-2 text-body leading-relaxed text-foreground">세계에서 오래 써 온 심리 검사 3가지를 그대로 써요. 지어낸 점수는 없어요.</p>
+      <p className="mt-2 text-body leading-relaxed text-foreground">세계 연구에서 널리 쓰는 심리 검사 3가지를 그대로 써요. 지어낸 점수는 없어요.</p>
 
       <ul className="mt-4 space-y-2">
         {MIND_SCALES.map((s) => (
