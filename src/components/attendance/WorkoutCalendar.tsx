@@ -38,6 +38,9 @@
  *     '이날은 쉬어요' 날은 휴관일처럼 약속 점선 · 약속한 날 셈 · 체육관 체크에서 뺀다 · 펼친 달력 맨 위 [달력 · 목록 · 한 해] +
  *     찾기 · 보일 것(켜고 끄기 · 리그 테마) · 내 일정이 있어 앞으로 12달까지 넘겨 본다. 접힌 주 보기(홈 첫 화면)의 줄 수는 그대로.
  *     글 · 계산은 lib/memberEvents.ts · lib/calendarViews.ts · 시트 · 보기는 누를 때 받는 조각.
+ *   · 날씨 도장 (2026-11-14 대표님 「기상청 api도 비용이 안드는거면 진행하자」 · get_my_calendar 의 weather): 출석한 날이
+ *     비 · 눈 · 폭염 · 한파면 칸 위 가운데 흰 동그라미 도장(우산 · 눈송이 · 불꽃 · 온도계 — '표시' 캘린더를 끄면 숨김) · 그날 카드에 칭찬 한 줄 ·
+ *     오늘 · 앞날은 예보 한 줄(CalendarChecks). 오지 않은 날의 날씨는 그리지 않는다. 글 · 판정은 lib/calendarWeather.ts.
  *   날짜 계산은 lib/attendanceCalendar.ts (주는 월요일 시작).
  */
 import {
@@ -92,6 +95,7 @@ import {
 import { albumOf, isTogetherDay, partnerPromiseLine, renewalLine, weekRecap, type CalPartner } from "@/lib/calendarTogether";
 import { holidayOn } from "@/lib/krHolidays";
 import { birthdayOn, layerOn, leagueStampOf, myEventHex, myEventsOn, restDaySet, type MyEvent } from "@/lib/memberEvents";
+import { WEATHER_META, weatherOn, weatherStamp, type WeatherKind } from "@/lib/calendarWeather";
 import { listRange } from "@/lib/calendarViews";
 import type { MyEventTarget } from "@/components/attendance/MyEventSheet";
 import { useMyPromise } from "@/services/promiseService";
@@ -99,7 +103,7 @@ import { CAL2_KEY, useMyCalendar, useSetCheckDone, useSetDaySticker, useSetTodoD
 import { useCalendarFeed } from "@/services/calendarFeedService";
 import PromiseSheet from "@/components/attendance/PromiseSheet";
 import DayChecksPanel from "@/components/attendance/CalendarChecks";
-import { ActIcon, NoteIcon } from "@/components/attendance/CalendarMarkIcons";
+import { ActIcon, NoteIcon, WeatherIcon } from "@/components/attendance/CalendarMarkIcons";
 import { MonthTools, RenewalBlock, WeekRecapPanel } from "@/components/attendance/CalendarTogether";
 import { cn } from "@/lib/utils";
 
@@ -183,6 +187,8 @@ interface CellProps {
   birthday?: boolean;
   /** (3-5) 리그 테마 — 출석 도장 색 */
   stampHex?: string | null;
+  /** (3-5 날씨) 출석한 날이 비 · 눈 · 폭염 · 한파면 위 가운데 날씨 도장 */
+  weather?: WeatherKind | null;
   /** (2-3) 길게 누르기 — 바로 넣기 (없으면 길게 눌러도 아무 일 없음) */
   onLongPress?: (day: string) => void;
   picked: boolean;
@@ -269,6 +275,7 @@ const DayCell = ({
   holiday = null,
   birthday = false,
   stampHex = null,
+  weather = null,
   onLongPress,
   picked,
   onPick,
@@ -278,7 +285,7 @@ const DayCell = ({
   const lp = useLongPress(day, faint ? undefined : onLongPress);
   const base = "flex h-10 w-10 items-center justify-center rounded-full text-label tabular-nums";
   const gold = on && !!moment?.gold;
-  const label = `${dayLabel(day)}${on ? " 출석" : ""}${on && together ? " · 짝꿍과 같이" : ""}${on && moment ? ` · ${moment.text}` : ""}${!on && promised ? " · 약속한 날" : ""}${star ? " · 금색 별" : ""}${act ? ` · ${actShort(act)}` : ""}${note ? " · 코치 한마디" : ""}${dday ? " · D-day" : ""}${dot === "closed" ? " · 휴관" : dot === "event" ? " · 153 일정" : ""}${call ? " · 같이 운동" : ""}${mine.length ? ` · 내 일정 ${mine.length}` : ""}${birthday ? " · 내 생일" : ""}${holiday ? ` · ${holiday}` : ""}${isToday ? " · 오늘" : ""}`;
+  const label = `${dayLabel(day)}${on ? " 출석" : ""}${on && together ? " · 짝꿍과 같이" : ""}${on && moment ? ` · ${moment.text}` : ""}${!on && promised ? " · 약속한 날" : ""}${star ? " · 금색 별" : ""}${act ? ` · ${actShort(act)}` : ""}${note ? " · 코치 한마디" : ""}${dday ? " · D-day" : ""}${dot === "closed" ? " · 휴관" : dot === "event" ? " · 153 일정" : ""}${call ? " · 같이 운동" : ""}${mine.length ? ` · 내 일정 ${mine.length}` : ""}${birthday ? " · 내 생일" : ""}${holiday ? ` · ${holiday}` : ""}${weather ? ` · ${WEATHER_META[weather].label}` : ""}${isToday ? " · 오늘" : ""}`;
   const pickedRing = picked && "ring-2 ring-foreground ring-offset-2 ring-offset-card";
   // 길게 누를 때 아이폰 글자 고르기 · 메뉴가 뜨지 않게
   const pressCls = onLongPress ? "select-none [-webkit-touch-callout:none]" : "";
@@ -298,6 +305,11 @@ const DayCell = ({
       {act && (
         <span className="pointer-events-none absolute -left-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-card shadow-elev-1" aria-hidden>
           <ActIcon act={act} className="h-3 w-3" />
+        </span>
+      )}
+      {weather && (
+        <span className="pointer-events-none absolute -top-3 left-1/2 flex h-5 w-5 -translate-x-1/2 items-center justify-center rounded-full bg-card shadow-elev-1" aria-hidden>
+          <WeatherIcon kind={weather} className="h-3 w-3" />
         </span>
       )}
       {star && (
@@ -564,6 +576,8 @@ const WorkoutCalendarCard = ({
   const mineFor = (d: string): string[] => (cal && onMine ? myEventsOn(cal.mine, d).map(myEventHex) : []);
   const holidayFor = (d: string) => (onHoliday ? holidayOn(d) : null);
   const birthdayFor = (d: string) => !!cal && onMine && birthdayOn(cal.birthday, d);
+  // (3-5 날씨) 출석한 날의 날씨 도장 — 금색 별 · 스티커와 같은 '표시' 캘린더를 따른다
+  const weatherFor = (d: string) => (cal && onMarks ? weatherStamp(weatherOn(cal.weather, d), byDay.has(d)) : null);
   const hasAgenda = (d: string) => !!cal && (eventsOn(cal.events, d).length > 0 || callsOn(cal.calls, d).length > 0);
   // (2-4) 운동 짝꿍 — 둘 다 온 날 = 쌍도장
   const partner = cal?.partner ?? null;
@@ -938,6 +952,7 @@ const WorkoutCalendarCard = ({
                       mine={c.inMonth ? mineFor(c.day) : []}
                       holiday={c.inMonth ? holidayFor(c.day) : null}
                       birthday={c.inMonth && birthdayFor(c.day)}
+                      weather={c.inMonth ? weatherFor(c.day) : null}
                       stampHex={stamp?.hex ?? null}
                       onLongPress={c.inMonth ? longPressFor(c.day) : undefined}
                       picked={picked === c.day}
@@ -970,6 +985,7 @@ const WorkoutCalendarCard = ({
                   mine={mineFor(d)}
                   holiday={holidayFor(d)}
                   birthday={birthdayFor(d)}
+                  weather={weatherFor(d)}
                   stampHex={stamp?.hex ?? null}
                   onLongPress={longPressFor(d)}
                   picked={picked === d}

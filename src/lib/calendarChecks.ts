@@ -29,6 +29,7 @@ import {
 import { RECAP_PREF_OFF, normalizePartner, normalizeRecapPref, type CalPartner, type CalRecapPref } from "@/lib/calendarTogether";
 import { WEEK_GOAL_MAX, normalizeCalTodos, type CalTodo } from "@/lib/memberHabits";
 import { CAL_VIEW_DEFAULT, normalizeCalView, normalizeMyEvents, type CalView, type MyEvent } from "@/lib/memberEvents";
+import { normalizeWeather, type DayWeather } from "@/lib/calendarWeather";
 
 const YMD = /^\d{4}-\d{2}-\d{2}$/;
 const n = (v: number) => v.toLocaleString("ko-KR");
@@ -170,6 +171,8 @@ export interface CalState {
   league: string | null;
   /** (3-5) 캘린더 켜고 끄기 · 리그 테마 (계정마다) */
   view: CalView;
+  /** (3-5 날씨) 내 지점 날씨 — 보이는 날짜 (lib/calendarWeather · 출석한 날이 비 · 눈 · 폭염 · 한파면 도장) */
+  weather: Map<string, DayWeather>;
 }
 
 export const CAL_OFF: CalState = {
@@ -191,6 +194,7 @@ export const CAL_OFF: CalState = {
   birthday: null,
   league: null,
   view: CAL_VIEW_DEFAULT,
+  weather: new Map(),
 };
 
 type Raw = Record<string, unknown>;
@@ -287,6 +291,7 @@ export function normalizeCalendar(raw: unknown): CalState {
     birthday: typeof r.birthday === "string" && /^\d{2}-\d{2}$/.test(r.birthday) ? r.birthday : null,
     league: str(r.league),
     view: normalizeCalView(r.view),
+    weather: normalizeWeather(r.weather),
   };
 }
 

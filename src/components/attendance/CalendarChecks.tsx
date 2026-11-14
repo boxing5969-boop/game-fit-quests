@@ -17,8 +17,25 @@
  *     한 줄은 다이어리처럼 — 사진 3장 · 길면 '더 보기'. 켜고 끄기(view)를 따른다 (lib/memberEvents.ts).
  */
 import { useLayoutEffect, useRef, useState } from "react";
-import { CalendarDays, Check, ChevronRight, Flag, Gift, Lock, Plus, Star, UserRound, Users } from "lucide-react";
-import { ActIcon, NoteIcon } from "@/components/attendance/CalendarMarkIcons";
+import {
+  CalendarDays,
+  Check,
+  ChevronRight,
+  Cloud,
+  CloudRain,
+  CloudSnow,
+  CloudSun,
+  Flag,
+  Gift,
+  Lock,
+  Plus,
+  Star,
+  Sun,
+  UserRound,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
+import { ActIcon, NoteIcon, WEATHER_TEXT, WeatherIcon } from "@/components/attendance/CalendarMarkIcons";
 import {
   GOAL_MAX,
   actIsGold,
@@ -69,6 +86,7 @@ import {
   mySubLine,
   type MyEvent,
 } from "@/lib/memberEvents";
+import { fcLook, forecastLine, stampLine, weatherOn, type FcLook, type WeatherFc } from "@/lib/calendarWeather";
 import { cn } from "@/lib/utils";
 
 const VIS_LABEL: Record<JournalVisibility, string> = { private: "나만 보기", partners: "친구만", branch: "전체 공개" };
@@ -235,6 +253,27 @@ const Acts = ({ acts }: { acts: readonly CalAct[] }) => {
         </li>
       ))}
     </ul>
+  );
+};
+
+const FC_ICON: Record<FcLook, { Icon: LucideIcon; tone: string }> = {
+  rain: { Icon: CloudRain, tone: "text-blue-600 dark:text-blue-300" },
+  snow: { Icon: CloudSnow, tone: "text-sky-600 dark:text-sky-300" },
+  sun: { Icon: Sun, tone: "text-amber-500" },
+  cloudsun: { Icon: CloudSun, tone: "text-amber-500" },
+  cloud: { Icon: Cloud, tone: "text-muted-foreground" },
+};
+
+/** (3-5 날씨) 오늘(오기 전) · 앞날 예보 한 줄 — 없으면 그리지 않음 */
+const Forecast = ({ fc }: { fc: WeatherFc | null | undefined }) => {
+  const line = fc ? forecastLine(fc) : "";
+  if (!fc || !line) return null;
+  const { Icon, tone } = FC_ICON[fcLook(fc)];
+  return (
+    <p className="mt-1 flex items-center gap-1.5 text-label tabular-nums text-muted-foreground">
+      <Icon className={cn("h-4 w-4 shrink-0", tone)} aria-hidden />
+      <span className="min-w-0">예보 · {line}</span>
+    </p>
   );
 };
 
@@ -468,12 +507,17 @@ export const DayChecksPanel = ({
   }
   const canGoal =
     !!onGoal && quickModeOf(day, today) === "future" && goalsOf(cal.ddays).length < GOAL_MAX && !dd.some((d) => d.kind === "goal");
+  // (3-5 날씨) 출석한 날의 도장 한 줄(칭찬) · 오늘 오기 전 · 앞날은 예보 한 줄 — 오지 않은 날의 날씨는 말하지 않는다
+  const weather = weatherOn(cal.weather, day);
+  const stamp = attended && weather?.kind ? weather : null;
+  const stampText = stamp ? stampLine(stamp) : null;
 
   // 앞날 — 그날 153 일정 · 저요 한 모집 · D-day (체크 · 스티커는 그날이 와야) + 이 날을 목표일로
   if (future) {
     return (
       <div className="mt-3 rounded-xl bg-muted/60 px-4 py-3" aria-label={`${dayLabel(day)} 일정`}>
         <p className="text-body font-bold text-foreground">{dayLabel(day)}</p>
+        <Forecast fc={weather?.fc} />
         <Marks marks={marks} />
         <MineList events={mine} day={day} onOpen={onOpenEvent} />
         <Agenda day={day} today={today} events={events} calls={calls} onOpenCalls={onOpenCalls} />
@@ -525,10 +569,19 @@ export const DayChecksPanel = ({
           <span className="font-bold text-foreground">{durationLabel(attended.minutes)}</span>
         </p>
       )}
+      {/* (3-5 날씨) 오늘 아직 안 왔으면 예보 한 줄 — 오기 전의 기대 */}
+      {!compact && isToday && !attended && <Forecast fc={weather?.fc} />}
       {!compact && attended && moment && (
         <p className={cn("mt-1 flex items-center gap-1 text-label font-bold", moment.gold ? "text-reward" : "text-primary")}>
           <Star className="h-4 w-4 shrink-0" fill="currentColor" aria-hidden />
           {moment.text}
+        </p>
+      )}
+      {/* (3-5 날씨) 비 · 눈 · 폭염 · 한파인 날 왔으면 도장 한 줄 */}
+      {!compact && stamp?.kind && stampText && (
+        <p className={cn("mt-1 flex items-center gap-1 text-label font-bold tabular-nums", WEATHER_TEXT[stamp.kind])}>
+          <WeatherIcon kind={stamp.kind} className="h-4 w-4 shrink-0" />
+          {stampText}
         </p>
       )}
       {/* (2-4) 쌍도장 — 운동 짝꿍과 둘 다 온 날 */}
