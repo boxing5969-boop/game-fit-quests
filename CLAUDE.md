@@ -61,6 +61,7 @@ talktalk 변경은 별도 commit 으로 처리하고 prefix 는 `chore(talktalk)
   - 여러 영역이 같이 쓰는 DB 함수는 따로 잡는다: `myboxer:db:<함수 이름>` (예: `myboxer:db:guard_profile_privileged_columns`) · Edge Function 배포는 `myboxer:edge:<함수>`.
 - **하는 동안**: 단계마다(30분 안쪽) `select mkt_work_set('<내 계정>', '<key>', 'doing', '어디까지: … · 다음: …');` — 사용량이 찰 것 같으면 `'handoff'` 로 어디까지 · 다음 할 일 · 손댄 파일을 남긴다(다른 계정이 이어받는다).
 - **끝낼 때**: 커밋 · 푸시 · 라이브 확인 뒤 `select mkt_work_set('<내 계정>', '<key>', 'done', '<커밋 해시 · 결과>');`
+  - **회원 화면에 보이는 기능을 main 에 올리면 `src/data/appUpdates.ts` 맨 위에 한 칸**(공지사항 「앱 업데이트」 — 아래 「앱 업데이트 내역」 · 2026-11-15 회원 제안). 코치진만 보이는 기능은 `audience: "staff"` · 시범 지점만이면 `branches`.
 - **git**: 작게 커밋하고 끝나면 바로 푸시. 푸시 직전 `git fetch && git rebase origin/main` → **`bun run build` 한 번 더**(다른 계정 변경과 합친 상태가 빌드되는지 + 마이그레이션 번호 겹침 검사 `scripts/check-migrations.mjs` — 클로드 세션에서는 겹치면 빌드가 멈춘다) → push. force push 금지 · 다른 계정 커밋 되돌리기 금지 · 충돌은 두 쪽을 다 살려서 푼다(판단이 안 서면 대표님께).
 - **DB**: `create or replace function` 전에 저장소 파일이 아니라 **DB 의 지금 정의**(`select pg_get_functiondef('public.<함수>'::regproc)`)를 읽고 그 위에 고친다 — 그사이 다른 계정이 바꾼 것을 덮지 않게.
   **저장소(storage.objects) 정책에는 authenticated 가 실행할 수 있는 함수만** 쓴다 — `has_role` · `_strategy_staff` 는 되고 `_strategy_hq` 같은 안쪽 함수는 안 된다. 정책 하나가 실행 권한 없는 함수를 부르면 저장소가 달라도 모든 올리기가 'permission denied for function …' 로 막힌다(넣기 정책은 저장소마다 나뉘지 않고 모두 검사된다 · 2026-11-13 카드 영상 저장소). 새 저장소 정책을 만들면 되돌림 시험에 **다른 저장소 올리기**를 꼭 넣는다.
@@ -769,6 +770,19 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 회원 1:1 메시지(`/messages`, 회원 · 코치님끼리)와 다르다 — 1:1 문의는 지점 운영진 창구(153OS 문의함에서 답장).
 - **검수 고침 (2026-11-03 · 153OS 38단계 — 대표님 「다음작업과 최고성능 검수하자」)**: ① `os_push_receive` 링크 검사식 `{0,298}` 이 PostgreSQL 정규식 반복 한도(255)를 넘어 **줄마다 오류** → 153OS 알림이 한 줄도 못 들어오던 것을 고침([20261103123928](supabase/migrations/20261103123928_os_push_receive_link_fix.sql) — 모양은 `*`, 길이 2~300 은 char_length). 그날까지 보낸 알림 0건이라 잃은 것 없음. DB 정규식에 `{n,m}` 을 쓸 때 255 를 넘기지 않는다. ② os-app-content: 로그인 확인 실패도 200 `{ok:false, code:NOT_AUTHENTICATED}` · 153OS 오류 글은 회원에게 보여도 되는 코드(NOT_REGISTERED · NOT_FOUND · TOO_MANY · INVALID_REQUEST · MEMBER_WITHDRAWN)만 그대로 · 화면(`callOs`)은 FunctionsHttpError/FetchError 를 나눠 '인터넷 연결' · '다시 로그인' · '잠시 뒤'로 ③ os-push-pull 은 빈 쪽이 나올 때까지(최대 3번) ④ 1:1 문의 화면(목록 · 새 문의 쓰기 · 대화)에서 오삼코치 손잡이 · 튜토리얼 오삼이 숨김 · 153OS 회원과 안 이어진 계정엔 '새 문의 남기기' 없음 ⑤ 후기 고칠 때 코치는 153OS 가 보낸 `mine.coach_staff_id` 로(이름으로 찾다 지워지던 것) ⑥ 키오스크: 153OS 가 `fallback:true`(자기 DB 못 읽음)를 보내면 지난 설정 그대로 · 마지막으로 맞춘 서버 소리 값을 기기에 기억(`153_kiosk_sound_server`) · 글 정리 규칙을 153OS 와 같게(제어 · 서식 · 한글 채움 문자 빼고 이모지 잇기 U+200D 는 둠).
 - **얼굴 출석 키오스크 설정**(153OS 35단계 '설정 › 출석 프로그램 설정' · 2026-11-02): [src/pages/FaceKioskPage.tsx](src/pages/FaceKioskPage.tsx) 가 켤 때와 1분마다 153OS `POST /api/face/settings`(x-kiosk-key = 지점)를 읽는다 → 얼굴 출석 쉬기(인식 멈춤 · 쉬는 화면) · 기다리는 화면 안내 줄 · QR 안내 · 인사 문구 · 호명 음성 `{이름}` · 소리(153OS 에 저장한 값이 바뀔 때만 기기 값을 맞춤) · 다시 인식 간격(분). 받기 · 기본값은 [src/lib/kioskSettings.ts](src/lib/kioskSettings.ts)(153OS `workers/api/src/lib/kioskSettings.ts` 와 같은 글 · 규칙), 화면은 [src/components/kiosk/FaceKioskOverlays.tsx](src/components/kiosk/FaceKioskOverlays.tsx). 못 읽으면(옛 워커 404 · 네트워크) 지금 키오스크 그대로. 출입 판단(verify)은 이 설정과 상관없다.
+
+### 앱 업데이트 내역 — 공지사항 「앱 업데이트」 칸 (2026-11-15 선릉역점 봄 회원 제안 「앱 내 개선사항이나 업데이트가 있을 때 공지사항에 업데이트 내용이 오면 좋을것같아요」 → 대표님 「공지사항 안 '앱 업데이트' 칸」 · 「알림은 안 보냄 — 빨간 점만」)
+
+| 파일 | 역할 |
+|---|---|
+| [src/data/appUpdates.ts](src/data/appUpdates.ts) | 내역 정본 — 앱과 함께 배포(DB 없음 · 153OS 와 안 이어진 회원도 보인다). 칸 = id(`YYYYMMDD-짧은-이름` · 바꾸지 않음) · 날짜 · 제목 · 설명 1~3줄 · 바로 보기(`{today}` = 오늘 — 운동 달력 `/home?cal={today}`) · `fromMember`(「회원 제안」) · `audience`(staff = 코치진만) · `branches`(시범 지점 회원만) |
+| [src/lib/appUpdates.ts](src/lib/appUpdates.ts) | 보이는 것(`visibleUpdates` — 회원은 코치진 칸 · 다른 지점 칸 빼고 · 대표님 · 운영진은 모두 · 최신 날짜 먼저 · 같은 날은 파일 순서) · 본 것 다듬기 · 안 본 것 · 「새」 표시(`newBadgeIds` — 이 기기에서 처음 열면 가장 최근 날짜만) · 칸 검사(`updateProblems` — 제목 34자 · 줄 48자 · id 앞 8자리 = 날짜) — 시험 appUpdates.test.ts(모든 칸 검사 · 회원 화면에 쓰지 않는 낱말 · 금액 · '국가대표' · 날짜 순서) |
+| [src/hooks/useAppUpdates.ts](src/hooks/useAppUpdates.ts) | 본 것 = 이 기기 localStorage `153updates:seen:<계정>`(저장이 막힌 기기는 이번 접속 동안만) · 전체 메뉴 · 알림함 · 공지사항이 같은 값을 본다 · 코치진 판단은 전체 메뉴의 지점 회의실 칸과 같은 기준(앱 권한 + `useDmSummary` kind) |
+| [AppUpdatesList](src/components/notices/AppUpdatesList.tsx) · [NoticesPage](src/pages/NoticesPage.tsx) | 공지사항 위 두 칸 [지점 공지 · 앱 업데이트] — `/notices?tab=updates` 로 바로 · 안 본 업데이트가 있으면 처음부터 그 칸 · 날짜마다 카드 · 줄 = 「새」 · 「회원 제안」 + 제목 + 첫 줄 · 누르면 설명 + 「바로 보기」(맨 위 줄은 펼쳐져 있음) · 맨 아래 「이런 기능이 있으면 좋겠어요」 → `/feedback?cat=제안`(오류 신고 화면이 '제안'으로 시작) · 이 칸을 열면 지금 보이는 업데이트를 모두 본 것으로 |
+
+- 빨간 점(휴대폰 알림 없음): 전체 메뉴 '공지사항' 칸(폴더 안이면 폴더에 — `HomeMenuGrid` `dotOf`) · 알림함 오른쪽 위 「공지사항」(점이 있으면 앱 업데이트 칸으로) · 공지사항 「앱 업데이트」 칸 이름 옆.
+- 글 쓰는 법: 회원 말로 무엇이 좋아졌는지 · 어디서 보는지 — 개발 말(함수 · 표 · 단계 번호) · 금액 · 사람 이름은 쓰지 않는다(공개 저장소 · 회원 제안도 이름 없이 「회원 제안」만). 오삼 FAQ `nt-updates` · 기능 검색 `app-updates`(→ `/notices?tab=updates`).
+- 처음 채운 것(11/02 ~ 11/15 main 에 올라간 회원 화면 기능 · 코치진 칸 6개 · 선릉역점만 연 칸 5개). 회원 제안 표시 = 운동 달력(11/11 봄 회원 제안) · 이 칸.
 
 ### 아이폰 앱 (App Store, 2026-10-19 대표님 "애플스토어에도 등록하자")
 
