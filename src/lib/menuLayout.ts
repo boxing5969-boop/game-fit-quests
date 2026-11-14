@@ -134,13 +134,14 @@ export const SHORTCUT_EXTRAS: readonly MenuCatalogItem[] = [
     ["코치", "코치 화면", "코치 대시보드"],
     "manager",
   ),
+  // 옛 「루틴 만들기」 → 「내 수업」 (2026-11-14 · 주소 /routine-builder 는 전략 회의 153 콘텐츠 카드의 내 수업으로 넘긴다 — 저장된 바로가기가 끊기지 않게 id 그대로)
   x(
     "/routine-builder",
-    "루틴 만들기",
+    "내 수업",
     "clipboard",
-    "코치 수업 루틴 빌더",
-    ["루틴 만들기", "루틴 빌더", "수업 만들기"],
-    "manager",
+    "153 콘텐츠 카드로 짠 나만의 수업",
+    ["내 수업", "루틴 만들기", "루틴 빌더", "수업 만들기"],
+    "staff",
   ),
   x(
     "/office?tab=strategy",

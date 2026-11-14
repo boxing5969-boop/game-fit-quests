@@ -249,6 +249,9 @@ export const FEATURES: readonly SearchEntry[] = [
   f("training-library", "영상으로 배우기 · 동작 카드", "동작 영상 · 설명 듣기 · 포인트", "books", go("/missions?learn=1"),
     ["라이브러리", "훈련 라이브러리", "운동 설명", "드릴", "동작 영상", "동작 그림", "운동법", "설명 듣기", "워밍업 영상",
       "스텝 영상", "카드", "동작 카드", "영상으로 배우기"]),
+  // 내 수업 (2026-11-14 영상으로 배우기 2단계) — 카드를 담아 짠 나만의 수업 · 재생 · 코치님께 보여드리기
+  f("my-class", "내 수업", "카드를 담아 나만의 수업 · 이어서 재생", "books", go("/missions?learn=1&shelf=mine"),
+    ["내 수업", "나만의 수업", "수업 짜기", "커스텀 수업", "담기", "담은 카드", "내가 짠 수업", "루틴", "운동 루틴", "혼자 운동", "집에서 운동"]),
   // 코치진 — 카드 보기 · 고치기 · 영상 넣기 (고치기는 대표님 · 운영진)
   f("training-library-edit", "훈련 라이브러리 · 카드 고치기", "153 콘텐츠 카드 · 영상 넣기", "books", go("/training-library"),
     ["훈련 라이브러리", "카드 고치기", "카드 영상", "코치용 영상"], { staffOnly: true }),
@@ -351,8 +354,9 @@ export const FEATURES: readonly SearchEntry[] = [
     ["관리자", "관리", "지점 관리", "매니저"], { staffOnly: true }),
   f("live-board", "라이브보드 · TV", "지점 TV 화면 고르기", "play", go("/manager/live-board"),
     ["tv", "티비", "사이니지", "라이브보드", "전광판"], { staffOnly: true }),
-  f("routine-builder", "수업 루틴 만들기", "코치 루틴 빌더", "clipboard", go("/routine-builder"),
-    ["루틴 만들기", "루틴 빌더", "수업 만들기"], { staffOnly: true }),
+  // 옛 「루틴 만들기」는 접음(2026-11-14) — 코치님 내 수업 = 전략 회의 「153 콘텐츠 카드」의 내 수업 칸 · 회원님이 보여 준 수업
+  f("routine-builder", "내 수업 · 회원님이 보여준 수업", "153 콘텐츠 카드로 짠 수업 · 코치 한마디", "clipboard", go("/office?tab=strategy&s=video&shelf=mine"),
+    ["루틴 만들기", "루틴 빌더", "수업 만들기", "내 수업", "회원 수업", "보여준 수업", "한마디"], { staffOnly: true }),
   // 153운영본부 「일정」 탭 (2026-11-02 대표님 "팀원들 스스로 스케줄 관리 · 내가 팀원들의 스케줄을 한눈에")
   f("team-plan", "팀 일정 · 내 일정", "153운영본부 — 코치님 스케줄", "clipboard", go("/office?tab=plan"),
     ["일정", "스케줄", "팀 일정", "내 일정", "코치 일정", "코치 스케줄", "직원 일정", "153운영본부", "운영본부"], { staffOnly: true }),

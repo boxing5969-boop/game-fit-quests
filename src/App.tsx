@@ -131,7 +131,6 @@ const MyBoxerCommunityPage = lazyWithRetry(() => import("@/pages/MyBoxerCommunit
 const MessagesPage = lazyWithRetry(() => import("@/pages/MessagesPage"));
 const MessageThreadPage = lazyWithRetry(() => import("@/pages/MessageThreadPage"));
 const TrainingLibraryPage = lazyWithRetry(() => import("@/pages/TrainingLibraryPage"));
-const RoutineBuilderPage = lazyWithRetry(() => import("@/pages/RoutineBuilderPage"));
 const RoutinesPage = lazyWithRetry(() => import("@/pages/RoutinesPage"));
 const BoxingLibraryPage = lazyWithRetry(() => import("@/pages/BoxingLibraryPage"));
 // 기능 검색 — 기능·영상·수업을 한 칸에서 (2026-10-01 대표님)
@@ -386,7 +385,8 @@ const AppRoutes = () => {
         <Route path="/messages/:threadId" element={<ProtectedRoute><MessageThreadPage /></ProtectedRoute>} />
         {/* 훈련 라이브러리 — 2026-11-13 회원 화면은 훈련 탭 「영상으로 배우기」로 옮겼다(내 바로가기 · 옛 링크는 그리로). 코치진은 카드 보기 · 고치기 화면 */}
         <Route path="/training-library" element={<ProtectedRoute><TrainingLibraryRoute /></ProtectedRoute>} />
-        <Route path="/routine-builder" element={<ProtectedRoute><ManagerRoute><RoutineBuilderPage /></ManagerRoute></ProtectedRoute>} />
+        {/* 옛 「루틴 만들기」는 접음(2026-11-14 영상으로 배우기 2단계 · 결정 7번) — 코치님 「내 수업」(전략 회의 153 콘텐츠 카드)으로 */}
+        <Route path="/routine-builder" element={<ProtectedRoute><Navigate to="/office?tab=strategy&s=video&shelf=mine" replace /></ProtectedRoute>} />
         <Route path="/routines" element={<ProtectedRoute><RoutinesPage /></ProtectedRoute>} />
         <Route path="/search" element={<ProtectedRoute><SearchPage /></ProtectedRoute>} />
         <Route path="/title-match" element={<ProtectedRoute><TitleMatchPage /></ProtectedRoute>} />

@@ -173,8 +173,9 @@ const TrainingLibraryPage = () => {
         <h1 className="text-heading font-black">훈련 라이브러리</h1>
         {canEdit && (
           <div className="ml-auto flex items-center gap-1.5">
-            <button onClick={() => navigate("/routine-builder")} className="rounded-lg bg-muted px-2.5 py-1.5 text-label font-bold text-foreground active:scale-95">
-              🥊 루틴 빌더
+            {/* 옛 「루틴 빌더」는 접음(2026-11-14) — 코치님 「내 수업」(전략 회의 153 콘텐츠 카드)으로 */}
+            <button onClick={() => navigate("/office?tab=strategy&s=video&shelf=mine")} className="rounded-lg bg-muted px-2.5 py-1.5 text-label font-bold text-foreground active:scale-95">
+              내 수업
             </button>
             <button onClick={() => openEdit("new")} className="flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-label font-bold text-primary-foreground active:scale-95">
               <Plus className="h-3.5 w-3.5" /> 추가

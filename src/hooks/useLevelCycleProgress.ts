@@ -6,7 +6,7 @@
  * 숫자는 전부 서버(get_level_cycle_progress)가 계산한다 — auto_advance_from_attendance 와
  * 같은 식(출석 1회 = 1.0, 운동시간 120분이면 1.25)이라 화면과 판정이 어긋나지 않는다.
  *
- * 쿼리키 ["level-cycle", userId] 는 RoutinesPage 와 같은 RPC·같은 키 — 캐시를 공유한다.
+ * 쿼리키 ["level-cycle", userId] — 같은 RPC 를 부르는 화면은 이 키를 같이 쓴다(캐시 공유). (수업 루틴 화면은 2026-11-14 부터 안 부름)
  */
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
