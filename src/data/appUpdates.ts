@@ -18,6 +18,28 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261115-card-react",
+    date: "2026-11-15",
+    title: "영상으로 배우기 — 동작마다 반응 · 의견",
+    lines: [
+      "동작 카드마다 ♥ · 쉬워요 · 딱 좋아요 · 어려워요",
+      "궁금한 점은 「코치님께 의견」으로 — 코치님 답이 와요",
+      "「찾기」로 동작을 찾고 · 영상이 없으면 「영상 찍어 주세요」",
+    ],
+    link: { to: "/missions?learn=1", label: "영상으로 배우기" },
+  },
+  {
+    id: "20261115-card-opinions",
+    date: "2026-11-15",
+    title: "코치님 — 카드마다 회원 반응 · 의견",
+    lines: [
+      "카드 시트 아래에 회원 ♥ · 쉬워요 · 어려워요 숫자",
+      "회원님 의견은 「153 콘텐츠 카드」 위 한 줄에서 답해요",
+    ],
+    link: { to: "/office?tab=strategy&s=video", label: "콘텐츠 카드 열기" },
+    audience: "staff",
+  },
+  {
     id: "20261115-app-updates",
     date: "2026-11-15",
     title: "공지사항에 「앱 업데이트」 칸이 생겼어요",
