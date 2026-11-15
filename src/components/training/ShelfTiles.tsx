@@ -15,6 +15,7 @@ export const Thumb = ({
   pinned,
   count,
   editing,
+  popular,
   children,
 }: {
   src: string | null;
@@ -27,6 +28,8 @@ export const Thumb = ({
   pinned?: boolean;
   /** 대표님 편집 — 지난 7일 연 회원 수 */
   count?: number | null;
+  /** 4단계 「많이 담은 동작」 — 담은 회원이 5명을 넘을 때 (숫자 없이) */
+  popular?: boolean;
   children?: ReactNode;
 }) => (
   <div className="relative aspect-square w-full overflow-hidden" style={{ backgroundColor: `${color}14` }}>
@@ -50,10 +53,14 @@ export const Thumb = ({
       </span>
     )}
     {pinned && <span className="absolute right-2 top-2 rounded-full bg-primary px-2 py-1 text-micro font-bold text-primary-foreground">추천</span>}
-    {count != null && count > 0 && (
+    {count != null && count > 0 ? (
       <span className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-micro font-bold text-foreground shadow-elev-1">
         {count}명
       </span>
+    ) : (
+      popular && (
+        <span className="absolute bottom-2 left-2 rounded-full bg-white/95 px-2 py-1 text-micro font-bold text-primary shadow-elev-1">많이 담은</span>
+      )
     )}
     {children}
   </div>

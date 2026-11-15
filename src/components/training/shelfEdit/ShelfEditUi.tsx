@@ -10,7 +10,7 @@
  */
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { ArrowDown, ArrowUp, EyeOff, History, Layers, ListOrdered, Undo2 } from "lucide-react";
+import { ArrowDown, ArrowUp, BarChart3, EyeOff, History, Layers, ListOrdered, Undo2 } from "lucide-react";
 import { DmSheet } from "@/components/dm/DmParts";
 import { cn } from "@/lib/utils";
 import { MEMBER_SHELVES, SHELF_INFO, cardLevel, type Shelf } from "@/lib/trainingCards";
@@ -46,6 +46,7 @@ import {
   type TileKey,
 } from "@/lib/shelfLayout";
 import { useShelfLayoutHistory, type CardBrief } from "@/services/shelfLayoutService";
+import { detailRows, leagueLine, type CardStats } from "@/lib/cardData";
 import type { SaveStatus } from "./useShelfEditor";
 
 export type EditSheet =
@@ -100,7 +101,7 @@ const BigBtn = ({ children, onClick, tone = "plain", disabled }: { children: Rea
   </button>
 );
 
-const Toggle = ({ label, sub, on, onChange }: { label: string; sub?: string; on: boolean; onChange: (v: boolean) => void }) => (
+export const Toggle = ({ label, sub, on, onChange }: { label: string; sub?: string; on: boolean; onChange: (v: boolean) => void }) => (
   <button
     type="button"
     role="switch"
@@ -132,6 +133,7 @@ export function ShelfEditBar({
   foldUpper,
   onToggleFold,
   brief,
+  onOpenData,
 }: {
   status: SaveStatus;
   demo: boolean;
@@ -144,6 +146,8 @@ export function ShelfEditBar({
   foldUpper: boolean;
   onToggleFold: () => void;
   brief: CardBrief | null;
+  /** 4단계 — 데이터 창(줄 세우기 · 다음 촬영 목록 · 카드에 숫자 붙이기) */
+  onOpenData?: () => void;
 }) {
   const statusText = demo
     ? "예시 화면 — 이 창에만 저장돼요"
@@ -166,6 +170,7 @@ export function ShelfEditBar({
       </div>
       <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <ToolChip icon={Undo2} label="되돌리기" disabled={!canUndo} onClick={onUndo} />
+        {onOpenData && <ToolChip icon={BarChart3} label="데이터" onClick={onOpenData} />}
         <ToolChip icon={Layers} label={`겹침 ${overlapCount}`} tone={overlapCount > 0 ? "warn" : undefined} onClick={() => onOpen("overlaps")} />
         <ToolChip icon={EyeOff} label={`숨긴 카드 ${hiddenCount}`} onClick={() => onOpen("hidden")} />
         <ToolChip label={foldUpper ? "위 리그 접기 켬" : "위 리그 접기 끔"} tone={foldUpper ? "on" : undefined} onClick={onToggleFold} />
@@ -199,6 +204,8 @@ export function ShelfEditSheets({
   arranged,
   overlaps,
   brief,
+  stats = null,
+  statsLabel = "",
   apply,
   restore,
   version,
@@ -211,6 +218,9 @@ export function ShelfEditSheets({
   arranged: ArrangedShelf[];
   overlaps: Overlap[];
   brief: CardBrief | null;
+  /** 4단계 데이터(데이터 창에서 고른 기간 · 지점) — 카드 창에 숫자 */
+  stats?: CardStats | null;
+  statsLabel?: string;
   apply: (next: ShelfLayout, note: string) => void;
   restore: (version: number) => Promise<void>;
   version: number;
@@ -243,6 +253,8 @@ export function ShelfEditSheets({
         layout={layout}
         order={order}
         brief={brief}
+        stats={stats}
+        statsLabel={statsLabel}
         apply={apply}
         keysOf={keysOf}
         nameOf={nameOf}
@@ -272,6 +284,8 @@ function ItemSheet({
   layout,
   order,
   brief,
+  stats,
+  statsLabel,
   apply,
   keysOf,
   nameOf,
@@ -283,6 +297,8 @@ function ItemSheet({
   layout: ShelfLayout;
   order: { id: Shelf; label: string; color: string }[];
   brief: CardBrief | null;
+  stats: CardStats | null;
+  statsLabel: string;
   apply: (next: ShelfLayout, note: string) => void;
   keysOf: (s: Shelf) => TileKey[];
   nameOf: (k: TileKey) => string;
@@ -299,6 +315,10 @@ function ItemSheet({
   const title = nameOf(key);
   const level = tile.kind === "card" ? cardLevel(tile.card) : 0;
   const stat = brief?.items.get(key);
+  const full = stats?.items.get(key) ?? null;
+  const rows = detailRows(full);
+  const saversByLeague = leagueLine(full, "savers");
+  const hardByLeague = leagueLine(full, "hard");
   const from = mergedFrom(layout, key);
   const sub = [
     `${shelfLabel(layout, found.shelf)} 칸`,
@@ -313,12 +333,30 @@ function ItemSheet({
   return (
     <DmSheet open={open} onClose={onClose} title={title} subtitle={sub}>
       <div className="space-y-3 pb-2">
-        {stat && (
-          <p className="rounded-2xl bg-secondary px-4 py-3 text-label text-foreground">
-            지난 {brief!.days}일 · 연 회원 <b>{stat.users}명</b> · 끝까지 본 회원 <b>{stat.completes}명</b>
-            {stat.replays ? ` · 다시 본 회원 ${stat.replays}명` : ""}
-            {brief!.demo ? " (예시)" : ""}
-          </p>
+        {rows.length > 0 ? (
+          <div className="rounded-2xl bg-secondary px-4 py-3">
+            <p className="text-label font-bold text-muted-foreground">
+              {statsLabel} · 회원 기준{stats?.demo ? " · 예시" : ""}
+            </p>
+            <dl className="mt-1.5 space-y-1">
+              {rows.map((r) => (
+                <div key={r.label} className="flex items-baseline justify-between gap-3 text-label">
+                  <dt className="shrink-0 text-muted-foreground">{r.label}</dt>
+                  <dd className="text-right font-bold text-foreground">{r.value}</dd>
+                </div>
+              ))}
+            </dl>
+            {saversByLeague && <p className="mt-1.5 text-label text-muted-foreground">담기 리그별 · {saversByLeague}</p>}
+            {hardByLeague && <p className="mt-0.5 text-label text-muted-foreground">어려워요 리그별 · {hardByLeague}</p>}
+          </div>
+        ) : (
+          stat && (
+            <p className="rounded-2xl bg-secondary px-4 py-3 text-label text-foreground">
+              지난 {brief!.days}일 · 연 회원 <b>{stat.users}명</b> · 끝까지 본 회원 <b>{stat.completes}명</b>
+              {stat.replays ? ` · 다시 본 회원 ${stat.replays}명` : ""}
+              {brief!.demo ? " (예시)" : ""}
+            </p>
+          )
         )}
         {tile.kind !== "folder" && (
           <BigBtn

@@ -25,13 +25,18 @@
  *   · 카드 시트 아래 반응 칸(♥ · 쉬워요/어려워요 · 코치님께 의견 · 영상 찍어 주세요)은 TrainingDrillSheet 가 그린다
  *   · 회원: 머리 「찾기」 → 찾기 칸 · 결과가 0이면 「영상 찍어 주세요」 + 찾았는데 없는 동작 기록(보이지 않게)
  *   · 코치진: 찾기 칸 아래 「회원님 의견 n · 답 기다려요 m」 → 창 · 알림 ?opinion=<id> / 코치님 답 알림 ?card=<id> → 그 카드 시트
+ *
+ *   2026-11-15 대표님 「다음 4단계진행」 — 데이터 (lib/cardData · services/cardDataService · shelfEdit/ShelfDataSheet)
+ *   · 대표님 · 운영진: 머리 📊 단추 · 편집 막대 「데이터」 · 월요일 요약 알림 ?data=1 → 데이터 창(줄 세우기 · 다음 촬영 목록)
+ *     「카드에 숫자 붙이기」를 켜면 타일마다 본 회원 · 담기 · ♥ · 어려워요 한 줄(이 기기에 기억) · 편집 카드 창에 숫자 전부
+ *   · 회원 · 코치진: 담은 회원이 5명을 넘는 카드에 「많이 담은」(숫자 없이 · 결정 5번)
  */
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { Check, ChevronDown, ChevronRight, ChevronUp, MessageCircle, Minus, Plus, Search, X } from "lucide-react";
+import { BarChart3, Check, ChevronDown, ChevronRight, ChevronUp, MessageCircle, Minus, Plus, Search, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toGlobalLevel } from "@/lib/rankLabels";
 import { cn } from "@/lib/utils";
@@ -76,6 +81,9 @@ import {
 } from "@/lib/shelfLayout";
 import { useCardPosters, useTrainingCards } from "@/services/trainingCardService";
 import { logCardEvent, useCardBrief, useShelfLayout } from "@/services/shelfLayoutService";
+import { useCardPopular, useCardStats } from "@/services/cardDataService";
+import { DEFAULT_DATA_DAYS, periodLabel, statParts, type FilmTarget } from "@/lib/cardData";
+import ShelfDataSheet from "@/components/training/shelfEdit/ShelfDataSheet";
 import TrainingDrillSheet from "@/components/TrainingDrillSheet";
 import { DRAG_ROOT, useMenuDrag, type MenuDrop } from "@/components/home/menuEdit/useMenuDrag";
 import { FadeTag, FolderThumb, Thumb } from "@/components/training/ShelfTiles";
@@ -122,6 +130,7 @@ const readMine = (aud: string): boolean => {
   }
 };
 const FOLDER_PREFIX = "fold:";
+const DATA_NUMS_KEY = "153learn:datanums";
 const LAYOUT_SPRING = { type: "spring", stiffness: 520, damping: 40, mass: 0.7 } as const;
 
 const readShelf = (aud: string, allowed: readonly Shelf[]): Shelf => {
@@ -184,6 +193,26 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
   const [opinionFocus, setOpinionFocus] = useState<string | null>(null);
   const [open, setOpen] = useState<OpenCard | null>(null);
   const [sheet, setSheet] = useState<EditSheet>(null);
+  // 4단계 데이터 창 (대표님 · 운영진) — 기간 · 지점 · 카드에 숫자 붙이기(이 기기에 기억)
+  const [dataOpen, setDataOpen] = useState(false);
+  const [dataDays, setDataDays] = useState<number>(DEFAULT_DATA_DAYS);
+  const [dataBranch, setDataBranch] = useState<string | null>(null);
+  const [tileNumbers, setTileNumbersState] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem(DATA_NUMS_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const setTileNumbers = (v: boolean) => {
+    setTileNumbersState(v);
+    try {
+      window.localStorage.setItem(DATA_NUMS_KEY, v ? "1" : "0");
+    } catch {
+      /* 무시 */
+    }
+  };
+  const [dataWanted, setDataWanted] = useState(() => !staff && params.get("data") === "1");
   const sectionRef = useRef<HTMLElement | null>(null);
 
   const setShelf = (s: Shelf, byTap = false) => {
@@ -223,9 +252,21 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
     const next = new URLSearchParams(params);
     next.delete("learn");
     next.delete("shelf");
+    next.delete("data");
     setParams(next, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [learnParam, params, setParams, staff]);
+  // 월요일 요약 알림 ?data=1 — 데이터 창(관리자 화면일 때만 · 역할을 늦게 읽어도 열리게 기억해 둔다)
+  const dataParam = params.get("data");
+  useEffect(() => {
+    if (staff || dataParam !== "1") return;
+    setDataWanted(true);
+    if (learnParam === "1") return; // learn 을 지울 때 같이 지운다
+    const next = new URLSearchParams(params);
+    next.delete("data");
+    setParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [staff, dataParam]);
   // 위 칸(오늘 할 것 · 내 레벨)이 늦게 그려지며 밀어내도 이 칸에 닿도록, 카드를 읽은 뒤 몇 번 더 맞춘다
   useEffect(() => {
     if (!scrollWanted || cardsQ.isLoading) return;
@@ -347,6 +388,38 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
   const allKeys = useMemo(() => [...leafByKey.keys(), ...arranged.flatMap((s) => s.tiles.filter((t) => t.kind === "folder").map((t) => t.key))], [leafByKey, arranged]);
   const briefQ = useCardBrief(editing, allKeys);
   const brief = briefQ.data ?? null;
+
+  // ── 4단계 데이터 (대표님 · 운영진) · 「많이 담은 동작」(모두) ──
+  useEffect(() => {
+    if (!dataWanted || !canEdit) return;
+    setDataOpen(true);
+    setDataWanted(false);
+  }, [dataWanted, canEdit]);
+  const statsQ = useCardStats(canEdit && (dataOpen || tileNumbers || editing), dataDays, dataBranch, allKeys);
+  const stats = statsQ.data ?? null;
+  const showNumbers = canEdit && tileNumbers && !!stats;
+  const statsLabel = `${periodLabel(dataDays)}${dataBranch ? ` · ${dataBranch.replace(/^153복싱짐\s*/, "")}` : ""}`;
+  const popularQ = useCardPopular(!!user && !editing, allKeys);
+  const popular = popularQ.data;
+  // 다음 촬영 목록 — 회원에게 보이는 카드(숨긴 카드 포함 · 촬영 뒤 다시 꺼내는 카드라서)
+  const filmTargets = useMemo(() => {
+    const m = new Map<string, FilmTarget>();
+    for (const c of visible) m.set(cardKey(c.id), { key: cardKey(c.id), name: c.name, hasVideo: hasMemberVideo(c) });
+    return m;
+  }, [visible]);
+  const matchQuery = useMemo(
+    () => (q: string): FilmTarget | null => {
+      const hit = searchCards(visible, q)[0];
+      return hit ? filmTargets.get(cardKey(hit.id)) ?? null : null;
+    },
+    [visible, filmTargets],
+  );
+  const itemName = (key: string) => {
+    const leaf = leafByKey.get(key);
+    if (leaf) return leafName(leaf);
+    if (key.startsWith("c:")) return (cardsQ.data ?? []).find((c) => c.id === key.slice(2))?.name ?? "카드";
+    return missions.find((x) => x.id === key.slice(2))?.title.replace(/\[[^\]]*\]/g, "").trim() || "워밍업 영상";
+  };
 
   const searching = (staff || (memberSearch && !editing)) && query.trim().length > 0;
   // 회원 찾기는 회원에게 보이는 카드만(숨김 · 합친 카드 빼고 — 접힌 위 리그 · 묶음 안 카드는 포함)
@@ -587,7 +660,9 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
     const dragging = drag.view.dragId === t.key;
     const merge = drag.view.mergeTarget === t.key;
     const faded = (editing || staff) && (t.hidden || !!t.mergedInto);
-    const count = editing ? brief?.items.get(t.key)?.users ?? null : null;
+    const count = editing && !showNumbers ? brief?.items.get(t.key)?.users ?? null : null;
+    const nums = showNumbers && t.kind !== "folder" ? statParts(stats?.items.get(t.key)) : [];
+    const isPopular = !editing && t.kind !== "folder" && !!popular?.has(t.key);
     const isOpenFolder = t.kind === "folder" && openFolder === t.id;
     const { sub, strong } = tileLabel(t);
     const title = t.kind === "folder" ? t.name : leafName(t);
@@ -606,7 +681,7 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
       );
     } else if (t.kind === "mission") {
       thumb = (
-        <Thumb src={t.mission.poster} color={cur?.color ?? "#FF8A3D"} label="워밍업" video pinned={t.pinned} count={count} editing={editing}>
+        <Thumb src={t.mission.poster} color={cur?.color ?? "#FF8A3D"} label="워밍업" video pinned={t.pinned} count={count} editing={editing} popular={isPopular}>
           {editing && t.hidden && <FadeTag text="회원님께 숨김" />}
         </Thumb>
       );
@@ -621,6 +696,7 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
           pinned={t.pinned}
           count={count}
           editing={editing}
+          popular={isPopular}
         >
           {editing && (t.hidden || t.mergedInto) && <FadeTag text={t.mergedInto ? "합침" : "회원님께 숨김"} />}
         </Thumb>
@@ -665,6 +741,7 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
             <span className="block p-3">
               <span className="line-clamp-2 block text-body font-bold leading-snug text-foreground">{title}</span>
               <span className={cn("mt-0.5 block truncate text-label", strong ? "font-bold text-primary" : "text-muted-foreground")}>{sub}</span>
+              {nums.length > 0 && <span className="mt-1 block text-label font-bold text-foreground">{nums.join(" · ")}</span>}
             </span>
           </span>
         </button>
@@ -789,6 +866,16 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
         {canEdit && !editing && (
           <button
             type="button"
+            onClick={() => setDataOpen(true)}
+            aria-label="영상으로 배우기 데이터 보기"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-card text-foreground active:scale-95"
+          >
+            <BarChart3 className="h-4 w-4" strokeWidth={2.4} aria-hidden />
+          </button>
+        )}
+        {canEdit && !editing && (
+          <button
+            type="button"
             onClick={editor.start}
             className="flex h-9 shrink-0 items-center rounded-full border border-border bg-card px-3.5 text-label font-bold text-foreground active:scale-95"
           >
@@ -825,6 +912,7 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
             editor.apply(setFoldUpper(layout, !on), on ? "위 리그 펼치기" : "위 리그 접기");
           }}
           brief={brief}
+          onOpenData={() => setDataOpen(true)}
         />
       )}
 
@@ -1061,10 +1149,44 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
           arranged={editing ? arranged : []}
           overlaps={overlaps}
           brief={brief}
+          stats={stats}
+          statsLabel={statsLabel}
           apply={editor.apply}
           restore={editor.restore}
           version={st?.version ?? 0}
           onOpenCard={openKey}
+        />
+      )}
+
+      {canEdit && (
+        <ShelfDataSheet
+          open={dataOpen}
+          onClose={() => setDataOpen(false)}
+          days={dataDays}
+          onDays={setDataDays}
+          branch={dataBranch}
+          onBranch={setDataBranch}
+          stats={stats}
+          loading={statsQ.isLoading}
+          error={statsQ.error ? (statsQ.error as Error).message : null}
+          nameOf={itemName}
+          targets={filmTargets}
+          matchQuery={matchQuery}
+          tileNumbers={tileNumbers}
+          onTileNumbers={setTileNumbers}
+          onOpenItem={(key) => {
+            setDataOpen(false);
+            if (key.startsWith("m:")) {
+              openMission(key.slice(2));
+              return;
+            }
+            const c = (cardsQ.data ?? []).find((x) => x.id === key.slice(2));
+            if (c) setOpen({ card: c, list: [c] });
+          }}
+          onOpenOpinions={() => {
+            setDataOpen(false);
+            navigate("/office?tab=strategy&s=video");
+          }}
         />
       )}
 
