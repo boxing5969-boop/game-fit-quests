@@ -18,6 +18,17 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261116-learn-videos",
+    date: "2026-11-16",
+    title: "영상으로 배우기 — 레벨 미션 영상 · 더빙 소리",
+    lines: [
+      "레벨 1~10 미션 영상이 칸마다(스텝 · 기본기 · 기술 …) 모였어요",
+      "잽 · 훅 · 어퍼컷 · 슬립 등 동작 영상이 15편 늘었어요",
+      "영상은 더빙 소리와 함께 · 「설명 듣기」는 열면 바로 들려요",
+    ],
+    link: { to: "/missions?learn=1", label: "영상으로 배우기" },
+  },
+  {
     id: "20261115-card-react",
     date: "2026-11-15",
     title: "영상으로 배우기 — 동작마다 반응 · 의견",
