@@ -7,14 +7,17 @@ import { tvGrowthOf } from "@/lib/growthStage2";
 const model = async (day: string) => tvGrowthOf(todayLesson(day, await loadGrowthLessons(day)), day)!;
 
 describe("라이브보드 2번 화면 — 오늘의 1분", () => {
-  it("O/X 날 — 문제와 O · X, 정답은 앱 홈에서 (TV 에는 답 · 이야기가 없다)", async () => {
+  it("O/X 날 — 퀴즈 없이 다른 날과 같은 모양 (사이니지에 퀴즈는 올리지 않는다 · 2026-11-17 대표님)", async () => {
     render(<LiveBoardGrowthCard model={await model("2026-11-17")} />);
     const card = screen.getByRole("complementary", { name: "오늘의 1분 성장" });
-    expect(within(card).getByRole("heading", { level: 2 })).toHaveTextContent("복싱 링은 처음부터 네모였다.");
-    expect(card).toHaveTextContent("복싱 상식 O/X");
-    expect(card).toHaveTextContent("정답은 마이복서153 앱 홈에서");
+    expect(within(card).getByRole("heading", { level: 2 })).toHaveTextContent("네모난데 왜 ‘링’일까요");
+    expect(card).toHaveTextContent("복싱 상식");
+    expect(card).toHaveTextContent("180년 넘게 이어진 이름 이야기");
     expect(card).toHaveTextContent("한 사람에게 물어보기");
-    expect(card.textContent).not.toMatch(/정답은 [OX]예요|런던/);
+    expect(card).toHaveTextContent("이야기는 마이복서153 앱 홈에서");
+    // 문제 문장 · O/X · 정답 안내 · O · X 칸이 없다
+    expect(card.textContent).not.toMatch(/O\/X|정답|처음부터 네모였다/);
+    expect(within(card).queryByText(/^[OX]$/)).toBeNull();
   });
 
   it("그 밖의 날 — 제목 · 한 줄 · 오늘 하나", async () => {

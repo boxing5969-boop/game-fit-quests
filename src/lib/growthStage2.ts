@@ -202,13 +202,11 @@ export const growthTvOn = (branch: string | null | undefined): boolean => !!bran
 export const TV_ROTATE_MS = 40_000;
 
 export interface TvGrowth {
-  /** 요일 코너 */
+  /** 요일 코너 — TV 에는 「O/X」를 붙이지 않는다 */
   corner: string;
-  /** 큰 글 — O/X 날은 문제, 그 밖은 제목 */
+  /** 큰 글 — 그날 글 제목 */
   headline: string;
-  /** O/X 날 */
-  quiz: boolean;
-  /** 제목 아래 한 줄 (O/X 날은 제목 — 제목은 답을 말하지 않는다) */
+  /** 제목 아래 한 줄 */
   sub: string;
   /** 오늘 하나 — 제목 · 한 줄 */
   actionTitle: string;
@@ -217,18 +215,22 @@ export interface TvGrowth {
   foot: string;
 }
 
-/** TV 「오늘의 1분」 — 번들 글로만 그린다(통신이 끊겨도 나온다) */
+/** TV 코너 이름 — 화요일 「복싱 상식 O/X」도 TV 에서는 「복싱 상식」 */
+export const tvCornerName = (corner: string): string => corner.replace(/\s*O\/X\s*$/i, "").trim();
+
+/** TV 「오늘의 1분」 — 번들 글로만 그린다(통신이 끊겨도 나온다).
+ *  사이니지에는 퀴즈를 올리지 않는다(2026-11-17 대표님 「사이니지에 퀴즈는 올리지마」) — O/X 날도 문제 · O · X · '정답' 없이
+ *  다른 날과 같이 제목 · 한 줄 · 오늘 하나만(제목 · 한 줄은 답을 말하지 않는 글 — 달 파일 시험이 지킨다). 문제는 앱 홈 카드에만. */
 export function tvGrowthOf(lesson: GrowthLesson | null | undefined, today: string): TvGrowth | null {
   if (!lesson) return null;
   const d = lesson.directions[0];
   return {
-    corner: lesson.days === 1 ? lesson.theme : cornerOf(today),
-    headline: lesson.quiz ? lesson.quiz.q : lesson.title,
-    quiz: !!lesson.quiz,
-    sub: lesson.quiz ? lesson.title : lesson.hook,
+    corner: tvCornerName(lesson.days === 1 ? lesson.theme : cornerOf(today)),
+    headline: lesson.title,
+    sub: lesson.hook,
     actionTitle: d?.title ?? "",
     actionBody: d?.body ?? "",
-    foot: lesson.quiz ? "정답은 마이복서153 앱 홈에서" : "이야기는 마이복서153 앱 홈에서",
+    foot: "이야기는 마이복서153 앱 홈에서",
   };
 }
 

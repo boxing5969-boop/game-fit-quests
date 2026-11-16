@@ -158,21 +158,39 @@ describe("TV 「오늘의 1분」", () => {
     for (const b of GROWTH_TV_BRANCHES) expect(SQL).toContain(`'branches', jsonb_build_array('${b}')`);
   });
 
-  it("O/X 날은 문제가 큰 글 · 정답은 앱에서 — 그 밖은 제목 · 한 줄", async () => {
+  it("사이니지에는 퀴즈를 올리지 않는다 — O/X 날도 다른 날처럼 제목 · 한 줄 · 오늘 하나 (2026-11-17 대표님)", async () => {
     const t = tvGrowthOf(await tue(), "2026-11-17")!;
-    expect([t.corner, t.quiz, t.headline, t.foot]).toEqual(["복싱 상식 O/X", true, "복싱 링은 처음부터 네모였다.", "정답은 마이복서153 앱 홈에서"]);
-    // TV 에 보이는 글이 정답을 말하지 않는다
-    expect(`${t.headline} ${t.sub} ${t.actionTitle}`).not.toMatch(/정답은 [OX]/);
+    expect(t).toEqual({
+      corner: "복싱 상식",
+      headline: "네모난데 왜 ‘링’일까요",
+      sub: "180년 넘게 이어진 이름 이야기",
+      actionTitle: "한 사람에게 물어보기",
+      actionBody: "같이 운동하는 분께 “링이 왜 링인지 아세요?” 하고 물어보세요.",
+      foot: "이야기는 마이복서153 앱 홈에서",
+    });
     const w = tvGrowthOf(await wed(), "2026-11-18")!;
-    expect([w.corner, w.quiz, w.headline, w.sub]).toEqual(["기술 한 끗", false, "잽은 돌아오는 것까지예요", "뻗는 것이 반, 돌아오는 것이 반"]);
+    expect([w.corner, w.headline, w.sub]).toEqual(["기술 한 끗", "잽은 돌아오는 것까지예요", "뻗는 것이 반, 돌아오는 것이 반"]);
     expect(w.actionTitle).toBe("거울 앞 잽 10번");
     expect(w.foot).toBe("이야기는 마이복서153 앱 홈에서");
     expect(tvGrowthOf(null, "2026-11-18")).toBeNull();
   });
 
-  it("예전 글이면 그날 요일 코너로 · 오늘 하나가 없어도 그린다", () => {
+  it("달 파일의 O/X 글 모두 — TV 글에 문제 · 정답 · O/X 가 없다 (다음 달 글도 저절로)", async () => {
+    const months = import.meta.glob<{ default: readonly GrowthLesson[] }>("../data/growth/20??-??.ts", { eager: true });
+    const quizDays = Object.values(months).flatMap((m) => m.default.filter((l) => l.quiz));
+    expect(quizDays.length).toBeGreaterThanOrEqual(2);
+    for (const l of quizDays) {
+      const tv = tvGrowthOf(l, l.from)!;
+      const text = Object.values(tv).join(" ");
+      expect(text).not.toContain(l.quiz!.q);
+      expect(text).not.toMatch(/정답|O\/X|[OX]일까요|맞을까요|틀릴까요/);
+      expect(tv.corner).toBe("복싱 상식");
+    }
+  });
+
+  it("예전 글이면 그날 요일 코너로(TV 는 「O/X」 없이) · 오늘 하나가 없어도 그린다", () => {
     const legacy = LEGACY_LESSONS[0];
-    expect(tvGrowthOf(legacy, "2026-11-10")!.corner).toBe("복싱 상식 O/X");
+    expect(tvGrowthOf(legacy, "2026-11-10")!.corner).toBe("복싱 상식");
     const none = tvGrowthOf({ ...legacy, directions: [] }, "2026-11-10")!;
     expect([none.actionTitle, none.actionBody]).toEqual(["", ""]);
   });
