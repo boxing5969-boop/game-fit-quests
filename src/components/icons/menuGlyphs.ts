@@ -32,7 +32,8 @@ export type MenuGlyphName =
   | "idcard"
   | "gear"
   | "survey"
-  | "roadmap";
+  | "roadmap"
+  | "market";
 
 type GradientKey = "mint" | "mintD" | "gold" | "goldD" | "ink" | "paper" | "skin";
 
@@ -242,4 +243,12 @@ export const MENU_GLYPHS: Record<SvgGlyphName, (p: string) => string> = {
 <defs><linearGradient id="${p}gearg" x1="0" y1="4" x2="0" y2="44" gradientUnits="userSpaceOnUse">${stops("var(--glyph-ink-t)", "var(--glyph-ink-b)")}</linearGradient></defs>
 <g fill="url(#${p}gearg)">${GEAR_TEETH}<circle cx="24" cy="24" r="14.5"/></g>
 <circle cx="24" cy="24" r="7" fill="url(#${p}mint)"/><circle cx="24" cy="24" r="3.2" fill="url(#${p}paper)"/>`,
+
+  /** 153 마켓 — 민트 쇼핑백 + 먹색 손잡이 + 금색 가격표 (2026-11-17) */
+  market: (p) => `${defs(p, ["ink", "mint", "gold"])}
+<path d="M10.2 17h27.6a2.4 2.4 0 0 1 2.4 2.1l2.3 19.6a4.2 4.2 0 0 1-4.2 4.7H9.7a4.2 4.2 0 0 1-4.2-4.7l2.3-19.6A2.4 2.4 0 0 1 10.2 17Z" fill="url(#${p}mint)"/>
+<path d="M16.5 23v-8.2a7.5 7.5 0 0 1 15 0V23" fill="none" stroke="url(#${p}ink)" stroke-width="3.6" stroke-linecap="round"/>
+<circle cx="16.5" cy="23.4" r="2.3" ${INK_FILL}/><circle cx="31.5" cy="23.4" r="2.3" ${INK_FILL}/>
+<path d="M11.3 20.8 9.7 34.4" stroke="#fff" stroke-opacity=".6" stroke-width="2" stroke-linecap="round"/>
+<g transform="rotate(-14 31 34)"><rect x="24.5" y="29" width="14" height="9.5" rx="2.6" fill="url(#${p}gold)"/><circle cx="27.6" cy="33.75" r="1.4" fill="#fff"/></g>`,
 };

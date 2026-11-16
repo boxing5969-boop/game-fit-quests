@@ -43,8 +43,8 @@ export interface SearchEntry {
   action: SearchAction;
   /** 지도진(코치·지점장·관리자)에게만 */
   staffOnly?: boolean;
-  /** 이 조건이 켜진 회원에게만 */
-  requires?: "diet" | "dm";
+  /** 이 조건이 켜진 회원에게만 — market: 우리 지점 153 마켓이 켜져 있다 */
+  requires?: "diet" | "dm" | "market";
   /** 같은 점수면 앞에 — 자주 찾는 것 */
   boost?: number;
 }
@@ -202,10 +202,15 @@ export interface SearchViewer {
   diet: boolean;
   /** 메시지를 쓸 수 없는 계정이면 false */
   dm: boolean;
+  /** 우리 지점 153 마켓이 켜져 있다 — 안 넘기면 꺼진 것으로 */
+  market?: boolean;
 }
 
 export const visibleFor = (e: SearchEntry, v: SearchViewer): boolean =>
-  (!e.staffOnly || v.staff) && (e.requires !== "diet" || v.diet) && (e.requires !== "dm" || v.dm);
+  (!e.staffOnly || v.staff) &&
+  (e.requires !== "diet" || v.diet) &&
+  (e.requires !== "dm" || v.dm) &&
+  (e.requires !== "market" || v.market === true);
 
 // ── 앱 기능 바로가기 ────────────────────────────────────────
 // 회원이 실제로 칠 만한 말을 keywords 에 넣는다. 경로는 App.tsx 라우트와 같아야 한다.
@@ -303,6 +308,15 @@ export const FEATURES: readonly SearchEntry[] = [
     ["마일리지", "포인트", "적립", "현금", "마일리지 확인", "내 마일리지"], { boost: 3 }),
   f("membership", "수강권", "결제 · 양도 · 환불 · 홀딩 · 남은 기간", "membership", go("/membership"),
     ["수강권", "이용권", "회원권", "기간", "만료", "남은 기간", "남은 횟수", "pt", "결제", "수강권 결제", "양도", "환불", "홀딩", "일시정지", "정지", "연장 신청"], { boost: 2 }),
+  // 153 마켓 (2026-11-17) — 복싱 용품 회원가 · 주문 → 데스크 결제 → 체육관 수령. 우리 지점 마켓이 켜져 있을 때만
+  f("market", "153 마켓", "복싱 용품 회원가 · 주문하고 체육관에서 받기", "market", go("/market"),
+    ["마켓", "153 마켓", "용품", "복싱 용품", "쇼핑", "글러브", "글러브 사기", "핸드랩", "복싱화", "헤드기어", "마우스피스", "미트",
+      "최저가", "회원가", "구매", "주문", "용품 사기"], { requires: "market", boost: 3 }),
+  f("market-orders", "마켓 내 주문", "주문한 용품 · 결제 · 도착", "market", go("/market?orders=1"),
+    ["내 주문", "주문 내역", "주문 확인", "용품 주문", "도착", "주문 취소"], { requires: "market" }),
+  // 코치진 — 주문함(결제 확인 · 발주 · 전달) · 상품
+  f("market-admin", "마켓 주문함", "결제 확인 · 발주 · 전달 · 상품", "market", go("/manager?tab=market"),
+    ["마켓 주문함", "용품 주문함", "발주", "상품 관리", "마켓 관리"], { staffOnly: true, requires: "market" }),
   f("membership-plans", "멤버십 상품", "재등록 · 연장", "idcard", go("/membership-plans"),
     ["멤버십", "재등록", "연장", "가격", "상품"]),
   f("rewards", "리워드", "젬과 보상", "medal", go("/rewards"),

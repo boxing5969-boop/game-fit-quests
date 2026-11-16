@@ -19,9 +19,9 @@ import { FEATURES } from "@/lib/appSearch";
 /**
  * diet: 다이어트 프로그램 회원 · staff: 코치님·지점장·운영진 · office: 사무실이 켜진 지점 지도진 ·
  * dm: 메시지를 쓸 수 있는 계정 · manager: 앱 권한 코치·지점장·관리자(관리자 화면 /manager 에 들어가는 분) ·
- * admin: 관리자 · 전체관리자
+ * admin: 관리자 · 전체관리자 · market: 우리 지점 153 마켓이 켜져 있다(서버 market_home)
  */
-export type MenuRequire = "diet" | "staff" | "office" | "dm" | "manager" | "admin";
+export type MenuRequire = "diet" | "staff" | "office" | "dm" | "manager" | "admin" | "market";
 
 export interface MenuViewer {
   diet: boolean;
@@ -30,9 +30,11 @@ export interface MenuViewer {
   dm: boolean;
   manager: boolean;
   admin: boolean;
+  /** 우리 지점 153 마켓이 켜져 있다 — 안 넘기면 꺼진 것으로 */
+  market?: boolean;
 }
 
-export const canSee = (req: MenuRequire | undefined, v: MenuViewer): boolean => !req || v[req];
+export const canSee = (req: MenuRequire | undefined, v: MenuViewer): boolean => !req || v[req] === true;
 
 // ── 바로가기 목록 ───────────────────────────────────────────
 
@@ -124,6 +126,14 @@ export const SHORTCUT_EXTRAS: readonly MenuCatalogItem[] = [
     "bell",
     "오래 안 온 회원 · 챙길 회원",
     ["위험", "위험 회원", "이탈", "안 오는 회원"],
+    "manager",
+  ),
+  x(
+    "/manager?tab=market",
+    "마켓 주문함",
+    "market",
+    "153 마켓 — 결제 확인 · 발주 · 전달",
+    ["마켓 주문함", "용품 주문함", "발주", "마켓"],
     "manager",
   ),
   x(

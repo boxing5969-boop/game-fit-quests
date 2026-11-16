@@ -10,11 +10,12 @@ import BroadcastNotification from "@/components/BroadcastNotification";
 import AtRiskMembersPanel from "@/components/AtRiskMembersPanel";
 import RegistrationReportPanel from "@/components/RegistrationReportPanel";
 import GoodsOrdersPanel from "@/components/admin/GoodsOrdersPanel";
+import MarketOrdersPanel from "@/components/admin/MarketOrdersPanel";
 import { formatRankShort } from "@/lib/rankLabels";
 import { fetchAllRows, inChunks } from "@/lib/supabasePaging";
 import { toast } from "sonner";
 
-type AdminTab = "overview" | "branches" | "transfers" | "broadcast" | "at_risk" | "settings" | "registrations" | "goods";
+type AdminTab = "overview" | "branches" | "transfers" | "broadcast" | "at_risk" | "settings" | "registrations" | "goods" | "market";
 
 const SuperAdminDashboard = () => {
   const navigate = useNavigate();
@@ -106,6 +107,8 @@ const SuperAdminDashboard = () => {
     { key: "broadcast", label: "공지", icon: <Bell className="h-4 w-4" /> },
     // 굿즈 사전예약 신청 — 플리스 집업 (2026-11-12 대표님 「마이복서에 올려서 판매신청받고」)
     { key: "goods", label: "굿즈", icon: <ShoppingBag className="h-4 w-4" /> },
+    // 153 마켓 — 주문함 · 상품(도매가 · 회원가 · 최저가) · 요청 (2026-11-17 대표님 「앱에 마켓 기능도 넣어서」)
+    { key: "market", label: "마켓", icon: <ShoppingBag className="h-4 w-4" /> },
     // 전 지점 수강권 등록 — 전체관리자(대표님 계정)에게만 (2026-10-26 대표님 "일단 나만 볼 수 있게"). 서버(registration-report)도 super_admin 만 받는다.
     ...(role === "super_admin"
       ? [{ key: "registrations" as AdminTab, label: "등록", icon: <ClipboardList className="h-4 w-4" /> }]
@@ -191,6 +194,7 @@ const SuperAdminDashboard = () => {
       {tab === "broadcast" && <BroadcastNotification />}
       {tab === "registrations" && role === "super_admin" && <RegistrationReportPanel />}
       {tab === "goods" && <GoodsOrdersPanel />}
+      {tab === "market" && <MarketOrdersPanel />}
     </div>
   );
 };

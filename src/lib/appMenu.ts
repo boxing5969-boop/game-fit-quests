@@ -17,8 +17,9 @@ export interface AppMenuItem {
   label: string;
   glyph: MenuGlyphName;
   /** 이 조건이 켜진 사람에게만 보인다 — diet: 다이어트 프로그램 회원 · staff: 코치님·지점장·운영진 ·
-   *  office: 지점 회의실이 켜진 지점의 지도진 · 대표님 (서버 office_me) */
-  requires?: "diet" | "staff" | "office";
+   *  office: 지점 회의실이 켜진 지점의 지도진 · 대표님 (서버 office_me) ·
+   *  market: 우리 지점 153 마켓이 켜져 있다 (서버 market_home — 2026-11-17) */
+  requires?: "diet" | "staff" | "office" | "market";
 }
 
 /**
@@ -83,6 +84,8 @@ export const APP_MENU: readonly AppMenuEntry[] = [
   { path: "/myboxer/visualization", label: "153마인드셋", glyph: "mind" },
   // 수강권 — 결제 · 양도 · 환불 · 홀딩을 한 칸에서 (2026-10-18). 하단 탭에서 빠진 뒤 내정보 안에만 있던 것을 다시 메뉴로.
   { path: "/membership", label: "수강권", glyph: "membership" },
+  // 153 마켓 — 복싱 용품(주문 → 데스크 결제 → 체육관 수령). 우리 지점 마켓이 켜져 있을 때만 (2026-11-17 · 선릉역점 시범).
+  { path: "/market", label: "153 마켓", glyph: "market", requires: "market" },
   // 153다이어트 — profiles.diet_program_enabled 가 켜진 회원만.
   { path: "/diet", label: "153다이어트", glyph: "bowl", requires: "diet" },
   // 153 안내 — 공지사항 · 우리 지점 · 가이드 · 153이란? · 단증혜택
@@ -126,12 +129,14 @@ export const buildAppMenu = (opts: {
   diet: boolean;
   staff?: boolean;
   office?: boolean;
+  market?: boolean;
   hide?: (path: string) => boolean;
 }): AppMenuEntry[] => {
   const visible = (m: AppMenuItem) =>
     (m.requires !== "diet" || opts.diet) &&
     (m.requires !== "staff" || opts.staff === true) &&
     (m.requires !== "office" || opts.office === true) &&
+    (m.requires !== "market" || opts.market === true) &&
     !opts.hide?.(m.path);
   const out: AppMenuEntry[] = [];
   for (const e of APP_MENU) {
@@ -147,5 +152,5 @@ export const buildAppMenu = (opts: {
 };
 
 /** 펼친 목록 — 묶음 안의 메뉴까지 한 줄로 (검색·테스트용) */
-export const flatAppMenu = (opts: { diet: boolean; staff?: boolean; office?: boolean }): AppMenuItem[] =>
+export const flatAppMenu = (opts: { diet: boolean; staff?: boolean; office?: boolean; market?: boolean }): AppMenuItem[] =>
   buildAppMenu(opts).flatMap((e) => (isMenuFolder(e) ? [...e.items] : [e]));
