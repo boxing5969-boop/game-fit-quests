@@ -26,7 +26,7 @@ import {
   trainingVideoPath,
   type TrainingCard,
 } from "./trainingCards";
-import { NEW_CARDS_1112, NEW_CARDS_1114, SAMPLE_TRAINING_CARDS, WEAVING_POLISHED } from "./trainingCardsSample";
+import { NEW_CARDS_1112, NEW_CARDS_1114, NEW_CARDS_1116, SAMPLE_TRAINING_CARDS, WEAVING_POLISHED } from "./trainingCardsSample";
 import { readFileSync } from "node:fs";
 
 // strategyService 의 BlockKind 와 같게 (서비스를 불러오면 Supabase 연결이 필요해서 여기 적어 둔다)
@@ -245,6 +245,35 @@ describe("예시 · 새 카드 글 (마이그레이션과 같은 글)", () => {
       for (const s of [c.id, c.name, c.summary, c.description, c.target, ...c.cues, ...c.mistakes]) expect(sql).toContain(s);
     }
     expect(SAMPLE_TRAINING_CARDS.filter((c) => NEW_CARDS_1114.some((n) => n.id === c.id))).toHaveLength(4);
+  });
+
+  it("드라이브 동작 영상 카드 7장 (11/16) — 칸 · 화이트 레벨 · 글 규칙 · 마이그레이션과 같은 글", () => {
+    expect(NEW_CARDS_1116.map((c) => c.name)).toEqual([
+      "더킹 · 위빙 자세",
+      "원투 · 훅 · 더킹",
+      "기본 스텝",
+      "왼손 훅 · 오른손 훅",
+      "기본 가드 자세",
+      "스트레이트 · 훅 콤비",
+      "훅 → 위빙",
+    ]);
+    const sql = readFileSync("supabase/migrations/20261116102134_learn_drive_videos.sql", "utf8");
+    for (const c of NEW_CARDS_1116) {
+      expect(["defense", "skill", "step", "basics"]).toContain(categoryToShelf(c.category));
+      expect(c.level_min).toBeGreaterThanOrEqual(1);
+      expect(c.level_min).toBeLessThanOrEqual(10);
+      expect(c.difficulty).toBe("초급");
+      expect(c.benefits).toBe("");
+      expect(c.cues).toHaveLength(3);
+      for (const m of c.mistakes) expect(m).toContain("→");
+      const all = [c.summary, c.description, ...c.cues, ...c.mistakes].join(" ");
+      expect(all).not.toMatch(/살이 빠|다이어트|부상을 막|예방|국가대표|칼로리|건강해/);
+      for (const s of [c.id, c.name, c.summary, c.description, c.target, ...c.cues, ...c.mistakes]) expect(sql).toContain(s);
+    }
+    // 같은 동작 카드 8장은 영상 칸이 비어 있을 때만 붙인다 · 새 카드는 이름이 같은 카드가 있으면 안 넣는다
+    expect(sql.match(/where id = '[0-9a-f-]+'::uuid and video_path is null;/g)).toHaveLength(8);
+    expect(sql.match(/or t\.name = /g)).toHaveLength(7);
+    expect(SAMPLE_TRAINING_CARDS.filter((c) => NEW_CARDS_1116.some((n) => n.id === c.id))).toHaveLength(7);
   });
 
   it("예시 카드 id 는 겹치지 않고 모두 uuid 모양", () => {
