@@ -122,7 +122,8 @@ export function learnVideos(missions: readonly LearnMissionSource[]): LearnVideo
     const key = videoKey(r.url);
     if (byVideo.has(key)) continue;
     byVideo.add(key);
-    const poster = primaryMissionVideo(r.m.mission_videos)?.poster_url?.trim() || null;
+    // 그림이 없는 유튜브 영상은 유튜브 첫 장면 그림으로
+    const poster = primaryMissionVideo(r.m.mission_videos)?.poster_url?.trim() || (key.startsWith("yt:") ? `https://i.ytimg.com/vi/${key.slice(3)}/mqdefault.jpg` : null);
     const variant = r.warmup ? null : variantOf(r.m.title);
     const groupKey = variant ? `${r.level}|${variant.base}` : null;
     const group = groupKey ? byVariant.get(groupKey) : undefined;

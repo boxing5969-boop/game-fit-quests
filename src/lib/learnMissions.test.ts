@@ -66,6 +66,8 @@ describe("영상으로 배우기 — 레벨 미션 영상", () => {
       m("none", "[복싱/잽] 영상 없음", "white", 2, null),
     ]);
     expect(list.map((v) => v.id)).toEqual(["l1"]);
+    // 그림이 없는 유튜브 영상은 유튜브 첫 장면 그림
+    expect(list[0].poster).toBe("https://i.ytimg.com/vi/3zYLlWfyY2k/mqdefault.jpg");
   });
 
   it("· 실사 / · 애니 ○○ 는 한 칸 — 버전 이름과 미션 id 를 함께", () => {
