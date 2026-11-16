@@ -18,6 +18,31 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261117-growth-days",
+    date: "2026-11-17",
+    title: "운동 달력 — 「1분 성장」 체크 · 읽은 날 편지",
+    lines: [
+      "18일부터 「오늘의 1분 성장」을 읽은 날은 달력에 저절로 체크돼요",
+      "읽은 날이 10 · 30 · 100 · 365일이 되면 축하 편지가 와요",
+      "체육관 TV에도 그날 글의 제목과 오늘 하나가 나와요",
+    ],
+    link: CAL,
+    branches: SEOLLEUNG,
+  },
+  {
+    id: "20261117-growth-coach",
+    date: "2026-11-17",
+    title: "일정 — 「오늘의 한마디」 (1분 성장)",
+    lines: [
+      "「오늘 만날 회원」 위에 그날 글의 한마디가 나와요",
+      "수업 시작이나 마무리에 전했으면 「전했어요」를 눌러요",
+      "의무는 아니에요 — 몇 분이 전했는지만 보여요",
+    ],
+    link: PLAN,
+    audience: "staff",
+    branches: SEOLLEUNG,
+  },
+  {
     id: "20261117-learn-calendar",
     date: "2026-11-17",
     title: "운동 달력 — 영상으로 배우기 한 날",
