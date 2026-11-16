@@ -102,11 +102,12 @@ const VideoPlayer = ({
   const getEmbedUrl = (url: string) => {
     if (url.includes("youtu.be/")) {
       const id = url.split("youtu.be/")[1]?.split("?")[0];
-      return `https://www.youtube.com/embed/${id}?autoplay=1`;
+      // 소리 켠 채로 바로 (2026-11-16 · 누른 다음이라 휴대폰이 허락) · 아이폰은 화면 안에서
+      return `https://www.youtube.com/embed/${id}?autoplay=1&playsinline=1&rel=0`;
     }
     if (url.includes("youtube.com/watch")) {
       const id = new URL(url).searchParams.get("v");
-      return `https://www.youtube.com/embed/${id}?autoplay=1`;
+      return `https://www.youtube.com/embed/${id}?autoplay=1&playsinline=1&rel=0`;
     }
     return url;
   };

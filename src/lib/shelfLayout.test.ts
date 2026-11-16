@@ -371,3 +371,56 @@ describe("겹쳐 보이는 카드", () => {
     expect(suggestFolderName("십자 스텝", "뛰는 스텝")).toBe("십자 스텝");
   });
 });
+
+describe("레벨 미션 영상 — 영상으로 배우기 (2026-11-16)", () => {
+  const LV: ShelfMission[] = [
+    { id: uid(951), title: "[복싱/스텝] 제자리 스텝ㅣ바운스 (1일차)", poster: null, level: 1, shelf: "step" },
+    { id: uid(952), title: "[복싱/스텝] 사이드 방향전환 스텝", poster: null, level: 4, shelf: "step" },
+    { id: uid(953), title: "[복싱/콤비] 콤보 드릴 18동작ㅣ원투 훅 → 더킹", poster: null, level: 20, shelf: "skill" },
+  ];
+  it("회원 — 그 칸에 · 내 레벨까지 영상은 그 칸 카드 앞 · 위 레벨은 레벨 자리 · 다음 리그 영상은 접힘", () => {
+    const a = arrangeShelves(MEMBER_CARDS, [...MISSIONS, ...LV], EMPTY_LAYOUT, { audience: "member", myLevel: 3 });
+    const step = shelf(a, "step");
+    expect(keysOf(step.tiles)).toEqual([
+      missionKey(LV[0].id),
+      cardKey(fwd.id),
+      cardKey(side.id),
+      cardKey(ladderStep.id),
+      missionKey(LV[1].id),
+    ]);
+    expect(keysOf(step.upper)).toEqual([cardKey(mirror.id), cardKey(mirror2.id)]);
+    expect(keysOf(shelf(a, "skill").upper)).toContain(missionKey(LV[2].id));
+    expect(keysOf(shelf(a, "skill").tiles)).not.toContain(missionKey(LV[2].id));
+    // 워밍업 영상은 예전처럼 워밍업 칸 맨 앞
+    expect(keysOf(shelf(a, "warmup").tiles).slice(0, MISSIONS.length)).toEqual(MISSIONS.map((m) => missionKey(m.id)));
+  });
+
+  it("블루 회원 — 레벨 20 영상도 접지 않고 그 레벨 자리에", () => {
+    const a = arrangeShelves(MEMBER_CARDS, LV, EMPTY_LAYOUT, { audience: "member", myLevel: 12 });
+    const skill = shelf(a, "skill");
+    expect(keysOf(skill.tiles)).toContain(missionKey(LV[2].id));
+    expect(skill.upper.map((t) => t.key)).not.toContain(missionKey(LV[2].id));
+    // 레벨 12 회원 — 내 레벨까지(원투쓰리 콤비 L12) 다음, 위 레벨(4연타 L14) 다음에 레벨 20 영상
+    expect(keysOf(skill.tiles).indexOf(missionKey(LV[2].id))).toBeGreaterThan(keysOf(skill.tiles).indexOf(cardKey(combo4.id)));
+  });
+
+  it("코치진 — 카드 순서는 그대로, 영상만 레벨 자리에", () => {
+    const a = arrangeShelves(CARDS, LV, EMPTY_LAYOUT, { audience: "staff", myLevel: 40 });
+    expect(keysOf(shelf(a, "step").tiles)).toEqual([
+      missionKey(LV[0].id),
+      cardKey(fwd.id),
+      cardKey(side.id),
+      cardKey(ladderStep.id),
+      missionKey(LV[1].id),
+      cardKey(mirror.id),
+      cardKey(mirror2.id),
+    ]);
+  });
+
+  it("대표님이 옮긴 칸 · 숨김은 레벨 미션 영상에도", () => {
+    const moved = moveToShelf(EMPTY_LAYOUT, missionKey(LV[1].id), "basics", []);
+    const a = arrangeShelves(MEMBER_CARDS, LV, setHidden(moved, missionKey(LV[0].id), true), { audience: "member", myLevel: 5 });
+    expect(keysOf(shelf(a, "basics").tiles)).toContain(missionKey(LV[1].id));
+    expect(keysOf(shelf(a, "step").tiles)).not.toContain(missionKey(LV[0].id));
+  });
+});

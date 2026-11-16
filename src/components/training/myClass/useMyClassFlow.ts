@@ -8,7 +8,7 @@
  */
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { cardMinutes, cardShelf, hasCardVideo, hasMemberVideo, type TrainingCard } from "@/lib/trainingCards";
+import { SHELF_INFO, cardMinutes, cardShelf, hasCardVideo, hasMemberVideo, type TrainingCard } from "@/lib/trainingCards";
 import type { ShelfLeaf, ShelfMission, TileKey } from "@/lib/shelfLayout";
 import {
   MAX_CLASSES,
@@ -108,7 +108,17 @@ export function useMyClassFlow({ audience, userId, cards, missions, branch, paus
         poster: fetched?.poster ?? local?.poster ?? null,
         video: fetched?.video ?? null,
       };
-      return { kind: "mission", key: k, name: mission.title, color: MISSION_COLOR, label: "워밍업 영상", mission, hasVideo: !!mission.video };
+      // 레벨 미션 영상(2026-11-16)은 그 칸 색 · '레벨 미션 영상', 워밍업 영상은 예전처럼
+      const shelfInfo = local?.level && local.shelf ? SHELF_INFO[local.shelf] : null;
+      return {
+        kind: "mission",
+        key: k,
+        name: mission.title,
+        color: shelfInfo?.color ?? MISSION_COLOR,
+        label: shelfInfo ? "레벨 미션 영상" : "워밍업 영상",
+        mission,
+        hasVideo: !!mission.video,
+      };
     },
     [cardById, missionsQ.data, missions, staffView],
   );

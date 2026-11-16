@@ -35,6 +35,7 @@ import type { Enums } from "@/integrations/supabase/types";
 
 import VideoPlayer, { type PlayerVariant } from "@/components/VideoPlayer";
 import WhiteLeagueTab from "@/components/WhiteLeagueTab";
+import { learnVideos, type LearnMissionSource } from "@/lib/learnMissions";
 import {
   extraVariantLabels,
   primaryMissionVideo,
@@ -253,6 +254,8 @@ const MissionsPage = () => {
   // 진행률은 레벨 미션만 센다 — 워밍업 참고 영상(제출 없음)은 뺀다
   const levelMissionList = (missions || []).filter((m) => !isWarmupMission(m));
   const warmupMissions = (missions || []).filter((m) => isWarmupMission(m));
+  // 영상으로 배우기 칸 — 워밍업 영상 + 레벨 미션 영상(같은 영상은 한 번 · 실사/애니는 한 칸) (2026-11-16 대표님 「레벨 1부터 레벨10까지 영상 … 모두 볼수있게」)
+  const learnList = learnVideos((missions || []) as unknown as LearnMissionSource[]);
   const totalMissions = levelMissionList.length;
   const completedCount = levelMissionList.filter(
     (m) => submissionMap.get(m.id) === "approved",
@@ -320,7 +323,7 @@ const MissionsPage = () => {
   };
 
   // 🔥 워밍업 참고 영상 — 제출·즉시 클리어 없이 보기만 한다
-  const openWarmup = (mission: WarmupMission) => {
+  const openWarmup = (mission: WarmupMission, variantsOverride?: PlayerVariant[]) => {
     const video = primaryMissionVideo(mission.mission_videos);
     if (!video) {
       toast.error("영상이 아직 등록되지 않았습니다");
@@ -339,8 +342,26 @@ const MissionsPage = () => {
       missionId: mission.id,
       canSubmit: false,
       reference: true,
-      variants: playerVariantsOf(mission.mission_videos),
+      variants: variantsOverride ?? playerVariantsOf(mission.mission_videos),
     });
+  };
+
+  // 영상으로 배우기의 미션 칸 — 같은 동작 다른 버전(실사 · 애니)이면 플레이어 위 버전 칸으로 바꿔 본다
+  const openLearnVideo = (id: string) => {
+    const all = missions || [];
+    const main = all.find((m) => m.id === id);
+    if (!main) return;
+    const item = learnList.find((v) => v.id === id);
+    if (!item || item.memberIds.length < 2) {
+      openWarmup(main);
+      return;
+    }
+    const variants: PlayerVariant[] = item.memberIds.flatMap((mid, i) => {
+      const v = primaryMissionVideo(all.find((m) => m.id === mid)?.mission_videos);
+      const url = (v?.video_url ?? "").trim();
+      return url ? [{ label: item.variantLabels[i] || `영상 ${i + 1}`, videoUrl: url, posterUrl: v?.poster_url ?? null }] : [];
+    });
+    openWarmup(main, variants);
   };
 
   const handleFileUpload = async (file: File, type: "video" | "poster") => {
@@ -536,15 +557,8 @@ const MissionsPage = () => {
         {missionTab === "white" ? (
           <WhiteLeagueTab
             onOpenMissionVideos={openMissionVideos}
-            warmups={warmupMissions.map((m) => ({
-              id: m.id,
-              title: m.title,
-              poster: primaryMissionVideo(m.mission_videos)?.poster_url ?? null,
-            }))}
-            onOpenWarmup={(id) => {
-              const m = warmupMissions.find((x) => x.id === id);
-              if (m) openWarmup(m);
-            }}
+            warmups={learnList.map((v) => ({ id: v.id, title: v.title, poster: v.poster, level: v.level, shelf: v.shelf }))}
+            onOpenWarmup={openLearnVideo}
           />
         ) : (
           <>

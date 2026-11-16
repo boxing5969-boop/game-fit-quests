@@ -105,7 +105,7 @@ const MyClassCardPicker = ({
             const r = flow.resolve(x.key);
             const muted = x.hidden || !!x.mergedInto;
             const minutes = x.kind === "card" ? cardMinutes(x.card) : MISSION_MINUTES;
-            const label = x.kind === "card" ? r?.label ?? "" : "워밍업 영상";
+            const label = x.kind === "card" ? r?.label ?? "" : r?.label ?? "워밍업 영상";
             return (
               <li key={x.key} className={muted ? "opacity-60" : undefined}>
                 <button

@@ -37,6 +37,7 @@ import { toGlobalLevel } from "@/lib/rankLabels";
 import { cn } from "@/lib/utils";
 import {
   MEMBER_SHELVES,
+  SHELF_INFO,
   STAFF_SHELVES,
   cardMinutes,
   cardShelf,
@@ -88,6 +89,8 @@ import { toPlanBlocks, type ClassItem } from "@/lib/myClass";
 import { buzz } from "@/features/myboxer-visualization/mindAudio";
 import type { ProgramBlock } from "@/services/strategyService";
 import { askKey, cleanQuery } from "@/lib/cardReact";
+import { titleMatches } from "@/lib/learnMissions";
+import { primeLearnAudio } from "@/lib/learnAudio";
 import { logSearchMiss, useCardOpinions, useCardReactActions } from "@/services/cardReactService";
 import OpinionsSheet from "@/components/training/react/OpinionsSheet";
 
@@ -95,6 +98,9 @@ export interface ShelfWarmup {
   id: string;
   title: string;
   poster: string | null;
+  /** 레벨 미션 영상(2026-11-16) — 리그를 이은 레벨 · 칸. 없으면 워밍업 영상(워밍업 칸 맨 앞) */
+  level?: number;
+  shelf?: Shelf;
 }
 
 interface TrainingShelfProps {
@@ -153,6 +159,11 @@ interface OpenCard {
   card: TrainingCard;
   list: TrainingCard[];
 }
+
+/** 미션 타일의 칸 이름 · 색 — 레벨 미션 영상은 그 칸(스텝 · 기본기 …), 워밍업 영상은 '워밍업' (2026-11-16) */
+const missionInfo = (m: ShelfMission): { label: string; color: string } =>
+  m.level && m.shelf ? { label: SHELF_INFO[m.shelf].label, color: SHELF_INFO[m.shelf].color } : { label: "워밍업", color: SHELF_INFO.warmup.color };
+
 
 const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetFooter, branch, onClassToPlan }: TrainingShelfProps) => {
   const staff = audience === "staff";
@@ -243,7 +254,8 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
     [cardsQ.data, staff],
   );
   const missions: ShelfMission[] = useMemo(
-    () => (onOpenWarmup ? warmups.map((w) => ({ id: w.id, title: w.title, poster: w.poster })) : []),
+    () =>
+      onOpenWarmup ? warmups.map((w) => ({ id: w.id, title: w.title, poster: w.poster, level: w.level, shelf: w.shelf })) : [],
     [warmups, onOpenWarmup],
   );
   const arranged = useMemo(
@@ -360,10 +372,21 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
     [staff, visible, leafByKey],
   );
   const searchList = useMemo(() => (searching ? searchCards(searchPool, query) : []), [searching, searchPool, query]);
+  // 레벨 미션 · 워밍업 영상도 찾기에 (2026-11-16) — 숨김 · 합친 것 빼고, 카드 결과 앞에
+  const missionHits = useMemo(
+    () =>
+      searching
+        ? [...leafByKey.values()].filter(
+            (x): x is Extract<ShelfLeaf, { kind: "mission" }> =>
+              x.kind === "mission" && !x.hidden && !x.mergedInto && titleMatches(x.mission.title, query),
+          )
+        : [],
+    [searching, leafByKey, query],
+  );
   const hiddenSet = useMemo(() => new Set(layout.hidden ?? []), [layout.hidden]);
 
   // 찾았는데 없는 동작 — 회원 찾기 결과가 0이면 잠깐 기다렸다 한 번(보이지 않게 · 같은 검색어는 이 창에서 한 번)
-  const missKey = !staff && searching && searchList.length === 0 && !cardsQ.isLoading ? askKey(query) : null;
+  const missKey = !staff && searching && searchList.length === 0 && missionHits.length === 0 && !cardsQ.isLoading ? askKey(query) : null;
   useEffect(() => {
     if (!missKey || !user) return;
     const q = query;
@@ -507,7 +530,10 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
   };
   const openLeaf = (leaf: ShelfLeaf, list: TrainingCard[]) => {
     if (leaf.kind === "mission") openMission(leaf.mission.id);
-    else setOpen({ card: leaf.card, list: list.some((c) => c.id === leaf.card.id) ? list : [leaf.card] });
+    else {
+      primeLearnAudio(); // 누른 순간 소리를 깨워 둔다 — 카드 시트가 소리 켠 영상 · 설명 듣기를 자동으로 (2026-11-16)
+      setOpen({ card: leaf.card, list: list.some((c) => c.id === leaf.card.id) ? list : [leaf.card] });
+    }
   };
   const openKey = (key: TileKey) => {
     const leaf = leafByKey.get(key);
@@ -566,7 +592,13 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
   // ── 타일 하나 ──
   const tileLabel = (t: ShelfTile): { sub: string; strong: boolean } => {
     if (t.kind === "folder") return { sub: `카드 ${t.tiles.length}장`, strong: false };
-    if (t.kind === "mission") return { sub: "워밍업 영상", strong: false };
+    if (t.kind === "mission") {
+      const lv = t.mission.level;
+      if (!lv) return { sub: "워밍업 영상", strong: false };
+      if (staff || editing) return { sub: `레벨 ${lv} · 레벨 미션 영상`, strong: false };
+      const upcoming = lv > Math.max(1, myLevel);
+      return { sub: upcoming ? `레벨 ${lv}부터` : `레벨 ${lv}`, strong: !upcoming };
+    }
     const c = t.card;
     const info = cardShelf(c);
     if (editing) {
@@ -599,14 +631,14 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
           count={count}
           items={t.tiles.map((x) => ({
             src: x.kind === "card" ? posterOf(x.card) : x.mission.poster,
-            color: x.kind === "card" ? cardShelf(x.card).color : cur?.color ?? "#FF8A3D",
+            color: x.kind === "card" ? cardShelf(x.card).color : missionInfo(x.mission).color,
             label: leafName(x),
           }))}
         />
       );
     } else if (t.kind === "mission") {
       thumb = (
-        <Thumb src={t.mission.poster} color={cur?.color ?? "#FF8A3D"} label="워밍업" video pinned={t.pinned} count={count} editing={editing}>
+        <Thumb src={t.mission.poster} color={missionInfo(t.mission).color} label={missionInfo(t.mission).label} video pinned={t.pinned} count={count} editing={editing}>
           {editing && t.hidden && <FadeTag text="회원님께 숨김" />}
         </Thumb>
       );
@@ -952,7 +984,7 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
           }}
         />
       ) : searching ? (
-        searchList.length === 0 ? (
+        searchList.length === 0 && missionHits.length === 0 ? (
           staff ? (
             <p className="rounded-2xl bg-secondary px-4 py-6 text-center text-body text-muted-foreground">찾는 카드가 없어요</p>
           ) : (
@@ -978,6 +1010,7 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
           )
         ) : (
           <div className="grid grid-cols-2 gap-2.5">
+            {missionHits.map((x, i) => renderTile(x, "search", i, searchList))}
             {searchList.map((c, i) => {
               const k = cardKey(c.id);
               const leaf: ShelfLeaf = leafByKey.get(k) ?? { kind: "card", key: k, card: c, hidden: hiddenSet.has(k), pinned: false, mergedInto: null };
@@ -1088,7 +1121,7 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
                   }))}
                 />
               ) : dragTile.kind === "mission" ? (
-                <Thumb src={dragTile.mission.poster} color={cur?.color ?? "#FF8A3D"} label="워밍업" video />
+                <Thumb src={dragTile.mission.poster} color={missionInfo(dragTile.mission).color} label={missionInfo(dragTile.mission).label} video />
               ) : (
                 <Thumb src={posterOf(dragTile.card)} color={cardShelf(dragTile.card).color} label={cardShelf(dragTile.card).label} />
               )}

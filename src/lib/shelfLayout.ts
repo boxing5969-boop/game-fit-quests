@@ -195,6 +195,10 @@ export interface ShelfMission {
   id: string;
   title: string;
   poster: string | null;
+  /** 레벨 미션 영상 — 리그를 이은 레벨(화이트 1~10 · 블루 11~20 …). 없으면 워밍업 영상(모든 레벨) (2026-11-16) */
+  level?: number;
+  /** 레벨 미션 영상의 기본 칸 — 없으면 워밍업 칸 */
+  shelf?: Shelf;
 }
 
 interface LeafBase {
@@ -259,7 +263,7 @@ export const shelfLabel = (layout: ShelfLayout, shelf: Shelf): string =>
 
 const tileLevel = <C extends TrainingCard>(t: ShelfTile<C>): number => {
   if (t.kind === "card") return cardLevel(t.card);
-  if (t.kind === "mission") return 0;
+  if (t.kind === "mission") return t.mission.level ?? 0;
   const levels = t.tiles.map((x) => tileLevel(x));
   return levels.length && levels.every((l) => l > 0) ? Math.min(...levels) : 0;
 };
@@ -335,7 +339,8 @@ export function arrangeShelves<C extends TrainingCard>(
       } else if (leaves.has(k) && !folderOf.has(k)) placed.set(k, s.id);
     }
   }
-  const defaultShelf = (leaf: ShelfLeaf<C>): Shelf => (leaf.kind === "mission" ? "warmup" : categoryToShelf(leaf.card.category));
+  const defaultShelf = (leaf: ShelfLeaf<C>): Shelf =>
+    leaf.kind === "mission" ? leaf.mission.shelf ?? "warmup" : categoryToShelf(leaf.card.category);
   for (const leaf of leaves.values()) {
     if (folderOf.has(leaf.key) || placed.has(leaf.key)) continue;
     placed.set(leaf.key, defaultShelf(leaf));
@@ -344,9 +349,12 @@ export function arrangeShelves<C extends TrainingCard>(
     if (!placed.has(f.key)) placed.set(f.key, defaultShelf(f.tiles[0]));
   }
 
-  // 예전 순서 — 미션 먼저, 카드는 회원(내 레벨까지 먼저) · 코치진(레벨 낮은 것부터). 묶음은 첫 잎이 올 자리에.
+  // 예전 순서 — 워밍업 영상 먼저, 카드는 회원(내 레벨까지 먼저) · 코치진(레벨 낮은 것부터). 묶음은 첫 잎이 올 자리에.
+  // 레벨 미션 영상(2026-11-16)은 카드와 같은 규칙 — 회원: 내 레벨까지의 영상이 그 카드들 앞(레벨 낮은 것부터),
+  // 위 레벨은 위 레벨 카드와 레벨 순으로 섞어서(같은 레벨이면 영상 먼저) / 코치진: 레벨 순으로 섞어서.
   const defaultOrder = (shelf: Shelf): TileKey[] => {
     const ms: TileKey[] = [];
+    const lms: { key: TileKey; level: number }[] = [];
     const cs: C[] = [];
     const topOf = (k: TileKey): TileKey => {
       const fid = folderOf.get(k);
@@ -355,13 +363,40 @@ export function arrangeShelves<C extends TrainingCard>(
     for (const leaf of leaves.values()) {
       const top = topOf(leaf.key);
       if (placed.get(top) !== shelf) continue;
-      if (leaf.kind === "mission") ms.push(leaf.key);
-      else cs.push(leaf.card);
+      if (leaf.kind === "mission") {
+        if (leaf.mission.level) lms.push({ key: leaf.key, level: leaf.mission.level });
+        else ms.push(leaf.key);
+      } else cs.push(leaf.card);
     }
     const ordered = member ? orderForMember(cs, opts.myLevel) : orderForStaff(cs);
+    const me = Math.max(1, opts.myLevel);
+    lms.sort((a, b) => a.level - b.level);
+    const cardRows = ordered.map((c) => ({ key: cardKey(c.id), level: cardLevel(c) }));
+    // 카드 순서는 그대로 두고 영상만 레벨 자리에 끼운다 (같은 레벨이면 그 레벨 카드들 앞)
+    const mergeIn = (cardsIn: { key: TileKey; level: number }[], videos: { key: TileKey; level: number }[]) => {
+      const merged: { key: TileKey; level: number; video?: true }[] = [...cardsIn];
+      let from = 0;
+      for (const v of videos) {
+        let i = merged.findIndex((r, idx) => idx >= from && !r.video && r.level >= v.level);
+        if (i < 0) i = merged.length;
+        merged.splice(i, 0, { ...v, video: true });
+        from = i + 1;
+      }
+      return merged;
+    };
+    const rows = member
+      ? [
+          ...lms.filter((x) => x.level <= me),
+          ...cardRows.filter((x) => x.level <= me),
+          ...mergeIn(
+            cardRows.filter((x) => x.level > me),
+            lms.filter((x) => x.level > me),
+          ),
+        ]
+      : mergeIn(cardRows, lms);
     const out: TileKey[] = [];
     const seen = new Set<TileKey>();
-    for (const k of [...ms, ...ordered.map((c) => cardKey(c.id))]) {
+    for (const k of [...ms, ...rows.map((r) => r.key)]) {
       const top = topOf(k);
       if (seen.has(top)) continue;
       seen.add(top);
