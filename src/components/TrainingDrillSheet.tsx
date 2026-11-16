@@ -1,6 +1,10 @@
 // 🃏 153 콘텐츠 카드 시트 — 훈련 라이브러리(training_exercises)의 어떤 동작이든 이 한 장으로 연다.
 //   2026-11-13 대표님 「추천대로 진행」: 그림만 있던 드릴 설명 시트 → 카드 시트
-//   위에서부터 영상(회원용 · 정사각 · 소리 없음, 없으면 그림) → 이름 · 칸 · 레벨 · 한 줄 → 🔊 설명 듣기(휴대폰 목소리)
+//   위에서부터 영상(회원용, 없으면 그림) → 이름 · 칸 · 레벨 · 한 줄 → 🔊 설명 듣기
+//   · 2026-11-16 대표님 「모든 영상 기존에 자연스러운 더빙 기본값으로 · 설명 듣기 들어가면 자동으로 · 버튼처럼 보이게」:
+//     영상은 소리를 켠 채로(목소리 있는 영상은 더빙 그대로 · 끝나면 「다시 보기」) · 가로 영상은 가로 그대로(잘라내지 않음) ·
+//     목소리 없는 영상 · 영상 없는 카드는 열면 설명 듣기가 저절로(드라이브 영상과 같은 목소리 파일, 없으면 휴대폰 목소리) ·
+//     설명이 나오는 동안 영상 소리는 잠깐 끈다 · 소리를 끄면 이 창을 닫을 때까지 조용히(lib/learnAudio)
 //   → 이렇게 해요(포인트) → 이런 실수 조심 → 준비물 · 시간 → 「다음 동작 →」 하나로 끝 (감정 설계 ⑤)
 //   · 코치진이 보면 「코치용 영상(목소리)」 단추가 하나 더 (코치용 영상이 붙은 카드만)
 //   · 같은 시트를 훈련 탭 「영상으로 배우기」 · 레벨 자세히 › 필수 훈련 · 전략 회의 영상 칸 · 훈련 라이브러리가 같이 쓴다
@@ -9,9 +13,9 @@
 //     코치님께 의견 · 영상 없는 카드는 「영상 찍어 주세요」) — 코치진은 같은 자리에 회원 반응 숫자 · 의견에 답 (training/react)
 // body 로 portal 한다 (2026-09-28): 상세 화면 루트의 animate-slide-up 이 끝난 뒤에도 transform 을 남겨
 // 그 안의 fixed 시트가 화면이 아니라 긴 루트의 맨 아래에 붙었다 → 드릴을 눌러도 화면만 어두워지고 시트가 안 보였다.
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { Check, ChevronRight, Mic, Plus, Square, Volume2, X } from "lucide-react";
+import { Check, ChevronRight, Mic, Play, Plus, RotateCcw, Square, Volume2, VolumeX, X } from "lucide-react";
 import type { TrainingExercise } from "@/hooks/useTrainingLibrary";
 import { useAuth } from "@/contexts/AuthContext";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
@@ -34,6 +38,16 @@ import { logCardEvent } from "@/services/shelfLayoutService";
 import { useCardSocial } from "@/services/cardReactService";
 import { CardHeartButton, CardReactSection } from "@/components/training/react/CardReact";
 import { pickKoreanVoice, speak, stopSpeech, type SpeakHandle } from "@/features/myboxer-visualization/mindAudio";
+import {
+  clampVideoRatio,
+  learnSoundOn,
+  playVoiceClip,
+  primeLearnAudio,
+  setLearnSoundOn,
+  stopVoiceClip,
+  videoAudioState,
+} from "@/lib/learnAudio";
+import { cardVoiceUrl } from "@/lib/cardVoice";
 import VideoOverlay from "@/components/common/VideoOverlay";
 
 interface TrainingDrillSheetProps {
@@ -102,11 +116,14 @@ const TrainingDrillSheet = ({
   const runRef = useRef(0);
   const handleRef = useRef<SpeakHandle | null>(null);
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
+  const speakingRef = useRef(false);
   const stop = useCallback(() => {
     runRef.current += 1;
     handleRef.current?.cancel();
     handleRef.current = null;
     stopSpeech();
+    stopVoiceClip();
+    speakingRef.current = false;
     setSpeaking(false);
   }, []);
   useEffect(() => {
@@ -117,12 +134,35 @@ const TrainingDrillSheet = ({
     });
   }, [card]);
   const cardId = card?.id;
+  // 🔈 소리 (2026-11-16) — 켠 채로가 기본 · 휴대폰이 막으면 소리 없이 틀고 「소리 켜기」 · 영상에 목소리가 있나
+  const [soundOn, setSoundOn] = useState<boolean>(learnSoundOn);
+  const [blocked, setBlocked] = useState(false);
+  const [hasAudio, setHasAudioState] = useState<boolean | null>(null);
+  const hasAudioRef = useRef<boolean | null>(null);
+  const setHasAudio = (v: boolean | null) => {
+    hasAudioRef.current = v;
+    setHasAudioState(v);
+  };
+  const [ratio, setRatio] = useState<number | null>(null);
+  const [ended, setEnded] = useState(false);
+  const soundRef = useRef(soundOn);
+  soundRef.current = soundOn;
+  const autoDoneRef = useRef<string | null>(null);
   useEffect(() => {
     setCoachOpen(false);
     setSlow(false);
+    setBlocked(false);
+    setHasAudio(null);
+    setRatio(null);
+    setEnded(false);
+    autoDoneRef.current = null;
     scrollRef.current?.scrollTo({ top: 0 });
     return stop;
   }, [cardId, stop]);
+  // 카드를 누른 순간(같은 누르기 안)에 소리를 깨워 둔다 — 아이폰이 자동 설명을 막지 않게
+  useLayoutEffect(() => {
+    if (cardId) primeLearnAudio();
+  }, [cardId]);
 
   // 보이지 않는 이용 기록 (2026-11-14 · 결정 8번 1년 보관) — 연 것 · 영상이 돈 것 · 끝까지 · 다시 본 것.
   // 회원용 영상은 반복 재생이라 'ended' 가 안 온다 → 시간이 처음으로 돌아가면 한 바퀴. 한 번 열 때 종류마다 한 번만.
@@ -155,6 +195,100 @@ const TrainingDrillSheet = ({
     if (videoRef.current) videoRef.current.playbackRate = slow ? 0.5 : 1;
   }, [slow, video.data]);
 
+  const url = video.data ?? null;
+  const isStorageVideo = !!url && !!card?.video_path;
+  const yt = url && !card?.video_path ? strictYoutubeId(url) : null;
+  const poster = card ? posterOf(card) : null;
+
+  // 🔊 설명 듣기 — 목소리 파일(드라이브 영상과 같은 목소리)이 있으면 그것, 없거나 못 틀면 휴대폰 목소리로 문장마다
+  const cardRef = useRef(card);
+  cardRef.current = card;
+  const startNarration = useCallback(() => {
+    const c = cardRef.current;
+    if (!c) return;
+    const lines = cardSpeech(c);
+    if (!lines.length) return;
+    const run = ++runRef.current;
+    const finish = () => {
+      if (runRef.current !== run) return;
+      speakingRef.current = false;
+      setSpeaking(false);
+    };
+    speakingRef.current = true;
+    setSpeaking(true);
+    void (async () => {
+      const clip = cardVoiceUrl(c);
+      if (clip) {
+        const h = playVoiceClip(clip);
+        handleRef.current = { done: h.done.then(() => undefined), cancel: h.cancel };
+        const end = await h.done;
+        if (runRef.current !== run) return;
+        // 끝 · 멈춤 · 휴대폰이 막음(누르면 다시) → 여기서 끝, 파일이 없으면 휴대폰 목소리로
+        if (end !== "failed") return finish();
+      }
+      if (!hasSpeech()) return finish();
+      for (const line of lines) {
+        if (runRef.current !== run) return;
+        const h = speak(line, { enabled: true, voice: voiceRef.current, rate: 0.95 });
+        handleRef.current = h;
+        await h.done;
+      }
+      finish();
+    })();
+  }, []);
+
+  // ▶ 영상 — 소리를 켠 채로 틀어 보고, 휴대폰이 막으면 소리 없이 틀고 「소리 켜기」
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v || !url || !isStorageVideo) return;
+    let gone = false;
+    v.muted = !soundRef.current || speakingRef.current;
+    v.play().catch((e: unknown) => {
+      if (gone || (e as { name?: string } | null)?.name !== "NotAllowedError" || v.muted) return;
+      setBlocked(true);
+      v.muted = true;
+      void v.play().catch(() => undefined);
+    });
+    return () => {
+      gone = true;
+    };
+  }, [url, isStorageVideo]);
+  useEffect(() => {
+    const v = videoRef.current;
+    if (v) v.muted = !soundOn || blocked || speaking;
+  }, [soundOn, blocked, speaking, url]);
+  // 그림 비율을 먼저 알면 영상이 오기 전부터 그 모양으로 (가로 영상이 정사각으로 잘리지 않게)
+  useEffect(() => {
+    if (!poster) return;
+    const img = new Image();
+    img.onload = () => {
+      if (img.naturalWidth && img.naturalHeight) setRatio((r) => r ?? clampVideoRatio(img.naturalWidth / img.naturalHeight));
+    };
+    img.src = poster;
+  }, [poster]);
+
+  // 🔊 들어가면 설명 듣기 — 목소리 없는 영상 · 영상 없는 카드만(목소리 있는 영상은 더빙이 설명) · 소리를 꺼 둔 회원님은 안 함
+  const hasVideoPath = !!card?.video_path;
+  const videoLoading = video.isLoading;
+  useEffect(() => {
+    if (!cardId || autoDoneRef.current === cardId || !soundOn) return;
+    const decide = (narrate: boolean) => {
+      if (autoDoneRef.current === cardId) return;
+      autoDoneRef.current = cardId;
+      if (narrate) startNarration();
+    };
+    if (yt || (url && !isStorageVideo)) return decide(false); // 유튜브 · 링크 영상은 그 영상 소리로
+    if (isStorageVideo) {
+      if (hasAudio !== null) return decide(!hasAudio);
+      // 영상이 늦게 오면 잠깐 기다렸다가 — 설명이 나오는 동안은 영상 소리를 끄니 겹치지 않는다
+      const t = window.setTimeout(() => decide(hasAudioRef.current !== true), 2500);
+      return () => window.clearTimeout(t);
+    }
+    if (hasVideoPath && videoLoading) return; // 영상 주소를 받는 중
+    const t = window.setTimeout(() => decide(true), 450);
+    return () => window.clearTimeout(t);
+  }, [cardId, soundOn, hasAudio, isStorageVideo, url, yt, hasVideoPath, videoLoading, startNarration]);
+
   if (!card) return null;
 
   const shelf = cardShelf(card);
@@ -162,31 +296,55 @@ const TrainingDrillSheet = ({
   const next =
     list && onChange ? nextCard(list.map((x) => normalizeCard(x as unknown as Record<string, unknown>)), card, { anyShelf: !!listIsShelf }) : null;
   const nextFull = next ? cardsQ.data?.find((c) => c.id === next.id) ?? next : null;
-  const poster = posterOf(card);
-  const url = video.data ?? null;
-  const yt = url && !card.video_path ? strictYoutubeId(url) : null;
-  const isStorageVideo = !!url && !!card.video_path;
   const minutesKnown = card.minutes != null && Number(card.minutes) > 0;
 
   const listen = () => {
+    autoDoneRef.current = card.id;
     if (speaking) {
       stop();
       return;
     }
-    const lines = cardSpeech(card);
-    if (!lines.length) return;
-    const run = ++runRef.current;
-    setSpeaking(true);
-    void (async () => {
-      for (const line of lines) {
-        if (runRef.current !== run) return;
-        const h = speak(line, { enabled: true, voice: voiceRef.current, rate: 0.95 });
-        handleRef.current = h;
-        await h.done;
-      }
-      if (runRef.current === run) setSpeaking(false);
-    })();
+    startNarration();
   };
+  const canListen = hasSpeech() || !!cardVoiceUrl(card);
+
+  // 소리 켜기 · 끄기 — 누른 순간 바로(아이폰은 누르기 안에서만 소리를 켤 수 있다)
+  const toggleSound = () => {
+    const v = videoRef.current;
+    if (blocked || !soundOn) {
+      setLearnSoundOn(true);
+      setSoundOn(true);
+      setBlocked(false);
+      if (v) {
+        v.muted = speakingRef.current;
+        void v.play().catch(() => undefined);
+      }
+      return;
+    }
+    setLearnSoundOn(false);
+    setSoundOn(false);
+    if (v) v.muted = true;
+    if (speakingRef.current) stop();
+  };
+  const onVideoMeta = (v: HTMLVideoElement) => {
+    if (v.videoWidth && v.videoHeight) setRatio(clampVideoRatio(v.videoWidth / v.videoHeight));
+    if (hasAudioRef.current === null) {
+      const a = videoAudioState(v);
+      if (a !== null) setHasAudio(a);
+    }
+  };
+  const detectAudio = (v: HTMLVideoElement) => {
+    if (hasAudioRef.current !== null || v.currentTime < 0.6) return;
+    setHasAudio(videoAudioState(v, true) ?? false);
+  };
+  const replay = () => {
+    const v = videoRef.current;
+    setEnded(false);
+    if (!v) return;
+    v.currentTime = 0;
+    void v.play().catch(() => undefined);
+  };
+  const showSoundHint = blocked && hasAudio !== false;
 
   // 코치용 영상 창은 시트 바깥(형제)에 둔다 — 안에 두면 그 창을 닫는 누르기가 시트까지 닫는다(React 이벤트는 portal 을 건너 올라온다)
   return createPortal(
@@ -209,21 +367,32 @@ const TrainingDrillSheet = ({
           <X className="h-4 w-4" />
         </button>
 
-        {/* 영상 — 회원용(정사각 · 소리 없음 · 반복) → 유튜브 링크 → 그림. 없으면 자리만 감춤 */}
+        {/* 영상 — 회원용(소리 켜고 · 가로는 가로 그대로 · 목소리 없는 영상은 반복) → 유튜브 링크 → 그림. 없으면 자리만 감춤 */}
         {isStorageVideo ? (
-          <div className="relative aspect-square w-full overflow-hidden rounded-t-3xl bg-black">
+          <div className="relative w-full overflow-hidden rounded-t-3xl bg-black" style={{ aspectRatio: String(ratio ?? 1) }}>
             <video
               ref={videoRef}
               key={url}
               src={url}
               poster={poster ?? undefined}
-              autoPlay
-              muted
-              loop
+              muted={!soundOn || blocked || speaking}
+              loop={hasAudio !== true}
               playsInline
               preload="auto"
-              onPlaying={onVideoPlaying}
-              onTimeUpdate={(e) => onVideoTime(e.currentTarget)}
+              onLoadedMetadata={(e) => onVideoMeta(e.currentTarget)}
+              onPlaying={(e) => {
+                setEnded(false);
+                onVideoPlaying();
+                if (e.currentTarget.muted && !blocked && soundOn && !speakingRef.current) e.currentTarget.muted = false;
+              }}
+              onTimeUpdate={(e) => {
+                onVideoTime(e.currentTarget);
+                detectAudio(e.currentTarget);
+              }}
+              onEnded={() => {
+                onLoopDone();
+                setEnded(true);
+              }}
               onClick={(e) => {
                 const v = e.currentTarget;
                 if (v.paused) void v.play();
@@ -231,6 +400,34 @@ const TrainingDrillSheet = ({
               }}
               className="h-full w-full object-cover"
             />
+            {/* 끝난 더빙 영상 — 다시 보기 */}
+            {ended && (
+              <button type="button" onClick={replay} className="absolute inset-0 flex items-center justify-center bg-black/35">
+                <span className="flex h-12 items-center gap-2 rounded-full bg-background px-5 text-body font-bold text-foreground shadow-elev-1">
+                  <RotateCcw className="h-4 w-4" aria-hidden /> 다시 보기
+                </span>
+              </button>
+            )}
+            {/* 소리 — 휴대폰이 막았으면 크게 「소리 켜기」, 아니면 작은 켜기 · 끄기 */}
+            {showSoundHint ? (
+              <button
+                type="button"
+                onClick={toggleSound}
+                className="absolute bottom-3 left-1/2 flex h-12 -translate-x-1/2 items-center gap-2 rounded-full bg-black/75 px-5 text-body font-bold text-white shadow-elev-1 active:scale-95"
+              >
+                <Volume2 className="h-5 w-5" aria-hidden /> 소리 켜기
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={toggleSound}
+                aria-label={soundOn ? "소리 끄기" : "소리 켜기"}
+                aria-pressed={soundOn}
+                className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white active:scale-90"
+              >
+                {soundOn ? <Volume2 className="h-5 w-5" aria-hidden /> : <VolumeX className="h-5 w-5" aria-hidden />}
+              </button>
+            )}
           </div>
         ) : yt ? (
           <div className="aspect-video w-full overflow-hidden rounded-t-3xl bg-black">
@@ -295,26 +492,43 @@ const TrainingDrillSheet = ({
           </div>
           {card.summary && <p className="mt-1 text-body font-bold text-primary">{card.summary}</p>}
 
-          {/* 🔊 설명 듣기 · 🎙 코치용 영상 */}
+          {/* 🔊 설명 듣기 · 🎙 코치용 영상 — 설명 듣기는 누르고 싶게 생긴 진짜 단추(차콜 바탕 · 민트 재생 동그라미 · 두 줄) */}
           <div className="mt-4 flex gap-2">
-            {hasSpeech() && (
+            {canListen && (
               <button
                 type="button"
                 onClick={listen}
                 aria-pressed={speaking}
-                className={`flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl text-body font-bold transition-all active:scale-[0.98] ${
-                  speaking ? "bg-foreground text-background" : "bg-secondary text-foreground"
-                }`}
+                aria-label={speaking ? "설명 멈추기" : "설명 듣기"}
+                className="flex h-16 min-w-0 flex-1 items-center gap-3 rounded-2xl bg-foreground px-4 text-left text-background shadow-elev-1 ring-1 ring-black/5 transition-all active:scale-[0.97]"
               >
-                {speaking ? <Square className="h-4 w-4" /> : <Volume2 className="h-5 w-5" />}
-                {speaking ? "멈추기" : "설명 듣기"}
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                  {speaking ? (
+                    <Square className="h-4 w-4 fill-current" aria-hidden />
+                  ) : (
+                    <Play className="h-5 w-5 translate-x-px fill-current" aria-hidden />
+                  )}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-body font-black">{speaking ? "설명 듣는 중" : "설명 듣기"}</span>
+                  <span className="block truncate text-label text-background/75">{speaking ? "누르면 멈춰요" : "눌러서 들어요"}</span>
+                </span>
+                {speaking ? (
+                  <span className="flex h-5 shrink-0 items-end gap-0.5" aria-hidden>
+                    {[0, 160, 320].map((d) => (
+                      <span key={d} className="w-1 rounded-full bg-primary motion-safe:animate-pulse" style={{ height: d === 160 ? 18 : 12, animationDelay: `${d}ms` }} />
+                    ))}
+                  </span>
+                ) : (
+                  <Volume2 className="h-5 w-5 shrink-0 text-background/75" aria-hidden />
+                )}
               </button>
             )}
             {staffViewer && hasCoachVideo(card) && (
               <button
                 type="button"
                 onClick={() => setCoachOpen(true)}
-                className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-primary/10 text-body font-bold text-primary transition-all active:scale-[0.98]"
+                className="flex h-16 flex-1 items-center justify-center gap-2 rounded-2xl bg-primary/10 text-body font-bold text-primary transition-all active:scale-[0.98]"
               >
                 <Mic className="h-4 w-4" /> 코치용 영상
               </button>
