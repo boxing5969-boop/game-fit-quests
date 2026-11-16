@@ -83,9 +83,9 @@ export const CompareBadge = ({ compare, className }: { compare: PriceCompare | n
   // 좁은 칸에서는 「최저가보다 / 4,500원 저렴」으로 꺾인다 — 「저렴」만 혼자 내려가지 않게 두 덩어리로.
   const [who, saving] = compareShortParts(compare);
   return (
-    <span className={cn("flex flex-wrap gap-x-1 text-micro font-bold leading-tight text-primary", className)}>
-      <span className="whitespace-nowrap">{who}</span>
-      <span className="whitespace-nowrap tabular-nums">{saving}</span>
+    <span className={cn("text-micro font-bold leading-tight text-primary", className)}>
+      <span className="whitespace-nowrap">{who}</span>{" "}
+      <span className="whitespace-nowrap">{saving}</span>
     </span>
   );
 };
