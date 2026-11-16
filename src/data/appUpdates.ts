@@ -18,6 +18,16 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261116-learn-popular",
+    date: "2026-11-16",
+    title: "영상으로 배우기 — 「많이 담은」 동작",
+    lines: [
+      "회원님들이 내 수업에 많이 담은 동작에 「많이 담은」이 붙어요",
+      "무엇부터 해 볼지 고를 때 참고해 보세요",
+    ],
+    link: { to: "/missions?learn=1", label: "영상으로 배우기" },
+  },
+  {
     id: "20261116-learn-153-videos",
     date: "2026-11-16",
     title: "영상으로 배우기 — 153 레슨 · 153 PB 영상",

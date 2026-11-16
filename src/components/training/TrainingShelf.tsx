@@ -441,7 +441,7 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
     const leaf = leafByKey.get(key);
     if (leaf) return leafName(leaf);
     if (key.startsWith("c:")) return (cardsQ.data ?? []).find((c) => c.id === key.slice(2))?.name ?? "카드";
-    return missions.find((x) => x.id === key.slice(2))?.title.replace(/\[[^\]]*\]/g, "").trim() || "워밍업 영상";
+    return missions.find((x) => x.id === key.slice(2))?.title.replace(/\[[^\]]*\]/g, "").trim() || "미션 영상";
   };
 
   const searching = (staff || (memberSearch && !editing)) && query.trim().length > 0;
@@ -1242,7 +1242,9 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
               return;
             }
             const c = (cardsQ.data ?? []).find((x) => x.id === key.slice(2));
-            if (c) setOpen({ card: c, list: [c] });
+            if (!c) return;
+            primeLearnAudio(); // 누른 순간 소리를 깨워 둔다 — 카드 시트가 소리 켠 영상 · 설명 듣기를 자동으로
+            setOpen({ card: c, list: [c] });
           }}
           onOpenOpinions={() => {
             setDataOpen(false);
