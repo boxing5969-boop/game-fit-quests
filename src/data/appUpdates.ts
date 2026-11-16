@@ -18,6 +18,31 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261116-pt-check",
+    date: "2026-11-16",
+    title: "PT 회원님 — PT 차감 안내",
+    lines: [
+      "PT가 차감됐는데 수업 기록이 없으면 홈에서 여쭤봐요",
+      "「네, 맞아요」 · 「아니에요」 중 하나만 눌러 주세요",
+      "「아니에요」는 지점에서 확인하고 답을 드려요",
+    ],
+    link: { to: "/home", label: "홈에서 보기" },
+    branches: SEOLLEUNG,
+  },
+  {
+    id: "20261116-pt-check-staff",
+    date: "2026-11-16",
+    title: "근무 — PT 차감 회원 확인 (「아니에요」)",
+    lines: [
+      "기록 없는 차감은 회원님께 받으신 수업이 맞는지 물어요",
+      "「아니에요」는 지점장 · 대표님이 확인 필요에서 답해요",
+      "답하기 전까지 그 수업 수당은 「회원 확인 중」 보류예요",
+    ],
+    link: { to: "/office?tab=work", label: "근무 탭 열기" },
+    audience: "staff",
+    branches: SEOLLEUNG,
+  },
+  {
     id: "20261116-pt-statement",
     date: "2026-11-16",
     title: "근무 — PT 수당 명세서 한 장 (PDF)",
