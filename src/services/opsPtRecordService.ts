@@ -2,6 +2,8 @@
  * 153운영본부 · PT 기록 — 서버 함수 감싸기 (2026-11-11, DB 20261111184433_ops_pt_record.sql)
  *   ops_pt_record · ops_pt_session_save · ops_pt_session_void · ops_pt_session_review · ops_pt_member_label_set · ops_pt_setting_set
  *   + 자동 기록 켜기 · 끄기 ops_pt_auto_set (2026-11-12 근무 1단계, DB 20261112225136_ops_work_stage1.sql)
+ *   + 회원 확인 목록 ops_pt_member_check_list (2026-11-16 2-4, DB 20261116195750_ops_pt_member_check.sql) — PT 기록과 함께 받아
+ *     자료(checks · check)에 붙인다. 함수가 없거나 못 받으면 회원 확인이 없는 것으로(PT 기록은 그대로).
  *   짝짓기 · 판정은 src/lib/opsPtRecord.ts — 여기는 읽고 쓰기만.
  *
  *   서버에 함수가 아직 없으면(PGRST202 — DB 적용 전 · 옛 DB 를 보는 preview-* 미리보기) 꺼진 것으로 본다(화면에 아무것도 안 나온다).
@@ -12,6 +14,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { translateError } from "@/lib/errorMessages";
 import type { PtRecordData, PtSavePayload } from "@/lib/opsPtRecord";
+import { normalizePtCheckList } from "@/lib/opsPtCheck";
 import { applyPtDemo, buildPtSample, type PtDemoAction } from "@/lib/opsPtRecordSample";
 import { OPS_KEY } from "./opsService";
 
@@ -52,14 +55,20 @@ export const useOpsPtRecord = (branch: string | null, { enabled = true, demo = f
     retry: false,
     queryFn: async (): Promise<PtRecordData> => {
       if (demo) return buildPtSample(kstToday(), demoManage, { auto: true });
-      const { data, error } = await rpc("ops_pt_record", { p_branch: branch });
+      const [{ data, error }, chk] = await Promise.all([
+        rpc("ops_pt_record", { p_branch: branch }),
+        rpc("ops_pt_member_check_list", { p_branch: branch }) as Promise<{ data: unknown; error: RpcError }>,
+      ]);
       if (error) {
         if (isMissingFn(error)) return { branch: branch ?? "", on: false, manage: false, me_staff: null };
         throw new Error(translateError(error, "PT 기록을 불러오지 못했어요"));
       }
       const d = (data ?? {}) as PtRecordData;
+      // 회원 확인(2-4) — 못 받으면(함수 없음 · 막힘) 없는 것으로
+      const list = chk.error ? null : normalizePtCheckList(chk.data);
       return {
         ...d,
+        ...(list ? { check: { on: list.on, started_at: list.started_at, can_set: list.can_set, can_close: list.can_close }, checks: list.checks } : {}),
         on: !!d.on,
         coaches: d.coaches ?? [],
         members: d.members ?? [],

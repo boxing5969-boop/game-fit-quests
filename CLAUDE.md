@@ -559,6 +559,26 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - 시험: vitest opsPtClose.test.ts 31개(2-3 여섯: 회원별 묶음 · 지급 예정일 · 막 나온 명세서 · 세무 자료 글 · 이름표/파일 이름 · 장부) / 로컬 Postgres 16개(대표님 · 회계매니저 · 그 지점 코치는 봄, 지점장 · 다른 지점 코치 · 회원 · anon 은 막힘, 서명 그림은 안 줌, 사업주 정보 없는 지점은 null) / 지어낸 서버로 화면: 회원별 보기 → 승인 → 코치 맨 위 카드 → 종이 → PDF(한 쪽 · 보정 · 정산 든 달도) → 세무 자료 복사 → 지점장은 줄 목록만 · 390 · 360px 넘침 0.
 - **적용 (2026-11-16 19:39 대표님 「2-3적용하고 다음작업가자」)**: 미리보기 `preview/pt-statement`(68013ef) 뒤 main 이 다른 창(홈 「다음 레벨까지」 684fcba)으로 앞서 있어 2-3 커밋을 그 위로 옮김(충돌 없음) → 운영 DB = MCP `apply_migration`(기록 `20261116103931_ops_pt_statement_head` — 파일 번호와 다르고 문장은 파일 그대로) → 본문 md5 = 저장소 파일(`63a307d3…`) · 보안 정의 · stable · search_path=public · anon 실행 막힘 · authenticated 실행 · API 가 함수를 앎(로그인 없이 부르면 401 「permission denied」 — 없는 함수는 404) → 되돌림 시험(DO 블록 예외): 로그인 없음 · 지점장 · 회원 · 다른 지점 코치 · 없는 지점 = 막힘 / 대표님 = 다섯 칸(서명 없음) · 사업주 정보가 덜 찬 지점은 찬 칸만 / 그 지점 PT 코치 = 보임 → DB 어긋남 점검 새 어긋남 0(DB 함수 941 · 저장소 정의 939). 함수가 없어도 명세서는 나온다(지급하는 곳 = 지점 이름). 화면은 첫 승인(12월 수업분 · 1/4 무렵) 뒤부터 보인다.
 
+#### PT 수당 2단계 2-4 — 회원 확인: 기록 없는 차감을 회원에게 묻기(「네, 맞아요」 · 「아니에요」) (2026-11-16 대표님 「2-3적용하고 다음작업가자」 · 보고서 「회원 알림」 · 근무 1단계 결정 ⑥)
+
+| 파일 | 역할 |
+|---|---|
+| [supabase/migrations/20261116195750_ops_pt_member_check.sql](supabase/migrations/20261116195750_ops_pt_member_check.sql) | 새 표 2 — `ops_pt_check_settings`(지점마다 켜기 · 켠 때 `started_at`) · `ops_pt_member_checks`(물은 차감 한 줄: 차감 · 회원 · 차감이 잡힌 날 · 짝 없던 횟수 · 물은 때 · 답 yes/no · 메모 200자 · 지점의 답 300자 · 닫은 사람/때 — 차감마다 한 줄) / 새 함수 8 — `_ops_pt_check_left`(한 회원의 짝 없는 차감 — 화면 `matchPtRecord` · `_ops_pt_auto_record` 와 같은 창 · 같은 차례 ①②) · `_ops_pt_check_notify_staff` · `_ops_pt_check_tick`(묻기) · 회원 `pt_deduct_checks` · `pt_deduct_answer` · 코치/관리자 `ops_pt_member_check_list` · `ops_pt_member_check_close`(지점장 · 대표님) · `ops_pt_check_setting_set`(대표님) / 예약 `ops-pt-check-tick` `55 1-11 * * *`(10:55 ~ 20:55 KST 매시). 기존 표 · 함수 · 예약은 그대로(알림은 PT 예약의 `_ops_pt_book_notify` 를 쓴다) |
+| [src/lib/opsPtCheck.ts](src/lib/opsPtCheck.ts) | 모양 · 글 · 검사 — 목록 정리 `normalizePtCheckList` · `isOpenDispute`(「아니에요」인데 아직 답 전) · 카드 한 줄 `ptCheckLine` · 답 예시 `PT_CHECK_REPLY_PRESETS` · 검사 `ptReplyError` · `ptAskNoteError`(서버와 같은 말) / 회원 띠 `normalizePtAsks` · `ptAskLine` · 예시 `buildPtAsksSample` · `applyPtAskDemo` (시험 opsPtCheck.test.ts 11) |
+| [src/lib/opsPtRecord.ts](src/lib/opsPtRecord.ts) · [opsPtPay.ts](src/lib/opsPtPay.ts) | `PtRecordData.checks` · `check` → `matchPtRecord` 가 짝지은 차감에 `disputed`, 사유 없는 차감에 `check`, 결과에 `disputes`(열린 「아니에요」) · `ptCounts.dispute`(관리자만) / 수당 줄 상태 `member` 「회원 확인 중」 — 열린 「아니에요」가 걸린 차감과 짝지은 수업은 보류(`hold.member`) |
+| [src/services/opsPtCheckService.ts](src/services/opsPtCheckService.ts) · [opsPtRecordService.ts](src/services/opsPtRecordService.ts) | 회원 `usePtDeductAsks` · `usePtDeductAnswer`(캐시 `["153pt","asks",…]`) / 코치 · 관리자 목록은 `useOpsPtRecord` 가 `ops_pt_record` 와 함께 받아 붙인다(못 받으면 없는 것으로) · 쓰기 `useOpsPtCheckActions`(답하고 닫기 · 켜기) |
+| [src/components/pt/PtDeductAskBand.tsx](src/components/pt/PtDeductAskBand.tsx) · [HomePtCard.tsx](src/components/pt/HomePtCard.tsx) | 회원 — 홈 「PT 수업」 카드 위쪽 「PT 차감 안내」 띠: 「○월 ○일에 PT 1회 차감이 확인됐어요」 [아니에요](한 줄 메모 → 지점에 알리기) [네, 맞아요] · 「아니에요」 뒤 「지점에서 확인하고 있어요」 · 지점의 답은 사흘. 알림 링크 `/home?ptcheck=1`(물을 것이 없으면 「그사이 기록됐어요」) · 카드가 안 보이는 회원(수업권 끝남)에게는 띠만 |
+| [src/components/ops/OpsPtCheck.tsx](src/components/ops/OpsPtCheck.tsx) · [OpsPtRecord.tsx](src/components/ops/OpsPtRecord.tsx) | 코치 · 관리자 — 확인 필요의 사유 없는 차감 카드에 회원 답 한 줄 · 열린 「아니에요」는 지점장 · 대표님에게 [회원님께 답하기](답 예시 칩 · 300자 → 회원 알림 「PT 차감 확인 결과」) · 카드 밖(기록과 맞은 차감)의 「아니에요」는 따로 한 장(「11/10 노쇼 기록과 맞은 차감」) · 코치에게는 안내만(숫자에 안 셈) · 관리자 PT 탭 아래 대표님 「회원 확인 켜기 · 끄기」 |
+
+- 왜: 11/10 보정 5회처럼 회원이 모르는 차감이 있었다(보고서 「회원 알림」). 기록이 있는 차감은 PT 프리미엄의 수업 적립 알림이 이미 가므로(11/14) **기록 없는 차감만** 묻는다. 결정(11/11 ⑤ 앱 알림 먼저 · 문자 보류 · 11/12 ⑥ 회원 차감 알림 + '아니에요').
+- 묻는 규칙(서버): 회원 확인을 켠 지점 · PT 기록 켬 · 수당에 세는 차감(auto · confirmed · 수업권 끝남 ended 는 뺌) · 회원 계정이 있는 차감 · **켠 뒤** 잡힌 차감 · 잡힌 지 **여섯 시간** ~ 14일 · 짝지을 기록이 없는 횟수(2회 차감에 기록 1건이면 1회만) · 차감마다 한 번. 회원마다 알림 한 통(여러 건은 「PT 차감 n건」). 밤에는 안 보낸다(10:55 ~ 20:55). 그새 기록이 들어오면 회원 화면의 묻기는 저절로 사라진다(답 전일 때).
+- 답: 「네, 맞아요」 → 담당 코치 알림 「PT 차감 회원 확인 · 이름표 — 기록해 주세요」(담당이 없으면 지점장 · 대표님) · 「아니에요」(메모 200자 선택) → 코치(「오늘 PT」 링크) + 지점장 · 대표님(근무 탭 링크) 「PT 차감 「아니에요」 · 이름표」. 답은 한 번 · 14일 안 · 끈 지점은 못 함.
+- 닫기: **지점장 · 대표님만**(코치 담당 차감에 대한 이의라서 코치는 닫지 못한다) · 「아니에요」만 · 한 번 · 답 2~300자 → 회원 알림. 닫기 전까지 그 차감과 짝지은 수업은 수당 보류 「회원 확인 중」 — 월 마감(2-2)에서는 보류 줄이고, 승인 뒤에 풀리면 다음 달 「보정」으로 들어간다.
+- 회원 화면 말: '노쇼' 대신 '미참석' · 「당일 취소 · 미참석도 1회 차감돼요 · 차감은 수업 다음 날 확인될 때도 있어요」. 오삼코치 `mb-pt-book` 에 한 줄.
+- 예시 화면: 회원 `/home?ptdemo=1`(띠 하나 — 아니에요 · 네) · 코치/관리자 `/office?tab=work&demo=1`(사유 없는 차감의 「아니에요」 + 노쇼 기록과 맞은 차감의 「아니에요」 → 수당 「회원 확인 중」 1).
+- 시험: 로컬 Postgres 16(뼈대 + PT 기록 1단계 + 알림 도우미 + 이 파일 두 번) 75개 — 켜기(대표님만 · 켠 때 그대로 · 다시 켜면 그때부터) · 짝 셈(기록보다 앞선 차감 · 늦은 차감) · 묻기(여섯 시간 · 켜기 전 · 수업권 끝남 · 뺀 차감 · 14일 · 이름만 · 안 켠 지점 · 2회 중 1회 · 한 통으로 묶기 · 한 번만) · 회원(남의 것 · 답 한 번 · 메모 · 기록 들어오면 사라짐 · 14일 · 끈 지점) · 알림 대상 · 목록 범위(코치 = 본인 담당) · 닫기(코치 막힘 · 「네」 막힘 · 빈 답 · 한 번 · 회원 알림 · 사흘) · 권한(anon · 안쪽 함수 · 표) · 예약 / vitest opsPtCheck 11 · 화면 흐름(390/360px).
+- **적용 전 (2026-11-16)**: 미리보기 `preview/pt-check` — 운영 DB에 아직 넣지 않았다(대표님 승인 뒤). 적용해도 대표님이 켜기 전에는 아무도 묻지 않는다(켜는 것까지 승인받아 선릉역점에서).
+
 #### 「일정」 탭 — 팀원이 스스로 넣는 일정 · 대표님 팀 일정판 (2026-11-02 대표님 "직원 회의 관리 탭에 팀원들 스스로 스케줄 관리 … 내가 팀원들의 스케줄을 한눈에")
 
 | 파일 | 역할 |

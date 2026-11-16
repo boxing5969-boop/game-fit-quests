@@ -4,6 +4,7 @@
  *   오늘을 기준으로 날짜를 만든다 — 줄마다 화면의 한 가지 모습(차감 확인 · 확인 중 · 대기 · 사유 없는 차감 · 기록 없는 입장 …).
  */
 import type { OpsPtEvent, OpsPtRate } from "./opsPt";
+import type { PtMemberCheck } from "./opsPtCheck";
 import {
   addDays,
   isUseKind,
@@ -75,6 +76,23 @@ export const buildPtSample = (today: string, manage: boolean, opts: { auto?: boo
     note: null,
   });
   const came = (member: string, day: number, hm: string): PtRecAttendance => ({ user_id: member, date: d(day), at: at(day, hm) });
+  // 회원 확인(2-4) — 물은 차감 한 줄(지어낸 답)
+  const ask = (e: OpsPtEvent, more: Partial<PtMemberCheck>): PtMemberCheck => ({
+    id: `sample-k${(seq += 1)}`,
+    event_id: e.id,
+    member_user_id: e.member_user_id ?? "",
+    work_date: e.work_date,
+    used: e.used,
+    coach_staff_id: e.coach_staff_id,
+    asked_at: `${e.work_date}T16:55:00+09:00`,
+    answer: null,
+    answered_at: null,
+    note: null,
+    reply: null,
+    closed_at: null,
+    closed_by_name: null,
+    ...more,
+  });
 
   const sessions: PtRecSession[] = [
     session("sample-m2", 0, "lesson"), // 오늘 수업 — 차감 확인 중
@@ -100,6 +118,13 @@ export const buildPtSample = (today: string, manage: boolean, opts: { auto?: boo
     event("sample-m3", -5), // 노쇼
     event("sample-m1", -6), // 이레 전 수업
   ];
+  const evOf = (member: string, day: number) => events.find((e) => e.member_user_id === member && e.work_date === d(day)) as OpsPtEvent;
+  const checks: PtMemberCheck[] = [
+    // 사유 없는 차감 — 회원이 「아니에요」(지점장 · 대표님이 답할 차례)
+    ask(evOf("sample-m5", -1), { answer: "no", answered_at: at(-1, "19:12"), note: "그날은 개인 운동만 했어요" }),
+    // 물은 뒤 코치가 미참석으로 기록한 차감 — 회원은 「아니에요」 → 기록과 맞았어도 답할 때까지 수당 보류
+    ask(evOf("sample-m3", -5), { answer: "no", answered_at: at(-4, "08:31"), note: "전날 코치님께 미리 말씀드렸어요" }),
+  ];
   const attendance: PtRecAttendance[] = [
     came("sample-m5", 0, "07:32"),
     came("sample-m1", 0, "18:02"), // 오늘 들어옴 — 아직 기록 전
@@ -124,6 +149,8 @@ export const buildPtSample = (today: string, manage: boolean, opts: { auto?: boo
     me_staff: manage ? null : PT_SAMPLE_COACH,
     sample: true,
     coaches: [{ id: PT_SAMPLE_COACH, name: "예시 코치" }],
+    check: { on: true, started_at: at(-10, "10:00"), can_set: manage && !!opts.auto, can_close: manage },
+    checks,
     members: MEMBERS,
     sessions,
     events,
@@ -137,7 +164,10 @@ export type PtDemoAction =
   | { type: "void"; id: string }
   | { type: "review"; id: string }
   | { type: "label"; member: string; label: string }
-  | { type: "auto"; on: boolean };
+  | { type: "auto"; on: boolean }
+  // 회원 확인(2-4) — 「아니에요」에 답하고 닫기 · 켜기 · 끄기
+  | { type: "checkClose"; id: string; reply: string }
+  | { type: "checkSet"; on: boolean };
 
 let demoSeq = 0;
 
@@ -146,6 +176,15 @@ export const applyPtDemo = (d: PtRecordData, a: PtDemoAction): PtRecordData => {
   const sessions = d.sessions ?? [];
   const today = d.today ?? "";
   if (a.type === "auto") return { ...d, auto: a.on };
+  if (a.type === "checkSet") return { ...d, check: { on: a.on, started_at: d.check?.started_at ?? null, can_set: !!d.check?.can_set, can_close: !!d.check?.can_close } };
+  if (a.type === "checkClose") {
+    const c = (d.checks ?? []).find((x) => x.id === a.id);
+    if (!c || c.answer !== "no") throw new Error("회원님이 「아니에요」라고 한 것만 답할 수 있어요");
+    if (c.closed_at) throw new Error("이미 답했어요");
+    if (a.reply.trim().length < 2) throw new Error("회원님께 보낼 답을 적어 주세요");
+    const closed = { ...c, reply: a.reply.trim(), closed_at: new Date().toISOString(), closed_by_name: "예시 지점장" };
+    return { ...d, checks: (d.checks ?? []).map((x) => (x.id === a.id ? closed : x)) };
+  }
   if (a.type === "void") return { ...d, sessions: sessions.filter((s) => s.id !== a.id) };
   if (a.type === "review") {
     return { ...d, sessions: sessions.map((s) => (s.id === a.id ? { ...s, reviewed_at: new Date().toISOString() } : s)) };

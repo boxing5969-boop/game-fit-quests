@@ -375,8 +375,9 @@ describe("예시 자료", () => {
   it("화면의 여러 모습이 하나씩 들어 있다", () => {
     const d = buildPtSample("2026-11-12", false);
     const res = matchPtRecord(d);
-    expect(ptCounts(res, PT_SAMPLE_COACH, false)).toEqual({ needReason: 0, extra: 1, wait: 1, unrecorded: 1, movedMissing: 0, needReview: 1, total: 3 });
-    expect(ptCounts(res, null, true).total).toBe(4);
+    expect(ptCounts(res, PT_SAMPLE_COACH, false)).toEqual({ needReason: 0, extra: 1, wait: 1, unrecorded: 1, movedMissing: 0, needReview: 1, dispute: 0, total: 3 });
+    // 관리자 = 늦은 기록 확인 + 회원 「아니에요」 2건(2-4 — 코치는 닫지 못해 코치 숫자에는 없다)
+    expect(ptCounts(res, null, true)).toMatchObject({ dispute: 2, total: 6 });
     const todo = ptTodayList(d, res).filter((i) => !i.row);
     expect(todo.map((i) => i.name)).toEqual(["한하늘"]);
     expect(res.rows.filter((r) => r.state === "pending")).toHaveLength(1);

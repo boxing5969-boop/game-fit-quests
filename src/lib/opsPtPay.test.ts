@@ -165,7 +165,7 @@ describe("한 달 셈 — 기록 + 차감", () => {
     const p = pay(d, "2026-12-01");
     expect(p.paidUses).toBe(0);
     expect(p.gross).toBe(0);
-    expect(p.hold).toEqual({ pending: 1, wait: 1, check: 0, review: 1, reason: 1, extra: 1, total: 5 });
+    expect(p.hold).toEqual({ pending: 1, wait: 1, check: 0, review: 1, reason: 1, member: 0, extra: 1, total: 5 });
     expect(p.lines.map((l) => [l.name, l.state])).toEqual([
       ["다솜", "review"],
       ["가온", "wait"],
@@ -189,7 +189,7 @@ describe("한 달 셈 — 기록 + 차감", () => {
     const held = pay(data("2026-12-20", { ...base, events: [ev("a", "2026-12-11", 1, { kind: "ended", status: "check" })] }), "2026-12-01");
     expect(held.paidUses).toBe(0);
     expect(held.lines.map((l) => l.state)).toEqual(["check"]);
-    expect(held.hold).toEqual({ pending: 0, wait: 0, check: 1, review: 0, reason: 0, extra: 0, total: 1 });
+    expect(held.hold).toEqual({ pending: 0, wait: 0, check: 1, review: 0, reason: 0, member: 0, extra: 0, total: 1 });
     expect(ptPayHoldText(held.hold)).toBe("수업권 끝남 확인 중 1");
     // 확인 전 차감은 차감 기준에도 들지 않는다
     expect(held.byDeduct.uses).toBe(0);

@@ -53,11 +53,14 @@ import { ptPayMonth, ptPayMonthCovered } from "@/lib/opsPtPay";
 import { PT_SAMPLE_COACH, PT_SAMPLE_RATES } from "@/lib/opsPtRecordSample";
 import { PT_REPORT_KIND_LABEL, emptyPtReportDraft, ptReportFixReply, type PtReport, type PtReportFix } from "@/lib/opsPtReport";
 import { useOpsPtRecord, useOpsPtRecordActions } from "@/services/opsPtRecordService";
+import { useOpsPtCheckActions } from "@/services/opsPtCheckService";
+import type { PtMemberCheck } from "@/lib/opsPtCheck";
 import { useOpsPtReportActions, useOpsPtReports } from "@/services/opsPtReportService";
 import { usePtCloseBook } from "./OpsPtClose";
 import OpsPtPay from "./OpsPtPay";
 import { ptTicketLabel } from "./OpsPtPanel";
 import { PtReportLink, PtReportList, PtReportResolveSheet, PtReportSheet, type PtReportInit, type PtResolveInit } from "./OpsPtReport";
+import { PtCheckNote, PtCheckReplySheet, PtCheckToggle } from "./OpsPtCheck";
 import { OpsButton, OpsChip, OpsLabel, OpsSheet, fmtDay, kstToday, monthOf, opsInput } from "./OpsParts";
 
 const KINDS: PtKind[] = ["lesson", "noshow", "late_cancel", "moved", "coach_cancel", "self"];
@@ -496,6 +499,7 @@ const TodoCard = ({
   two,
   children,
   footer,
+  note,
 }: {
   title: string;
   body: string;
@@ -504,11 +508,14 @@ const TodoCard = ({
   children?: ReactNode;
   /** 카드 맨 아래(오류 신고 글 단추) */
   footer?: ReactNode;
+  /** 회원 확인(2-4) — 회원 답 한 줄 */
+  note?: ReactNode;
 }) => (
   <li className="rounded-xl bg-amber-50 p-3">
     <p className="text-label font-bold text-amber-800">{title}</p>
     <p className="mt-0.5 text-body text-foreground">{body}</p>
     {sub && <p className="text-label text-muted-foreground">{sub}</p>}
+    {note}
     {children && <div className={cn("mt-2 grid gap-2", two && "grid-cols-2")}>{children}</div>}
     {footer}
   </li>
@@ -526,6 +533,10 @@ const TodoList = ({
   onGuessLesson,
   onReview,
   onReport,
+  disputes = [],
+  canClose = false,
+  onCheckReply,
+  memberName,
 }: {
   res: PtMatchResult;
   rows: PtRow[];
@@ -540,7 +551,17 @@ const TodoList = ({
   onReview: (r: PtRow) => void;
   /** 코치 — 오류 신고 시트 */
   onReport?: (init: PtReportInit) => void;
+  /** 회원 확인(2-4) — 사유 없는 차감 카드 밖의 열린 「아니에요」(기록과 맞은 차감 등) */
+  disputes?: PtMemberCheck[];
+  /** 「아니에요」에 답할 수 있는가(지점장 · 대표님) */
+  canClose?: boolean;
+  onCheckReply?: (c: PtMemberCheck) => void;
+  memberName?: (userId: string) => string;
 }) => {
+  const checkNote = (c: PtMemberCheck | undefined, held = false) =>
+    c ? <PtCheckNote c={c} canClose={canClose && !!onCheckReply} onReply={(x) => onCheckReply?.(x)} held={held} /> : undefined;
+  // 열린 「아니에요」가 걸린 차감과 짝지은 기록(있으면 그 수업 수당은 보류)
+  const rowOfEvent = (eventId: string) => res.rows.find((r) => r.deducts.some((d) => d.eventId === eventId)) ?? null;
   // 오늘 입장은 아직 묻지 않는다 · 자동 기록을 켠 지점은 이틀 안의 입장도(차감이 잡히면 저절로 적힘 — ptCounts 와 같은 기준)
   const past = res.unrecorded.filter((u) => !u.isToday && !u.waiting);
   const reviews = rows.filter((r) => r.needReview);
@@ -568,6 +589,7 @@ const TodoList = ({
               body={`${x.name} · ${x.count}회 — ${mdw(g.date)} ${hm(g.at)} 입장한 날 수업이었나요?`}
               sub="차감은 수업 다음 날 잡힐 때가 많아요 · 다른 날이면 날짜를 골라 기록해 주세요"
               footer={report}
+              note={checkNote(x.check)}
             >
               <button
                 type="button"
@@ -595,6 +617,7 @@ const TodoList = ({
             body={`${x.name} · ${x.count}회 — 어떤 수업이었는지 기록해 주세요`}
             sub="기록이 없으면 과차감일 수 있어요 · 잘못 뺀 것이면 브로제이에서 되돌려 주세요"
             footer={report}
+            note={checkNote(x.check)}
           >
             <button
               type="button"
@@ -615,6 +638,19 @@ const TodoList = ({
               기록하기
             </button>
           </TodoCard>
+        );
+      })}
+      {disputes.map((c) => {
+        const row = rowOfEvent(c.event_id);
+        const who = memberName ? memberName(c.member_user_id) : "회원";
+        return (
+          <TodoCard
+            key={`dispute${c.id}`}
+            title={`회원 「아니에요」 · ${fmtDay(c.work_date)} 차감`}
+            body={row ? `${who} · ${mdOf(row.s.session_date)} ${PT_KIND_LABEL[row.s.kind]} 기록과 맞은 차감` : `${who} · ${c.used}회`}
+            sub={canClose ? "기록 · 브로제이를 확인하고 회원님께 답해 주세요" : "회원님이 이 차감이 아니라고 했어요 — 기록이 맞는지 한 번 더 봐 주세요"}
+            note={checkNote(c, !!row)}
+          />
         );
       })}
       {past.map((u) => (
@@ -730,6 +766,9 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
   const [reportInit, setReportInit] = useState<PtReportInit | null>(null);
   const [resolveInit, setResolveInit] = useState<PtResolveInit | null>(null);
   const canReport = !!rq.data?.available;
+  // 회원 확인(2026-11-16 2-4) — 「아니에요」에 답하고 닫기 · 대표님 켜기
+  const cactions = useOpsPtCheckActions(branch, { demo });
+  const [replyFor, setReplyFor] = useState<PtMemberCheck | null>(null);
 
   // 알림을 누르고 왔을 때(/office?tab=work&pt=today) — 오늘 PT 로 내려온다
   const [params] = useSearchParams();
@@ -774,7 +813,14 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
   const rows = coachId ? res.rows.filter((r) => r.s.coach_staff_id === coachId) : res.rows;
   const extras = coachId ? res.extras.filter((x) => x.coachId === coachId) : res.extras;
   const counts = ptCounts(res, coachId, manage);
-  const showTodo = counts.total > 0 || rows.some((r) => r.needReview);
+  // 회원 확인(2-4) — 사유 없는 차감 카드에 안 걸린 열린 「아니에요」는 따로 한 장씩(코치에게도 보인다 · 숫자는 관리자만)
+  const disputes = (res.disputes ?? []).filter((c) => (!coachId || c.coach_staff_id === coachId) && !extras.some((x) => x.eventId === c.event_id));
+  const canClose = !!data.check?.can_close;
+  const memberName = (userId: string) => {
+    const m = (data.members ?? []).find((x) => x.user_id === userId);
+    return m ? ptMemberName(m) : "회원";
+  };
+  const showTodo = counts.total > 0 || rows.some((r) => r.needReview) || disputes.length > 0 || extras.some((x) => !!x.check);
 
   const editRow = (r: PtRow) =>
     setSheet({
@@ -870,10 +916,22 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
       });
     }
   };
-  const reportSheets = canReport && (
+  const reportSheets = (
     <>
-      <PtReportSheet init={reportInit} onClose={() => setReportInit(null)} branch={branch} data={data} actions={ractions} />
-      <PtReportResolveSheet init={resolveInit} onClose={() => setResolveInit(null)} actions={ractions} />
+      {canReport && (
+        <>
+          <PtReportSheet init={reportInit} onClose={() => setReportInit(null)} branch={branch} data={data} actions={ractions} />
+          <PtReportResolveSheet init={resolveInit} onClose={() => setResolveInit(null)} actions={ractions} />
+        </>
+      )}
+      {canClose && (
+        <PtCheckReplySheet
+          check={replyFor}
+          memberName={replyFor ? memberName(replyFor.member_user_id) : ""}
+          onClose={() => setReplyFor(null)}
+          actions={cactions}
+        />
+      )}
     </>
   );
 
@@ -892,6 +950,10 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
         onGuessLesson={guessLesson}
         onReview={review}
         onReport={openReport}
+        disputes={disputes}
+        canClose={canClose}
+        onCheckReply={setReplyFor}
+        memberName={memberName}
       />
     </>
   );
@@ -1026,6 +1088,7 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
           </button>
         )}
         {autoCard}
+        {data.check?.can_set && <PtCheckToggle on={!!data.check.on} actions={cactions} />}
         {data.can_set && !demo && (
           <div className="mt-3 text-right">
             {offAsk ? (

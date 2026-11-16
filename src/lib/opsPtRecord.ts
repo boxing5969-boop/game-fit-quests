@@ -15,6 +15,7 @@
  *     다음 날 잡혀 [기록하기]가 차감 날로 저장된 일). 기록 시트는 고른 날 입장이 없으면 앞 이틀의 입장을 알려 준다(ptNearEntry).
  */
 import { countsForPay, type OpsPtEvent } from "./opsPt";
+import { isOpenDispute, type PtCheckMeta, type PtMemberCheck } from "./opsPtCheck";
 
 export type PtKind = "lesson" | "noshow" | "late_cancel" | "moved" | "coach_cancel" | "self";
 export type PtNoEntryReason = "door_open" | "manual" | "other";
@@ -118,6 +119,12 @@ export interface PtRecordData {
   /** 예시 자료(?demo=1) — 서버 자료가 아니다 */
   sample?: boolean;
   coaches?: Array<{ id: string; name: string }>;
+  /**
+   * 회원 확인(2026-11-16 2-4 · ops_pt_member_check_list) — 짝지을 기록이 없는 차감을 회원에게 물은 것과 그 답.
+   *   서버에 함수가 없으면(DB 적용 전 · 옛 DB 미리보기) 없다. 열린 「아니에요」가 걸린 차감은 수당 보류(opsPtPay).
+   */
+  check?: PtCheckMeta;
+  checks?: PtMemberCheck[];
   members?: PtRecMember[];
   sessions?: PtRecSession[];
   events?: OpsPtEvent[];
@@ -145,6 +152,8 @@ export interface PtDeduct {
   workDate: string;
   /** 수업 날짜 → 앱이 차감을 알아챈 날 */
   days: number;
+  /** 회원이 「아니에요」라고 했고 지점장 · 대표님이 아직 답하지 않은 차감(2-4) — 이 수업은 수당 보류 */
+  disputed?: boolean;
 }
 
 /** ok 기록 · 차감 맞음 / pending 차감 확인 중(이틀 안) / wait 차감 대기 / prestart 시작 전 수업(맞춰 보지 않음) / info 차감 없는 기록 */
@@ -194,6 +203,8 @@ export interface PtExtra {
   coachId: string | null;
   /** 이 차감의 수업이었을 법한 입장(차감이 잡힌 날에서 이틀 앞까지 · 알아채기 전 · 그날 기록 없음) — 없으면 null */
   guess: PtGuess | null;
+  /** 회원에게 물었으면 그 확인(2-4) */
+  check?: PtMemberCheck;
 }
 
 /** 기록 없는 입장 — PT 회원이 들어왔는데 그날 기록이 없음(자동 기록을 켠 지점은 이틀이 지나도 차감 · 기록이 없을 때 묻는다) */
@@ -217,6 +228,8 @@ export interface PtMatchResult {
   rows: PtRow[];
   extras: PtExtra[];
   unrecorded: PtUnrecorded[];
+  /** 열린 「아니에요」(2-4) — 지점장 · 대표님이 답하기 전. 기록과 맞은 차감도 들어 있다 */
+  disputes?: PtMemberCheck[];
 }
 
 interface Slot {
@@ -340,6 +353,10 @@ export const matchPtRecord = (data: PtRecordData): PtMatchResult => {
     unitsBy.set(k, list);
   }
 
+  // 회원 확인(2-4) — 물은 차감 · 열린 「아니에요」
+  const checkByEvent = new Map((data.checks ?? []).map((c) => [c.event_id, c]));
+  const disputed = new Set((data.checks ?? []).filter(isOpenDispute).map((c) => c.event_id));
+
   // 서버가 창을 잘랐으면(넉 달 넘게 씀) 창 맨 앞 이틀의 차감은 창 밖 기록의 것일 수 있어 묻지 않는다
   const clippedFrom = data.from && data.from > addDays(startedOn, -14) ? data.from : null;
   const extras: PtExtra[] = [];
@@ -350,7 +367,12 @@ export const matchPtRecord = (data: PtRecordData): PtMatchResult => {
         const slot = slots.find((s) => !s.taken && ok(s));
         if (!slot) break;
         slot.taken = true;
-        slot.row.deducts.push({ eventId: u.e.id, workDate: u.e.work_date, days: dayDiff(slot.date, u.e.work_date) });
+        slot.row.deducts.push({
+          eventId: u.e.id,
+          workDate: u.e.work_date,
+          days: dayDiff(slot.date, u.e.work_date),
+          ...(disputed.has(u.e.id) ? { disputed: true } : {}),
+        });
         u.left -= 1;
       }
     };
@@ -373,6 +395,7 @@ export const matchPtRecord = (data: PtRecordData): PtMatchResult => {
         ticket: u.e.ticket_name,
         coachId: u.e.coach_staff_id,
         guess: null,
+        ...(checkByEvent.has(u.e.id) ? { check: checkByEvent.get(u.e.id) } : {}),
       });
     }
   }
@@ -441,7 +464,8 @@ export const matchPtRecord = (data: PtRecordData): PtMatchResult => {
   unrecorded.sort((a, b) => b.date.localeCompare(a.date) || a.at.localeCompare(b.at));
   extras.sort((a, b) => b.workDate.localeCompare(a.workDate));
   rows.sort((a, b) => b.s.session_date.localeCompare(a.s.session_date) || b.s.created_at.localeCompare(a.s.created_at));
-  return { today, startedOn, auto, rows, extras, unrecorded };
+  const disputes = (data.checks ?? []).filter(isOpenDispute).sort((a, b) => b.work_date.localeCompare(a.work_date));
+  return { today, startedOn, auto, rows, extras, unrecorded, ...(disputes.length > 0 ? { disputes } : {}) };
 };
 
 // ───────── 확인 필요 ─────────
@@ -458,7 +482,9 @@ export interface PtCounts {
   movedMissing: number;
   /** 늦은 기록 — 지점장 확인 전 */
   needReview: number;
-  /** 화면 맨 위 숫자 — 코치는 본인이 할 것, 관리자는 늦은 기록 확인까지 */
+  /** 회원 「아니에요」 — 지점장 · 대표님이 답할 것(2-4) */
+  dispute: number;
+  /** 화면 맨 위 숫자 — 코치는 본인이 할 것, 관리자는 늦은 기록 확인 · 회원 「아니에요」까지 */
   total: number;
 }
 
@@ -475,6 +501,7 @@ export const ptCounts = (res: PtMatchResult, coachId: string | null, manage: boo
   const unrecorded = res.unrecorded.filter((u) => !u.isToday && !u.waiting).length;
   const movedMissing = rows.filter((r) => r.movedMissing).length;
   const needReview = rows.filter((r) => r.needReview).length;
+  const dispute = manage ? (res.disputes ?? []).filter((c) => !coachId || c.coach_staff_id === coachId).length : 0;
   return {
     needReason,
     extra,
@@ -482,7 +509,8 @@ export const ptCounts = (res: PtMatchResult, coachId: string | null, manage: boo
     unrecorded,
     movedMissing,
     needReview,
-    total: needReason + extra + wait + unrecorded + movedMissing + (manage ? needReview : 0),
+    dispute,
+    total: needReason + extra + wait + unrecorded + movedMissing + (manage ? needReview : 0) + dispute,
   };
 };
 

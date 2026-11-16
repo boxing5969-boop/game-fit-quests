@@ -7,6 +7,8 @@
  *     · 수업권 칸 막대 + 남은 횟수(브로제이 기준 시각과 함께 — 수강권 카드와 같은 숫자)
  *     · 규칙 한 줄 · 아래 단추 [예약하기](코치님이 시간을 열어 둔 회원만) · [내 PT 일정]
  *   알림 링크 `/home?pt=1` 이면 일정 창이 열린다(주소에서 ?pt= 는 지운다).
+ *   PT 차감 안내(2026-11-16 2-4 회원 확인): 기록 없는 차감을 서버가 물으면 카드 위쪽에 「PT 차감 안내」 띠(PtDeductAskBand)
+ *     — [아니에요] [네, 맞아요]. 알림 링크 `/home?ptcheck=1`. 카드가 안 보이는 회원(수업권이 끝남 등)에게는 띠만 따로 보인다.
  *   서버 함수가 없는 DB(적용 전 · 옛 DB 미리보기) · PT 예약을 안 켠 지점 · PT 회원이 아니면 아무것도 그리지 않는다.
  *   예시 화면: `/home?ptdemo=1`(지어낸 자료 · 서버를 부르지 않음).
  */
@@ -20,6 +22,8 @@ import { asOfLabel } from "@/lib/gymTicketInfo";
 import { isPtMember } from "@/lib/ptMember";
 import { PT_RULE_LINE, aheadChip, showPtCard, splitBookings, ticketTotal, whenLabel } from "@/lib/ptBooking";
 import { isPtDemo, usePtActions, usePtHome } from "@/services/ptBookingService";
+import { usePtDeductAsks } from "@/services/opsPtCheckService";
+import PtDeductAskBand from "./PtDeductAskBand";
 import { cn } from "@/lib/utils";
 
 const PtSheet = lazy(() => import("./PtSheet"));
@@ -59,6 +63,10 @@ const HomePtCard = () => {
   const maybePt = demo || isPtMember(profile) || !!(profile as { pt_ticket?: string | null } | null)?.pt_ticket;
   const { data } = usePtHome(maybePt);
   const { confirm } = usePtActions();
+  // PT 차감 안내(2-4) — PT 회원이거나 알림 링크(/home?ptcheck=1)로 왔을 때만 서버를 부른다
+  const wantCheck = params.get("ptcheck") === "1";
+  const asksQ = usePtDeductAsks(maybePt || wantCheck);
+  const asks = asksQ.data ?? [];
   const [sheet, setSheet] = useState<null | "list" | "book">(null);
   // 수업 시간이 되면 「수업 받았어요」 띠가 뜨게 — 30초마다 지금 시각을 다시 본다
   const [now, setNow] = useState(() => Date.now());
@@ -79,7 +87,26 @@ const HomePtCard = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wantOpen, !!data, show]);
 
-  if (!data || !show) return null;
+  // 알림 링크 /home?ptcheck=1 → 주소를 지우고, 그새 기록이 들어와 물을 것이 없으면 한마디
+  const checkLoaded = asksQ.isSuccess || asksQ.isError;
+  useEffect(() => {
+    if (!wantCheck || !checkLoaded) return;
+    if (asks.length === 0) toast("확인할 PT 차감이 없어요 — 그사이 기록됐어요");
+    const next = new URLSearchParams(params);
+    next.delete("ptcheck");
+    setParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantCheck, checkLoaded]);
+
+  if (!data || !show) {
+    // 카드가 안 보이는 회원(수업권이 끝남 등)에게도 물은 차감은 보인다
+    if (asks.length === 0) return null;
+    return (
+      <section aria-label="PT 차감 안내" className="rounded-2xl border border-border bg-card p-4 shadow-elev-1">
+        <PtDeductAskBand asks={asks} />
+      </section>
+    );
+  }
 
   const { confirm: waiting, upcoming } = splitBookings(data, now);
   const next = upcoming[0] ?? null;
@@ -113,6 +140,9 @@ const HomePtCard = () => {
           </h2>
           {upcoming.length > 0 && <span className="shrink-0 text-label font-bold text-muted-foreground">예약 {upcoming.length}건</span>}
         </div>
+
+        {/* PT 차감 안내(2-4) — 기록 없는 차감을 서버가 물었을 때 */}
+        {asks.length > 0 && <PtDeductAskBand asks={asks} className="mx-5 mt-3" />}
 
         {/* 수업 시간이 지난 예약 — 「수업 받았어요」 */}
         {ask && (

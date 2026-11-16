@@ -66,8 +66,9 @@ export const ptPayMonthCovered = (month: string, data: Pick<PtRecordData, "from"
 /**
  * paid 지급 대상 / pending 차감 확인 중(이틀 안) · wait 차감 대기 · check 수업권이 끝나 지점장 확인을 기다리는 차감(「확인할 것」)
  *   · review 늦은 기록 확인 전 · reason 출석 체크 없는데 사유 없음
+ *   · member 회원이 「아니에요」라고 한 차감 — 지점장 · 대표님이 답하기 전(2026-11-16 2-4 회원 확인)
  */
-export type PtPayLineState = "paid" | "pending" | "wait" | "check" | "review" | "reason";
+export type PtPayLineState = "paid" | "pending" | "wait" | "check" | "review" | "reason" | "member";
 
 export const PT_PAY_STATE_LABEL: Record<PtPayLineState, string> = {
   paid: "지급 대상",
@@ -76,6 +77,7 @@ export const PT_PAY_STATE_LABEL: Record<PtPayLineState, string> = {
   check: "수업권 끝남 · 확인 중",
   review: "늦은 기록 · 확인 전",
   reason: "출석 체크 없음 · 사유 필요",
+  member: "회원 확인 중",
 };
 
 export interface PtPayLine {
@@ -128,7 +130,7 @@ export interface PtPayMonth {
   net: number | null;
   /** 수당표에 없는 수업권(회) */
   unpriced: number;
-  hold: { pending: number; wait: number; check: number; review: number; reason: number; extra: number; total: number };
+  hold: { pending: number; wait: number; check: number; review: number; reason: number; member: number; extra: number; total: number };
   /** 이 달에 잡힌 기록 없는 차감 */
   extras: PtExtra[];
   /** 차감 기준으로 셈한 같은 달(예전 방식) */
@@ -185,6 +187,8 @@ export const ptPayLinesAll = (res: PtMatchResult, events: OpsPtEvent[], rates: O
       // 전환 달 경계 — 차감 기준이던 달의 수업인데 차감이 기록 기준 달에 잡혔다 → 그 차감이 잡힌 달에 든다
       const carry = s < first && dYm != null && dYm >= first;
       const ticket = (d && eventById.get(d.eventId)?.ticket_name) || r.s.ticket_name;
+      // 회원이 「아니에요」라고 한 차감과 짝지은 수업 — 지점장 · 대표님이 답할 때까지 보류(2-4)
+      const st = stateOf(r, !!d);
       lines.push({
         id: `${r.s.id}:${i}`,
         sessionId: r.s.id,
@@ -197,7 +201,7 @@ export const ptPayLinesAll = (res: PtMatchResult, events: OpsPtEvent[], rates: O
         lateDeduct: !!d && d.days > PT_LAG_DAYS,
         auto: r.s.source === "auto",
         noEntry: r.noEntry,
-        state: stateOf(r, !!d),
+        state: st === "paid" && d?.disputed ? "member" : st,
         rate: rates ? perUseRate(rates, ticket ?? null, r.s.session_date) : null,
         carry,
         payYm: carry && dYm ? dYm : s,
@@ -231,7 +235,7 @@ export const ptPayMonth = (
   const prevLesson = all.filter((l) => l.deductDate != null && ymOf(l.deductDate) === ym && ymOf(l.date) < ym).length;
   const nextMonth = all.filter((l) => ymOf(l.date) === ym && l.deductDate != null && ymOf(l.deductDate) > ym).length;
   const carryOut = all.filter((l) => ymOf(l.date) === ym && l.payYm > ym).length;
-  const held = lines.filter((l) => l.deductDate != null && (l.state === "review" || l.state === "reason")).length;
+  const held = lines.filter((l) => l.deductDate != null && (l.state === "review" || l.state === "reason" || l.state === "member")).length;
 
   const paid = lines.filter((l) => l.state === "paid");
   const unpriced = rates ? paid.filter((l) => l.rate == null).length : 0;
@@ -239,8 +243,17 @@ export const ptPayMonth = (
   const extras = (coachId ? res.extras.filter((x) => x.coachId === coachId) : res.extras).filter((x) => ymOf(x.workDate) === ym);
   const extra = extras.reduce((n, x) => n + x.count, 0);
   const count = (st: PtPayLineState) => lines.filter((l) => l.state === st).length;
-  const hold = { pending: count("pending"), wait: count("wait"), check: count("check"), review: count("review"), reason: count("reason"), extra, total: 0 };
-  hold.total = hold.pending + hold.wait + hold.check + hold.review + hold.reason + hold.extra;
+  const hold = {
+    pending: count("pending"),
+    wait: count("wait"),
+    check: count("check"),
+    review: count("review"),
+    reason: count("reason"),
+    member: count("member"),
+    extra,
+    total: 0,
+  };
+  hold.total = hold.pending + hold.wait + hold.check + hold.review + hold.reason + hold.member + hold.extra;
 
   // 차감 기준(예전 방식) — 그 달에 잡힌 차감
   const dEvents = (monthEvents ?? events).filter(
@@ -310,6 +323,7 @@ export const ptPayHoldText = (h: PtPayMonth["hold"]): string =>
     h.check > 0 ? `수업권 끝남 확인 중 ${h.check}` : "",
     h.review > 0 ? `늦은 기록 확인 전 ${h.review}` : "",
     h.reason > 0 ? `사유 필요 ${h.reason}` : "",
+    h.member > 0 ? `회원 확인 중 ${h.member}` : "",
     h.extra > 0 ? `기록 없는 차감 ${h.extra}` : "",
   ]
     .filter(Boolean)
