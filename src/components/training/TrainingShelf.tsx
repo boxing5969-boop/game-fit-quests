@@ -36,7 +36,7 @@ import { createPortal } from "react-dom";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { BarChart3, Check, ChevronDown, ChevronRight, ChevronUp, MessageCircle, Minus, Plus, Search, X } from "lucide-react";
+import { BarChart3, Check, ChevronDown, ChevronRight, ChevronUp, MessageCircle, Minus, Plus, Search, Wand2, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toGlobalLevel } from "@/lib/rankLabels";
 import { cn } from "@/lib/utils";
@@ -44,6 +44,7 @@ import {
   MEMBER_SHELVES,
   SHELF_INFO,
   STAFF_SHELVES,
+  cardLevel,
   cardMinutes,
   cardShelf,
   hasCardVideo,
@@ -91,9 +92,11 @@ import { FadeTag, FolderThumb, Thumb } from "@/components/training/ShelfTiles";
 import { useShelfEditor } from "@/components/training/shelfEdit/useShelfEditor";
 import { ShelfEditBar, ShelfEditSheets, type EditSheet } from "@/components/training/shelfEdit/ShelfEditUi";
 import MyClassPanel from "@/components/training/myClass/MyClassPanel";
+import AutoClassSheet from "@/components/training/myClass/AutoClassSheet";
+import type { AutoCandidate } from "@/lib/autoClass";
 import MyClassLayer from "@/components/training/myClass/MyClassLayer";
 import { primeAudio, useMyClassFlow } from "@/components/training/myClass/useMyClassFlow";
-import { toPlanBlocks, type ClassItem } from "@/lib/myClass";
+import { missionTitle, toPlanBlocks, type ClassItem } from "@/lib/myClass";
 import { buzz } from "@/features/myboxer-visualization/mindAudio";
 import type { ProgramBlock } from "@/services/strategyService";
 import { askKey, cleanQuery } from "@/lib/cardReact";
@@ -230,6 +233,9 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
     }
   };
   const [dataWanted, setDataWanted] = useState(() => !staff && params.get("data") === "1");
+  // 5단계 자동 짜기 — 「수업 짜기」 · 내 수업 칸 「자동으로 짜기」 · 훈련 탭 「자율 운동」에서 ?auto=1
+  const [autoOpen, setAutoOpen] = useState(false);
+  const [autoWanted, setAutoWanted] = useState(() => !staff && params.get("auto") === "1");
   const sectionRef = useRef<HTMLElement | null>(null);
 
   const setShelf = (s: Shelf, byTap = false) => {
@@ -270,6 +276,7 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
     next.delete("learn");
     next.delete("shelf");
     next.delete("data");
+    next.delete("auto");
     setParams(next, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [learnParam, params, setParams, staff]);
@@ -284,6 +291,16 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
     setParams(next, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [staff, dataParam]);
+  const autoParam = params.get("auto");
+  useEffect(() => {
+    if (staff || autoParam !== "1") return;
+    setAutoWanted(true);
+    if (learnParam === "1") return;
+    const next = new URLSearchParams(params);
+    next.delete("auto");
+    setParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [staff, autoParam]);
   // 위 칸(오늘 할 것 · 내 레벨)이 늦게 그려지며 밀어내도 이 칸에 닿도록, 카드를 읽은 뒤 몇 번 더 맞춘다
   useEffect(() => {
     if (!scrollWanted || cardsQ.isLoading) return;
@@ -328,6 +345,37 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
     paused: editing,
   });
   const mineChip = flow.available && !editing && (flow.classes.length > 0 || (staff && flow.shared.length > 0));
+  // ── 5단계 자동 짜기 — 회원님께 보이는 동작만(숨김 · 합친 카드 · 다음 리그 · 153 영상 · 준비 · 코치 칸 빼고 · 코치진은 숨긴 카드까지) ──
+  const autoPool = useMemo<AutoCandidate[]>(() => {
+    const out: AutoCandidate[] = [];
+    const seen = new Set<string>();
+    for (const sh of arranged) {
+      if (sh.id === "prep" || sh.id === "coach") continue;
+      for (const t of sh.tiles) {
+        for (const x of t.kind === "folder" ? t.tiles : [t]) {
+          if (seen.has(x.key) || x.mergedInto || (!staff && x.hidden)) continue;
+          seen.add(x.key);
+          if (x.kind === "card") {
+            out.push({ key: x.key, name: x.card.name, shelf: cardShelf(x.card).id, level: cardLevel(x.card), video: staff ? hasCardVideo(x.card) : hasMemberVideo(x.card) });
+          } else if (!x.mission.extra) {
+            out.push({ key: x.key, name: missionTitle(x.mission.title), shelf: x.mission.shelf ?? "warmup", level: x.mission.level ?? 1, video: true });
+          }
+        }
+      }
+    }
+    return out;
+  }, [arranged, staff]);
+  useEffect(() => {
+    if (!autoWanted || !flow.ready) return;
+    setAutoWanted(false);
+    if (flow.available) setAutoOpen(true);
+  }, [autoWanted, flow.ready, flow.available]);
+  const saveAuto = async (name: string, items: ClassItem[]) => {
+    const id = await flow.createFrom(name, items);
+    if (!id) return;
+    setAutoOpen(false);
+    setMineState(true);
+  };
   const showMine = mine && mineChip;
   // 알림에서 ?shelf=mine&class=<id> — 내 수업이면 편집 창, 코치진이 보는 회원 수업이면 보기 창
   const classParam = params.get("class");
@@ -923,6 +971,16 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
             <Search className="h-4 w-4" aria-hidden /> 찾기
           </button>
         )}
+        {!staff && !editing && !canEdit && flow.available && (
+          <button
+            type="button"
+            onClick={() => setAutoOpen(true)}
+            aria-label="내 수업 자동으로 짜기"
+            className="flex h-9 shrink-0 items-center gap-1 rounded-full border border-border bg-card px-3.5 text-label font-bold text-foreground active:scale-95"
+          >
+            <Wand2 className="h-4 w-4" aria-hidden /> 수업 짜기
+          </button>
+        )}
         {canEdit && !editing && (
           <button
             type="button"
@@ -1092,6 +1150,7 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
         <MyClassPanel
           flow={flow}
           posterOf={posterOf}
+          onAuto={() => setAutoOpen(true)}
           onStart={(id) => {
             const c = flow.classes.find((x) => x.id === id);
             if (!c) return;
@@ -1216,6 +1275,18 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
           restore={editor.restore}
           version={st?.version ?? 0}
           onOpenCard={openKey}
+        />
+      )}
+
+      {flow.available && (
+        <AutoClassSheet
+          open={autoOpen}
+          onClose={() => setAutoOpen(false)}
+          pool={autoPool}
+          myLevel={myLevel}
+          classCount={flow.classes.length}
+          busy={flow.busy}
+          onSave={saveAuto}
         />
       )}
 

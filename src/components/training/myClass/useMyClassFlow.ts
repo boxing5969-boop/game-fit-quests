@@ -13,6 +13,7 @@ import type { ShelfLeaf, ShelfMission, TileKey } from "@/lib/shelfLayout";
 import {
   MAX_CLASSES,
   MISSION_MINUTES,
+  cleanName,
   defaultClassName,
   missionTitle,
   savedKeySet,
@@ -199,6 +200,34 @@ export function useMyClassFlow({ audience, userId, cards, missions, branch, paus
     }
   }, [available, busy, classes, actions]);
 
+  /** 다 짠 수업으로 새로 만들기 — 자동 짜기 (2026-11-16) · 이름이 겹치면 「 2」 · 「 3」… · 저장 뒤 편집 창 */
+  const createFrom = useCallback(
+    async (name: string, items: ClassItem[]): Promise<string | null> => {
+      if (!available || busy) return null;
+      if (classes.length >= MAX_CLASSES) {
+        toast.error(`내 수업은 ${MAX_CLASSES}개까지 만들 수 있어요`);
+        return null;
+      }
+      const used = new Set(classes.map((c) => c.name.trim()));
+      let finalName = cleanName(name) || defaultClassName(classes);
+      for (let i = 2; used.has(finalName) && i <= MAX_CLASSES + 1; i++) finalName = cleanName(`${cleanName(name).slice(0, 20)} ${i}`);
+      setBusy(true);
+      try {
+        const r = await actions.save({ id: null, name: finalName, items, shared: false });
+        toast.success(`‘${finalName}’을 만들었어요`, { description: "이름 · 순서 · 시간을 고치고 ▶ 로 시작해요" });
+        setPickerId(null);
+        setEditorId(r.id);
+        return r.id;
+      } catch (e) {
+        toast.error((e as Error).message);
+        return null;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [available, busy, classes, actions],
+  );
+
   const byId = (id: string | null): MyClass | null => (id ? classes.find((c) => c.id === id) ?? null : null);
   const sharedById = (id: string | null): SharedClass | null => (id ? shared.find((c) => c.id === id) ?? null : null);
 
@@ -219,6 +248,7 @@ export function useMyClassFlow({ audience, userId, cards, missions, branch, paus
     save,
     pick,
     createEmpty,
+    createFrom,
     chooser,
     closeChooser: () => setChooser(null),
     editor: byId(editorId),

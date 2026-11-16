@@ -6,7 +6,7 @@
  *   · 코치진: 아래 「회원님이 보여준 수업 n」 — 누르면 보기 · 한마디 창. 아직 한마디가 없으면 「한마디 기다려요」
  *   감정 설계: 안 한 수업 · 빠진 날은 말하지 않는다 · 숫자는 본인에게만
  */
-import { Plus, Play } from "lucide-react";
+import { Play, Plus, Wand2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MAX_CLASSES, classSummary, playedText, type MyClass, type SharedClass } from "@/lib/myClass";
 import { ClassGrid } from "./MyClassParts";
@@ -19,7 +19,18 @@ const statusLine = (c: MyClass, staff: boolean): { text: string; strong: boolean
   return null;
 };
 
-const MyClassPanel = ({ flow, posterOf, onStart }: { flow: MyClassFlow; posterOf: PosterOf; onStart: (id: string) => void }) => {
+const MyClassPanel = ({
+  flow,
+  posterOf,
+  onStart,
+  onAuto,
+}: {
+  flow: MyClassFlow;
+  posterOf: PosterOf;
+  onStart: (id: string) => void;
+  /** 자동으로 짜기 창 (2026-11-16 5단계) */
+  onAuto?: () => void;
+}) => {
   const { classes, shared, resolve, staffView } = flow;
   const playable = (c: Pick<MyClass, "items">) => c.items.some((x) => !!resolve(x.k));
 
@@ -93,14 +104,26 @@ const MyClassPanel = ({ flow, posterOf, onStart }: { flow: MyClassFlow; posterOf
     <div className="space-y-3">
       {classes.length > 0 && <ul className="space-y-2.5">{classes.map(classCard)}</ul>}
       {classes.length < MAX_CLASSES && (
-        <button
-          type="button"
-          onClick={() => void flow.createEmpty()}
-          disabled={flow.busy}
-          className="flex h-12 w-full items-center justify-center gap-1.5 rounded-2xl border border-dashed border-border text-body font-bold text-foreground transition-all active:scale-[0.99] disabled:opacity-50"
-        >
-          <Plus className="h-4 w-4" aria-hidden /> 새 수업 만들기
-        </button>
+        <div className="flex gap-2">
+          {onAuto && (
+            <button
+              type="button"
+              onClick={onAuto}
+              disabled={flow.busy}
+              className="flex h-12 flex-1 items-center justify-center gap-1.5 rounded-2xl bg-foreground text-body font-bold text-background transition-all active:scale-[0.99] disabled:opacity-50"
+            >
+              <Wand2 className="h-4 w-4" aria-hidden /> 자동으로 짜기
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => void flow.createEmpty()}
+            disabled={flow.busy}
+            className="flex h-12 flex-1 items-center justify-center gap-1.5 rounded-2xl border border-dashed border-border text-body font-bold text-foreground transition-all active:scale-[0.99] disabled:opacity-50"
+          >
+            <Plus className="h-4 w-4" aria-hidden /> {onAuto ? "새 수업" : "새 수업 만들기"}
+          </button>
+        </div>
       )}
       {classes.length === 0 && <p className="px-1 text-label text-muted-foreground">카드의 + 를 누르면 내 수업에 담겨요</p>}
 
