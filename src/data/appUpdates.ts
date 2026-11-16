@@ -18,6 +18,17 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261117-growth-ox",
+    date: "2026-11-17",
+    title: "홈 — 「오늘의 1분 성장」 O/X · 좋아요 · 지난 글",
+    lines: [
+      "화요일 「복싱 상식 O/X」는 홈 카드에서 바로 골라요",
+      "도움이 된 글에 좋아요를 누르고, 지난 7일 글도 다시 봐요",
+      "카드에 그날 코너 이름이 같이 보여요",
+    ],
+    link: { to: "/home", label: "홈에서 보기" },
+  },
+  {
     id: "20261116-auto-class",
     date: "2026-11-16",
     title: "내 수업 — 자동으로 짜기 · 오늘 수업 담기",
