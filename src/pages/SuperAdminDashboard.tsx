@@ -100,12 +100,13 @@ const SuperAdminDashboard = () => {
 
   const TABS: { key: AdminTab; label: string; icon: React.ReactNode }[] = [
     { key: "overview", label: "개요", icon: <BarChart3 className="h-4 w-4" /> },
+    // 굿즈 사전예약 신청 — 플리스 집업 (2026-11-12 대표님 「마이복서에 올려서 판매신청받고」)
+    // 둘째 칸 (2026-11-16 대표님 「굿즈 탭이 어디있는지 모르겠」 — 탭 줄이 옆으로 넘기는 칸이라 휴대폰에서 뒤쪽 탭이 안 보였다)
+    { key: "goods", label: "굿즈", icon: <ShoppingBag className="h-4 w-4" /> },
     { key: "branches", label: "지점 비교", icon: <BarChart3 className="h-4 w-4" /> },
     { key: "at_risk", label: "위험 회원", icon: <AlertTriangle className="h-4 w-4" /> },
     { key: "transfers", label: "이전 승인", icon: <ArrowRightLeft className="h-4 w-4" /> },
     { key: "broadcast", label: "공지", icon: <Bell className="h-4 w-4" /> },
-    // 굿즈 사전예약 신청 — 플리스 집업 (2026-11-12 대표님 「마이복서에 올려서 판매신청받고」)
-    { key: "goods", label: "굿즈", icon: <ShoppingBag className="h-4 w-4" /> },
     // 전 지점 수강권 등록 — 전체관리자(대표님 계정)에게만 (2026-10-26 대표님 "일단 나만 볼 수 있게"). 서버(registration-report)도 super_admin 만 받는다.
     ...(role === "super_admin"
       ? [{ key: "registrations" as AdminTab, label: "등록", icon: <ClipboardList className="h-4 w-4" /> }]

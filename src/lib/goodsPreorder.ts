@@ -173,6 +173,16 @@ export function ddayLabel(c: Pick<GoodsCampaign, "open" | "closes_at">, now: Dat
   return left <= 0 ? "오늘 마감" : `D-${left}`;
 }
 
+/**
+ * 플리스 안내 한 줄 — 회원 · TV 화면에서 D-day 대신 (2026-11-16 대표님 「d데이 10 빼고 선착순 50장 고품질의 집업 마진없는 원가 공급 으로 변경해줘」).
+ * 홈 카드 · TV 2번 화면이 쓰고, 상세페이지(public/goods/fleece/index.html) 가격 옆 칩도 같은 글을 옮겨 적었다 — 고치면 같이.
+ * 수량은 다른 곳('선착순 50벌' · '남은 12벌')과 같은 '벌' · 선착순 제한이 없으면 앞 칸을 뺀다.
+ */
+export function goodsPitch(c: Pick<GoodsCampaign, "stock_limit"> | null | undefined): string {
+  const lead = c?.stock_limit != null ? `선착순 ${c.stock_limit}벌 · ` : "";
+  return `${lead}고품질 집업 · 마진 없는 원가 공급`;
+}
+
 /** 운영진 단추 — 서버 goods_admin_update 의 허용 변화와 같아야 한다 */
 export function nextActions(status: GoodsStatus): { to: GoodsStatus; label: string; tone: "primary" | "plain" | "danger" }[] {
   switch (status) {

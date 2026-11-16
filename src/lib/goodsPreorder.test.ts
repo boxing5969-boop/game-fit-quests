@@ -6,6 +6,7 @@ import {
   ddayLabel,
   deadlineLabel,
   formatPhone,
+  goodsPitch,
   hasGoodsSample,
   isAccepting,
   isSoldOut,
@@ -72,6 +73,13 @@ describe("goodsPreorder", () => {
     expect(ddayLabel(c, new Date("2026-11-26T10:00:00+09:00"))).toBe("오늘 마감");
     expect(ddayLabel(c, new Date("2026-11-27T00:00:00+09:00"))).toBe("마감");
     expect(ddayLabel({ ...c, open: false }, new Date("2026-11-12T11:00:00Z"))).toBe("마감");
+  });
+
+  it("pitch line replaces the d-day on member · TV screens", () => {
+    expect(goodsPitch({ stock_limit: 50 })).toBe("선착순 50벌 · 고품질 집업 · 마진 없는 원가 공급");
+    expect(goodsPitch({ stock_limit: null })).toBe("고품질 집업 · 마진 없는 원가 공급");
+    expect(goodsPitch(undefined)).toBe("고품질 집업 · 마진 없는 원가 공급");
+    expect(goodsPitch({ stock_limit: 50 })).not.toMatch(/D-\d/);
   });
 
   it("next actions mirror the server transitions", () => {

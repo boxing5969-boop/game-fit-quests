@@ -73,11 +73,12 @@ a{color:inherit}
 .eyebrow{margin:0;font-family:var(--serif);font-size:15px;letter-spacing:.2em;color:var(--mint)}
 h1{margin:6px 0 0;font-size:32px;line-height:1.25;font-weight:800;letter-spacing:-.02em}
 .lead{margin:10px 0 0;font-size:17px;color:var(--ink2)}
-.price-row{display:flex;align-items:center;gap:10px;margin-top:18px}
+.price-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin-top:18px}
 .price{font-size:30px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
 .chip{display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:999px;background:var(--mintSoft);
   color:var(--mint);font-size:14px;font-weight:800}
 .chip.off{background:var(--sunk);color:var(--ink3)}
+.chip.pitch{height:auto;min-height:28px;padding:4px 12px;line-height:1.35}
 .sub{margin:4px 0 0;font-size:14px;color:var(--ink3)}
 .meta{margin:20px 0 0;padding:4px 16px;border:1px solid var(--line);border-radius:16px}
 .meta div{display:flex;gap:14px;padding:11px 0;border-bottom:1px solid var(--line)}
@@ -323,7 +324,7 @@ details p{margin:6px 0 0}
     <div class="price-row">
       <s class="list" data-list-price hidden></s>
       <span class="price" data-price>25,000원</span>
-      <span class="chip" id="dday">D-14</span>
+      <span class="chip pitch" id="dday">선착순 50벌 · 고품질 집업 · 마진 없는 원가 공급</span>
     </div>
     <p class="sub">153이 남기는 이익 0원 · 인쇄 색 2가지 중 선택</p>
     <ul class="proof" aria-label="한눈에 보기">
@@ -706,10 +707,10 @@ details p{margin:6px 0 0}
     $("stockLeft").textContent = soldOut() ? "마감" : "남은 " + stockLeft() + "벌";
     all("[data-deadline]").forEach(function (el) { el.textContent = dateLabel(C.closes_at); });
     all("[data-sizes]").forEach(function (el) { el.textContent = C.sizes.join(" · "); });
-    var dd = $("dday"), left = daysLeft(C.closes_at), open = isOpen();
+    // 가격 옆 칩 — D-day 대신 안내 한 줄 (2026-11-16 대표님 「d데이 10 빼고 선착순 50장 고품질의 집업 마진없는 원가 공급 으로」 · 앱 goodsPitch 와 같은 글)
+    var dd = $("dday"), open = isOpen();
     if (!open || soldOut()) { dd.textContent = "마감"; dd.className = "chip off"; }
-    else if (left <= 0) { dd.textContent = "오늘 마감"; dd.className = "chip"; }
-    else { dd.textContent = "D-" + left; dd.className = "chip"; }
+    else { dd.textContent = (lim == null ? "" : "선착순 " + lim + "벌 · ") + "고품질 집업 · 마진 없는 원가 공급"; dd.className = "chip pitch"; }
     $("qtyHint").textContent = "한 번에 " + C.max_qty + "벌까지";
     // 사이즈 단추
     var box = $("sizeOpts"); box.innerHTML = "";

@@ -196,9 +196,23 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// 주소를 바로 열 때(채팅 · 알림 링크 · 바로가기 · 새로고침)는 로그인(loading)이 끝난 뒤에도 역할을 잠깐 못 읽은 상태다 —
+// 그때 넘기면 대표님 · 코치진도 회원 홈으로 튕긴다(2026-11-16 대표님 「굿즈 탭이 어디있는지 모르겠」 — /admin 을 바로 열면 홈으로).
+// 역할이 올 때까지 기다린다(못 읽으면 4초 뒤 그대로 넘김) — 아래 TrainingLibraryRoute 와 같은 기다림.
+const useRoleReady = () => {
+  const { user, role, loading } = useAuth();
+  const [roleWaitOver, setRoleWaitOver] = useState(false);
+  useEffect(() => {
+    if (role) return;
+    const t = window.setTimeout(() => setRoleWaitOver(true), 4000);
+    return () => window.clearTimeout(t);
+  }, [role]);
+  return { role, waiting: loading || (!!user && !role && !roleWaitOver) };
+};
+
 const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
-  const { role, loading } = useAuth();
-  if (loading) return <RouteLoader />;
+  const { role, waiting } = useRoleReady();
+  if (waiting) return <RouteLoader />;
   if (!isManagerRole(role)) return <Navigate to="/home" replace />;
   return <>{children}</>;
 };
@@ -221,8 +235,8 @@ const TrainingLibraryRoute = () => {
 
 // 153 스토리 RPG 미공개 — admin/super_admin 만 진입 (회원 직접 URL 접근 차단)
 const AdminOnlyRoute = ({ children }: { children: React.ReactNode }) => {
-  const { role, loading } = useAuth();
-  if (loading) return <RouteLoader />;
+  const { role, waiting } = useRoleReady();
+  if (waiting) return <RouteLoader />;
   if (role !== "admin" && role !== "super_admin") {
     return <Navigate to="/home" replace />;
   }

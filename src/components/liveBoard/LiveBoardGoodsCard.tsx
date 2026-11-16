@@ -11,9 +11,11 @@
  *     → 정상가(있을 때만) 줄 긋고 25,000원 · 원가 그대로 한 줄 · 선착순 남은 벌 수. 다 차면 그리지 않는다(런칭 이벤트가 화면 전체).
  *   ④ 11/13 「체육관에 사이즈별 샘플도 있어서 직접 보고 입어볼수있다고 이야기하자」 → 샘플이 있는 지점 TV 만 '샘플' 줄
  *     (hasGoodsSample — 지금 선릉역점. 다른 지점 TV 에는 없는 샘플을 말하지 않는다).
+ *   ⑤ 11/16 「d데이 10 빼고 선착순 50장 고품질의 집업 마진없는 원가 공급 으로 변경해줘」 → 머리 줄 오른쪽 D-day 알약을 빼고,
+ *     제목 바로 아래 민트 한 줄 goodsPitch(홈 카드 · 상세페이지와 같은 글). 마감 날짜는 아래 '신청' 줄에 그대로.
  */
 import { useQuery } from "@tanstack/react-query";
-import { GOODS_FLEECE_SLUG, ddayLabel, deadlineLabel, hasGoodsSample, isAccepting, listPriceOf, stockLabel, won } from "@/lib/goodsPreorder";
+import { GOODS_FLEECE_SLUG, deadlineLabel, goodsPitch, hasGoodsSample, isAccepting, listPriceOf, stockLabel, won } from "@/lib/goodsPreorder";
 import { getGoodsCampaign } from "@/services/goodsService";
 
 const PHOTOS = [
@@ -48,9 +50,9 @@ const LiveBoardGoodsCard = ({ branchName }: { branchName?: string }) => {
       <div className="flex items-center gap-3">
         <span className="rounded-full bg-emerald-400/15 px-3.5 py-1 text-xl font-black text-emerald-300">연말 원가 판매</span>
         <span className="text-xl font-black tracking-[0.2em] text-gray-500">153 GOODS</span>
-        <span className="ml-auto rounded-full bg-white px-4 py-1 text-2xl font-black tabular-nums text-gray-900">{ddayLabel(c)}</span>
       </div>
       <h2 className="mt-3 text-6xl font-black leading-tight text-white">153 플리스 집업</h2>
+      <p className="mt-2 text-2xl font-black text-emerald-300">{goodsPitch(c)}</p>
       <p className="mt-1 text-2xl font-bold text-gray-400">공장에 남은 물량만 · 153은 원가 그대로</p>
 
       <div className="mt-5 grid min-h-0 flex-1 grid-cols-2 gap-4">

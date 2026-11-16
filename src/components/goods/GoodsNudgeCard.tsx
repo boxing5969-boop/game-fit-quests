@@ -13,8 +13,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   GOODS_FLEECE_PATH,
   GOODS_FLEECE_SLUG,
-  ddayLabel,
   deadlineLabel,
+  goodsPitch,
   isSoldOut,
   shortBranch,
   won,
@@ -23,11 +23,11 @@ import {
 import { getGoodsCampaign, getGoodsMyPage } from "@/services/goodsService";
 import { leaveApp } from "@/lib/docCache";
 
-/** 한 줄에 들어가게 짧게 — '50벌 한정' · '남은 12벌' · (제한 없으면) '11월 26일(목)까지' */
+/** 가격 옆 짧은 칸 — 팔리기 시작하면 '남은 12벌' · (제한 없으면) '11월 26일(목)까지' · 그대로면 빈칸(위 줄 '선착순 50벌'과 겹치지 않게) */
 const stockShort = (c: GoodsCampaign): string => {
   if (c.stock_limit == null) return `${deadlineLabel(c.closes_at)}까지`;
   const left = c.stock_left == null ? c.stock_limit : Math.max(0, c.stock_left);
-  return left >= c.stock_limit ? `${c.stock_limit}벌 한정` : `남은 ${left}벌`;
+  return left >= c.stock_limit ? "" : `남은 ${left}벌`;
 };
 
 const GoodsNudgeCard = () => {
@@ -83,8 +83,10 @@ const GoodsNudgeCard = () => {
       <img src="/goods/fleece/img/model-back.webp?v=2" alt="" className="h-14 w-11 shrink-0 rounded-xl object-cover" loading="lazy" />
       <span className="min-w-0 flex-1">
         <span className="block text-label font-extrabold text-foreground">153 플리스 집업 · 원가 판매</span>
+        {/* D-day 대신 안내 한 줄 (2026-11-16 대표님 「d데이 10 빼고 선착순 50장 고품질의 집업 마진없는 원가 공급 으로」) */}
+        <span className="mt-0.5 block text-label font-bold text-foreground">{goodsPitch(c)}</span>
         <span className="mt-0.5 block text-label text-muted-foreground">
-          {won(c.price)} · {stockShort(c)} · {ddayLabel(c)}
+          {[won(c.price), stockShort(c)].filter(Boolean).join(" · ")}
         </span>
       </span>
       <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
