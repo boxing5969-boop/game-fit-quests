@@ -18,6 +18,19 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261116-pt-close",
+    date: "2026-11-16",
+    title: "근무 — PT 수당 월 마감 (확정 → 승인)",
+    lines: [
+      "달이 끝나면 코치 확정 → 승인으로 그 달 수당을 닫아요",
+      "닫은 뒤 달라진 수업은 다음 달에 보정 · 정산 줄로 들어가요",
+      "12월 수업분부터 — 첫 마감은 1월 초예요",
+    ],
+    link: { to: "/office?tab=work", label: "근무 탭 열기" },
+    audience: "staff",
+    branches: SEOLLEUNG,
+  },
+  {
     id: "20261116-pt-pay",
     date: "2026-11-16",
     title: "근무 — PT 수당 「기록 + 차감」 미리 보기",
