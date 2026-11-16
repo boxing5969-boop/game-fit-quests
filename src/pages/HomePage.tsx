@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef, Fragment } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { User, Ticket, Trophy, Settings, ChevronDown, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { toast } from "sonner";
@@ -46,6 +46,9 @@ import WorkoutFinishCard from "@/components/home/WorkoutFinishCard";
 import MileageCard from "@/components/home/MileageCard";
 import HomeWorkoutCard from "@/components/home/HomeWorkoutCard";
 import HomePtCard from "@/components/pt/HomePtCard";
+import LevelUpRequestCard from "@/components/LevelUpRequestCard";
+import NextLevelDemoStrip from "@/components/home/NextLevelDemoStrip";
+import { nextLevelDemo } from "@/lib/nextLevelGuideSample";
 import HomeWorkoutCalendar from "@/components/home/HomeWorkoutCalendar";
 import { useLevelCycleProgress, promotionHint } from "@/hooks/useLevelCycleProgress";
 import {
@@ -117,6 +120,9 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
   const { totalXp, metrics } = useLocalProgress();
   // 승급 진행도 — 홈 카드 막대의 단일 출처 (서버 계산). 대표님 결정(2026-09-22): 막대 = 승급 진행도.
   const { data: levelCycle } = useLevelCycleProgress();
+  // 「다음 레벨까지」 예시 (?lvdemo=1 · 4 · 10 · wait) — 지도진 · 마스터 계정에는 이 카드가 없어서, 회원 화면 모습을 볼 수 있게 (운영진 미리 보기)
+  const [homeParams] = useSearchParams();
+  const lvDemo = nextLevelDemo(homeParams.get("lvdemo"));
   const { data: levelupRules } = useLevelupRules();
   // 오늘 출석 여부 — 서버(get_my_workout_today, KST·지점 무관)가 단일 출처. 예전엔 기기 자정·지점 필터로 따로 세어
   // WorkoutFinishCard 와 다른 답을 냈다 (검수 발견).
@@ -254,7 +260,8 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
   const isMasterDisplay = isMaster40 || isManagerRole(role);
   void isMasterDisplay;
   // missionTitle/SELF_CHALLENGE_BONUS_XP — 옛 MissionCard 에서 사용됨, Option C 에서는 미사용
-  void unifiedLevel; void currentLevel;
+  // (unifiedLevel 은 첫 화면 「다음 레벨까지」 카드가 미션 영상이 없는 레벨의 목표 한 줄로 쓴다 — 2026-11-16)
+  void currentLevel;
 
   const myRankRow = ranking?.find((r) => r.r_user_id === user?.id);
   const myPosition = myRankRow ? Number(myRankRow.rank_position) : null;
@@ -626,6 +633,22 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
           {/* 🥊 PT 수업 — PT 회원에게만: 다음 수업 · 「수업 받았어요」 · 남은 횟수 · 예약 · 취소 (2026-11-14 대표님
               「홈화면에 PT 회원님들을 위한 스케줄관리」). PT 예약을 켠 지점의 PT 회원이 아니면 아무것도 그리지 않는다 */}
           <HomePtCard />
+          {/* 🎯 다음 레벨까지 — 몇 번 더 오면 되는지 + 이번 레벨 미션 (2026-11-16 대표님 「홈화면에 회원님들에게 다음 레벨로
+              가려면 얼마나 출석하면 될지? 또 어떤 미션을 달성하면 되는지 알려주자」). 훈련 탭 '레벨업까지'와 같은 카드 —
+              막대 · 숫자는 바로 위 내 카드에 있어 끄고(같은 숫자는 한 화면에 한 번) 「미션」 칸을 켠다.
+              지도진 · 마스터(레벨 40 뒤)는 내 카드에 승급 막대가 없듯 이 카드도 없다 — 그 계정은 ?lvdemo= 예시로 본다 */}
+          {lvDemo ? (
+            <>
+              <NextLevelDemoStrip current={lvDemo} />
+              <LevelUpRequestCard bar={false} missions demo={lvDemo.data} />
+            </>
+          ) : (
+            !staffCard &&
+            !isMaster40 &&
+            !onMasterTrack && (
+              <LevelUpRequestCard bar={false} missions levelGoal={{ title: unifiedLevel?.title, goal: unifiedLevel?.shortGoal }} />
+            )
+          )}
           {/* 👊 오늘 우리 체육관 — 커뮤니티 입구 한 줄 (2026-10-27 대표님 "니가 추천해주는대로 진행", 커뮤니티 보고서 1단계) */}
           <CommunityTodayStrip />
           {/* 🎂 오늘 생일인 동료가 운동하러 왔거나 오늘 내 생일일 때만 보인다 (2026-10-16 대표님) */}

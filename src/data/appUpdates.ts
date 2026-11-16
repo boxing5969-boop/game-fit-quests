@@ -18,6 +18,17 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261116-home-next-level",
+    date: "2026-11-16",
+    title: "홈 — 다음 레벨까지 · 이번 레벨 미션",
+    lines: [
+      "홈에서 몇 번 더 오면 다음 레벨인지 바로 보여요",
+      "이번 레벨 미션은 눌러서 영상으로 미리 볼 수 있어요",
+      "레벨 10은 타이틀미션과 심사 신청까지 한눈에 보여요",
+    ],
+    link: { to: "/home", label: "홈에서 보기" },
+  },
+  {
     id: "20261116-pt-close",
     date: "2026-11-16",
     title: "근무 — PT 수당 월 마감 (확정 → 승인)",
