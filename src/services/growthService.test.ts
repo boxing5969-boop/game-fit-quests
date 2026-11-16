@@ -64,6 +64,50 @@ describe("오늘의 1분 성장 — 서버 읽음 기록 (보이지 않게)", ()
   });
 });
 
+describe("오늘의 1분 성장 — (2단계) 읽은 날 · 누적 도장 알림", () => {
+  const hooks = () => ({ onReadDay: vi.fn(), onStamp: vi.fn() });
+
+  it("오늘이 읽은 날로 남으면 그날 한 번만 알린다 — 다른 글 · 다른 종류로 또 남겨도", async () => {
+    const h = hooks();
+    await markGrowth(LESSON, "open", undefined, h);
+    await markGrowth(LESSON, "act", undefined, h);
+    await markGrowth({ id: "jab-return", from: "2026-11-18" }, "open", undefined, h);
+    await markGrowth(LESSON, "heart_on", undefined, h);
+    expect(h.onReadDay).toHaveBeenCalledTimes(1);
+    expect(h.onStamp).not.toHaveBeenCalled();
+  });
+
+  it("좋아요 취소 · 못 남긴 것 · 서버가 받지 않은 답은 읽은 날이 아니다", async () => {
+    const h = hooks();
+    await markGrowth(LESSON, "heart_off", undefined, h);
+    rpc.mockResolvedValueOnce({ data: null, error: { code: "57014", message: "timeout" } });
+    await markGrowth(LESSON, "open", undefined, h);
+    rpc.mockResolvedValueOnce({ data: { ok: false }, error: null });
+    await markGrowth(LESSON, "open", undefined, h);
+    expect(h.onReadDay).not.toHaveBeenCalled();
+    // 그다음에 남으면 그때 알린다
+    await markGrowth(LESSON, "act", undefined, h);
+    expect(h.onReadDay).toHaveBeenCalledTimes(1);
+  });
+
+  it("서버가 도장(stamp)을 보내면 그 숫자를 알린다 — 숫자가 아니면 알리지 않는다", async () => {
+    const h = hooks();
+    rpc.mockResolvedValueOnce({ data: { ok: true, hearts: null, stamp: 10 }, error: null });
+    await markGrowth(LESSON, "open", undefined, h);
+    expect(h.onStamp).toHaveBeenCalledWith(10);
+    rpc.mockResolvedValueOnce({ data: { ok: true, hearts: null, stamp: "30" }, error: null });
+    await markGrowth(LESSON, "act", undefined, h);
+    rpc.mockResolvedValueOnce({ data: { ok: true, hearts: null, stamp: null }, error: null });
+    await markGrowth(LESSON, "heart_on", undefined, h);
+    expect(h.onStamp).toHaveBeenCalledTimes(1);
+  });
+
+  it("알림 받는 곳이 없어도(1단계 그대로) 아무 일 없다", async () => {
+    rpc.mockResolvedValueOnce({ data: { ok: true, hearts: null, stamp: 10 }, error: null });
+    await expect(markGrowth(LESSON, "open")).resolves.toBeNull();
+  });
+});
+
 describe("오늘의 1분 성장 — 좋아요 수 (5명이 넘을 때만)", () => {
   it("서버가 숫자를 보내면 돌려주고, 이번 접속 동안 기억한다", async () => {
     rpc.mockResolvedValueOnce(answer(12));

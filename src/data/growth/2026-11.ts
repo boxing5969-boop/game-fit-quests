@@ -1,5 +1,5 @@
 /**
- * 🌱 오늘의 1분 성장 — 2026년 11월 (16일 ~ 30일 · 15편 · 0단계에 쓴 글 그대로)
+ * 🌱 오늘의 1분 성장 — 2026년 11월 (16일 ~ 30일 · 15편 · 0단계에 쓴 글 그대로 · 2단계에 코치 한마디 coach 한 줄씩)
  *   글 규격 · 사실 확인 원칙은 ../growthLessons.ts 머리말 · 시험 ../growthLessons.test.ts
  *   코너는 날짜의 요일에서 나온다(daily) — 월 「이번 주 한 가지」 · 화 「복싱 상식 O/X」 · 수 「기술 한 끗」 ·
  *   목 「몸이 받는 선물」 · 금 「링 위의 이야기」 · 토 「집에서 1분」 · 일 「한 주 돌아보기」
@@ -19,6 +19,7 @@ const LESSONS: readonly GrowthLesson[] = [
     ],
     directions: [{ title: "올 요일 두 개 정하기", body: "이번 주에 체육관에 올 요일 두 개를 지금 정하고, 달력에 적어 두세요." }],
     pledge: "중요한 건 다시 오는 거예요.",
+    coach: "이번 주에 올 요일 두 개, 지금 정해 볼까요?",
     sources: [{ name: "영국심리학회 연구 요약(Lally 외, 2010)", url: "https://bps.org.uk/research-digest/how-form-habit" }],
   }),
   daily({
@@ -34,6 +35,7 @@ const LESSONS: readonly GrowthLesson[] = [
     ],
     directions: [{ title: "한 사람에게 물어보기", body: "같이 운동하는 분께 “링이 왜 링인지 아세요?” 하고 물어보세요." }],
     pledge: "오래된 운동을, 오늘 내가 배우고 있어요.",
+    coach: "링이 왜 ‘링’인지 아세요? 답은 앱 홈에 있어요.",
     sources: [{ name: "세계복싱협회(WBA) 「링은 왜 링일까」", url: "https://www.wbaboxing.com/boxing-news/why-the-ring-is-called-a-ring" }],
   }),
   daily({
@@ -48,6 +50,7 @@ const LESSONS: readonly GrowthLesson[] = [
     ],
     directions: [{ title: "거울 앞 잽 10번", body: "거울 앞에서 잽 10번. 돌아온 손이 가드 자리에 오는지 눈으로 확인해 보세요." }],
     pledge: "돌아온 손이 다음 동작의 시작이에요.",
+    coach: "잽은 돌아오는 것까지예요. 손은 가드 자리로!",
     sources: [{ name: "153 레벨 과정 화이트 레벨 1 ‘잽 후 가드 복귀’" }],
   }),
   daily({
@@ -62,6 +65,7 @@ const LESSONS: readonly GrowthLesson[] = [
     ],
     directions: [{ title: "기분 스티커 하나", body: "수업이 끝나면 운동 달력에서 오늘을 누르고, 기분 스티커 하나를 붙여 보세요." }],
     pledge: "오늘 운동은 마음에도 보내는 선물이에요.",
+    coach: "오늘 운동은 기분에도 닿아요. 끝나고 스티커 하나 붙여요.",
     sources: [{ name: "영국 스포츠의학 저널(BJSM) Singh 외(2023) 저자 요약", url: "https://blogs.bmj.com/bjsm/?p=10597" }],
   }),
   daily({
@@ -76,6 +80,7 @@ const LESSONS: readonly GrowthLesson[] = [
     ],
     directions: [{ title: "마지막 라운드 가드", body: "오늘 마지막 라운드는 벨이 울릴 때까지 가드를 올리고 있어 보세요." }],
     pledge: "벨 소리 하나에 150년 넘는 이야기가 있어요.",
+    coach: "마지막 라운드는 벨이 울릴 때까지 가드를 올려 봐요.",
     sources: [{ name: "브리태니커 「퀸즈베리 규칙」", url: "https://www.britannica.com/sports/Marquess-of-Queensberry-rules" }],
   }),
   daily({
@@ -90,6 +95,7 @@ const LESSONS: readonly GrowthLesson[] = [
     ],
     directions: [{ title: "제자리 스텝 1분", body: "오늘 저녁, 가드를 올리고 제자리 스텝을 1분만 밟아 보세요." }],
     pledge: "1분이면 충분해요.",
+    coach: "쉬는 날엔 집에서 제자리 스텝 1분, 해 보세요.",
     sources: [{ name: "153 레벨 과정 화이트 레벨 1 ‘제자리 스텝’" }],
   }),
   daily({
@@ -104,6 +110,7 @@ const LESSONS: readonly GrowthLesson[] = [
     ],
     directions: [{ title: "잘한 것 한 줄", body: "이번 주 잘한 것 하나를 한 줄로 적어 보세요. 운동 달력의 ‘한 줄’이나 메모장, 어디든 좋아요." }],
     pledge: "이번 주의 나에게, 수고했어요.",
+    coach: "이번 주 잘한 것 하나, 떠올리고 가요.",
   }),
   daily({
     id: "week-one-thing",
@@ -117,6 +124,7 @@ const LESSONS: readonly GrowthLesson[] = [
     ],
     directions: [{ title: "코치님께 한마디", body: "이번 주에 익히고 싶은 것 하나를 정해서, 수업 전에 코치님께 말해 보세요." }],
     pledge: "하나를 정한 주는, 하나가 남는 주예요.",
+    coach: "이번 주에 익히고 싶은 것 하나, 저한테 말해 주세요.",
   }),
   daily({
     id: "ox-glove-oz",
@@ -131,6 +139,7 @@ const LESSONS: readonly GrowthLesson[] = [
     ],
     directions: [{ title: "내 글러브 숫자 찾기", body: "내 글러브에 적힌 oz 숫자를 찾아보세요. 안 보이면 코치님께 물어봐도 좋아요." }],
     pledge: "숫자 하나를 알면 장비가 달리 보여요.",
+    coach: "글러브의 ‘oz’가 뭔지 아세요? 답은 앱 홈에 있어요.",
     sources: [{ name: "Boxfit UK 「글러브 크기와 무게」", url: "https://www.boxfituk.com/blogs/blog/understanding-boxing-glove-sizes-and-weights" }],
   }),
   daily({
@@ -145,6 +154,7 @@ const LESSONS: readonly GrowthLesson[] = [
     ],
     directions: [{ title: "제자리 스텝 30초", body: "오늘 워밍업 때 제자리 스텝 30초, 박자에만 귀를 기울여 보세요." }],
     pledge: "박자가 잡히면 손은 따라와요.",
+    coach: "주먹보다 스텝이 먼저예요. 박자에 귀를 기울여 봐요.",
     sources: [{ name: "153 첫 수업 과정(스텝과 잽 4라운드)" }],
   }),
   daily({
@@ -159,6 +169,7 @@ const LESSONS: readonly GrowthLesson[] = [
     ],
     directions: [{ title: "내 운동 시간 보기", body: "‘내 운동 기록’을 열어 내가 운동한 시간을 확인해 보세요." }],
     pledge: "일주일에 두세 번, 그 꾸준함이 기준에 닿아요.",
+    coach: "오늘 50분, 이번 주 운동량에 차곡차곡 쌓였어요.",
     sources: [{ name: "세계보건기구(WHO) 유럽 「신체활동」 자료", url: "https://www.who.int/europe/news-room/fact-sheets/item/physical-activity" }],
   }),
   daily({
@@ -173,6 +184,7 @@ const LESSONS: readonly GrowthLesson[] = [
     ],
     directions: [{ title: "옆 사람에게 인사", body: "오늘 같은 벨 소리에 운동하는 옆 사람에게 먼저 인사해 보세요." }],
     pledge: "같은 글러브, 같은 벨 소리.",
+    coach: "오늘은 옆 사람에게 먼저 인사해 볼까요?",
     sources: [
       { name: "올림픽 공식 사이트 「런던 2012 여자 복싱」", url: "https://olympics.com/en/news/women-punch-their-weight-on-olympic-debut-london-2012-boxing" },
       { name: "잉글랜드 복싱 「올림픽 복싱」", url: "https://www.englandboxing.org/?p=2159" },
@@ -190,6 +202,7 @@ const LESSONS: readonly GrowthLesson[] = [
     ],
     directions: [{ title: "거울 앞 스탠스 30초", body: "오늘 양치할 때 30초. 발은 기찻길, 무릎은 풀고, 턱은 살짝 당겨 보세요." }],
     pledge: "매일 보는 거울이 연습 자리예요.",
+    coach: "집에서 양치할 때 스탠스 30초, 해 보세요.",
     sources: [{ name: "153 레벨 과정 화이트 레벨 1 ‘기본 스탠스’" }],
   }),
   daily({
@@ -204,6 +217,7 @@ const LESSONS: readonly GrowthLesson[] = [
     ],
     directions: [{ title: "응원 한 번 보내기", body: "이번 주에 같이 운동한 동료 한 명에게 응원을 보내 보세요. 직접 말로 전해도 좋아요." }],
     pledge: "고마움은 전할 때 더 커져요.",
+    coach: "이번 주 고마운 동료 한 명에게 응원을 보내 봐요.",
   }),
   daily({
     id: "bag-by-door",
@@ -217,6 +231,7 @@ const LESSONS: readonly GrowthLesson[] = [
     ],
     directions: [{ title: "전날 밤 가방 싸기", body: "이번 주 운동 가는 날 전날 밤, 가방을 싸서 현관 앞에 두세요." }],
     pledge: "작은 준비 하나가 한 주를 지켜 줘요.",
+    coach: "운동 가방은 전날 밤 문 앞에 두면 발이 먼저 가요.",
   }),
 ];
 

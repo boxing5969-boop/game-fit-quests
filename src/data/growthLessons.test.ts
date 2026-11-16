@@ -45,6 +45,7 @@ const textOf = (l: GrowthLesson): string =>
     ...l.story,
     ...l.directions.flatMap((d) => [d.title, d.body]),
     l.pledge,
+    l.coach ?? "",
     ...(l.sources ?? []).map((s) => s.name),
   ].join("\n");
 const bare = (s: string): number => [...s.replace(/\s/g, "")].length;
@@ -225,6 +226,9 @@ describe("날마다 글 — 글 규격", () => {
     expect([...l.directions[0].title].length).toBeLessThanOrEqual(14);
     expect([...l.directions[0].body].length).toBeLessThanOrEqual(60);
     expect([...l.pledge].length).toBeLessThanOrEqual(30);
+    // (2단계) 코치 「오늘의 한마디」 — 수업에서 말하는 한 문장 · 40자 안
+    expect((l.coach ?? "").trim().length).toBeGreaterThan(0);
+    expect([...(l.coach ?? "")].length).toBeLessThanOrEqual(40);
     expect(textOf(l)).not.toMatch(BANNED);
     if (NEEDS_SOURCE.has(l.theme)) expect((l.sources ?? []).length).toBeGreaterThan(0);
     for (const s of l.sources ?? []) {
@@ -245,6 +249,9 @@ describe("날마다 글 — 글 규격", () => {
       expect([...q.q].length).toBeGreaterThanOrEqual(8);
       expect([...q.q].length).toBeLessThanOrEqual(50);
       expect(l.story[0].startsWith(`정답은 ${q.answer}예요.`)).toBe(true);
+      // 코치 한마디 · TV 는 답을 말하지 않는다 — 답은 앱 홈에서
+      expect(l.coach ?? "").not.toMatch(/정답은|[OX]예요/);
+      if (l.coach) expect(l.coach).toContain("앱");
     }
   });
 });

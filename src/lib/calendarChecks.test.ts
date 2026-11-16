@@ -226,3 +226,58 @@ describe("운동 달력 체크 — 주 n번 (3-4)", () => {
     expect(draftFromItem(FLEX)).toMatchObject({ schedule: "goal", goal: 3, weekdays: [] });
   });
 });
+
+describe("운동 달력 체크 — 1분 성장 칸 (오늘의 1분 성장 2단계)", () => {
+  const line = { id: "j", content: "좋았다", mood: null, photoUrl: null, visibility: "private" as const, at: "" };
+  const full = (day: string) => ({ day, cheer: true, give153: false, journal: line, done: ["jab"], sticker: null });
+  // 11/12(목)부터 드는 계정 — 11/10 · 11/12 에 읽었다
+  const growth = { from: "2026-11-12", days: new Set(["2026-11-10", "2026-11-12"]) };
+
+  it("첫날부터 '한 줄' 다음에 든다 — 읽은 날이면 채워지고, 다 채워야 금색 별", () => {
+    const read = dayChecks("2026-11-12", true, full("2026-11-12"), [JAB], false, growth);
+    expect(read.map((c) => [c.key, c.done])).toEqual([
+      ["gym", true],
+      ["cheer", true],
+      ["line", true],
+      ["growth", true],
+      ["item:jab", true],
+    ]);
+    expect(read[3]).toMatchObject({ kind: "growth", label: "1분 성장" });
+    expect(isStarDay(read)).toBe(true);
+    // 다음 날 — 아직 안 읽었으면 그 칸만 비어 있고 별은 아직
+    const unread = dayChecks("2026-11-13", true, full("2026-11-13"), [JAB], false, growth);
+    expect(unread.find((c) => c.key === "growth")).toMatchObject({ done: false });
+    expect(isStarDay(unread)).toBe(false);
+    expect(checkProgress(unread, true)).toBe("4개 채웠어요 · 1개 더 채우면 금색 별");
+  });
+
+  it("첫날 앞은 예전 그대로 — 지난 금색 별이 사라지지 않는다 (그 전에 읽은 날이어도 칸이 없다)", () => {
+    for (const day of ["2026-11-10", "2026-11-11"]) {
+      const before = dayChecks(day, true, full(day), [JAB], false, growth);
+      expect(before).toEqual(dayChecks(day, true, full(day), [JAB]));
+      expect(before.some((c) => c.kind === "growth")).toBe(false);
+      expect(isStarDay(before)).toBe(true);
+    }
+  });
+
+  it("조각이 없으면(꺼진 지점 · 옛 서버) 예전과 똑같다 · 틀린 날짜는 칸이 없다", () => {
+    const day = "2026-11-12";
+    expect(dayChecks(day, true, full(day), [JAB], false, null)).toEqual(dayChecks(day, true, full(day), [JAB]));
+    expect(dayChecks("bad", true, undefined, [], false, growth).some((c) => c.kind === "growth")).toBe(false);
+  });
+
+  it("휴관일에 안 와도 1분 성장은 센다 — 쉬는 날에도 읽으면 별 (서버 _cal_check_count 와 같은 식)", () => {
+    const closed = dayChecks("2026-11-12", false, full("2026-11-12"), [JAB], true, growth);
+    expect(closed.map((c) => c.key)).toEqual(["cheer", "line", "growth", "item:jab"]);
+    expect(isStarDay(closed)).toBe(true);
+  });
+
+  it("서버 값 읽기 · 캐시 고치기는 조각을 그대로 둔다", () => {
+    expect(CAL_OFF.growth).toBeNull();
+    const s0 = normalizeCalendar({ on: true, today: "2026-11-12", items: [], days: [] });
+    expect(s0.growth).toBeNull();
+    const s1 = { ...s0, growth };
+    expect(applyDone(s1, "2026-11-12", "jab", true).growth).toBe(growth);
+    expect(applySticker(s1, "2026-11-12", "fire").growth).toBe(growth);
+  });
+});

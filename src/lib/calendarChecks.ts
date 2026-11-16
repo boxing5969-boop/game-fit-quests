@@ -13,6 +13,9 @@
  *     (보이는 날짜가 마감인 할 일) 도 여기서 읽는다(습관 · 할 일 글 · 계산은 lib/memberHabits.ts).
  *   · (3-5 · 2026-11-14) get_my_calendar 'mine'(내 일정 · 기념일) · 'birthday'(내 생일 MM-DD) · 'league'(리그) · 'view'(켜고 끄기 ·
  *     리그 테마) · 한 줄 'photos'(다이어리 사진 3장)도 여기서 읽는다(글 · 계산은 lib/memberEvents.ts) · 기분 스티커 8 → 20.
+ *   · (오늘의 1분 성장 2단계 · 2026-11-17 대표님 「다음진행」 · 선릉역점부터) 저절로 체크에 '1분 성장' 한 칸 —
+ *     그날 「오늘의 1분 성장」을 읽었으면 채워진다. get_my_calendar 가 아니라 get_my_growth 로 읽어 붙인다(CalState.growth ·
+ *     services/calendarCheckService). 드는 날 = check_from 부터(그 앞 날은 예전 그대로) · 서버 _cal_check_count 와 같은 식.
  */
 import { weekdayOfYmd } from "@/lib/promise153";
 import { normalizeCalls, normalizeEvents, type CalCall, type CalEvent } from "@/lib/calendarEvents";
@@ -30,6 +33,7 @@ import { RECAP_PREF_OFF, normalizePartner, normalizeRecapPref, type CalPartner, 
 import { WEEK_GOAL_MAX, normalizeCalTodos, type CalTodo } from "@/lib/memberHabits";
 import { CAL_VIEW_DEFAULT, normalizeCalView, normalizeMyEvents, type CalView, type MyEvent } from "@/lib/memberEvents";
 import { normalizeWeather, type DayWeather } from "@/lib/calendarWeather";
+import type { GrowthCheck } from "@/lib/growthStage2";
 
 const YMD = /^\d{4}-\d{2}-\d{2}$/;
 const n = (v: number) => v.toLocaleString("ko-KR");
@@ -173,6 +177,8 @@ export interface CalState {
   view: CalView;
   /** (3-5 날씨) 내 지점 날씨 — 보이는 날짜 (lib/calendarWeather · 출석한 날이 비 · 눈 · 폭염 · 한파면 도장) */
   weather: Map<string, DayWeather>;
+  /** (1분 성장 2단계) 그날의 체크에 '1분 성장'이 드는 첫날 · 보이는 날짜의 읽은 날 — 안 드는 계정 · 서버면 null */
+  growth: GrowthCheck | null;
 }
 
 export const CAL_OFF: CalState = {
@@ -195,6 +201,7 @@ export const CAL_OFF: CalState = {
   league: null,
   view: CAL_VIEW_DEFAULT,
   weather: new Map(),
+  growth: null,
 };
 
 type Raw = Record<string, unknown>;
@@ -292,6 +299,8 @@ export function normalizeCalendar(raw: unknown): CalState {
     league: str(r.league),
     view: normalizeCalView(r.view),
     weather: normalizeWeather(r.weather),
+    // get_my_growth 로 따로 읽어 붙인다(services/calendarCheckService)
+    growth: null,
   };
 }
 
@@ -325,7 +334,7 @@ export function itemsForDay(items: readonly CheckItem[], day: string): CheckItem
   );
 }
 
-export type CheckKind = "gym" | "cheer" | "line" | "custom";
+export type CheckKind = "gym" | "cheer" | "line" | "growth" | "custom";
 export interface DayCheck {
   key: string;
   kind: CheckKind;
@@ -337,20 +346,28 @@ export interface DayCheck {
   flex?: boolean;
 }
 
-/** 그날의 체크 — 저절로 3개(체육관 · 응원 · 한 줄) + 그날의 나만의 체크
- *  (2-2) 휴관일(closed)에 안 왔으면 체육관은 빼고 센다 — 쉬는 날도 금색 별을 받을 수 있게 (서버 _cal_check_count 와 같은 식) */
+/** '1분 성장' 칸 이름 */
+export const GROWTH_CHECK_LABEL = "1분 성장";
+
+/** 그날의 체크 — 저절로 3개(체육관 · 응원 · 한 줄) + (켠 지점 · 첫날부터) 1분 성장 + 그날의 나만의 체크
+ *  (2-2) 휴관일(closed)에 안 왔으면 체육관은 빼고 센다 — 쉬는 날도 금색 별을 받을 수 있게 (서버 _cal_check_count 와 같은 식)
+ *  (1분 성장 2단계) growth 가 있고 그날이 첫날(from)부터면 '1분 성장' 칸이 더해진다 — 그날 읽었으면 채움 */
 export function dayChecks(
   day: string,
   attended: boolean,
   cal: CalDay | undefined,
   items: readonly CheckItem[],
   closed = false,
+  growth: GrowthCheck | null = null,
 ): DayCheck[] {
   const done = new Set(cal?.done ?? []);
   return [
     ...(closed && !attended ? [] : [{ key: "gym", kind: "gym" as const, label: "체육관", done: attended }]),
     { key: "cheer", kind: "cheer", label: "응원", done: !!cal && (cal.cheer || cal.give153) },
     { key: "line", kind: "line", label: "한 줄", done: !!cal?.journal },
+    ...(growth && YMD.test(day) && day >= growth.from
+      ? [{ key: "growth", kind: "growth" as const, label: GROWTH_CHECK_LABEL, done: growth.days.has(day) }]
+      : []),
     ...itemsForDay(items, day).map(
       (i): DayCheck => ({
         key: `item:${i.id}`,

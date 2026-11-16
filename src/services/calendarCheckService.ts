@@ -35,6 +35,7 @@ import {
 import { HABITS_OFF, applyTodoDone, normalizeHabits, todoPayload, type Habits } from "@/lib/memberHabits";
 import { goalPayload, normalizeDdays, type GoalDraft } from "@/lib/calendarMarks";
 import { SEARCH_OFF, normalizeCalSearch, type CalSearch, type CalView, type MyScope } from "@/lib/memberEvents";
+import { fetchGrowthCheck } from "@/services/growthStage2Service";
 
 export const CAL2_KEY = ["153cal2"] as const;
 /** (3-4) 나만의 체크 시트 — 이번 주 · 이어 간 주 · 할 일 (달력 캐시와 모양이 달라 따로) */
@@ -56,9 +57,15 @@ export function useMyCalendar(from: string | null, to: string | null, enabled = 
     retry: false,
     placeholderData: (prev) => prev,
     queryFn: async () => {
-      const { data, error } = await rpc("get_my_calendar", { p_from: from, p_to: to });
-      if (error) return CAL_OFF;
-      return normalizeCalendar(data);
+      // (1분 성장 2단계) 읽은 날은 get_my_growth 로 같이 받아 붙인다 — 켠 지점 회원이 아니거나 함수가 없으면 null(예전 그대로).
+      //   get_my_calendar 는 고치지 않는다 — 다른 일이 같은 달력에 얹을 때도 여기 Promise.all 에 한 칸씩 더한다.
+      const [cal, growth] = await Promise.all([
+        rpc("get_my_calendar", { p_from: from, p_to: to }),
+        from && to ? fetchGrowthCheck(user?.id, from, to) : Promise.resolve(null),
+      ]);
+      if (cal.error) return CAL_OFF;
+      const state = normalizeCalendar(cal.data);
+      return state.on && growth ? { ...state, growth } : state;
     },
   });
 }

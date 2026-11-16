@@ -13,9 +13,15 @@
  *     · 제목 옆 ♥ — 숫자는 5명이 넘을 때만(서버가 그 아래는 보내지 않는다 · 4주 뒤 어떤 코너가 좋았는지 보려고)
  *     · 맨 아래 '지난 글 보기' — 지난 7일 글(읽은 글에만 옅은 표시 · 안 읽은 글은 아무 표시 없음)
  *     · 글은 달마다 따로 받는다(data/growthLessons) · 기록은 이 기기(lib/growthRead) + 서버(services/growthService — 없어도 그대로)
+ *   2026-11-17 2단계(대표님 「다음진행」 · 선릉역점부터 — 켠 지점 회원이 아니거나 서버 함수가 없으면 아래 것은 안 보인다):
+ *     · 서랍 맨 아래 한 줄 '지금까지 n일 읽었어요 · m일째에 축하 편지가 와요' (읽은 날은 누적 — 빠진 날은 말하지 않는다)
+ *     · 읽은 날 10 · 30 · 100 · 365번째가 되는 순간 한 줄 알림 — 축하 편지는 다음에 앱을 열 때(WelcomeLetter)
+ *     · 오늘이 '읽은 날'로 남으면 운동 달력 「오늘의 체크」의 '1분 성장' 칸이 채워진다(달력 자료를 다시 읽는다)
+ *     · 주소 '/home?growth=1'(운동 달력 '1분 읽기' 칩) · '/home?growth=날짜'(월요일 요약 알림 — 지난 7일 안의 글)면 서랍이 열린다
  */
-import { useMemo, useRef, useState, type ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronDown, ChevronLeft, ChevronRight, Compass, Heart, Sprout } from "lucide-react";
 import { toast } from "sonner";
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -31,9 +37,12 @@ import {
 } from "@/data/growthLessons";
 import { kstToday } from "@/lib/attendanceCheer";
 import { markHeart, markOpened, markPick, useGrowthMarks, type GrowthPick } from "@/lib/growthRead";
+import { growthDaysLine, growthFocusOf, growthStampToast } from "@/lib/growthStage2";
 import { isIosApp, loadIosAppNative } from "@/lib/iosApp";
 import { cn } from "@/lib/utils";
+import { CAL2_KEY } from "@/services/calendarCheckService";
 import { markGrowth, type GrowthMarkKind } from "@/services/growthService";
+import { GROWTH_ME_KEY, useMyGrowth } from "@/services/growthStage2Service";
 
 const doneKey = (uid: string, day: string, id: string) => `mb153.growth.done:${uid}:${day}:${id}`;
 const readDone = (key: string): boolean => {
@@ -130,6 +139,57 @@ const GrowthLessonCard = ({ className }: { className?: string }) => {
   const [heartCounts, setHeartCounts] = useState<Record<string, number>>({});
   const heartCountsRef = useRef(heartCounts);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const qc = useQueryClient();
+  // (2단계) 내 읽은 날 — 서랍을 열었을 때만 읽는다(켠 지점 회원이 아니면 꺼진 값)
+  const growthQ = useMyGrowth(open && !!user);
+  const daysLine = growthDaysLine(growthQ.data);
+  const [params, setParams] = useSearchParams();
+  const focusParam = params.get("growth");
+
+  /** 서버에 남긴다(보이지 않게 · 로그인했을 때만) — 답으로 온 좋아요 수가 달라졌을 때만 적어 둔다 */
+  const send = (l: GrowthLesson, kind: GrowthMarkKind, quiz?: { pick: GrowthPick; right: boolean }) => {
+    if (!user) return;
+    void markGrowth(l, kind, quiz, {
+      // (2단계) 오늘이 읽은 날로 남았다 — 읽은 날 한 줄 · 운동 달력 '1분 성장' 칸을 다시 읽는다
+      onReadDay: () => {
+        void qc.invalidateQueries({ queryKey: GROWTH_ME_KEY });
+        void qc.invalidateQueries({ queryKey: CAL2_KEY });
+      },
+      onStamp: (n) => toast.success(growthStampToast(n)),
+    }).then((n) => {
+      const cur = heartCountsRef.current;
+      if ((cur[l.id] ?? null) === n) return;
+      const next = { ...cur };
+      if (n === null) delete next[l.id];
+      else next[l.id] = n;
+      heartCountsRef.current = next;
+      setHeartCounts(next);
+    });
+  };
+
+  /** 글을 열었다 — 이 기기 + 서버 */
+  const seen = (l: GrowthLesson) => {
+    updateMarks((m) => markOpened(m, l.id, today));
+    send(l, "open");
+  };
+
+  // (2단계) 주소로 열기 — '/home?growth=1' = 오늘 글 · '/home?growth=날짜' = 그날 글(지난 7일 안일 때, 아니면 오늘 글)
+  const lessonId = lesson?.id ?? null;
+  useEffect(() => {
+    if (!focusParam || !lesson) return;
+    const focus = growthFocusOf(focusParam, today);
+    const next = new URLSearchParams(params);
+    next.delete("growth");
+    setParams(next, { replace: true });
+    if (!focus) return;
+    const past = focus.day === today ? null : (recent.find((r) => r.day === focus.day) ?? null);
+    setViewId(past ? past.lesson.id : null);
+    setPastOpen(false);
+    setOpen(true);
+    seen(past ? past.lesson : lesson);
+    // 글을 받은 뒤 한 번 — 주소에서 growth 를 지우면 다시 돌지 않는다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusParam, lessonId]);
 
   if (!lesson) return null;
 
@@ -149,26 +209,6 @@ const GrowthLessonCard = ({ className }: { className?: string }) => {
   const heartCount = heartCounts[shown.id] ?? null;
   /** O/X 날 — 아직 고르기 전이면 카드 앞면이 문제 */
   const faceQuiz = !done && lesson.quiz && !marks[lesson.id]?.q ? lesson.quiz : null;
-
-  /** 서버에 남긴다(보이지 않게 · 로그인했을 때만) — 답으로 온 좋아요 수가 달라졌을 때만 적어 둔다 */
-  const send = (l: GrowthLesson, kind: GrowthMarkKind, quiz?: { pick: GrowthPick; right: boolean }) => {
-    if (!user) return;
-    void markGrowth(l, kind, quiz).then((n) => {
-      const cur = heartCountsRef.current;
-      if ((cur[l.id] ?? null) === n) return;
-      const next = { ...cur };
-      if (n === null) delete next[l.id];
-      else next[l.id] = n;
-      heartCountsRef.current = next;
-      setHeartCounts(next);
-    });
-  };
-
-  /** 글을 열었다 — 이 기기 + 서버 */
-  const seen = (l: GrowthLesson) => {
-    updateMarks((m) => markOpened(m, l.id, today));
-    send(l, "open");
-  };
 
   const openDrawer = () => {
     setViewId(null);
@@ -411,6 +451,9 @@ const GrowthLessonCard = ({ className }: { className?: string }) => {
                 )}
               </section>
             )}
+
+            {/* (2단계) 읽은 날 — 쌓인 날과 다음 한 걸음만 (켠 지점 회원 · 하루라도 읽었을 때) */}
+            {daysLine && <p className="pb-1 text-center text-label text-muted-foreground">{daysLine}</p>}
           </div>
         </DrawerContent>
       </Drawer>
