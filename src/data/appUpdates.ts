@@ -18,6 +18,16 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261117-learn-calendar",
+    date: "2026-11-17",
+    title: "운동 달력 — 영상으로 배우기 한 날",
+    lines: [
+      "내 수업을 하거나 영상을 끝까지 본 날 달력에 ▶ 표시",
+      "날짜를 누르면 내 수업 몇 분 · 몇 동작 했는지 보여요",
+    ],
+    link: { to: "/mypage/attendance", label: "내 운동 기록 보기" },
+  },
+  {
     id: "20261117-growth-ox",
     date: "2026-11-17",
     title: "홈 — 「오늘의 1분 성장」 O/X · 좋아요 · 지난 글",
