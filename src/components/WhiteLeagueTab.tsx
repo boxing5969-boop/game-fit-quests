@@ -24,6 +24,7 @@ import TrainingDrillSheet from "@/components/TrainingDrillSheet";
 import LevelVideoMaster from "@/components/LevelVideoMaster";
 import CoachTodayCard from "@/components/CoachTodayCard";
 import LessonTodayCard from "@/components/lesson/LessonTodayCard";
+import LessonClassActions from "@/components/lesson/LessonClassActions";
 import TrainingShelf, { type ShelfWarmup } from "@/components/training/TrainingShelf";
 import LessonDayList from "@/components/lesson/LessonDayList";
 import LessonDaySheet from "@/components/lesson/LessonDaySheet";
@@ -144,7 +145,13 @@ const WhiteLeagueTab = ({ onOpenMissionVideos, warmups, onOpenWarmup }: WhiteLea
         onOpenDetail={() => setDetailView({ league: currentRank, level: currentLevel, detail: true })}
         onOpenVideos={() => setDetailView({ league: currentRank, level: currentLevel, detail: true })}
         // 📋 오늘(다음) 수업 — 대표님 일차별 매뉴얼 (2026-09-30). 수업이 없는 레벨이면 저절로 숨는다
-        extra={<LessonTodayCard />}
+        // 📥 오늘 수업 담기 · 자율 운동 = 내 수업 (2026-11-16 5단계) — 매뉴얼 동작이 있거나 오늘 출석했을 때만
+        extra={
+          <>
+            <LessonTodayCard />
+            <LessonClassActions />
+          </>
+        }
         // ② 내 레벨 — 레벨업까지 카드 · 레벨 n 훈련 자세히 보기 (코치 카드 안) → 아래 레벨 미션 영상 전체 · 전체 레벨 지도
         levelHeading={<TrainingSectionTitle>내 레벨</TrainingSectionTitle>}
       />

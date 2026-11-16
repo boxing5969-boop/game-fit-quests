@@ -18,6 +18,17 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261116-auto-class",
+    date: "2026-11-16",
+    title: "내 수업 — 자동으로 짜기 · 오늘 수업 담기",
+    lines: [
+      "시간 · 목표를 고르면 내 레벨에 맞춰 수업을 짜 드려요",
+      "「오늘 수업 담기」로 그날 동작을 집에서 복습해요",
+      "운동하러 온 날은 「자율 운동」으로 내 수업을 바로 열어요",
+    ],
+    link: { to: "/missions?learn=1&auto=1", label: "수업 짜기" },
+  },
+  {
     id: "20261116-pt-check",
     date: "2026-11-16",
     title: "PT 회원님 — PT 차감 안내",
