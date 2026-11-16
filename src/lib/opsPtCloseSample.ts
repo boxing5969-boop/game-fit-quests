@@ -4,7 +4,7 @@
  *   [확정] · [승인] 단추를 바로 눌러 볼 수 있다(실제 화면은 달이 끝나야 눌린다). 금액은 지어낸 예시 수당표(PT_SAMPLE_RATES).
  */
 import { withholding33 } from "./opsPt";
-import type { PtClose, PtCloseConfirm, PtCloseData, PtCloseHold, PtCloseLine } from "./opsPtClose";
+import type { PtClose, PtCloseConfirm, PtCloseData, PtCloseHold, PtCloseLine, PtStatementHead } from "./opsPtClose";
 import { PT_SAMPLE_COACH } from "./opsPtRecordSample";
 
 const nextMonthSecond = (today: string) => {
@@ -29,6 +29,12 @@ export const buildPtCloseSample = (today: string): PtCloseData => ({
   closes: [],
   sample: true,
 });
+
+/** 예시 명세서의 「지급하는 곳」 — 지어낸 사업주 정보 */
+export const PT_SAMPLE_HEAD: PtStatementHead = {
+  available: true,
+  employer: { biz_name: "예시 복싱짐", owner_name: "예시 대표", biz_number: "000-00-00000", address: "예시시 예시로 1", phone: "" },
+};
 
 export type PtCloseDemoAction =
   | { type: "confirm"; coachId: string; month: string; summary: PtCloseConfirm }

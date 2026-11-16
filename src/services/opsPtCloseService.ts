@@ -1,6 +1,7 @@
 /**
  * 153운영본부 · PT 월 마감 — 서버 함수 감싸기 (2026-11-16, DB 20261116155618_ops_pt_close.sql)
  *   ops_pt_close_list · ops_pt_close_confirm(코치 확정) · ops_pt_close_approve(승인 = 잠금) · ops_pt_close_reopen(승인 취소)
+ *   · ops_pt_statement_head(2-3 명세서의 「지급하는 곳」)
  *   줄 만들기 · 견줌은 src/lib/opsPtClose.ts — 여기는 읽고 쓰기만.
  *
  *   서버에 함수가 아직 없으면(PGRST202 — DB 적용 전 · 옛 DB 를 보는 preview-* 미리보기) available=false — 마감 화면을 그리지 않는다
@@ -9,8 +10,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { translateError } from "@/lib/errorMessages";
-import type { PtCloseConfirm, PtCloseData, PtCloseHold, PtCloseLine } from "@/lib/opsPtClose";
-import { applyPtCloseDemo, buildPtCloseSample, type PtCloseDemoAction } from "@/lib/opsPtCloseSample";
+import type { PtCloseConfirm, PtCloseData, PtCloseHold, PtCloseLine, PtEmployer, PtStatementHead } from "@/lib/opsPtClose";
+import { PT_SAMPLE_HEAD, applyPtCloseDemo, buildPtCloseSample, type PtCloseDemoAction } from "@/lib/opsPtCloseSample";
 import { OPS_KEY } from "./opsService";
 
 const kstToday = (): string => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul" }).format(new Date());
@@ -59,6 +60,30 @@ export const useOpsPtCloses = (branch: string | null, { enabled = true, demo = f
         available: true,
         coaches: d.coaches ?? [],
         closes: d.closes ?? [],
+      };
+    },
+  });
+
+/**
+ * PT 명세서의 「지급하는 곳」(2-3 · DB ops_pt_statement_head) — 돈을 보는 분과 그 지점 PT 코치 본인만.
+ *   서버에 함수가 없거나 볼 수 없는 계정이면 employer=null — 명세서에는 지점 이름만 나온다(막지 않는다).
+ */
+export const useOpsPtStatementHead = (branch: string | null, { enabled = true, demo = false }: PtCloseOpts = {}) =>
+  useQuery({
+    queryKey: demo ? ([...OPS_KEY, "pt-statement-head", "demo"] as const) : ([...OPS_KEY, "pt-statement-head", branch] as const),
+    enabled: demo || (enabled && !!branch),
+    staleTime: demo ? Infinity : 300_000,
+    retry: false,
+    queryFn: async (): Promise<PtStatementHead> => {
+      if (demo) return PT_SAMPLE_HEAD;
+      const { data, error } = await rpc("ops_pt_statement_head", { p_branch: branch });
+      if (error) return { available: !isMissingFn(error), employer: null };
+      const e = ((data ?? {}) as { employer?: Partial<PtEmployer> | null }).employer;
+      return {
+        available: true,
+        employer: e
+          ? { biz_name: e.biz_name ?? "", owner_name: e.owner_name ?? "", biz_number: e.biz_number ?? "", address: e.address ?? "", phone: e.phone ?? "" }
+          : null,
       };
     },
   });

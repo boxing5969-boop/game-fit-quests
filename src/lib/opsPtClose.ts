@@ -10,8 +10,12 @@
  *   줄마다 열쇠 = 수업 기록 id:몇 번째 회(opsPtPay.ts PtPayLine.id). 승인한 달들의 줄을 모으면 「이 수업에 나갔나」가 나온다
  *   — 같은 수업은 두 번 넣지 않는다(서버도 다시 본다).
  *   짝짓기 · 줄 만들기는 opsPtPay.ts — 이 파일은 닫은 달의 줄과 견줘 한 달의 「명세」를 만든다. 서버는 잠그고 지킨다.
+ *
+ *   2-3 PT 명세서(2026-11-16 대표님 「다음작업시작」): 승인한 달의 줄을 회원별로 묶은 한 장 — ptStatementGroups ·
+ *   지급 예정일 ptPayDate(다음 달 10일) · 세무 담당에게 보낼 글 ptStatementTaxText(회원 이름 없이 금액 네 가지) ·
+ *   코치 화면 맨 위에 명세서를 띄울 달 ptStatementFreshYm. 종이 모양은 components/ops/OpsPtStatementDoc.tsx.
  */
-import { withholding33, type OpsPtEvent, type OpsPtRate } from "./opsPt";
+import { classifyTicket, withholding33, type OpsPtEvent, type OpsPtRate } from "./opsPt";
 import { ptPayFirstRecordMonth, ptPayHoldText, ptPayLinesAll, ptPayMonth, ptPayMonthCovered, type PtPayLine, type PtPayMonth } from "./opsPtPay";
 import { addDays, type PtExtra, type PtMatchResult, type PtRecordData } from "./opsPtRecord";
 
@@ -443,6 +447,114 @@ export const ptStatementStatusText = (st: PtStatement): string => {
 /** 관리자 「확인할 것」 한 줄 — "12월 PT 수당 승인 대기" · "12월 PT 수당 · 코치 확정 전" */
 export const ptCloseTodoText = (st: PtStatement): string => `${monthNo(st.ym)}월 PT 수당 ${st.status === "confirmed" ? "승인 대기" : "· 코치 확정 전"}`;
 
+// ───────────────────────── 2-3 PT 명세서 ─────────────────────────
+/** 수당 지급일 — 수업한 달의 다음 달 10일 (11/11 결정: 3일 코치 확정 → 4일 승인 → 5일 세무 → 10일 지급) */
+export const PT_PAY_DAY = 10;
+/** 그 달(YYYY-MM) 수당의 지급 예정일 (YYYY-MM-DD) */
+export const ptPayDate = (ym: string): string => `${nextYm(ym)}-${String(PT_PAY_DAY).padStart(2, "0")}`;
+
+const prevYm = (ym: string) => {
+  const y = Number(ym.slice(0, 4));
+  const m = Number(ym.slice(5, 7));
+  return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, "0")}`;
+};
+
+/** 막 나온 명세서의 달(YYYY-MM) — 바로 지난달이 승인됐고 오늘이 지급일(10일)까지일 때. 코치 화면 맨 위에 띄운다 */
+export const ptStatementFreshYm = (closes: PtClose[], coachId: string, today: string): string | null => {
+  if (Number(today.slice(8, 10)) > PT_PAY_DAY) return null;
+  const ym = prevYm(ymOf(today));
+  return closes.some((c) => c.coach_staff_id === coachId && c.status === "approved" && ymOf(c.month) === ym) ? ym : null;
+};
+
+/** 명세서의 「지급하는 곳」 — 계약서에 쓰는 사업주 정보(ops_employers)에서 서명만 뺀 것 */
+export interface PtEmployer {
+  biz_name: string;
+  owner_name: string;
+  biz_number: string;
+  address: string;
+  phone: string;
+}
+
+export interface PtStatementHead {
+  /** 서버에 ops_pt_statement_head 가 있는가 — 없으면(적용 전 · 옛 DB 미리보기) 지점 이름만 쓴다 */
+  available: boolean;
+  employer: PtEmployer | null;
+}
+
+export interface PtStatementItem {
+  k: string;
+  date: string;
+  kind: string;
+  t: PtCloseLineType;
+}
+
+/** 명세서의 회원 한 줄 — 같은 회원 · 같은 수업권 · 같은 1회 수당끼리 */
+export interface PtStatementGroup {
+  key: string;
+  name: string;
+  ticket: string | null;
+  /** 1회 수당 — 금액을 못 보는 화면은 null */
+  rate: number | null;
+  /** 수업한 날 순 */
+  items: PtStatementItem[];
+  uses: number;
+  amount: number | null;
+}
+
+/** 줄을 회원별로 묶는다(이름 순) — 코치가 「회원별 날짜 · 종류 · 합계」를 보고 확정하고, 명세서도 이 모양이다 */
+export const ptStatementGroups = (lines: PtCloseLine[]): PtStatementGroup[] => {
+  const map = new Map<string, PtStatementGroup>();
+  for (const l of [...lines].sort((a, b) => a.date.localeCompare(b.date) || a.k.localeCompare(b.k))) {
+    const rate = l.rate ?? null;
+    const key = `${l.name}|${l.ticket ?? ""}|${rate ?? ""}`;
+    const g = map.get(key) ?? { key, name: l.name, ticket: l.ticket ?? null, rate, items: [], uses: 0, amount: rate == null ? null : 0 };
+    g.items.push({ k: l.k, date: l.date, kind: l.kind, t: l.t });
+    g.uses += 1;
+    if (g.amount != null) g.amount += rate ?? 0;
+    map.set(key, g);
+  }
+  return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, "ko") || a.items[0].date.localeCompare(b.items[0].date) || a.key.localeCompare(b.key));
+};
+
+/** "퍼스널 트레이닝 20회권" → "1:1 20회" · 팀 수업권은 "4인 팀 10회" */
+export const ptTicketText = (ticket: string | null | undefined): string => {
+  if (!ticket) return "";
+  const k = classifyTicket(ticket);
+  const n = k.sessions ? ` ${k.sessions}회` : "";
+  return k.teamSize === 1 ? `1:1${n}` : `${k.teamSize}인 팀${n}`;
+};
+
+/** 이름 뒤에 「코치」를 붙인다(이미 붙어 있으면 그대로) */
+export const ptCoachLabel = (name: string | null | undefined): string => {
+  const n = (name ?? "").trim();
+  return !n ? "코치" : /코치(님)?$/.test(n) ? n : `${n} 코치`;
+};
+
+const wonText = (n: number) => `${n.toLocaleString("ko-KR")}원`;
+const krDay = (d: string) => `${Number(d.slice(0, 4))}년 ${Number(d.slice(5, 7))}월 ${Number(d.slice(8, 10))}일`;
+
+/**
+ * 세무 담당에게 보낼 글 — 받는 분 · 금액 네 가지 · 지급 예정일만(회원 이름은 넣지 않는다). 승인한 달이고 금액을 보는 화면만.
+ */
+export const ptStatementTaxText = (p: { branch: string; coachName: string | null | undefined; st: PtStatement }): string | null => {
+  const { st } = p;
+  if (!st.locked || st.gross == null || st.net == null || !st.tax) return null;
+  const settle = st.settle.length;
+  return [
+    `[${p.branch}] PT 수당 — ${Number(st.ym.slice(0, 4))}년 ${monthNo(st.ym)}월 수업분`,
+    `받는 분: ${ptCoachLabel(p.coachName)} (사업소득 3.3%)`,
+    `지급액(3.3% 전): ${wonText(st.gross)} · PT ${st.uses}회${settle > 0 ? ` · 정산 ${settle}회 뺌` : ""}`,
+    `소득세 3%: ${wonText(st.tax.income)}`,
+    `지방소득세 0.3%: ${wonText(st.tax.local)}`,
+    `실지급액: ${wonText(st.net)}`,
+    `지급 예정일: ${krDay(ptPayDate(st.ym))}`,
+  ].join("\n");
+};
+
+/** 명세서 PDF 파일 이름 */
+export const ptStatementFileName = (ym: string, coachName: string | null | undefined): string =>
+  `PT수당명세서_${ym}_${(coachName ?? "").replace(/[\\/:*?"<>|\s]+/g, "") || "코치"}.pdf`;
+
 /** 한 지점의 마감 장부 — 기록(넉 달) · 마감 줄 · 수당표를 묶어 코치 · 달마다 명세를 꺼낸다 */
 export interface PtCloseBook {
   today: string;
@@ -450,6 +562,8 @@ export interface PtCloseBook {
   startYm: (coachId: string) => string;
   /** 마감할 차례인 달(YYYY-MM-01) — 없으면 null */
   due: (coachId: string) => string | null;
+  /** 막 나온 명세서의 달(YYYY-MM-01) — 바로 지난달이 승인됐고 지급일(10일)이 지나기 전. 없으면 null */
+  fresh: (coachId: string) => string | null;
   /**
    * 그 코치 · 그 달(YYYY-MM-01)의 명세. 받은 기록 창(넉 달) 밖의 달은 기록이 일부만 있다 —
    *   잠긴 달은 승인본만 보여 주고(뒤에 달라진 것은 따지지 않는다), 안 잠긴 달은 셈하지 않는다(null).
@@ -476,6 +590,10 @@ export const ptCloseBook = (
     startYm,
     due: (coachId) => {
       const ym = ptCloseDueYm(closes, coachId, startYm(coachId), today);
+      return ym ? `${ym}-01` : null;
+    },
+    fresh: (coachId) => {
+      const ym = ptStatementFreshYm(closes, coachId, today);
       return ym ? `${ym}-01` : null;
     },
     statement: (coachId, month, monthEvents) => {

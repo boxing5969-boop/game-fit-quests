@@ -9,9 +9,16 @@ import {
   ptCloseSnapshot,
   ptCloseStartYm,
   ptCloseTodoText,
+  ptCoachLabel,
+  ptPayDate,
   ptStatement,
   ptStatementChip,
+  ptStatementFileName,
+  ptStatementFreshYm,
+  ptStatementGroups,
   ptStatementStatusText,
+  ptStatementTaxText,
+  ptTicketText,
   type PtClose,
   type PtCloseData,
   type PtStatement,
@@ -585,5 +592,107 @@ describe("예시 화면 — 이 기기 안에서만 확정 · 승인 · 취소",
     expect(back?.status).toBe("confirmed");
     expect(back?.locked).toBe(false);
     expect(back?.close?.reopen_reason).toBe("예시");
+  });
+});
+
+describe("2-3 PT 명세서 — 승인한 달의 줄을 한 장으로", () => {
+  // 12월: 가온 2회(12/3 · 12/10) · 나래 1회(12/5 노쇼) — 승인. 1월: 다솜 12/20 이 뒤늦게 풀림(보정)
+  const decData = data("2027-01-02", {
+    sessions: [ses("s1", "a", "2026-12-03"), ses("s2", "b", "2026-12-05", { kind: "noshow" }), ses("s3", "a", "2026-12-10"), ses("s4", "c", "2026-12-20")],
+    events: [ev("a", "2026-12-04"), ev("b", "2026-12-05"), ev("a", "2026-12-11")],
+    attendance: [came("a", "2026-12-03"), came("a", "2026-12-10"), came("c", "2026-12-20")],
+  });
+  const open = stmt(decData, "2026-12-01");
+  const dec = { ...approved(open), approved_at: "2027-01-04T01:00:00+00:00" };
+  const locked = stmt(decData, "2026-12-01", { closes: [dec] });
+
+  it("회원별 묶음 — 이름 순 · 날짜 순 · 횟수와 금액", () => {
+    const g = ptStatementGroups(locked.pay);
+    expect(g.map((x) => [x.name, x.uses, x.amount, x.rate, x.items.map((i) => `${i.date}:${i.kind}`).join(",")])).toEqual([
+      ["가온", 2, 60000, 30000, "2026-12-03:lesson,2026-12-10:lesson"],
+      ["나래", 1, 30000, 30000, "2026-12-05:noshow"],
+    ]);
+    // 같은 회원이라도 1회 수당이 다르면 줄을 나눈다
+    const mixed = ptStatementGroups([
+      { k: "x:0", sid: "x", i: 0, t: "line", rate: 30000, date: "2026-12-03", name: "가온", kind: "lesson", ticket: T20 },
+      { k: "y:0", sid: "y", i: 0, t: "line", rate: 40000, date: "2026-12-01", name: "가온", kind: "lesson", ticket: "퍼스널 트레이닝 10회권" },
+      { k: "z:0", sid: "z", i: 0, t: "line", rate: 30000, date: "2026-12-08", name: "가온", kind: "lesson", ticket: T20 },
+    ]);
+    expect(mixed.map((x) => [x.ticket, x.uses, x.amount])).toEqual([
+      ["퍼스널 트레이닝 10회권", 1, 40000],
+      [T20, 2, 60000],
+    ]);
+    // 금액을 못 보는 화면(지점장) — 횟수만
+    const blind = ptStatementGroups(locked.pay.map(({ rate: _r, ...l }) => ({ ...l, rate: null })));
+    expect(blind.map((x) => [x.name, x.uses, x.amount])).toEqual([
+      ["가온", 2, null],
+      ["나래", 1, null],
+    ]);
+    expect(ptStatementGroups([])).toEqual([]);
+  });
+
+  it("지급 예정일 — 수업한 달의 다음 달 10일", () => {
+    expect(ptPayDate("2026-12")).toBe("2027-01-10");
+    expect(ptPayDate("2027-01")).toBe("2027-02-10");
+  });
+
+  it("막 나온 명세서 — 바로 지난달이 승인됐고 지급일까지만", () => {
+    expect(ptStatementFreshYm([dec], COACH, "2027-01-04")).toBe("2026-12");
+    expect(ptStatementFreshYm([dec], COACH, "2027-01-10")).toBe("2026-12");
+    expect(ptStatementFreshYm([dec], COACH, "2027-01-11")).toBeNull();
+    expect(ptStatementFreshYm([dec], COACH, "2027-02-03")).toBeNull();
+    expect(ptStatementFreshYm([dec], COACH2, "2027-01-04")).toBeNull();
+    expect(ptStatementFreshYm([confirmed(open)], COACH, "2027-01-04")).toBeNull();
+  });
+
+  it("세무 자료 — 금액 네 가지 · 지급 예정일(회원 이름은 없다) · 승인한 달만", () => {
+    const text = ptStatementTaxText({ branch: "153복싱짐 예시점", coachName: "예시", st: locked });
+    expect(text).toBe(
+      [
+        "[153복싱짐 예시점] PT 수당 — 2026년 12월 수업분",
+        "받는 분: 예시 코치 (사업소득 3.3%)",
+        "지급액(3.3% 전): 90,000원 · PT 3회",
+        "소득세 3%: 2,700원",
+        "지방소득세 0.3%: 270원",
+        "실지급액: 87,030원",
+        "지급 예정일: 2027년 1월 10일",
+      ].join("\n"),
+    );
+    expect(text).not.toMatch(/가온|나래|다솜/);
+    expect(ptStatementTaxText({ branch: "x", coachName: "예시", st: open })).toBeNull();
+    expect(ptStatementTaxText({ branch: "x", coachName: "예시", st: stmt(decData, "2026-12-01", { closes: [dec], rates: null }) })?.includes("90,000원")).toBe(
+      true,
+    );
+  });
+
+  it("이름표 · 수업권 글 · 파일 이름", () => {
+    expect(ptCoachLabel("예시")).toBe("예시 코치");
+    expect(ptCoachLabel("예시 코치")).toBe("예시 코치");
+    expect(ptCoachLabel("")).toBe("코치");
+    expect(ptCoachLabel(null)).toBe("코치");
+    expect(ptTicketText(T20)).toBe("1:1 20회");
+    expect(ptTicketText(null)).toBe("");
+    expect(ptStatementFileName("2026-12", "예시 코치")).toBe("PT수당명세서_2026-12_예시코치.pdf");
+    expect(ptStatementFileName("2026-12", null)).toBe("PT수당명세서_2026-12_코치.pdf");
+  });
+
+  it("장부 — 막 나온 명세서의 달", () => {
+    const cd: PtCloseData = {
+      branch: "예시 지점",
+      on: true,
+      available: true,
+      first_month: "2026-12-01",
+      today: "2027-01-05",
+      manage: false,
+      pay: false,
+      me_staff: COACH,
+      coaches: [{ id: COACH, start: "2026-12-01" }],
+      closes: [dec],
+    };
+    const book = ptCloseBook(decData, matchPtRecord(decData), cd, rates, { viewerCoach: COACH });
+    expect(book.fresh(COACH)).toBe("2026-12-01");
+    expect(book.due(COACH)).toBeNull();
+    expect(book.statement(COACH, "2026-12-01")?.net).toBe(87030);
+    expect(ptCloseBook(decData, matchPtRecord(decData), { ...cd, today: "2027-01-12" }, rates).fresh(COACH)).toBeNull();
   });
 });
