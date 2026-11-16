@@ -21,6 +21,12 @@ export type PtNoEntryReason = "door_open" | "manual" | "other";
 
 /** 차감을 앱이 알아채기까지 걸릴 수 있는 날 수 */
 export const PT_LAG_DAYS = 2;
+/**
+ * 차감이 입장보다 먼저 잡힌 수업 — 차감이 잡힌 뒤 이 시간 안의 그날 첫 입장을 그 수업으로 본다(2026-11-16).
+ *   코치가 수업 직전에 차감했고 그사이 차감이 읽힌 경우. 더 늦은 입장은 다른 일로 온 것일 수 있어 잇지 않는다
+ *   (서버 자동 기록 _ops_pt_auto_record 와 같은 값 — 20261116153257_ops_pt_auto_after_entry.sql).
+ */
+export const PT_PRE_DEDUCT_HOURS = 3;
 /** 출석 체크 없는 수업 — 한 달에 이 횟수를 넘으면 대표님께 표시 (2026-11-11 대표님 결정 4) */
 export const PT_NO_ENTRY_MONTH_LIMIT = 3;
 
@@ -235,6 +241,7 @@ const entriesOf = (entry: Map<string, string>, userId: string): PtGuess[] => {
 /**
  * 차감의 실제 수업 날 어림 — 차감이 잡힌 날(workDate)에서 이틀 앞까지의 입장 중, 앱이 차감을 알아채기 전(detectedAt)이고
  *   skip(그날 기록이 이미 있음 등)이 아닌 가장 늦은 것. 차감은 회원마다 하루~이틀에 한 번 읽혀 저녁 수업이 다음 날로 잡힌다.
+ *   그런 입장이 없으면: 차감이 잡힌 그날, 잡힌 뒤 PT_PRE_DEDUCT_HOURS 안의 첫 입장(차감이 입장보다 먼저 잡힌 수업).
  */
 export const ptGuessClassDay = (
   entries: PtGuess[],
@@ -251,7 +258,14 @@ export const ptGuessClassDay = (
     if (Number.isNaN(t) || t >= limit || skip(e.date)) continue;
     if (!best || e.date > best.date) best = e;
   }
-  return best;
+  if (best || Number.isNaN(until)) return best;
+  // 차감이 먼저 잡힌 수업 — entries 는 날마다 첫 입장이다(서버와 같은 기준)
+  for (const e of entries) {
+    if (e.date !== workDate || skip(e.date)) continue;
+    const t = msOf(e.at);
+    if (!Number.isNaN(t) && t >= until && t < until + PT_PRE_DEDUCT_HOURS * 3_600_000) return e;
+  }
+  return null;
 };
 
 /**
