@@ -60,6 +60,8 @@ const FeedbackPage = lazyWithRetry(() => import("@/pages/FeedbackPage"));
 const NoticesPage = lazyWithRetry(() => import("@/pages/NoticesPage"));
 const BranchInfoPage = lazyWithRetry(() => import("@/pages/BranchInfoPage"));
 const InquiriesPage = lazyWithRetry(() => import("@/pages/InquiriesPage"));
+// 153 마켓 — 복싱 용품 주문 · 데스크 결제 · 체육관 수령 (2026-11-17 · 우리 지점 마켓이 켜져 있을 때만 메뉴에 보인다)
+const MarketPage = lazyWithRetry(() => import("@/pages/MarketPage"));
 const SurveyPage = lazyWithRetry(() => import("@/pages/SurveyPage"));
 const HallOfFamePage = lazyWithRetry(() => import("@/pages/HallOfFamePage"));
 const MyPage = lazyWithRetry(() => import("@/pages/MyPage"));
@@ -197,8 +199,16 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
-  const { role, loading } = useAuth();
-  if (loading) return <RouteLoader />;
+  const { user, role, loading } = useAuth();
+  // 알림 · 바로가기로 처음 열 때는 로그인(loading)이 끝난 뒤에도 역할을 잠깐 못 읽은 상태다 — 그때 넘기면 코치진도 홈으로 가 버린다.
+  // 역할이 올 때까지 기다린다(못 읽으면 4초 뒤 홈으로) — TrainingLibraryRoute 와 같은 기다림 (2026-11-17 마켓 새 주문 알림 /manager?tab=market)
+  const [roleWaitOver, setRoleWaitOver] = useState(false);
+  useEffect(() => {
+    if (role) return;
+    const t = window.setTimeout(() => setRoleWaitOver(true), 4000);
+    return () => window.clearTimeout(t);
+  }, [role]);
+  if (loading || (user && !role && !roleWaitOver)) return <RouteLoader />;
   if (!isManagerRole(role)) return <Navigate to="/home" replace />;
   return <>{children}</>;
 };
@@ -396,6 +406,7 @@ const AppRoutes = () => {
         <Route path="/branch" element={<ProtectedRoute><BranchInfoPage /></ProtectedRoute>} />
         <Route path="/inquiries" element={<ProtectedRoute><InquiriesPage /></ProtectedRoute>} />
         <Route path="/inquiries/:id" element={<ProtectedRoute><InquiriesPage /></ProtectedRoute>} />
+        <Route path="/market" element={<ProtectedRoute><MarketPage /></ProtectedRoute>} />
         <Route path="/handwrap" element={<ProtectedRoute><HandWrapGuidePage /></ProtectedRoute>} />
         <Route path="/office" element={<ProtectedRoute><OfficePage /></ProtectedRoute>} />
         <Route path="/office/room" element={<ProtectedRoute><OfficeRoomPage /></ProtectedRoute>} />

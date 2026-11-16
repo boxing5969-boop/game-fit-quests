@@ -4,6 +4,8 @@ import DailyOperationsBoard from "@/components/DailyOperationsBoard";
 import AtRiskMembersPanel from "@/components/AtRiskMembersPanel";
 import GoodsOrdersPanel from "@/components/admin/GoodsOrdersPanel";
 import GoodsAdminEntryCard from "@/components/admin/GoodsAdminEntryCard";
+import MarketOrdersPanel from "@/components/admin/MarketOrdersPanel";
+import MarketAdminEntryCard from "@/components/admin/MarketAdminEntryCard";
 import DailyReportCard from "@/components/DailyReportCard";
 import TodayListPanel from "@/components/manager/TodayListPanel";
 import Test153MeasurePanel from "@/components/test153/Test153MeasurePanel";
@@ -56,8 +58,9 @@ type SortType = "recent_submission" | "level_desc" | "pending_count";
 // test153 — '153 PB 측정' 카드를 눌러 여는 코치 측정 화면 (2026-10-15)
 // broadcast — '유효회원 전체 메시지' 카드 (대표님·지점장만, 2026-10-15)
 // goods — '굿즈 신청' 카드(사전예약이 열려 있는 동안 · 마감 뒤 45일), 2026-11-12
-type MainTab = "members" | "inbox" | "level_review" | "operations" | "at_risk" | "today_new" | "today_submissions" | "test153" | "broadcast" | "goods";
-const MAIN_TABS: readonly MainTab[] = ["members", "inbox", "level_review", "operations", "at_risk", "today_new", "today_submissions", "test153", "broadcast", "goods"];
+// market — '153 마켓 주문함' 카드(우리 지점 마켓이 켜져 있을 때) · 새 주문 알림 링크 /manager?tab=market, 2026-11-17
+type MainTab = "members" | "inbox" | "level_review" | "operations" | "at_risk" | "today_new" | "today_submissions" | "test153" | "broadcast" | "goods" | "market";
+const MAIN_TABS: readonly MainTab[] = ["members", "inbox", "level_review", "operations", "at_risk", "today_new", "today_submissions", "test153", "broadcast", "goods", "market"];
 /** 알림에서 바로 여는 탭 — /manager?tab=level_review (타이틀매치 심사 신청 알림, 2026-10-14) */
 const tabFromParam = (raw: string | null): MainTab | null =>
   MAIN_TABS.find((t) => t === raw) ?? null;
@@ -794,6 +797,9 @@ const BranchManagerHome = () => {
         {/* 🧥 굿즈 신청 — 데스크 결제 · 받음 처리 · 업체 발주표 (2026-11-12, 사전예약 기간에만) */}
         <GoodsAdminEntryCard onOpen={() => openTab("goods")} />
 
+        {/* 🛍 153 마켓 주문함 — 결제 확인 · 발주 · 전달 (2026-11-17, 우리 지점 마켓이 켜져 있을 때만) */}
+        <MarketAdminEntryCard onOpen={() => openTab("market")} />
+
         {/* 🧠 전략 회의 — 코치진 지시·전략 · 오늘 프로그램 · 수업 기록 · 영상 (2026-10-16 대표님 · 10-29 지점 회의실 '전략 회의' 탭으로 옮김) */}
         <button
           type="button"
@@ -896,6 +902,7 @@ const BranchManagerHome = () => {
         )}
         {mainTab === "broadcast" && canBroadcast && <BroadcastNotification />}
         {mainTab === "goods" && <GoodsOrdersPanel />}
+        {mainTab === "market" && <MarketOrdersPanel />}
         {(mainTab === "today_new" || mainTab === "today_submissions") && (
           <TodayListPanel
             kind={mainTab === "today_new" ? "new" : "submissions"}
@@ -962,6 +969,9 @@ const BranchManagerHome = () => {
 
           {/* 🧥 굿즈 신청 (2026-11-12, 사전예약 기간에만) */}
           <GoodsAdminEntryCard onOpen={() => openTab("goods")} />
+
+          {/* 🛍 153 마켓 주문함 (2026-11-17, 우리 지점 마켓이 켜져 있을 때만) */}
+          <MarketAdminEntryCard onOpen={() => openTab("market")} />
 
           {canBroadcast && (
             <button
@@ -1030,6 +1040,7 @@ const BranchManagerHome = () => {
           )}
           {mainTab === "broadcast" && canBroadcast && <BroadcastNotification />}
           {mainTab === "goods" && <GoodsOrdersPanel />}
+          {mainTab === "market" && <MarketOrdersPanel />}
           {(mainTab === "today_new" || mainTab === "today_submissions") && (
             <TodayListPanel
               kind={mainTab === "today_new" ? "new" : "submissions"}

@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDmSummary } from "@/hooks/useDm";
 import { useLessonDays } from "@/hooks/useLessonDays";
+import { useMarketOn } from "@/services/marketOn";
 import { youtubeThumb } from "@/hooks/useLevelVideos";
 import { isManagerRole } from "@/lib/rankLabels";
 import { levelShort, resolveDay } from "@/lib/lessonDays";
@@ -85,14 +86,16 @@ export function useAppSearchEntries(enabled = true) {
     queryFn: fetchSearchVideos,
   });
   const lessons = useLessonDays(enabled);
+  const market = useMarketOn();
 
   const viewer = useMemo(
     () => ({
       staff: isManagerRole(role ?? null),
       diet: !!profile?.diet_program_enabled,
       dm: dm?.enabled !== false,
+      market,
     }),
-    [role, profile?.diet_program_enabled, dm?.enabled],
+    [role, profile?.diet_program_enabled, dm?.enabled, market],
   );
 
   const entries = useMemo<SearchEntry[]>(() => {

@@ -23,6 +23,7 @@ import { useAppUpdates } from "@/hooks/useAppUpdates";
 import { useMenuLayout } from "@/hooks/useMenuLayout";
 import { useStrategyBadge } from "@/services/strategyService";
 import { useOfficeMe } from "@/services/officeService";
+import { useMarketOn } from "@/services/marketOn";
 import { isManagerRole } from "@/lib/rankLabels";
 import {
   MAX_FOLDER_ITEMS,
@@ -178,6 +179,9 @@ const HomeMenuGrid = ({ variant = "card", onNavigate }: Props) => {
   // 공지사항 칸 — 아직 안 본 앱 업데이트가 있으면 빨간 점 (lib/appUpdates · 2026-11-15)
   const { hasNew: updatesNew } = useAppUpdates();
 
+  // 153 마켓 칸 — 우리 지점 마켓이 켜져 있을 때만 (서버 market_home · 2026-11-17)
+  const market = useMarketOn();
+
   const viewer: MenuViewer = useMemo(
     () => ({
       diet,
@@ -186,8 +190,9 @@ const HomeMenuGrid = ({ variant = "card", onNavigate }: Props) => {
       dm: !dmOff,
       manager: isManagerRole(role),
       admin: role === "admin" || role === "super_admin",
+      market,
     }),
-    [diet, staff, office, dmOff, role],
+    [diet, staff, office, dmOff, role, market],
   );
 
   const { layout, save } = useMenuLayout();
