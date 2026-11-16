@@ -18,6 +18,19 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261116-pt-statement",
+    date: "2026-11-16",
+    title: "근무 — PT 수당 명세서 한 장 (PDF)",
+    lines: [
+      "승인한 달을 열면 PT 수당 명세서 한 장이 나와요",
+      "코치는 근무 맨 위 안내에서 열고 PDF로 저장 · 보내기",
+      "첫 명세서는 12월 수업분 — 1월 초에 나와요",
+    ],
+    link: { to: "/office?tab=work", label: "근무 탭 열기" },
+    audience: "staff",
+    branches: SEOLLEUNG,
+  },
+  {
     id: "20261116-home-next-level",
     date: "2026-11-16",
     title: "홈 — 다음 레벨까지 · 이번 레벨 미션",
