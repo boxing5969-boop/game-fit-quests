@@ -12,7 +12,7 @@
  *   자료는 한 곳 — useOpsPlansRange(서버 ops_plans_range · 3-2 함수가 없으면 주마다 받아 합침, 연간은 숨김).
  *   코치님끼리는 서로 일정이 안 보인다(10/29 근무 시간 비공개와 같은 결). 일정은 근무 시간 · 급여와 따로 — 쉰 날 인정 · 대타 · 연장은 「근무」 탭.
  *   계산(반복 펼치기 · 하루 정리 · 달력 표시)은 src/lib/opsPlans.ts · opsRecur.ts · opsTimeGrid.ts.
- *   맨 위 「오늘 만날 회원」(2026-11-12): OpsMeetToday · 맨 아래 「회원 달력」(2-2): OpsCalEvents · 맨 끝 「휴대폰 캘린더」(3-1): OpsPhoneCalendar.
+ *   맨 위 「오늘의 한마디」(2026-11-17 · 오늘의 1분 성장 2단계): OpsGrowthLine · 「오늘 만날 회원」(2026-11-12): OpsMeetToday · 맨 아래 「회원 달력」(2-2): OpsCalEvents · 맨 끝 「휴대폰 캘린더」(3-1): OpsPhoneCalendar.
  *   캘린더 3-3(2026-11-13 「남은거 진행하자」 — 함께 쓰기, 조각은 OpsPlanTogether.tsx):
  *     · 답할 초대 카드 · 초대 응답 시트 · 알림 링크 ?plan=<id>(&d=) = 내 일정이면 고치기, 초대면 답하기
  *     · 코치님도 「팀」 보기(사람 × 월~일 — 다른 분은 '바쁨'만, 제목 없이) · 시간 찾기 · 캘린더 켜고 끄기(DB) · 기본 알림
@@ -106,6 +106,7 @@ import {
 import OpsPlanAgenda from "./OpsPlanAgenda";
 import OpsPlanYear from "./OpsPlanYear";
 import { PlanScopeAsk, PlanSearchSheet, PlanToolsRow, PlanTrashSheet } from "./OpsPlanTools";
+import OpsGrowthLine from "./OpsGrowthLine";
 import OpsMeetToday from "./OpsMeetToday";
 import OpsCalEvents from "./OpsCalEvents";
 import OpsPhoneCalendar from "./OpsPhoneCalendar";
@@ -437,6 +438,9 @@ const OpsPlanTab = () => {
 
       {/* 3-3 — 답할 초대 (아직 답 안 한 초대 · 앞으로 있는 것) */}
       <PlanInvitesCard invites={data.invites ?? []} onOpen={(p, d) => setInvite({ plan: p, date: d })} />
+
+      {/* 오늘의 한마디 — 「오늘의 1분 성장」 그날 글의 한 문장(켠 지점 지도진 · 대표님, 꺼진 지점이면 안 그림) */}
+      <OpsGrowthLine branch={data.branch} />
 
       {/* 오늘 만날 회원 — 켠 지점 지도진 · 대표님, 없으면 안 그림 */}
       <OpsMeetToday branch={data.branch} />

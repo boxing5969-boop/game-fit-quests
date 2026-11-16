@@ -25,7 +25,7 @@ import LiveLevelUpInterrupt, {
 } from "@/components/liveBoard/LiveLevelUpInterrupt";
 import LiveBoardTestPanel from "@/components/liveBoard/LiveBoardTestPanel";
 import LiveBoardQrCard from "@/components/liveBoard/LiveBoardQrCard";
-import LiveBoardGoodsCard from "@/components/liveBoard/LiveBoardGoodsCard";
+import LiveBoardSideSlot from "@/components/liveBoard/LiveBoardSideSlot";
 import LaunchEventBoard from "@/components/liveBoard/LaunchEventBoard";
 import { isPilotBranch } from "@/lib/pilotBranches";
 import { STAFF_CHAMPION_LEVEL, honorTitle } from "@/lib/staffDisplay";
@@ -1381,7 +1381,7 @@ const LiveBoardPage = () => {
         {/* ═══ Center: Main area — 명예의 전당 sticky bottom + 위쪽만 스크롤 ═══ */}
         <div className="flex flex-col min-w-0 overflow-hidden flex-1">
           {/* 2번 화면(TV2): 스포트라이트 대신 런칭 이벤트 보드 — ① 출석왕 ② 앱 활동왕 ③ 닉네임 좋아요왕 (2026-09-23 대표님 지시).
-              아래 띠(오늘 다녀간 회원·COACHING STAFF·명예의 전당)는 그대로 둔다. 오른쪽 패널은 2026-11-12 부터 플리스 안내 1/3(LiveBoardGoodsCard) — 활동 중 · QR 없음. */}
+              아래 띠(오늘 다녀간 회원·COACHING STAFF·명예의 전당)는 그대로 둔다. 오른쪽 패널은 2026-11-12 부터 플리스 안내 1/3(LiveBoardGoodsCard) — 활동 중 · QR 없음 · 2026-11-17 부터 「오늘의 1분」과 번갈아(LiveBoardSideSlot). */}
           {only2 && branchName && (
             <div className="flex-1 min-h-0 overflow-hidden">
               <LaunchEventBoard branchName={branchName} />
@@ -1849,8 +1849,10 @@ const LiveBoardPage = () => {
         </div>
 
         {/* ═══ 2번 화면 오른쪽 1/3 = 플리스 사전예약 안내 (2026-11-12 대표님 「현재 활동중도 지워주고 … 런칭이벤트를 3분의2 · 153집업을 나머지」).
-             QR 출석 · 현재 활동 중 · 짐 레이드 패널은 2번 화면에 없다(QR 은 옆 사이니지 기본 화면에). 사전예약이 닫히면 이 칸도 없어져 런칭 이벤트가 화면 전체를 쓴다. */}
-        {only2 && <LiveBoardGoodsCard branchName={branchName} />}
+             QR 출석 · 현재 활동 중 · 짐 레이드 패널은 2번 화면에 없다(QR 은 옆 사이니지 기본 화면에).
+             2026-11-17 「오늘의 1분 성장」 2단계: 같은 칸을 「오늘의 1분」과 번갈아 쓴다(LiveBoardSideSlot — 켠 지점 TV 만).
+             사전예약이 닫히면 「오늘의 1분」이 이 칸을 이어받고, 둘 다 없으면 칸이 없어져 런칭 이벤트가 화면 전체를 쓴다. */}
+        {only2 && <LiveBoardSideSlot branchName={branchName} />}
 
         {/* ═══ Right panel ═══ */}
         {!only1 && !only2 && (
