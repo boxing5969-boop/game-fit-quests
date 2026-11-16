@@ -3,6 +3,7 @@
  *   (2026-11-13 대표님 「다음」 — 「운동 달력 2단계 보고서」 https://claude.ai/artifact/H8kmEW8aUrsLG92MRWB68b 2-3)
  *   감정 설계(CLAUDE.md 「회원 감정 설계 기준」): 끝났을 때 = 뿌듯함("코치님이 나를 봤다") · 들어올 때 = 환영 · 한 달 = 확신.
  *   · 그날 한 일 = DB 에 이미 있는 기록만(PT 수업 · 153 PB · 타이틀매치 · 레벨업) — 칸 왼쪽 위 아이콘 하나(타이틀 > 레벨업 > 153 PB > PT).
+ *     (2026-11-17) + 영상으로 배우기(내 수업을 한 날 · 영상을 끝까지 본 날 — my_learn_days, 달력 자료에 화면이 합친다) — 맨 뒤 순서.
  *     타이틀매치는 통과 = '통과', 그 밖 = '도전했어요'(못한 말 없이).
  *   · 코치 한마디 = 코치님이 「오늘 만날 회원」에서 남긴 한 줄 — 칸 왼쪽 아래 말풍선 도장 · 그날 카드에 '○○ 코치님' + 한 줄.
  *   · 153 기념일 = 153 등록일(모르면 첫 도장) n주년 — 출석한 날이면 금색 도장 · 지난 날 안 온 기념일은 말하지 않는다.
@@ -51,8 +52,8 @@ export const DOT_DDAY = "bg-violet-500";
 export const DDAY_CHIP = "bg-violet-100 text-violet-800 dark:bg-violet-500/20 dark:text-violet-200";
 
 // ───────────────────────── 서버 값 ─────────────────────────
-export type ActKind = "pt" | "pb" | "title" | "level";
-export const ACT_KINDS: readonly ActKind[] = ["title", "level", "pb", "pt"];
+export type ActKind = "pt" | "pb" | "title" | "level" | "learn";
+export const ACT_KINDS: readonly ActKind[] = ["title", "level", "pb", "pt", "learn"];
 
 export interface CalAct {
   day: string;
@@ -68,6 +69,9 @@ export interface CalAct {
   rank: string | null;
   /** 레벨업 — 올라간 레벨(전체 1~40) */
   level: number | null;
+  /** 영상으로 배우기 — 내 수업을 한 분 · 영상을 끝까지 본 동작 수 (2026-11-17) */
+  minutes?: number | null;
+  cards?: number | null;
 }
 
 export interface CalNote {
@@ -134,7 +138,27 @@ export function normalizeAct(raw: unknown): CalAct | null {
     passed: r.passed === true,
     rank: str(r.rank),
     level: level != null && level >= 1 && level <= 40 ? level : null,
+    ...(r.kind === "learn" ? { minutes: Math.max(0, int(r.minutes) ?? 0), cards: Math.max(0, int(r.cards) ?? 0) } : {}),
   };
+}
+
+/**
+ * (2026-11-17) my_learn_days 한 줄 → 그날 한 일 「영상으로 배우기」 — 내 수업 분 · 끝까지 본 동작이 둘 다 0 이면 버린다(빠진 날 표시 없음).
+ *   서버 [{day, minutes, plays, cards}] · 화면이 get_my_calendar 의 acts 에 합친다(calendarCheckService).
+ */
+export function learnActs(raw: unknown): CalAct[] {
+  if (!Array.isArray(raw)) return [];
+  const out: CalAct[] = [];
+  for (const x of raw) {
+    const r = obj(x);
+    const day = ymd(r?.day);
+    if (!r || !day) continue;
+    const minutes = Math.max(0, int(r.minutes) ?? 0);
+    const cards = Math.max(0, int(r.cards) ?? 0);
+    if (minutes === 0 && cards === 0) continue;
+    out.push({ day, kind: "learn", coach: null, division: null, first: false, best: false, passed: false, rank: null, level: null, minutes, cards });
+  }
+  return out;
 }
 
 export function normalizeNote(raw: unknown): CalNote | null {
@@ -197,9 +221,9 @@ const weekday = (day: string): number => {
 export const mdw = (day: string): string => `${Number(day.slice(5, 7))}/${Number(day.slice(8, 10))}(${DAY[weekday(day)]})`;
 
 // ───────────────────────── 그날 한 일 ─────────────────────────
-const ACT_RANK: Record<ActKind, number> = { title: 0, level: 1, pb: 2, pt: 3 };
+const ACT_RANK: Record<ActKind, number> = { title: 0, level: 1, pb: 2, pt: 3, learn: 4 };
 
-/** 그날 한 일 (타이틀 > 레벨업 > 153 PB > PT) */
+/** 그날 한 일 (타이틀 > 레벨업 > 153 PB > PT > 영상으로 배우기) */
 export const actsOn = (acts: readonly CalAct[], day: string): CalAct[] =>
   acts.filter((a) => a.day === day).sort((a, b) => ACT_RANK[a.kind] - ACT_RANK[b.kind]);
 
@@ -228,6 +252,13 @@ export function actText(a: CalAct): string {
     }
     case "level":
       return a.level != null ? `레벨업 · Lv.${a.level}` : "레벨업";
+    case "learn": {
+      const m = a.minutes ?? 0;
+      const c = a.cards ?? 0;
+      if (m > 0 && c > 0) return `영상으로 배우기 · 내 수업 ${m}분 · ${c}동작`;
+      if (m > 0) return `영상으로 배우기 · 내 수업 ${m}분`;
+      return `영상으로 배우기 · ${c}동작 끝까지 봤어요`;
+    }
   }
 }
 
@@ -242,6 +273,8 @@ export function actShort(a: CalAct): string {
       return a.passed ? "타이틀매치 통과" : "타이틀매치 도전";
     case "level":
       return "레벨업";
+    case "learn":
+      return "영상으로 배우기";
   }
 }
 

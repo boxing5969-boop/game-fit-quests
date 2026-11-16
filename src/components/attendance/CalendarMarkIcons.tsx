@@ -11,6 +11,7 @@ import {
   Flame,
   MessageCircle,
   Snowflake,
+  SquarePlay,
   ThermometerSnowflake,
   Timer,
   Trophy,
@@ -21,12 +22,13 @@ import { actIsGold, type ActKind, type CalAct } from "@/lib/calendarMarks";
 import type { WeatherKind } from "@/lib/calendarWeather";
 import { cn } from "@/lib/utils";
 
-const ICON: Record<ActKind, LucideIcon> = { pt: Dumbbell, pb: Timer, title: Trophy, level: ChevronsUp };
+const ICON: Record<ActKind, LucideIcon> = { pt: Dumbbell, pb: Timer, title: Trophy, level: ChevronsUp, learn: SquarePlay };
 const TONE: Record<ActKind, string> = {
   pt: "text-sky-600 dark:text-sky-300",
   pb: "text-rose-600 dark:text-rose-300",
   title: "text-reward",
   level: "text-primary",
+  learn: "text-emerald-600 dark:text-emerald-300",
 };
 
 export const ActIcon = ({ act, className }: { act: CalAct; className?: string }) => {

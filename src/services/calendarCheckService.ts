@@ -33,7 +33,7 @@ import {
   type StickerKey,
 } from "@/lib/calendarChecks";
 import { HABITS_OFF, applyTodoDone, normalizeHabits, todoPayload, type Habits } from "@/lib/memberHabits";
-import { goalPayload, normalizeDdays, type GoalDraft } from "@/lib/calendarMarks";
+import { goalPayload, learnActs, normalizeDdays, type GoalDraft } from "@/lib/calendarMarks";
 import { SEARCH_OFF, normalizeCalSearch, type CalSearch, type CalView, type MyScope } from "@/lib/memberEvents";
 
 export const CAL2_KEY = ["153cal2"] as const;
@@ -56,9 +56,17 @@ export function useMyCalendar(from: string | null, to: string | null, enabled = 
     retry: false,
     placeholderData: (prev) => prev,
     queryFn: async () => {
-      const { data, error } = await rpc("get_my_calendar", { p_from: from, p_to: to });
-      if (error) return CAL_OFF;
-      return normalizeCalendar(data);
+      // (2026-11-17) 영상으로 배우기 한 날 — my_learn_days 를 같이 받아 그날 한 일에 합친다(함수가 없거나 실패하면 그대로)
+      const [cal, learn] = await Promise.all([
+        rpc("get_my_calendar", { p_from: from, p_to: to }),
+        rpc("my_learn_days", { p_from: from, p_to: to }).then(
+          (r: { data: unknown; error: RpcError }) => (r.error ? [] : learnActs(r.data)),
+          () => [],
+        ),
+      ]);
+      if (cal.error) return CAL_OFF;
+      const state = normalizeCalendar(cal.data);
+      return learn.length && state.on ? { ...state, acts: [...state.acts, ...learn] } : state;
     },
   });
 }

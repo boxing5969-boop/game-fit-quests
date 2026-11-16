@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  learnActs,
   GOAL_MAX,
   actIsGold,
+  actShort,
   actText,
   actsOn,
   annivShort,
@@ -15,6 +17,7 @@ import {
   goalDraftError,
   goalPayload,
   nextDday,
+  normalizeAct,
   normalizeActs,
   normalizeAnnivs,
   normalizeDdays,
@@ -205,5 +208,34 @@ describe("밀기 · 길게 누르기 · 알림 링크", () => {
     expect(focusDayOf("2026-11-20", T, "2026-02-02", 366)).toBe("2026-11-20");
     expect(focusDayOf("2028-01-01", T, "2026-02-02", 366)).toBeNull();
     expect(focusDayOf("2026-11-20", T, "2026-02-02")).toBeNull();
+  });
+});
+
+describe("영상으로 배우기 한 날 (2026-11-17 · my_learn_days)", () => {
+  it("한 것이 있는 날만 · 맨 뒤 순서 · 문구", () => {
+    const acts = learnActs([
+      { day: "2026-11-16", minutes: 20, plays: 2, cards: 3 },
+      { day: "2026-11-15", minutes: 0, plays: 0, cards: 2 },
+      { day: "2026-11-14", minutes: 12, plays: 1, cards: 0 },
+      { day: "2026-11-13", minutes: 0, plays: 0, cards: 0 },
+      { day: "bad", minutes: 5, cards: 1 },
+      null,
+    ]);
+    expect(acts.map((a) => a.day)).toEqual(["2026-11-16", "2026-11-15", "2026-11-14"]);
+    expect(acts.every((a) => a.kind === "learn" && !actIsGold(a))).toBe(true);
+    expect(actText(acts[0])).toBe("영상으로 배우기 · 내 수업 20분 · 3동작");
+    expect(actText(acts[1])).toBe("영상으로 배우기 · 2동작 끝까지 봤어요");
+    expect(actText(acts[2])).toBe("영상으로 배우기 · 내 수업 12분");
+    expect(actShort(acts[0])).toBe("영상으로 배우기");
+    expect(learnActs({})).toEqual([]);
+  });
+
+  it("같은 날 다른 일이 있으면 그 일이 칸 아이콘 · 영상으로 배우기는 그날 카드 맨 아래", () => {
+    const pt = normalizeAct({ day: "2026-11-16", kind: "pt", coach: "김코치" })!;
+    const learn = learnActs([{ day: "2026-11-16", minutes: 10, cards: 1 }]);
+    const all = [...learn, pt];
+    expect(topActOn(all, "2026-11-16")?.kind).toBe("pt");
+    expect(actsOn(all, "2026-11-16").map((a) => a.kind)).toEqual(["pt", "learn"]);
+    expect(topActOn(learn, "2026-11-16")?.kind).toBe("learn");
   });
 });
