@@ -89,7 +89,7 @@ describe("한 달 셈 — 기록 + 차감", () => {
     expect(p.unpriced).toBe(0);
     expect(p.hold.total).toBe(0);
     expect(p.byDeduct).toEqual({ uses: 3, gross: 90000 });
-    expect(p.diff).toEqual({ prevLesson: 0, nextMonth: 0, extra: 0, held: 0, preStart: 0 });
+    expect(p.diff).toEqual({ prevLesson: 0, nextMonth: 0, carryOut: 0, extra: 0, held: 0, preStart: 0 });
     expect(ptPayDiffNotes(p)).toEqual([]);
     expect(p.members).toEqual([
       { key: "a", name: "가온", uses: 2, pay: 60000 },
@@ -130,20 +130,22 @@ describe("한 달 셈 — 기록 + 차감", () => {
       events: [ev("a", "2026-12-01"), ev("b", "2026-12-02")],
       attendance: [came("a", "2026-11-30"), came("b", "2026-12-02")],
     });
-    // 11월은 차감 기준 — 그 달에 잡힌 차감이 없어 예전 방식으로는 0회(이 수업이 빠진다)
+    // 11월은 차감 기준 — 그 달에 잡힌 차감이 없어 예전 방식으로는 0회(이 수업이 빠진다). 미리 보기에도 넣지 않는다 — 12월 몫이다
     const nov = pay(d, "2026-11-01");
     expect(nov.basis).toBe("deduct");
     expect(nov.byDeduct.uses).toBe(0);
-    expect(nov.lines.map((l) => [l.date, l.state, l.carry])).toEqual([["2026-11-30", "paid", false]]);
+    expect(nov.lines).toEqual([]);
+    expect(nov.diff.carryOut).toBe(1);
+    expect(ptPayDiffNotes(nov)).toEqual(["이 달 수업인데 차감이 다음 달에 잡힌 1회 — 다음 달에 「지난달 수업」으로 지급해요"]);
     // 12월은 기록 기준 — 그 수업을 12월에 얹는다
     const dec = pay(d, "2026-12-01");
     expect(dec.basis).toBe("record");
     expect(dec.paidUses).toBe(2);
     expect(dec.carryUses).toBe(1);
     expect(dec.gross).toBe(60000);
-    expect(dec.lines.map((l) => [l.date, l.carry, l.deductDate])).toEqual([
-      ["2026-11-30", true, "2026-12-01"],
-      ["2026-12-02", false, "2026-12-02"],
+    expect(dec.lines.map((l) => [l.date, l.carry, l.deductDate, l.payYm])).toEqual([
+      ["2026-11-30", true, "2026-12-01", "2026-12"],
+      ["2026-12-02", false, "2026-12-02", "2026-12"],
     ]);
     expect(dec.byDeduct.uses).toBe(2);
     expect(ptPayDiffNotes(dec)).toEqual(["지난달 수업인데 차감이 이 달에 잡힌 1회 — 이 달에 「지난달 수업」으로 지급해요"]);
@@ -171,7 +173,7 @@ describe("한 달 셈 — 기록 + 차감", () => {
       ["나래", "pending"],
     ]);
     expect(p.extras.map((x) => [x.name, x.workDate, x.count])).toEqual([["마루", "2026-12-15", 1]]);
-    expect(p.diff).toEqual({ prevLesson: 0, nextMonth: 0, extra: 1, held: 2, preStart: 0 });
+    expect(p.diff).toEqual({ prevLesson: 0, nextMonth: 0, carryOut: 0, extra: 1, held: 2, preStart: 0 });
     expect(ptPayHoldText(p.hold)).toBe("차감 대기 1 · 차감 확인 중 1 · 늦은 기록 확인 전 1 · 사유 필요 1 · 기록 없는 차감 1");
     expect(ptPayDiffNotes(p)).toEqual([
       "기록 없는 차감 1회 — 수업 기록이 생길 때까지 보류해요",

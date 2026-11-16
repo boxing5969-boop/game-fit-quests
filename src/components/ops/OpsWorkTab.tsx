@@ -25,11 +25,13 @@
  *   PT 수당 2단계 (2026-11-16 2-1): PT 기록을 켠 지점 — 근무자 카드 'PT' 탭 · 코치님 화면 'PT' 카드에 「기록 + 차감」 수당 카드.
  *     전환 달(12월 수업분 · 지점마다 ptPayFirstRecordMonth)부터 PT 수당 합계 · 근무자 줄도 기록 기준, 그 앞 달은 미리 보기만
  *     — OpsPtPay · src/lib/opsPtPay.ts
+ *   PT 월 마감 (2026-11-16 2-2): 달이 끝나면 코치 「확정」 → 대표님 · 회계매니저 「승인」 = 그 달 수당 잠금. 코치 화면 맨 위에 확정할 달,
+ *     관리자 '확인할 것'에 승인 대기(돈을 보는 분만), 근무자 줄 · 합계는 잠긴 달이면 승인본 — OpsPtClose · src/lib/opsPtClose.ts
  *   계산은 src/lib/opsWork.ts 한 곳 — 서버는 자료만.
  */
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { ChevronRight, ClipboardCheck, FileSignature, Flag, Plus } from "lucide-react";
+import { ChevronRight, ClipboardCheck, FileSignature, Flag, Plus, ReceiptText } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
@@ -68,7 +70,8 @@ import {
   type OpsMonthData,
 } from "@/services/opsService";
 import { computePtMonth, type OpsPtSummary } from "@/lib/opsPt";
-import { ptPayBasis, ptPayMonth, ptPayMonthCovered, type PtPayMonth } from "@/lib/opsPtPay";
+import { ptCloseTodoText, type PtStatement } from "@/lib/opsPtClose";
+import { ptPayBasis, ptPayMonth, ptPayMonthCovered } from "@/lib/opsPtPay";
 import { matchPtRecord, ptCounts } from "@/lib/opsPtRecord";
 import { PT_SAMPLE_COACH, PT_SAMPLE_RATES } from "@/lib/opsPtRecordSample";
 import { ptReportOpenCount } from "@/lib/opsPtReport";
@@ -80,6 +83,7 @@ import { useOpsPtReports } from "@/services/opsPtReportService";
 import OpsContractSheet from "./OpsContractSheet";
 import OpsDaySheet from "./OpsDaySheet";
 import OpsPtPanel, { PtCheckItem } from "./OpsPtPanel";
+import { PtCloseDueCard, PtCloseSheet, usePtCloseBook } from "./OpsPtClose";
 import OpsPtPay from "./OpsPtPay";
 import OpsPtBook, { OpsPtBookDemo } from "./OpsPtBook";
 import OpsPtRecord, { OpsPtRecordDemo } from "./OpsPtRecord";
@@ -271,16 +275,45 @@ const ManagerView = ({ data, ptDemo }: { data: OpsMonthData; ptDemo: boolean }) 
   const ptRecordBasis = !ptDemo && !!ptRec && ptPayBasis(data.month, ptRec.startedOn) === "record";
   //   넉 달이 지난 달은 받은 자료에 그 달 기록이 일부만 있다 — 셈하지 않고 PT 수당 줄을 비운다(닫은 달은 2-2 월 마감 기록에서)
   const ptRecordCovered = ptRecordBasis && !!ptRecQ.data && ptPayMonthCovered(data.month, ptRecQ.data);
-  const ptPayByCoach = useMemo(() => {
-    const m = new Map<string, PtPayMonth>();
-    if (!ptRecordCovered || !ptRec || !ptRecQ.data) return m;
-    for (const c of ptCoaches) m.set(c.id, ptPayMonth(ptRec, ptRecQ.data.events ?? [], ptPay && pt ? pt.rates : null, data.month, c.id, pt?.events));
+  // PT 월 마감(2026-11-16 2-2) — 서버에 마감 함수가 있을 때만. 잠긴 달은 승인본, 열린 달은 지금 줄(이미 지급한 수업은 빼고 보정 · 정산을 더한다)
+  const ptCloseCtx = usePtCloseBook(data.branch, ptPay && pt ? pt.rates : null, { enabled: ptCoaches.length > 0 && !ptDemo, manage: true });
+  const ptRowByCoach = useMemo(() => {
+    const m = new Map<string, { uses: number; gross: number | null; hold: number }>();
+    if (!ptRecordBasis || !ptRec || !ptRecQ.data) return m;
+    for (const c of ptCoaches) {
+      const st = ptCloseCtx?.book.statement(c.id, data.month, pt?.events) ?? null;
+      if (st) m.set(c.id, { uses: st.uses, gross: st.gross, hold: st.hold });
+      else if (ptRecordCovered) {
+        const p = ptPayMonth(ptRec, ptRecQ.data.events ?? [], ptPay && pt ? pt.rates : null, data.month, c.id, pt?.events);
+        m.set(c.id, { uses: p.paidUses, gross: p.gross, hold: p.hold.total });
+      }
+    }
     return m;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ptRecordCovered, ptRec, ptRecQ.data, pt, data.staff, data.month, ptPay]);
+  }, [ptRecordBasis, ptRecordCovered, ptRec, ptRecQ.data, pt, data.staff, data.month, ptPay, ptCloseCtx]);
   const ptGross = ptRecordBasis
-    ? [...ptPayByCoach.values()].reduce((s, x) => s + (x.gross ?? 0), 0)
+    ? [...ptRowByCoach.values()].reduce((s, x) => s + (x.gross ?? 0), 0)
     : [...ptByCoach.values()].reduce((s, x) => s + (x.gross ?? 0), 0);
+  //   승인 대기 — 돈을 보는 분(대표님 · 회계매니저)만: 코치마다 마감할 차례인 달(끝난 달 가운데 아직 승인 전인 가장 이른 달)
+  const ptCloseTodo = useMemo(() => {
+    const out: Array<{ staff: OpsStaff; month: string; st: PtStatement }> = [];
+    if (!ptCloseCtx?.cd.can_approve) return out;
+    for (const c of ptCoaches) {
+      const month = ptCloseCtx.book.due(c.id);
+      const st = month ? ptCloseCtx.book.statement(c.id, month) : null;
+      if (!month || !st) continue;
+      // 지금 근무하지 않는 코치의 빈 달은 묻지 않는다(근무자 카드 'PT' 탭에서 닫을 수 있다)
+      if (!c.active && st.status !== "confirmed" && st.uses + st.hold + st.settle.length === 0) continue;
+      out.push({ staff: c, month, st });
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ptCloseCtx, data.staff]);
+  const [closeSheet, setCloseSheet] = useState<{ staffId: string; month: string; open: boolean } | null>(null);
+  const closeSt = useMemo(
+    () => (closeSheet && ptCloseCtx ? ptCloseCtx.book.statement(closeSheet.staffId, closeSheet.month) : null),
+    [closeSheet, ptCloseCtx],
+  );
   // PT 기록 오류 신고(2026-11-12) — 코치별 열린 신고. 코치가 정해지지 않은 신고는 첫 PT 코치 줄에 더한다
   const ptRepQ = useOpsPtReports(data.branch, { enabled: !!ptRec, demo: ptDemo, demoManage: true });
   const ptRepTodo = ptRepQ.data?.available
@@ -382,7 +415,14 @@ const ManagerView = ({ data, ptDemo }: { data: OpsMonthData; ptDemo: boolean }) 
       {duty && <DutySettingRow data={duty} actions={dutyAct} />}
 
       {/* 확인할 것 */}
-      {(pending.length > 0 || flags.length > 0 || ptToCheck.length > 0 || contractTodo.length > 0 || ptRecTodo.length > 0 || ptRepTodo.length > 0 || dutyOpenList.length > 0) && (
+      {(pending.length > 0 ||
+        flags.length > 0 ||
+        ptToCheck.length > 0 ||
+        contractTodo.length > 0 ||
+        ptRecTodo.length > 0 ||
+        ptRepTodo.length > 0 ||
+        ptCloseTodo.length > 0 ||
+        dutyOpenList.length > 0) && (
         <section className={card}>
           <h2 className="text-heading font-black text-foreground">확인할 것</h2>
           {duty && (
@@ -409,6 +449,25 @@ const ManagerView = ({ data, ptDemo }: { data: OpsMonthData; ptDemo: boolean }) 
                     <Flag className="h-5 w-5 shrink-0 text-amber-700" />
                     <span className="min-w-0 flex-1 truncate text-body text-foreground">
                       <b className="font-black">{staff.name}</b> · PT 기록 오류 신고 {n}건
+                    </span>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {ptCloseTodo.length > 0 && (
+            <ul className="mt-3 divide-y divide-border/70 overflow-hidden rounded-xl border border-amber-200 bg-amber-50/60">
+              {ptCloseTodo.map(({ staff, month, st }) => (
+                <li key={staff.id}>
+                  <button
+                    type="button"
+                    onClick={() => setCloseSheet({ staffId: staff.id, month, open: true })}
+                    className="flex w-full items-center gap-2 px-3 py-2.5 text-left active:bg-amber-100/70"
+                  >
+                    <ReceiptText className="h-5 w-5 shrink-0 text-amber-700" />
+                    <span className="min-w-0 flex-1 truncate text-body text-foreground">
+                      <b className="font-black">{staff.name}</b> · {ptCloseTodoText(st)}
                     </span>
                     <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                   </button>
@@ -578,11 +637,11 @@ const ManagerView = ({ data, ptDemo }: { data: OpsMonthData; ptDemo: boolean }) 
                         {sched || "시간표를 넣어 주세요"}
                       </p>
                       {s.pt_freelancer && ptRecordBasis ? (
-                        ptPayByCoach.get(s.id) && (
+                        ptRowByCoach.get(s.id) && (
                           <p className="mt-0.5 text-label font-bold tabular-nums text-primary">
-                            PT {ptPayByCoach.get(s.id)!.paidUses}회
-                            {ptPayByCoach.get(s.id)!.gross != null ? ` · ${fmtWon(ptPayByCoach.get(s.id)!.gross ?? 0)}` : ""}
-                            {ptPayByCoach.get(s.id)!.hold.total > 0 ? ` · 보류 ${ptPayByCoach.get(s.id)!.hold.total}` : ""}
+                            PT {ptRowByCoach.get(s.id)!.uses}회
+                            {ptRowByCoach.get(s.id)!.gross != null ? ` · ${fmtWon(ptRowByCoach.get(s.id)!.gross ?? 0)}` : ""}
+                            {ptRowByCoach.get(s.id)!.hold > 0 ? ` · 보류 ${ptRowByCoach.get(s.id)!.hold}` : ""}
                           </p>
                         )
                       ) : (
@@ -657,6 +716,7 @@ const ManagerView = ({ data, ptDemo }: { data: OpsMonthData; ptDemo: boolean }) 
                 rates={ptDemo ? PT_SAMPLE_RATES : ptPay ? pt.rates : null}
                 monthEvents={ptDemo ? undefined : pt.events}
                 manage
+                coachName={openStaff.name}
                 demo={ptDemo}
                 asOfficial={ptDemo}
                 panelBelow
@@ -671,6 +731,19 @@ const ManagerView = ({ data, ptDemo }: { data: OpsMonthData; ptDemo: boolean }) 
           ) : undefined
         }
       />
+      {/* PT 월 마감 — '확인할 것'의 승인 대기에서 바로 연다 */}
+      {ptCloseCtx && (
+        <PtCloseSheet
+          open={!!closeSheet?.open}
+          onClose={() => setCloseSheet((v) => (v ? { ...v, open: false } : v))}
+          branch={data.branch}
+          coachId={closeSheet?.staffId ?? ""}
+          coachName={data.staff.find((s) => s.id === closeSheet?.staffId)?.name}
+          st={closeSt}
+          cd={ptCloseCtx.cd}
+          manage
+        />
+      )}
       <OpsDaySheet
         open={!!dayObj}
         onClose={() => setDaySheet(null)}
@@ -744,6 +817,8 @@ const CoachView = ({ data, onOpenContract, ptDemo }: { data: OpsMonthData; onOpe
     () => (ptQ.data && mine ? computePtMonth(ptQ.data.events, ptQ.data.members, ptPay ? ptQ.data.rates : null, mine.id) : null),
     [ptQ.data, mine, ptPay],
   );
+  // PT 월 마감(2026-11-16 2-2) — 달이 끝나면 내 수당 줄을 보고 확정한다. 서버에 마감 함수가 없으면 null(예전 화면)
+  const ptCloseCtx = usePtCloseBook(data.branch, ptPay && ptQ.data ? ptQ.data.rates : null, { enabled: !!mine?.pt_freelancer && !ptDemo });
 
   if (!mine || !month) {
     return (
@@ -781,6 +856,9 @@ const CoachView = ({ data, onOpenContract, ptDemo }: { data: OpsMonthData; onOpe
           <ChevronRight className="h-5 w-5 shrink-0" />
         </button>
       ))}
+
+      {/* PT 수당 확정 — 끝난 달 가운데 아직 확정하지 않은 달이 있을 때 (2026-11-16 2-2) */}
+      {mine.pt_freelancer && ptCloseCtx && <PtCloseDueCard branch={data.branch} coachId={mine.id} ctx={ptCloseCtx} />}
 
       {/* 출근 확정 — 오늘 출근 기록이 아직 없음 · 출근 기록 없는 날 (2026-11-12) */}
       {duty && (

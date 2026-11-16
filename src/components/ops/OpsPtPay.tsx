@@ -6,7 +6,8 @@
  *   지급 대상(기록 + 차감이 맞은 수업) · 보류(차감 대기 · 수업권 끝남 확인 중 · 확인 전 · 사유 필요 · 기록 없는 차감) · 차감 기준과 다른 까닭.
  *   전환 달(지점마다 ptPayFirstRecordMonth) 앞 달은 「미리 보기」 — 그 달 수당은 차감 기록 기준 그대로다.
  *   금액은 수당표를 받은 화면만(대표님 · 회계매니저 · 그 코치 본인) — rates 가 null 이면 횟수만.
- *   월 마감(잠금) · 「보정」 · 「정산」 줄은 2-2.
+ *   월 마감(2-2 · 2026-11-16): 「기록 + 차감」 지급 달이고 서버에 마감 함수가 있으면 한 달 명세(확정 · 승인 · 「보정」 · 「정산」)를
+ *   그린다 — OpsPtClose.tsx PtCloseCard · src/lib/opsPtClose.ts. 미리 보기 달 · 마감 함수가 없는 서버는 아래 2-1 카드 그대로.
  */
 import { useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
@@ -17,6 +18,7 @@ import type { OpsPtEvent, OpsPtRate } from "@/lib/opsPt";
 import { PT_PAY_STATE_LABEL, ptPayDiffNotes, ptPayFirstRecordMonth, ptPayHoldText, ptPayMonth, ptPayMonthCovered, type PtPayLine } from "@/lib/opsPtPay";
 import { PT_KIND_LABEL, PT_NO_ENTRY_MONTH_LIMIT, matchPtRecord, mdOf } from "@/lib/opsPtRecord";
 import { useOpsPtRecord } from "@/services/opsPtRecordService";
+import { PtCloseCard, usePtCloseBook } from "./OpsPtClose";
 
 const WD = ["일", "월", "화", "수", "목", "금", "토"];
 /** "11/11(수)" */
@@ -66,6 +68,8 @@ interface Props {
   monthEvents?: OpsPtEvent[];
   /** 관리자 화면(근무자 카드 'PT' 탭) — 없으면 코치 화면 */
   manage?: boolean;
+  /** 관리자 화면 — 마감 시트 제목에 쓰는 코치 이름 */
+  coachName?: string;
   demo?: boolean;
   /** 예시 화면 — 이 달부터 지급 기준인 모습으로 보여 준다 */
   asOfficial?: boolean;
@@ -73,7 +77,7 @@ interface Props {
   panelBelow?: boolean;
 }
 
-const OpsPtPay = ({ branch, coachId, month, rates, monthEvents, manage = false, demo = false, asOfficial = false, panelBelow = false }: Props) => {
+const OpsPtPay = ({ branch, coachId, month, rates, monthEvents, manage = false, coachName, demo = false, asOfficial = false, panelBelow = false }: Props) => {
   const q = useOpsPtRecord(branch, { demo, demoManage: manage });
   const data = q.data;
   const [open, setOpen] = useState(false);
@@ -82,13 +86,29 @@ const OpsPtPay = ({ branch, coachId, month, rates, monthEvents, manage = false, 
     const res = matchPtRecord(data);
     return { res, covered: ptPayMonthCovered(month, data), pay: ptPayMonth(res, data.events ?? [], rates, month, coachId, monthEvents) };
   }, [data, rates, month, coachId, monthEvents]);
+  // 월 마감(2-2) — 서버에 마감 함수가 있고 PT 기록을 켠 지점만. 넉 달이 지난 달은 승인본이 있을 때만 명세가 나온다
+  const closeCtx = usePtCloseBook(branch, rates, { demo, manage });
+  const st = useMemo(
+    () => (closeCtx && coachId && calc ? closeCtx.book.statement(coachId, month, monthEvents) : null),
+    [closeCtx, coachId, calc, month, monthEvents],
+  );
   if (!calc) return null;
 
   const { res, pay } = calc;
   const panelLabel = (text: string) => (panelBelow ? <p className="mb-2 text-label font-bold text-muted-foreground">{text}</p> : null);
   // PT 기록을 켜기 전 달 — 견줄 기록이 없다(차감 기록 기준만)
   if (pay.ym < res.startedOn.slice(0, 7)) return panelLabel("차감 기록 기준");
-  // 넉 달이 지난 달 — 받은 자료에 그 달 기록이 일부만 있다. 0회로 보이지 않게 셈하지 않는다(닫은 달은 2-2 월 마감 기록에서)
+  const official = asOfficial || pay.basis === "record";
+  // 「기록 + 차감」 지급 달 — 한 달 명세(확정 · 승인 · 보정 · 정산)
+  if (st && closeCtx && coachId && official) {
+    return (
+      <>
+        <PtCloseCard branch={branch} coachId={coachId} coachName={coachName} month={month} st={st} ctx={closeCtx} manage={manage} demo={demo} />
+        {panelLabel("차감 기록 기준 (참고)")}
+      </>
+    );
+  }
+  // 넉 달이 지난 달 — 받은 자료에 그 달 기록이 일부만 있다. 0회로 보이지 않게 셈하지 않는다(승인한 달은 위 명세가 승인본을 보여 준다)
   if (!calc.covered) {
     return (
       <>
@@ -97,7 +117,6 @@ const OpsPtPay = ({ branch, coachId, month, rates, monthEvents, manage = false, 
       </>
     );
   }
-  const official = asOfficial || pay.basis === "record";
   const money = pay.gross != null;
   const first = ptPayFirstRecordMonth(res.startedOn);
   const startedThisMonth = res.startedOn.slice(0, 7) === pay.ym && res.startedOn.slice(8, 10) !== "01";

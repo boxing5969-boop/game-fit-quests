@@ -54,6 +54,7 @@ import { PT_SAMPLE_COACH, PT_SAMPLE_RATES } from "@/lib/opsPtRecordSample";
 import { PT_REPORT_KIND_LABEL, emptyPtReportDraft, ptReportFixReply, type PtReport, type PtReportFix } from "@/lib/opsPtReport";
 import { useOpsPtRecord, useOpsPtRecordActions } from "@/services/opsPtRecordService";
 import { useOpsPtReportActions, useOpsPtReports } from "@/services/opsPtReportService";
+import { usePtCloseBook } from "./OpsPtClose";
 import OpsPtPay from "./OpsPtPay";
 import { ptTicketLabel } from "./OpsPtPanel";
 import { PtReportLink, PtReportList, PtReportResolveSheet, PtReportSheet, type PtReportInit, type PtResolveInit } from "./OpsPtReport";
@@ -716,6 +717,8 @@ interface Props {
 const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, payBelow = false }: Props) => {
   const q = useOpsPtRecord(branch, { demo, demoManage: manage });
   const actions = useOpsPtRecordActions(branch, { demo, demoManage: manage });
+  // 월 마감(2026-11-16 2-2) — 관리자 화면의 「기록 기준」 칸을 아래 수당 카드(잠긴 달은 승인본)와 같은 숫자로. 횟수만 쓴다
+  const closeCtx = usePtCloseBook(branch, null, { enabled: manage && !!coachId, demo, manage });
   const data = q.data;
   const res = useMemo(() => (data?.on ? matchPtRecord(data) : null), [data]);
   const [sheet, setSheet] = useState<SheetInit | null>(null);
@@ -958,6 +961,10 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
     const beforeStart = ym < res.startedOn.slice(0, 7);
     const covered = !beforeStart && ptPayMonthCovered(`${ym}-01`, data);
     const uncoveredNote = beforeStart ? "PT 기록을 켜기 전" : "넉 달이 지난 달";
+    // 월 마감(2-2) — 아래 수당 카드와 같은 숫자: 잠긴 달은 승인본(넉 달이 지나도 남는다), 열린 달은 이미 지급한 수업을 빼고 보정을 더한 지금 줄
+    const closeSt = recordBasis && coachId && closeCtx ? closeCtx.book.statement(coachId, `${ym}-01`) : null;
+    const recUses = closeSt ? closeSt.uses : payM.paidUses;
+    const recHold = closeSt ? closeSt.hold : payM.hold.total;
     const monthRows = rows.filter((r) => r.s.session_date.startsWith(ym));
     const shown = more ? monthRows : monthRows.slice(0, 8);
     return (
@@ -981,10 +988,10 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
           </div>
           <div className="rounded-2xl border border-border p-4">
             <p className="text-label text-muted-foreground">기록 기준</p>
-            <p className="mt-0.5 text-title font-black tabular-nums text-foreground">{covered ? `${payM.paidUses}회` : "—"}</p>
+            <p className="mt-0.5 text-title font-black tabular-nums text-foreground">{covered || closeSt ? `${recUses}회` : "—"}</p>
             <p className="text-label text-muted-foreground">
-              {!covered ? uncoveredNote : recordBasis ? "이 달 수당 기준" : "기록 + 차감이 맞은 수업"}
-              {covered && payM.hold.total > 0 ? ` · 보류 ${payM.hold.total}` : ""}
+              {closeSt?.locked ? "마감 · 승인됨" : !covered ? uncoveredNote : recordBasis ? "이 달 수당 기준" : "기록 + 차감이 맞은 수업"}
+              {(covered || closeSt) && recHold > 0 ? ` · 보류 ${recHold}` : ""}
             </p>
           </div>
         </div>
@@ -1203,7 +1210,7 @@ export const OpsPtRecordDemo = () => {
         <section className="rounded-2xl border border-border bg-card p-5">
           <h2 className="mb-3 text-heading font-black text-foreground">예시 코치 · PT</h2>
           <OpsPtRecord branch="예시 지점" manage payBelow coachId={PT_SAMPLE_COACH} demo />
-          <OpsPtPay branch="예시 지점" coachId={PT_SAMPLE_COACH} month={monthOf(kstToday())} rates={PT_SAMPLE_RATES} manage demo asOfficial />
+          <OpsPtPay branch="예시 지점" coachId={PT_SAMPLE_COACH} month={monthOf(kstToday())} rates={PT_SAMPLE_RATES} manage coachName="예시 코치" demo asOfficial />
         </section>
       )}
     </div>

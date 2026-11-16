@@ -99,8 +99,10 @@ export interface PtPayLine {
   state: PtPayLineState;
   /** 1회 수당 — 수당표를 못 받았거나 표에 없는 수업권이면 null */
   rate: number | null;
-  /** 차감 기준이던 달의 수업 — 차감이 이 달에 잡혀 이 달에 지급한다(전환 달 경계) */
+  /** 차감 기준이던 달의 수업 — 차감이 기록 기준 달에 잡혀 그 달에 지급한다(전환 달 경계) */
   carry: boolean;
+  /** 이 줄이 드는 달(YYYY-MM) — 수업한 달, carry 는 차감이 잡힌 달 */
+  payYm: string;
 }
 
 export interface PtPayMemberRow {
@@ -137,6 +139,8 @@ export interface PtPayMonth {
     prevLesson: number;
     /** 이 달 수업인데 차감은 다음 달에 잡힘 */
     nextMonth: number;
+    /** 그중 다음 달에 「지난달 수업」으로 지급하는 것(전환 달 경계 — 이 달이 차감 기준일 때) */
+    carryOut: number;
     /** 기록 없는 차감 */
     extra: number;
     /** 차감은 맞았지만 확인 · 사유를 기다리는 기록 */
@@ -161,28 +165,14 @@ const stateOf = (r: PtRow, matched: boolean): PtPayLineState => {
 };
 
 /**
- * 한 코치(coachId) 또는 지점 전체(null)의 한 달 — 「기록 + 차감」 기준.
- *   res · events = PT 기록 자료(ops_pt_record)로 짝지은 결과와 그 차감 목록. monthEvents = 그 달 차감 전체(ops_pt_month —
- *   켠 날 앞 차감도 있다)를 주면 차감 기준 견줌에 쓴다. rates = 수당표(못 보는 화면은 null).
+ * 한 코치(coachId) 또는 지점 전체(null)의 모든 수업 줄 — 달을 가리지 않는다. 줄마다 드는 달(payYm)과 지금 상태가 붙는다.
+ *   월 마감(opsPtClose.ts)이 닫은 달의 줄과 견줄 때도 이 줄을 쓴다(줄 id = 기록 id:몇 번째 회).
  */
-export const ptPayMonth = (
-  res: PtMatchResult,
-  events: OpsPtEvent[],
-  rates: OpsPtRate[] | null,
-  month: string,
-  coachId: string | null,
-  monthEvents?: OpsPtEvent[],
-): PtPayMonth => {
-  const ym = ymOf(month);
-  const first = ptPayFirstRecordMonth(res.startedOn);
-  const basis: PtPayBasis = ym >= first ? "record" : "deduct";
+export const ptPayLinesAll = (res: PtMatchResult, events: OpsPtEvent[], rates: OpsPtRate[] | null, coachId: string | null, firstYm?: string): PtPayLine[] => {
+  const first = firstYm ?? ptPayFirstRecordMonth(res.startedOn);
   const eventById = new Map(events.map((e) => [e.id, e]));
   const rows = coachId ? res.rows.filter((r) => r.s.coach_staff_id === coachId) : res.rows;
-
   const lines: PtPayLine[] = [];
-  let prevLesson = 0;
-  let nextMonth = 0;
-  let held = 0;
   for (const r of rows) {
     if (!isUseKind(r.s.kind)) continue;
     const s = ymOf(r.s.session_date);
@@ -192,13 +182,8 @@ export const ptPayMonth = (
       const dYm = d ? ymOf(d.workDate) : null;
       // 켠 날 앞 수업인데 차감이 없다 — 맞춰 보지 않는다(차감은 켜기 전에 잡혔다)
       if (!d && r.state === "prestart") continue;
-      if (dYm === ym && s < ym) prevLesson += 1;
-      // 전환 달 경계 — 차감 기준이던 달의 수업인데 차감이 기록 기준 달(이 달)에 잡혔다
-      const carry = basis === "record" && s < first && dYm === ym;
-      if (s !== ym && !carry) continue;
-      const state = stateOf(r, !!d);
-      if (s === ym && dYm && dYm > ym) nextMonth += 1;
-      if (d && (state === "review" || state === "reason")) held += 1;
+      // 전환 달 경계 — 차감 기준이던 달의 수업인데 차감이 기록 기준 달에 잡혔다 → 그 차감이 잡힌 달에 든다
+      const carry = s < first && dYm != null && dYm >= first;
       const ticket = (d && eventById.get(d.eventId)?.ticket_name) || r.s.ticket_name;
       lines.push({
         id: `${r.s.id}:${i}`,
@@ -212,13 +197,41 @@ export const ptPayMonth = (
         lateDeduct: !!d && d.days > PT_LAG_DAYS,
         auto: r.s.source === "auto",
         noEntry: r.noEntry,
-        state,
+        state: stateOf(r, !!d),
         rate: rates ? perUseRate(rates, ticket ?? null, r.s.session_date) : null,
         carry,
+        payYm: carry && dYm ? dYm : s,
       });
     }
   }
-  lines.sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
+  return lines.sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
+};
+
+/**
+ * 한 코치(coachId) 또는 지점 전체(null)의 한 달 — 「기록 + 차감」 기준.
+ *   res · events = PT 기록 자료(ops_pt_record)로 짝지은 결과와 그 차감 목록. monthEvents = 그 달 차감 전체(ops_pt_month —
+ *   켠 날 앞 차감도 있다)를 주면 차감 기준 견줌에 쓴다. rates = 수당표(못 보는 화면은 null).
+ */
+export const ptPayMonth = (
+  res: PtMatchResult,
+  events: OpsPtEvent[],
+  rates: OpsPtRate[] | null,
+  month: string,
+  coachId: string | null,
+  monthEvents?: OpsPtEvent[],
+  /** 예시 화면 — 「기록 + 차감」 첫 달을 억지로(YYYY-MM) */
+  firstYm?: string,
+): PtPayMonth => {
+  const ym = ymOf(month);
+  const first = firstYm ?? ptPayFirstRecordMonth(res.startedOn);
+  const basis: PtPayBasis = ym >= first ? "record" : "deduct";
+  const all = ptPayLinesAll(res, events, rates, coachId, first);
+  const lines = all.filter((l) => l.payYm === ym);
+  // 차감 기준과 다른 까닭(회)
+  const prevLesson = all.filter((l) => l.deductDate != null && ymOf(l.deductDate) === ym && ymOf(l.date) < ym).length;
+  const nextMonth = all.filter((l) => ymOf(l.date) === ym && l.deductDate != null && ymOf(l.deductDate) > ym).length;
+  const carryOut = all.filter((l) => ymOf(l.date) === ym && l.payYm > ym).length;
+  const held = lines.filter((l) => l.deductDate != null && (l.state === "review" || l.state === "reason")).length;
 
   const paid = lines.filter((l) => l.state === "paid");
   const unpriced = rates ? paid.filter((l) => l.rate == null).length : 0;
@@ -263,7 +276,7 @@ export const ptPayMonth = (
     hold,
     extras,
     byDeduct: { uses: dUses, gross: dGross },
-    diff: { prevLesson, nextMonth, extra, held, preStart },
+    diff: { prevLesson, nextMonth, carryOut, extra, held, preStart },
     noEntry,
     noEntryOver: noEntry > PT_NO_ENTRY_MONTH_LIMIT,
     members: [...byMember.values()].sort((a, b) => b.uses - a.uses || a.name.localeCompare(b.name)),
@@ -280,7 +293,9 @@ export const ptPayDiffNotes = (p: PtPayMonth): string[] => {
     if (carried > 0) out.push(`지난달 수업인데 차감이 이 달에 잡힌 ${carried}회 — 이 달에 「지난달 수업」으로 지급해요`);
     if (rest > 0) out.push(`지난달 수업의 차감 ${rest}회 — 수업한 달 몫이에요`);
   }
-  if (p.diff.nextMonth > 0) out.push(`이 달 수업인데 차감이 다음 달에 잡힌 ${p.diff.nextMonth}회 — 수업한 이 달에 넣어요`);
+  const stay = p.diff.nextMonth - p.diff.carryOut;
+  if (stay > 0) out.push(`이 달 수업인데 차감이 다음 달에 잡힌 ${stay}회 — 수업한 이 달에 넣어요`);
+  if (p.diff.carryOut > 0) out.push(`이 달 수업인데 차감이 다음 달에 잡힌 ${p.diff.carryOut}회 — 다음 달에 「지난달 수업」으로 지급해요`);
   if (p.diff.extra > 0) out.push(`기록 없는 차감 ${p.diff.extra}회 — 수업 기록이 생길 때까지 보류해요`);
   if (p.diff.held > 0) out.push(`차감은 맞았지만 확인 · 사유를 기다리는 기록 ${p.diff.held}회 — 풀리면 지급 대상이 돼요`);
   if (p.diff.preStart > 0) out.push(`PT 기록을 켜기 전에 잡힌 차감 ${p.diff.preStart}회 — 기록이 없어 차감 기준으로만 셈해요`);

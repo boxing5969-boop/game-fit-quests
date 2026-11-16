@@ -77,10 +77,13 @@ export const perUseRate = (rates: OpsPtRate[], ticket: string | null, date: stri
 /** 수당에 셀 기록 — 빼기(excluded)와 확인 전(check)은 세지 않는다 */
 export const countsForPay = (e: OpsPtEvent) => e.status === "auto" || e.status === "confirmed";
 
-/** 3.3% — 소득세 3% · 지방소득세 0.3%(소득세의 10%), 각각 10원 미만 버림 */
+/**
+ * 3.3% — 소득세 3% · 지방소득세 0.3%(소득세의 10%), 각각 10원 미만 버림.
+ *   정수로만 셈한다(0.03 을 곱하면 소수 오차로 10원이 어긋날 수 있다) — 서버 ops_pt_close_approve 와 같은 셈(2026-11-16 월 마감).
+ */
 export const withholding33 = (gross: number) => {
-  const income = Math.floor((gross * 0.03) / 10) * 10;
-  const local = Math.floor((income * 0.1) / 10) * 10;
+  const income = Math.floor((gross * 3) / 1000) * 10;
+  const local = Math.floor(income / 100) * 10;
   return { income, local, total: income + local, net: gross - income - local };
 };
 
