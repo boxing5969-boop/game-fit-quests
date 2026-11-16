@@ -18,6 +18,15 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261116-pt-pay",
+    date: "2026-11-16",
+    title: "근무 — PT 수당 「기록 + 차감」 미리 보기",
+    lines: ["PT 카드에 지급 대상 · 보류 · 수업 줄이 보여요", "12월 수업분부터 기록과 차감이 맞은 수업으로 셈해요"],
+    link: { to: "/office?tab=work", label: "근무 탭 열기" },
+    audience: "staff",
+    branches: SEOLLEUNG,
+  },
+  {
     id: "20261116-learn-popular",
     date: "2026-11-16",
     title: "영상으로 배우기 — 「많이 담은」 동작",
