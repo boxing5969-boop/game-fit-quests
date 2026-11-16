@@ -26,7 +26,7 @@ import {
   trainingVideoPath,
   type TrainingCard,
 } from "./trainingCards";
-import { NEW_CARDS_1112, NEW_CARDS_1114, NEW_CARDS_1116, SAMPLE_TRAINING_CARDS, WEAVING_POLISHED } from "./trainingCardsSample";
+import { NEW_CARDS_1112, NEW_CARDS_1114, NEW_CARDS_1116, NEW_CARDS_1116_MATCH, SAMPLE_TRAINING_CARDS, WEAVING_POLISHED } from "./trainingCardsSample";
 import { readFileSync } from "node:fs";
 
 // strategyService 의 BlockKind 와 같게 (서비스를 불러오면 Supabase 연결이 필요해서 여기 적어 둔다)
@@ -274,6 +274,39 @@ describe("예시 · 새 카드 글 (마이그레이션과 같은 글)", () => {
     expect(sql.match(/where id = '[0-9a-f-]+'::uuid and video_path is null;/g)).toHaveLength(8);
     expect(sql.match(/or t\.name = /g)).toHaveLength(7);
     expect(SAMPLE_TRAINING_CARDS.filter((c) => NEW_CARDS_1116.some((n) => n.id === c.id))).toHaveLength(7);
+  });
+
+  it("드라이브 영상과 같은 카드 5장 (11/16 「다른 동작에 설명이 나와」) — 영상 제목 · 자막 그대로 · 마이그레이션과 같은 글", () => {
+    expect(NEW_CARDS_1116_MATCH.map((c) => c.name)).toEqual(["기본 스탠스", "잽 · 스트레이트", "원투", "원투 · 훅 콤비네이션", "블로킹 · 커버"]);
+    const sql = readFileSync("supabase/migrations/20261116112015_learn_drive_cards_match.sql", "utf8");
+    for (const c of NEW_CARDS_1116_MATCH) {
+      expect(["defense", "skill", "basics"]).toContain(categoryToShelf(c.category));
+      expect(c.level_min).toBeGreaterThanOrEqual(1);
+      expect(c.level_min).toBeLessThanOrEqual(10);
+      expect(c.difficulty).toBe("초급");
+      expect(c.benefits).toBe("");
+      expect(c.cues).toHaveLength(3);
+      for (const m of c.mistakes) expect(m).toContain("→");
+      const all = [c.summary, c.description, ...c.cues, ...c.mistakes].join(" ");
+      expect(all).not.toMatch(/살이 빠|다이어트|부상을 막|예방|국가대표|칼로리|건강해/);
+      for (const s of [c.id, c.name, c.summary, c.description, c.target, ...c.cues, ...c.mistakes]) expect(sql).toContain(s);
+    }
+    // 새 카드는 이름이 같은 카드가 있으면 안 넣고, 예전 카드는 칸 값이 드라이브 영상 그대로이고 새 카드에 같은 영상이 들어갔을 때만 뗀다
+    expect(sql.match(/or t\.name = /g)).toHaveLength(5);
+    expect(sql.match(/^update public\.training_exercises set video_path = null,$/gm)).toHaveLength(5);
+    expect(sql.match(/and exists \(select 1 from public\.training_exercises n where n\.id = '1530c4d0-001[89abc]-4a00-8000-000000001116'::uuid and n\.video_path = /g)).toHaveLength(5);
+    // 영상을 옮기는 예전 카드 5장 (훅 · 어퍼컷 · 슬립은 그대로)
+    for (const id of [
+      "c1062d07-e8eb-42f9-8aba-c2261e0196ed",
+      "9fec2574-5132-4d6d-bdc7-09c6c635e5fe",
+      "e2470ff0-13d6-4993-b5b6-967b9bfa26f6",
+      "b6cbf20a-c3ce-475c-b230-38d73e44367a",
+      "b7480eaf-ef48-4abe-be2b-1e0e8d5daa22",
+    ])
+      expect(sql).toContain(`where id = '${id}'::uuid and video_path = 'member/${id}-d`);
+    for (const id of ["b9e75f6c-33d0-43f2-b7d8-f071034d40cd", "2350d855-4280-4b02-a4b5-76c7120e603f", "3b4eb590-9ed6-410b-9098-0f73ee72c47c"])
+      expect(sql).not.toContain(id);
+    expect(SAMPLE_TRAINING_CARDS.filter((c) => NEW_CARDS_1116_MATCH.some((n) => n.id === c.id))).toHaveLength(5);
   });
 
   it("예시 카드 id 는 겹치지 않고 모두 uuid 모양", () => {
