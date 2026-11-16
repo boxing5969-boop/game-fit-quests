@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { X, Play, Pause, Maximize, RotateCcw, FlipHorizontal2 } from "lucide-react";
 import VideoVariantTabs from "@/components/common/VideoVariantTabs";
+import { instagramEmbedUrl, isInstagramUrl } from "@/lib/learnExtras";
 
 /** 같은 동작의 다른 버전 (실사 · 애니메이션 — 2026-10-01) */
 export interface PlayerVariant {
@@ -30,6 +31,10 @@ interface VideoPlayerProps {
   mirrorable?: boolean;
   /** 처음 속도 — 붕대 감기는 천천히(0.75) 시작 (2026-10-27 대표님 "속도 조절") */
   initialSpeed?: number;
+  /** 영상 아래 설명 한 단락 — 영상으로 배우기의 153 영상(153플레이 · 153 PB) (2026-11-16) */
+  description?: string;
+  /** 영상 칸 비율(가로 ÷ 세로) — 없으면 16:9 · 153 PB 시범은 정사각(1) */
+  aspect?: number;
 }
 
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -48,6 +53,8 @@ const VideoPlayer = ({
   startAt,
   mirrorable = false,
   initialSpeed = 1,
+  description,
+  aspect,
 }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -97,9 +104,14 @@ const VideoPlayer = ({
   };
 
   // Detect if it's a YouTube/external embed
-  const isEmbed = src.includes("youtube") || src.includes("youtu.be") || src.includes("vimeo");
+  const reel = isInstagramUrl(src);
+  const isEmbed = reel || src.includes("youtube") || src.includes("youtu.be") || src.includes("vimeo");
+  // 영상 칸 — 16:9 기본 · 정해 준 비율은 화면 높이의 60% 를 넘지 않게
+  const boxRatio = aspect && Number.isFinite(aspect) && aspect > 0 ? aspect : 16 / 9;
 
   const getEmbedUrl = (url: string) => {
+    // 인스타 릴스 — 원래 글(캡션) 없이 영상만 (2026-11-16 영상으로 배우기 · 153플레이의 153복싱짐 릴스)
+    if (reel) return instagramEmbedUrl(url) ?? url;
     if (url.includes("youtu.be/")) {
       const id = url.split("youtu.be/")[1]?.split("?")[0];
       // 소리 켠 채로 바로 (2026-11-16 · 누른 다음이라 휴대폰이 허락) · 아이폰은 화면 안에서
@@ -123,8 +135,11 @@ const VideoPlayer = ({
         </button>
       </div>
 
-      {/* Video */}
-      <div className="relative w-full bg-foreground/5" style={{ aspectRatio: "16/9" }}>
+      {/* Video — 인스타 릴스는 세로(9:16) 칸을 가운데에 */}
+      <div
+        className={reel ? "relative mx-auto w-full max-w-[340px] bg-foreground/5" : "relative w-full bg-foreground/5"}
+        style={reel ? { aspectRatio: "9/16", maxHeight: "62vh" } : boxRatio === 16 / 9 ? { aspectRatio: "16/9" } : { aspectRatio: String(boxRatio), maxHeight: "60vh" }}
+      >
         {error ? (
           <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-muted">
             <span className="text-display">📹</span>
@@ -140,6 +155,7 @@ const VideoPlayer = ({
           <iframe
             key={src}
             src={getEmbedUrl(src)}
+            title={title}
             className="h-full w-full"
             allow="autoplay; fullscreen; picture-in-picture"
             allowFullScreen
@@ -222,6 +238,7 @@ const VideoPlayer = ({
 
       {/* Key Points + CTA */}
       <div className="flex-1 overflow-y-auto px-4 py-4">
+        {description && <p className="mb-4 whitespace-pre-line text-body leading-relaxed text-foreground">{description}</p>}
         {keyPoints.filter(Boolean).length > 0 && (
           <div className="mb-4">
             <h3 className="mb-2 text-body font-bold text-foreground">💡 핵심 포인트</h3>

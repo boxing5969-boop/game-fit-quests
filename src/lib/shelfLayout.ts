@@ -199,6 +199,15 @@ export interface ShelfMission {
   level?: number;
   /** 레벨 미션 영상의 기본 칸 — 없으면 워밍업 칸 */
   shelf?: Shelf;
+  /**
+   * 153 영상(153플레이의 153복싱짐 영상 · 153 PB 종목 시범 — lib/learnExtras, 2026-11-16) — 미션이 아니라 보기만.
+   * 같은 레벨이면 카드 뒤에 놓고, 내 수업 담기 · 이용 기록은 하지 않는다(서버가 미션 표에서 찾기 때문).
+   */
+  extra?: boolean;
+  /** 153 영상 타일 아래 한 줄 — 「153 레슨」 · 「153 PB 종목」 … */
+  badge?: string;
+  /** 인스타 릴스 — 첫 장면 그림이 없어 타일에 「릴스」 */
+  reel?: boolean;
 }
 
 interface LeafBase {
@@ -352,9 +361,12 @@ export function arrangeShelves<C extends TrainingCard>(
   // 예전 순서 — 워밍업 영상 먼저, 카드는 회원(내 레벨까지 먼저) · 코치진(레벨 낮은 것부터). 묶음은 첫 잎이 올 자리에.
   // 레벨 미션 영상(2026-11-16)은 카드와 같은 규칙 — 회원: 내 레벨까지의 영상이 그 카드들 앞(레벨 낮은 것부터),
   // 위 레벨은 위 레벨 카드와 레벨 순으로 섞어서(같은 레벨이면 영상 먼저) / 코치진: 레벨 순으로 섞어서.
+  // 153 영상(extra · 2026-11-16)은 그다음 — 회원: 내 레벨까지의 카드 뒤(레벨 낮은 것부터), 위 레벨은 같은 레벨 카드 뒤 /
+  // 코치진: 레벨 순으로 섞되 같은 레벨이면 카드 뒤.
   const defaultOrder = (shelf: Shelf): TileKey[] => {
     const ms: TileKey[] = [];
     const lms: { key: TileKey; level: number }[] = [];
+    const xs: { key: TileKey; level: number }[] = [];
     const cs: C[] = [];
     const topOf = (k: TileKey): TileKey => {
       const fid = folderOf.get(k);
@@ -364,7 +376,8 @@ export function arrangeShelves<C extends TrainingCard>(
       const top = topOf(leaf.key);
       if (placed.get(top) !== shelf) continue;
       if (leaf.kind === "mission") {
-        if (leaf.mission.level) lms.push({ key: leaf.key, level: leaf.mission.level });
+        if (leaf.mission.extra) xs.push({ key: leaf.key, level: Math.max(1, leaf.mission.level ?? 1) });
+        else if (leaf.mission.level) lms.push({ key: leaf.key, level: leaf.mission.level });
         else ms.push(leaf.key);
       } else cs.push(leaf.card);
     }
@@ -384,16 +397,32 @@ export function arrangeShelves<C extends TrainingCard>(
       }
       return merged;
     };
+    // 153 영상은 같은 레벨 줄들 뒤에 끼운다 (들어온 순서 그대로 — 레벨이 내려가면 앞 자리부터 다시 찾지 않는다)
+    const appendByLevel = (rowsIn: { key: TileKey; level: number }[], extras: { key: TileKey; level: number }[]) => {
+      const out2 = [...rowsIn];
+      let from = 0;
+      for (const x of [...extras].sort((a, b) => a.level - b.level)) {
+        let i = out2.findIndex((r, idx) => idx >= from && r.level > x.level);
+        if (i < 0) i = out2.length;
+        out2.splice(i, 0, x);
+        from = i + 1;
+      }
+      return out2;
+    };
     const rows = member
       ? [
           ...lms.filter((x) => x.level <= me),
           ...cardRows.filter((x) => x.level <= me),
-          ...mergeIn(
-            cardRows.filter((x) => x.level > me),
-            lms.filter((x) => x.level > me),
+          ...xs.filter((x) => x.level <= me).sort((a, b) => a.level - b.level),
+          ...appendByLevel(
+            mergeIn(
+              cardRows.filter((x) => x.level > me),
+              lms.filter((x) => x.level > me),
+            ),
+            xs.filter((x) => x.level > me),
           ),
         ]
-      : mergeIn(cardRows, lms);
+      : appendByLevel(mergeIn(cardRows, lms), xs);
     const out: TileKey[] = [];
     const seen = new Set<TileKey>();
     for (const k of [...ms, ...rows.map((r) => r.key)]) {
@@ -794,6 +823,8 @@ export function findOverlaps<C extends TrainingCard>(arranged: readonly Arranged
       const list = t.kind === "folder" ? t.tiles.map((x) => ({ leaf: x, folder: t.id, hidden: t.hidden })) : [{ leaf: t, folder: null, hidden: false }];
       for (const { leaf, folder, hidden } of list) {
         if (hidden || leaf.hidden || leaf.mergedInto) continue;
+        // 153 영상(153플레이 · 153 PB)은 보탬 영상이라 겹침 후보에서 뺀다 — 긴 제목이 카드 이름과 자꾸 엮인다 (2026-11-16)
+        if (leaf.kind === "mission" && leaf.mission.extra) continue;
         const name = leaf.kind === "card" ? leaf.card.name : leaf.mission.title;
         entries.push({
           leaf,

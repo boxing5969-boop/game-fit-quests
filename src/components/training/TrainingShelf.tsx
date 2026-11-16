@@ -101,6 +101,12 @@ export interface ShelfWarmup {
   /** 레벨 미션 영상(2026-11-16) — 리그를 이은 레벨 · 칸. 없으면 워밍업 영상(워밍업 칸 맨 앞) */
   level?: number;
   shelf?: Shelf;
+  /** 153 영상(153플레이의 153복싱짐 영상 · 153 PB 종목 시범 — lib/learnExtras) — 보기만 · 같은 레벨이면 카드 뒤 */
+  extra?: boolean;
+  /** 153 영상 타일 아래 한 줄 — 「153 레슨」 · 「153 PB 종목」 … */
+  badge?: string;
+  /** 인스타 릴스 — 첫 장면 그림이 없다 */
+  reel?: boolean;
 }
 
 interface TrainingShelfProps {
@@ -255,9 +261,13 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
   );
   const missions: ShelfMission[] = useMemo(
     () =>
-      onOpenWarmup ? warmups.map((w) => ({ id: w.id, title: w.title, poster: w.poster, level: w.level, shelf: w.shelf })) : [],
+      onOpenWarmup
+        ? warmups.map((w) => ({ id: w.id, title: w.title, poster: w.poster, level: w.level, shelf: w.shelf, extra: w.extra, badge: w.badge, reel: w.reel }))
+        : [],
     [warmups, onOpenWarmup],
   );
+  // 내 수업에 담는 건 미션 · 카드만 — 153 영상은 서버의 미션 표에 없다
+  const classMissions = useMemo(() => missions.filter((m) => !m.extra), [missions]);
   const arranged = useMemo(
     () => arrangeShelves(visible, missions, layout, { audience, myLevel, editing }),
     [visible, missions, layout, audience, myLevel, editing],
@@ -272,7 +282,7 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
     audience,
     userId: user?.id ?? null,
     cards: cardsQ.data ?? [],
-    missions,
+    missions: classMissions,
     branch,
     paused: editing,
   });
@@ -306,6 +316,7 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
   const holdStart = (ev: React.PointerEvent, leaf: ShelfLeaf) => {
     const h = holdRef.current;
     holdEnd();
+    if (leaf.kind === "mission" && leaf.mission.extra) return;
     h.fired = false;
     h.x = ev.clientX;
     h.y = ev.clientY;
@@ -524,8 +535,10 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
     flattenLeaves(list)
       .filter((x): x is Extract<ShelfLeaf, { kind: "card" }> => x.kind === "card" && !x.hidden && !x.mergedInto)
       .map((x) => x.card);
+  const extraIds = useMemo(() => new Set(missions.filter((m) => m.extra).map((m) => m.id)), [missions]);
   const openMission = (id: string) => {
-    if (user && !staff) logCardEvent(missionKey(id), "open");
+    // 153 영상은 이용 기록을 남기지 않는다 — 서버가 미션 표에서 찾는 기록이라
+    if (user && !staff && !extraIds.has(id)) logCardEvent(missionKey(id), "open");
     onOpenWarmup?.(id);
   };
   const openLeaf = (leaf: ShelfLeaf, list: TrainingCard[]) => {
@@ -594,6 +607,11 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
     if (t.kind === "folder") return { sub: `카드 ${t.tiles.length}장`, strong: false };
     if (t.kind === "mission") {
       const lv = t.mission.level;
+      if (t.mission.extra) {
+        const badge = t.mission.badge || "153 영상";
+        if (staff || editing) return { sub: lv ? `${badge} · 레벨 ${lv}` : badge, strong: false };
+        return { sub: lv && lv > Math.max(1, myLevel) ? `${badge} · 레벨 ${lv}부터` : badge, strong: false };
+      }
       if (!lv) return { sub: "워밍업 영상", strong: false };
       if (staff || editing) return { sub: `레벨 ${lv} · 레벨 미션 영상`, strong: false };
       const upcoming = lv > Math.max(1, myLevel);
@@ -638,7 +656,16 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
       );
     } else if (t.kind === "mission") {
       thumb = (
-        <Thumb src={t.mission.poster} color={missionInfo(t.mission).color} label={missionInfo(t.mission).label} video pinned={t.pinned} count={count} editing={editing}>
+        <Thumb
+          src={t.mission.poster}
+          color={missionInfo(t.mission).color}
+          label={t.mission.reel ? "릴스" : missionInfo(t.mission).label}
+          reel={t.mission.reel}
+          video
+          pinned={t.pinned}
+          count={count}
+          editing={editing}
+        >
           {editing && t.hidden && <FadeTag text="회원님께 숨김" />}
         </Thumb>
       );
@@ -700,7 +727,7 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
             </span>
           </span>
         </button>
-        {flow.available && !editing && t.kind !== "folder" && (
+        {flow.available && !editing && t.kind !== "folder" && !(t.kind === "mission" && t.mission.extra) && (
           <div className="pointer-events-none absolute inset-x-0 top-0 aspect-square">
             <button
               type="button"

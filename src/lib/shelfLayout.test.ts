@@ -424,3 +424,52 @@ describe("레벨 미션 영상 — 영상으로 배우기 (2026-11-16)", () => {
     expect(keysOf(shelf(a, "step").tiles)).not.toContain(missionKey(LV[0].id));
   });
 });
+
+describe("153 영상(153플레이 · 153 PB) — 영상으로 배우기 (2026-11-16)", () => {
+  const LV: ShelfMission[] = [{ id: uid(961), title: "[복싱/스텝] 제자리 스텝ㅣ바운스", poster: null, level: 1, shelf: "step" }];
+  const X: ShelfMission[] = [
+    { id: uid(971), title: "복싱 풋워크 — 관장 시연", poster: null, level: 11, shelf: "step", extra: true, badge: "153 기술", reel: true },
+    { id: uid(972), title: "원·투·쓰리 스텝", poster: "/test153/pb2.webp", level: 1, shelf: "step", extra: true, badge: "153 PB 종목" },
+    { id: uid(973), title: "아웃복싱 잘하기 위한 5가지 방법", poster: null, level: 21, shelf: "step", extra: true, badge: "153 레슨", reel: true },
+  ];
+  it("회원 — 레벨 미션 영상 → 카드 → 153 영상(내 레벨까지) · 위 레벨은 같은 레벨 카드 뒤 · 다음 리그는 접힘", () => {
+    const a = arrangeShelves(MEMBER_CARDS, [...LV, ...X], EMPTY_LAYOUT, { audience: "member", myLevel: 3 });
+    const step = shelf(a, "step");
+    expect(keysOf(step.tiles)).toEqual([missionKey(LV[0].id), cardKey(fwd.id), cardKey(side.id), cardKey(ladderStep.id), missionKey(X[1].id)]);
+    // 위 레벨 — 레벨 11 영상 · 레벨 21 영상 · 레벨 25 카드 · 레벨 33 카드 (같은 레벨이면 카드 뒤)
+    expect(keysOf(step.upper)).toEqual([missionKey(X[0].id), missionKey(X[2].id), cardKey(mirror.id), cardKey(mirror2.id)]);
+  });
+
+  it("블루 회원 — 레벨 11 영상은 내 레벨까지라 카드 뒤에 바로", () => {
+    const a = arrangeShelves(MEMBER_CARDS, X, EMPTY_LAYOUT, { audience: "member", myLevel: 12 });
+    const step = shelf(a, "step");
+    expect(keysOf(step.tiles)).toEqual([cardKey(fwd.id), cardKey(side.id), cardKey(ladderStep.id), missionKey(X[1].id), missionKey(X[0].id)]);
+    expect(keysOf(step.upper)).toEqual([missionKey(X[2].id), cardKey(mirror.id), cardKey(mirror2.id)]);
+  });
+
+  it("코치진 — 레벨 순, 같은 레벨이면 카드 뒤 · 겹침 후보에는 안 들어감", () => {
+    const a = arrangeShelves(CARDS, [...LV, ...X], EMPTY_LAYOUT, { audience: "staff", myLevel: 40 });
+    expect(keysOf(shelf(a, "step").tiles)).toEqual([
+      missionKey(LV[0].id),
+      cardKey(fwd.id),
+      cardKey(side.id),
+      cardKey(ladderStep.id),
+      missionKey(X[1].id),
+      missionKey(X[0].id),
+      missionKey(X[2].id),
+      cardKey(mirror.id),
+      cardKey(mirror2.id),
+    ]);
+    const extraKeys = new Set(X.map((m) => missionKey(m.id)));
+    for (const o of findOverlaps(a, EMPTY_LAYOUT)) for (const k of o.kind === "pair" ? [o.a, o.b] : o.keys) expect(extraKeys.has(k)).toBe(false);
+  });
+
+  it("153 영상이 없으면 예전 순서 그대로", () => {
+    const before = arrangeShelves(MEMBER_CARDS, [...MISSIONS, ...LV], EMPTY_LAYOUT, { audience: "member", myLevel: 3 });
+    const after = arrangeShelves(MEMBER_CARDS, [...MISSIONS, ...LV, ...X.map((m) => ({ ...m, shelf: "cooldown" as const }))], EMPTY_LAYOUT, {
+      audience: "member",
+      myLevel: 3,
+    });
+    for (const s of before) expect(keysOf(shelf(after, s.id).tiles).slice(0, s.tiles.length)).toEqual(keysOf(s.tiles));
+  });
+});

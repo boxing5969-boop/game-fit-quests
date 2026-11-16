@@ -18,6 +18,17 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261116-learn-153-videos",
+    date: "2026-11-16",
+    title: "영상으로 배우기 — 153 레슨 · 153 PB 영상",
+    lines: [
+      "153 레슨 · 분석 영상이 칸마다 함께 나와요",
+      "153 PB 8종목 시범 영상은 체력 칸에 있어요",
+      "기본 스탠스 · 원투 등 영상마다 그 동작 설명을 맞췄어요",
+    ],
+    link: { to: "/missions?learn=1", label: "영상으로 배우기" },
+  },
+  {
     id: "20261116-learn-videos",
     date: "2026-11-16",
     title: "영상으로 배우기 — 레벨 미션 영상 · 더빙 소리",

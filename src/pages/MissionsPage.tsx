@@ -36,6 +36,9 @@ import type { Enums } from "@/integrations/supabase/types";
 import VideoPlayer, { type PlayerVariant } from "@/components/VideoPlayer";
 import WhiteLeagueTab from "@/components/WhiteLeagueTab";
 import { learnVideos, type LearnMissionSource } from "@/lib/learnMissions";
+import { isInstagramUrl, learnPbVideos, learnPrograms, type LearnExtra } from "@/lib/learnExtras";
+import { TEST153_STATIONS } from "@/lib/test153";
+import { useLearnPrograms } from "@/services/learnExtrasService";
 import {
   extraVariantLabels,
   primaryMissionVideo,
@@ -189,6 +192,10 @@ const MissionsPage = () => {
     reference?: boolean;
     /** 실사 · 애니메이션 같은 버전 (대표 포함) */
     variants?: PlayerVariant[];
+    /** 153 영상(153플레이 · 153 PB) — 영상 아래 설명 한 단락 (2026-11-16) */
+    description?: string;
+    /** 영상 칸 비율(가로 ÷ 세로) — 153 PB 시범은 정사각 1 · 없으면 16:9 */
+    aspect?: number;
   } | null>(null);
 
   // League expand/collapse — default: current rank expanded.
@@ -220,6 +227,35 @@ const MissionsPage = () => {
         return { rank, rankLevels, rankMissions };
       }),
     [levels, missions],
+  );
+
+  // (훅이라 아래 early return 앞에 둔다)
+  // 영상으로 배우기 칸 — 워밍업 영상 + 레벨 미션 영상(같은 영상은 한 번 · 실사/애니는 한 칸) (2026-11-16 대표님 「레벨 1부터 레벨10까지 영상 … 모두 볼수있게」)
+  const learnList = useMemo(() => learnVideos((missions || []) as unknown as LearnMissionSource[]), [missions]);
+  // + 마이복서153 안의 다른 153 영상 — 153플레이의 153복싱짐 영상(레벨 미션과 같은 영상은 빼고) · 153 PB 종목 시범 (같은 날 「마이복서 153에있는 영상도 활용해서」)
+  const programsQ = useLearnPrograms(missionTab === "white");
+  const learnExtras = useMemo((): LearnExtra[] => {
+    const byId = new Map((missions || []).map((m) => [m.id, m]));
+    const urls = learnList.flatMap((v) =>
+      v.memberIds.map((id) => primaryMissionVideo(byId.get(id)?.mission_videos as MissionVideoRow[] | null)?.video_url ?? ""),
+    );
+    return [...learnPrograms(programsQ.data ?? [], urls), ...learnPbVideos(TEST153_STATIONS)];
+  }, [missions, learnList, programsQ.data]);
+  const learnShelfItems = useMemo(
+    () => [
+      ...learnList.map((v) => ({ id: v.id, title: v.title, poster: v.poster, level: v.level, shelf: v.shelf })),
+      ...learnExtras.map((x) => ({
+        id: x.id,
+        title: x.title,
+        poster: x.poster,
+        level: x.level,
+        shelf: x.shelf,
+        extra: true,
+        badge: x.badge,
+        reel: isInstagramUrl(x.videoUrl),
+      })),
+    ],
+    [learnList, learnExtras],
   );
 
   if (!progress) return null;
@@ -254,8 +290,6 @@ const MissionsPage = () => {
   // 진행률은 레벨 미션만 센다 — 워밍업 참고 영상(제출 없음)은 뺀다
   const levelMissionList = (missions || []).filter((m) => !isWarmupMission(m));
   const warmupMissions = (missions || []).filter((m) => isWarmupMission(m));
-  // 영상으로 배우기 칸 — 워밍업 영상 + 레벨 미션 영상(같은 영상은 한 번 · 실사/애니는 한 칸) (2026-11-16 대표님 「레벨 1부터 레벨10까지 영상 … 모두 볼수있게」)
-  const learnList = learnVideos((missions || []) as unknown as LearnMissionSource[]);
   const totalMissions = levelMissionList.length;
   const completedCount = levelMissionList.filter(
     (m) => submissionMap.get(m.id) === "approved",
@@ -348,6 +382,23 @@ const MissionsPage = () => {
 
   // 영상으로 배우기의 미션 칸 — 같은 동작 다른 버전(실사 · 애니)이면 플레이어 위 버전 칸으로 바꿔 본다
   const openLearnVideo = (id: string) => {
+    // 153 영상(153플레이 · 153 PB) — 레벨 미션 영상과 같은 플레이어(가로 영상 + 설명 + 핵심 포인트) · 보기만
+    const extra = learnExtras.find((x) => x.id === id);
+    if (extra) {
+      setVideoModal({
+        show: true,
+        videoUrl: extra.videoUrl,
+        posterUrl: extra.poster,
+        title: extra.title,
+        keyPoints: extra.points,
+        description: extra.description,
+        missionId: extra.id,
+        canSubmit: false,
+        reference: true,
+        aspect: extra.kind === "pb" ? 1 : undefined,
+      });
+      return;
+    }
     const all = missions || [];
     const main = all.find((m) => m.id === id);
     if (!main) return;
@@ -557,7 +608,7 @@ const MissionsPage = () => {
         {missionTab === "white" ? (
           <WhiteLeagueTab
             onOpenMissionVideos={openMissionVideos}
-            warmups={learnList.map((v) => ({ id: v.id, title: v.title, poster: v.poster, level: v.level, shelf: v.shelf }))}
+            warmups={learnShelfItems}
             onOpenWarmup={openLearnVideo}
           />
         ) : (
@@ -755,6 +806,8 @@ const MissionsPage = () => {
           variants={videoModal.variants}
           title={videoModal.title}
           keyPoints={videoModal.keyPoints}
+          description={videoModal.description}
+          aspect={videoModal.aspect}
           onClose={() => setVideoModal(null)}
           onStartChallenge={
             !videoModal.reference && (videoModal.canSubmit || isAdmin)

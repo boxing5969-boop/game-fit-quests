@@ -3,7 +3,7 @@
  *   화면 없는 계산은 lib/shelfLayout · 이 파일은 그림만. TrainingShelf(회원 · 코치진 · 대표님 편집)가 같이 쓴다.
  */
 import type { ReactNode } from "react";
-import { Play } from "lucide-react";
+import { Play, SquarePlay } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /** 타일 그림 — 첫 장면 · 그림, 없으면 칸 색 바탕에 칸 이름 */
@@ -12,6 +12,7 @@ export const Thumb = ({
   color,
   label,
   video,
+  reel,
   pinned,
   count,
   editing,
@@ -21,6 +22,8 @@ export const Thumb = ({
   color: string;
   label: string;
   video?: boolean;
+  /** 인스타 릴스 — 첫 장면 그림이 없어 재생 그림 + 이름 (2026-11-16 영상으로 배우기의 153 영상) */
+  reel?: boolean;
   /** 대표님 편집 중 — 왼쪽 위 − 표시 자리를 비운다 */
   editing?: boolean;
   /** 맨 앞 고정 — 「추천」 */
@@ -39,6 +42,11 @@ export const Thumb = ({
         className="h-full w-full object-cover"
         onError={(e) => (e.currentTarget.style.visibility = "hidden")}
       />
+    ) : reel ? (
+      <span className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 px-2 text-center" style={{ color }}>
+        <SquarePlay className="h-10 w-10" strokeWidth={1.75} aria-hidden />
+        <span className="text-heading font-black">{label}</span>
+      </span>
     ) : (
       <span className="absolute inset-0 flex items-center justify-center px-2 text-center text-heading font-black" style={{ color }}>
         {label}
