@@ -45,6 +45,9 @@ export interface GrowthLesson {
   sources?: GrowthSource[];
   /** O/X 문제 (화요일 「복싱 상식 O/X」) */
   quiz?: GrowthQuiz;
+  /** (2단계) 코치 「오늘의 한마디」 — 코치님이 수업 시작이나 마무리에 말할 한 문장 (40자 안 · O/X 글은 답을 말하지 않게).
+   *  없으면 '오늘 하나' 제목으로 대신한다(lib/growthStage2 coachLineOf) */
+  coach?: string;
 }
 
 /** 요일 코너 이름 — 0 = 일요일 */

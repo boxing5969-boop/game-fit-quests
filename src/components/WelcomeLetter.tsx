@@ -14,6 +14,9 @@
  *     순서: 승급 편지 → 출석 축하 편지 → 이른 축하 · 첫 4주 편지 → 웰컴 편지 (한 접속에 한 통)
  *   · motivation — 동기부여 1단계(2026-11-12 대표님 「추천대로」 · 선릉역점만): 5 · 10 · 20 · 30번째 출석 축하(보상 없이)
  *     · 첫 4주 8번 달성(마일리지). '안 본 축하'는 서버 get_my_motivation.unseen — 닫으면 mark_my_motivation_seen (lib/motivation153)
+ *   · growth — 「오늘의 1분 성장」 누적 도장(2026-11-17 대표님 「다음진행」 · 선릉역점부터): 읽은 날 10 · 30 · 100 · 365번째
+ *     (보상 없이 편지만 · 연속이 아니라 누적). '안 본 도장'은 서버 get_my_growth.unseen — 닫으면 mark_my_growth_seen (lib/growthStage2).
+ *     순서는 이른 축하 · 첫 4주 편지 다음, 웰컴 편지 앞.
  *   웰컴·코치 편지 문구는 설정 화면(관리자)에서 고친다 — src/lib/welcomeLetters.ts (app_settings.welcome_letters).
  *   전체관리자·관리자 계정은 자동 편지를 받지 않는다(예전엔 회원 편지가 닉네임 그대로 "…개발자님께" 로 떴다).
  *
@@ -53,11 +56,13 @@ import { attendanceLetter, type AttendanceUnseen } from "@/lib/attendanceMilesto
 import { useAttendanceStats, useMarkAttendanceMilestonesSeen } from "@/hooks/useAttendanceStats";
 import { motivationLetter, type Motivation } from "@/lib/motivation153";
 import { useMarkMotivationSeen, useMotivation } from "@/hooks/useMotivation";
+import { GROWTH_STAMPS, growthLetter } from "@/lib/growthStage2";
+import { useMarkGrowthSeen, useMyGrowth } from "@/services/growthStage2Service";
 
 const RANK_ORDER = ["white", "blue", "red", "black"] as const;
 type RankKey = (typeof RANK_ORDER)[number];
 type RankLetterKey = "blue" | "red" | "black";
-type LetterKey = "welcome" | "coach" | "attendance" | "motivation" | RankLetterKey;
+type LetterKey = "welcome" | "coach" | "attendance" | "motivation" | "growth" | RankLetterKey;
 
 // 기기 단위 옛 키(2026-09-23 이전) — 이미 본 회원에게 다시 띄우지 않으려고 읽기만 한다
 const LEGACY_WELCOME_KEY = "153_letter_welcome_v1";
@@ -313,6 +318,8 @@ const WelcomeLetter = () => {
   const [attUnseen, setAttUnseen] = useState<AttendanceUnseen | null>(null);
   // 이른 축하 · 첫 4주 편지 — 보여 줄 때의 값을 붙잡아 둔다(같은 이유)
   const [motSnap, setMotSnap] = useState<Motivation | null>(null);
+  // 1분 성장 누적 도장 편지 — 보여 줄 때의 도장(읽은 날 n번째)을 붙잡아 둔다
+  const [growSnap, setGrowSnap] = useState<{ n: number; stamps: readonly number[] } | null>(null);
 
   // 받는 사람 — 관리자 계정은 자동 편지 없음, 지도진·코치·관장은 코치 편지, 나머지는 회원 편지
   // '회원으로 보기' 중이어도 진짜 관리자 계정이면 자동 편지는 없다 (role 은 member 로 보인다 · 2026-10-21)
@@ -330,6 +337,12 @@ const WelcomeLetter = () => {
   const motSettled = !attEnabled || motQ.isFetched || motQ.isError;
   const motPending = motQ.data?.on && motQ.data.unseen ? motQ.data : null;
   const markMotivationSeen = useMarkMotivationSeen();
+  // 1분 성장 누적 도장 — 켠 지점 회원만 서버가 값을 준다(그 밖 · 함수가 없는 서버는 꺼진 값 → 편지 없음)
+  const growQ = useMyGrowth(attEnabled);
+  const growSettled = !attEnabled || growQ.isFetched || growQ.isError;
+  const growPending = growQ.data?.on ? growQ.data.unseen : null;
+  const growStamps = growQ.data?.stamps;
+  const markGrowthSeen = useMarkGrowthSeen();
 
   // 관리자가 설정 화면에서 고친 문구 — 웰컴·코치 편지를 띄울 때만 읽는다(없으면 기본 문구)
   const needsTemplate = activeKey === "welcome" || activeKey === "coach";
@@ -383,7 +396,7 @@ const WelcomeLetter = () => {
       if (role === "member" && !(p.phone_number ?? "").trim()) return;
 
       // 출석 기록을 읽는 중 — 다 읽으면 다시 판단 (축하 편지가 웰컴 편지보다 먼저라서)
-      if (!attSettled || !motSettled) return;
+      if (!attSettled || !motSettled || !growSettled) return;
 
       const rank = ((progress as unknown as { current_rank?: string } | null)?.current_rank ??
         "white") as RankKey;
@@ -420,6 +433,13 @@ const WelcomeLetter = () => {
         return;
       }
 
+      // 2-2) 1분 성장 누적 도장 편지 — 읽은 날 10 · 30 · 100 · 365번째 (2026-11-17)
+      if (growPending) {
+        setGrowSnap({ n: growPending, stamps: growStamps ?? GROWTH_STAMPS });
+        setActiveKey("growth");
+        return;
+      }
+
       // 3) 웰컴 편지 — 처음 3번 접속까지 (2026-10-21 대표님: 첫 로그인엔 대부분 건너뛴다).
       //    튜토리얼 조건은 뺐다(2026-09-28) — 기존 회원은 튜토리얼을 거의 안 해서 편지가 영영 안 왔다.
       if (firstLetterDue(firstLetterState(uid, "welcome"))) {
@@ -428,7 +448,7 @@ const WelcomeLetter = () => {
     };
     const t = window.setTimeout(decide, 1200);
     return () => window.clearTimeout(t);
-  }, [user, profile, progress, role, isAdminRole, isCoach, location.pathname, attSettled, attPending, motSettled, motPending]);
+  }, [user, profile, progress, role, isAdminRole, isCoach, location.pathname, attSettled, attPending, motSettled, motPending, growSettled, growPending, growStamps]);
 
   // 결정되면 살짝 지연 후 등장 (스플래시/다른 모달 정리 후). 문구를 읽는 중이면 기다린다(기본 문구 깜빡임 방지).
   const templateLoading = needsTemplate && lettersQ.isLoading;
@@ -455,6 +475,7 @@ const WelcomeLetter = () => {
       else if (activeKey === "coach") lsSet(coachKey(uid), "1");
       else if (activeKey === "attendance") void markAttendanceSeen();
       else if (activeKey === "motivation") void markMotivationSeen();
+      else if (activeKey === "growth") void markGrowthSeen();
       // 승급 편지 닫으면 기준선을 현재 리그로 올림
       else if (activeKey) lsSet(rankBaselineKey(uid), activeKey);
     }
@@ -485,6 +506,9 @@ const WelcomeLetter = () => {
     const l = motSnap ? motivationLetter(memberName, motSnap) : null;
     if (!l) return null;
     letter = l;
+  } else if (activeKey === "growth") {
+    if (!growSnap) return null;
+    letter = growthLetter(memberName, growSnap.n, growSnap.stamps);
   } else {
     const r = RANK_LETTERS[activeKey];
     letter = { eyebrow: r.eyebrow, title: r.title(memberName), body: r.body(memberName), sign: r.sign, cta: r.cta };

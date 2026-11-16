@@ -113,3 +113,32 @@ describe("운동 달력 그날 카드 — (2-4) 운동 짝꿍 쌍도장", () => 
     expect(screen.queryByText(/짝꿍 비비님과 같이/)).toBeNull();
   });
 });
+
+describe("운동 달력 그날 카드 — 1분 성장 칸 (오늘의 1분 성장 2단계)", () => {
+  // 11/12(목)부터 드는 계정
+  const withGrowth = (days: string[]) => ({ ...cal, growth: { from: "2026-11-12", days: new Set(days) } });
+
+  it("오늘 아직 안 읽었으면 '1분 읽기' — 누르면 홈의 오늘의 1분 성장으로", () => {
+    const onGrowth = vi.fn();
+    render(<DayChecksPanel {...base} cal={withGrowth([])} day="2026-11-12" attended={null} compact onToggle={noop} onGrowth={onGrowth} />);
+    fireEvent.click(screen.getByRole("button", { name: "1분 읽기" }));
+    expect(onGrowth).toHaveBeenCalledTimes(1);
+    expect(document.body.textContent).not.toMatch(/못|안 읽|놓쳤|빠졌|실패/);
+  });
+
+  it("오늘 읽었으면 채워진 칸 '1분 성장' (누를 것 없음)", () => {
+    render(<DayChecksPanel {...base} cal={withGrowth(["2026-11-12"])} day="2026-11-12" attended={null} compact onToggle={noop} onGrowth={noop} />);
+    expect(screen.getByText("1분 성장")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "1분 읽기" })).toBeNull();
+  });
+
+  it("첫날 앞의 날 · 꺼진 계정에는 칸이 없다", () => {
+    const { unmount } = render(<DayChecksPanel {...base} cal={withGrowth(["2026-11-03"])} day="2026-11-03" attended={att} onToggle={noop} onGrowth={noop} />);
+    expect(screen.queryByText("1분 성장")).toBeNull();
+    expect(screen.getByText("금색 별을 받은 날이에요")).toBeInTheDocument();
+    unmount();
+    render(<DayChecksPanel {...base} day="2026-11-12" attended={null} compact onToggle={noop} onGrowth={noop} />);
+    expect(screen.queryByText("1분 성장")).toBeNull();
+    expect(screen.queryByRole("button", { name: "1분 읽기" })).toBeNull();
+  });
+});

@@ -15,6 +15,8 @@
  *   · (3-5 · 2026-11-14) 그날의 내 일정 · 기념일 한 줄씩(누르면 고치기 · '이날은 쉬어요' 이름표) · 공휴일 · 내 생일 한 줄 ·
  *     '+ 내 일정'(오늘 · 앞날) · 쉬어요 날은 휴관일처럼 체육관 체크를 뺀다 · 기분 스티커 20(첫 줄 8 + '스티커 더 보기') ·
  *     한 줄은 다이어리처럼 — 사진 3장 · 길면 '더 보기'. 켜고 끄기(view)를 따른다 (lib/memberEvents.ts).
+ *   · (오늘의 1분 성장 2단계 · 2026-11-17 · 선릉역점부터) 저절로 체크에 '1분 성장' 한 칸 — 그날 글을 읽었으면 채워지고,
+ *     오늘 아직이면 「1분 읽기」(onGrowth → 홈의 오늘의 1분 성장 서랍). 켠 지점 회원 · check_from 날부터만 (lib/growthStage2.ts).
  */
 import { useLayoutEffect, useRef, useState } from "react";
 import {
@@ -105,6 +107,8 @@ export interface DayChecksPanelProps {
   onSticker: (key: StickerKey | null) => void;
   onWriteLine: () => void;
   onCheer: () => void;
+  /** (1분 성장 2단계) 오늘 아직 안 읽은 '1분 성장' 칸을 누르면 — 홈의 「오늘의 1분 성장」을 연다 */
+  onGrowth?: () => void;
   onManage: () => void;
   /** (2-2) 저요 한 운동 모집을 누르면 — 커뮤니티 '오늘 같이 해요' */
   onOpenCalls?: () => void;
@@ -370,6 +374,7 @@ const CheckChip = ({
   onToggle,
   onWriteLine,
   onCheer,
+  onGrowth,
 }: {
   c: DayCheck;
   today: boolean;
@@ -378,6 +383,7 @@ const CheckChip = ({
   onToggle: (itemId: string, done: boolean) => void;
   onWriteLine: () => void;
   onCheer: () => void;
+  onGrowth?: () => void;
 }) => {
   const base = "inline-flex h-9 items-center gap-1 rounded-full px-3 text-label font-bold transition-transform";
   const doneCls = "border border-primary/30 bg-primary/10 text-primary";
@@ -418,6 +424,15 @@ const CheckChip = ({
       </button>
     );
   }
+  // (1분 성장 2단계) 오늘 아직 안 읽었으면 — 홈의 「오늘의 1분 성장」을 연다
+  if (today && c.kind === "growth" && onGrowth) {
+    return (
+      <button type="button" onClick={onGrowth} className={cn(base, "border border-border bg-card text-foreground active:scale-95")}>
+        <Plus className="h-4 w-4 text-primary" aria-hidden />
+        1분 읽기
+      </button>
+    );
+  }
   return <span className={cn(base, "border border-dashed border-border text-muted-foreground")}>{c.label}</span>;
 };
 
@@ -440,6 +455,7 @@ export const DayChecksPanel = ({
   onSticker,
   onWriteLine,
   onCheer,
+  onGrowth,
   onManage,
   onOpenCalls,
   onGoal,
@@ -464,7 +480,7 @@ export const DayChecksPanel = ({
   const rest = cal.mine.some((e) => e.rest && e.kind === "plan" && myEventOn(e, day));
   const holiday = layerOn(view, "holiday") ? holidayOn(day) : null;
   const bday = layerOn(view, "mine") && birthdayOn(cal.birthday, day);
-  const rawChecks = dayChecks(day, !!attended, info, cal.items, isClosedDay(cal.events, day) || rest);
+  const rawChecks = dayChecks(day, !!attended, info, cal.items, isClosedDay(cal.events, day) || rest, cal.growth);
   // (3-4) 주 n번 칩 — 그 주 채운 수 / 그 주 목표
   const monday = mondayOfYmd(day);
   const checks = rawChecks.map((c) => {
@@ -612,6 +628,7 @@ export const DayChecksPanel = ({
             onToggle={onToggle}
             onWriteLine={onWriteLine}
             onCheer={onCheer}
+            onGrowth={onGrowth}
           />
         ))}
       </div>

@@ -642,7 +642,8 @@ const WorkoutCalendarCard = ({
     () => (cal ? withAnnivMoments(baseMoments, cal.anniv, (d) => byDay.has(d)) : baseMoments),
     [baseMoments, cal, byDay],
   );
-  const starOf = (d: string) => !!cal && d <= today && isStarDay(dayChecks(d, byDay.has(d), cal.days.get(d), cal.items, closed.has(d) || rest.has(d)));
+  const starOf = (d: string) =>
+    !!cal && d <= today && isStarDay(dayChecks(d, byDay.has(d), cal.days.get(d), cal.items, closed.has(d) || rest.has(d), cal.growth));
   const stickerFor = (d: string) => (cal && onMarks ? stickerOf(cal.days.get(d)?.sticker)?.emoji ?? null : null);
   // (2-3) 앞날도 누를 수 있다 — 그날 일정 · D-day · '이 날을 목표일로'
   const pickableFor = (d: string) => !!cal && (d <= today || hasAgenda(d) || quickModeOf(d, today) === "future");
@@ -694,6 +695,7 @@ const WorkoutCalendarCard = ({
         onSticker={(key: StickerKey | null) => stickerM.mutate({ day, sticker: key }, { onError: (e) => toast.error((e as Error).message) })}
         onWriteLine={() => openSheet("line")}
         onCheer={() => openSheet("cheer")}
+        onGrowth={() => navigate("/home?growth=1")}
         onManage={() => openSheet("items")}
         onOpenCalls={() => navigate("/myboxer/community?together=1")}
         onGoal={(d) => openSheet("dday", d)}

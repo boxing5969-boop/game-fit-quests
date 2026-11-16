@@ -35,6 +35,7 @@ import {
 import { HABITS_OFF, applyTodoDone, normalizeHabits, todoPayload, type Habits } from "@/lib/memberHabits";
 import { goalPayload, learnActs, normalizeDdays, type GoalDraft } from "@/lib/calendarMarks";
 import { SEARCH_OFF, normalizeCalSearch, type CalSearch, type CalView, type MyScope } from "@/lib/memberEvents";
+import { fetchGrowthCheck } from "@/services/growthStage2Service";
 
 export const CAL2_KEY = ["153cal2"] as const;
 /** (3-4) 나만의 체크 시트 — 이번 주 · 이어 간 주 · 할 일 (달력 캐시와 모양이 달라 따로) */
@@ -56,17 +57,21 @@ export function useMyCalendar(from: string | null, to: string | null, enabled = 
     retry: false,
     placeholderData: (prev) => prev,
     queryFn: async () => {
-      // (2026-11-17) 영상으로 배우기 한 날 — my_learn_days 를 같이 받아 그날 한 일에 합친다(함수가 없거나 실패하면 그대로)
-      const [cal, learn] = await Promise.all([
+      // get_my_calendar 는 고치지 않는다 — 같은 달력에 얹는 일은 여기 Promise.all 에 한 칸씩 더한다(함수가 없거나 실패하면 그대로).
+      //   (2026-11-17) 영상으로 배우기 한 날 — my_learn_days 를 같이 받아 그날 한 일에 합친다
+      //   (2026-11-17) 오늘의 1분 성장 2단계 — 읽은 날은 get_my_growth 로 받아 붙인다(켠 지점 회원이 아니면 null)
+      const [cal, learn, growth] = await Promise.all([
         rpc("get_my_calendar", { p_from: from, p_to: to }),
         rpc("my_learn_days", { p_from: from, p_to: to }).then(
           (r: { data: unknown; error: RpcError }) => (r.error ? [] : learnActs(r.data)),
           () => [],
         ),
+        from && to ? fetchGrowthCheck(user?.id, from, to) : Promise.resolve(null),
       ]);
       if (cal.error) return CAL_OFF;
-      const state = normalizeCalendar(cal.data);
-      return learn.length && state.on ? { ...state, acts: [...state.acts, ...learn] } : state;
+      const base = normalizeCalendar(cal.data);
+      const state = learn.length && base.on ? { ...base, acts: [...base.acts, ...learn] } : base;
+      return state.on && growth ? { ...state, growth } : state;
     },
   });
 }
