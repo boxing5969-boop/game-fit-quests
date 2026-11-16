@@ -5,14 +5,17 @@
  *   2026-10-28 리디자인: 카드는 이름표 + 제목 한 줄 + › (부제 · '1분' 칩 · '오늘의 방향 보기' 줄은 서랍 안으로) · 서랍 속 읽는 글은 본문 16px
  *   '오늘 하나 해 볼게요'를 누르면 이 기기에 오늘 날짜로 남겨 카드에 '오늘 실천 약속' 표시 (서버에 쓰지 않는다).
  *   교육 내용은 data/growthLessons.ts 한 곳.
+ *   2026-11-16 날마다 새 글(0단계 — 대표님 「매일 똑같은 거만 있어서 식상해」): 화면은 그대로 두고 두 가지만 —
+ *     오늘 해 볼 것이 하나면 번호 없이 '오늘 하나' · 사실을 다룬 글은 이야기 아래 '출처'(주소가 있으면 누르면 원문).
  */
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Check, ChevronRight, Compass, Sprout } from "lucide-react";
 import { toast } from "sonner";
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useAuth } from "@/contexts/AuthContext";
 import { todayLesson } from "@/data/growthLessons";
 import { kstToday } from "@/lib/attendanceCheer";
+import { isIosApp, loadIosAppNative } from "@/lib/iosApp";
 import { cn } from "@/lib/utils";
 
 const doneKey = (uid: string, day: string, id: string) => `mb153.growth.done:${uid}:${day}:${id}`;
@@ -24,6 +27,23 @@ const readDone = (key: string): boolean => {
   }
 };
 
+/** 바깥 링크 — 아이폰 앱은 앱 안 사파리 창, 그 밖은 새 창 (TitleTeachTab 과 같은 방식) */
+const OutLink = ({ href, children }: { href: string; children: ReactNode }) => (
+  <a
+    href={href}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="underline decoration-border underline-offset-4"
+    onClick={(e) => {
+      if (!isIosApp()) return;
+      e.preventDefault();
+      void loadIosAppNative().then((n) => n.openInAppBrowser(href));
+    }}
+  >
+    {children}
+  </a>
+);
+
 const GrowthLessonCard = ({ className }: { className?: string }) => {
   const { user } = useAuth();
   const today = kstToday();
@@ -32,6 +52,9 @@ const GrowthLessonCard = ({ className }: { className?: string }) => {
   const [open, setOpen] = useState(false);
   const [justDone, setJustDone] = useState(false);
   const done = justDone || (!!key && readDone(key));
+  /** 날마다 글은 오늘 해 볼 것이 하나 — 번호 없이 '오늘 하나' */
+  const single = lesson?.directions.length === 1;
+  const sources = lesson?.sources ?? [];
 
   if (!lesson) return null;
 
@@ -43,7 +66,7 @@ const GrowthLessonCard = ({ className }: { className?: string }) => {
     }
     setJustDone(true);
     setOpen(false);
-    toast.success("좋아요! 오늘의 방향 하나, 응원할게요");
+    toast.success(single ? "좋아요! 오늘 하나, 응원할게요" : "좋아요! 오늘의 방향 하나, 응원할게요");
   };
 
   return (
@@ -89,18 +112,34 @@ const GrowthLessonCard = ({ className }: { className?: string }) => {
                   {p}
                 </p>
               ))}
+              {sources.length > 0 && (
+                <p className="break-words text-label leading-relaxed text-muted-foreground">
+                  출처 ·{" "}
+                  {sources.map((s, i) => (
+                    <span key={s.name}>
+                      {i > 0 && ", "}
+                      {s.url ? <OutLink href={s.url}>{s.name}</OutLink> : s.name}
+                    </span>
+                  ))}
+                </p>
+              )}
             </div>
 
-            <section aria-label="오늘의 방향" className="rounded-2xl bg-emerald-500/[0.08] p-3.5 ring-1 ring-inset ring-emerald-500/20">
+            <section
+              aria-label={single ? "오늘 하나" : "오늘의 방향"}
+              className="rounded-2xl bg-emerald-500/[0.08] p-3.5 ring-1 ring-inset ring-emerald-500/20"
+            >
               <p className="flex items-center gap-1.5 text-label font-black text-foreground">
-                <Compass className="h-4 w-4 text-emerald-600 dark:text-emerald-400" aria-hidden /> 오늘의 방향
+                <Compass className="h-4 w-4 text-emerald-600 dark:text-emerald-400" aria-hidden /> {single ? "오늘 하나" : "오늘의 방향"}
               </p>
               <ol className="mt-2.5 space-y-2.5">
                 {lesson.directions.map((d, i) => (
                   <li key={d.title} className="flex gap-2.5">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-micro font-black text-white">
-                      {i + 1}
-                    </span>
+                    {!single && (
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-micro font-black text-white">
+                        {i + 1}
+                      </span>
+                    )}
                     <span className="min-w-0">
                       <span className="block text-body font-black leading-snug text-foreground">{d.title}</span>
                       <span className="mt-0.5 block text-label leading-relaxed text-muted-foreground">{d.body}</span>

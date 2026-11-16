@@ -18,6 +18,17 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261116-growth-daily",
+    date: "2026-11-16",
+    title: "홈 — 「오늘의 1분 성장」 날마다 새 글",
+    lines: [
+      "홈 카드 글이 날마다 바뀌어요 — 요일마다 다른 코너예요",
+      "복싱 상식 O/X · 기술 한 끗 · 링 위의 이야기 · 집에서 1분",
+      "사실을 다룬 글은 아래 출처를 누르면 원문이 열려요",
+    ],
+    link: { to: "/home", label: "홈에서 보기" },
+  },
+  {
     id: "20261116-pt-check",
     date: "2026-11-16",
     title: "PT 회원님 — PT 차감 안내",
