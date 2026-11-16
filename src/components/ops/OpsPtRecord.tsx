@@ -49,10 +49,12 @@ import {
   type PtRow,
   type PtUnrecorded,
 } from "@/lib/opsPtRecord";
-import { PT_SAMPLE_COACH } from "@/lib/opsPtRecordSample";
+import { ptPayMonth, ptPayMonthCovered } from "@/lib/opsPtPay";
+import { PT_SAMPLE_COACH, PT_SAMPLE_RATES } from "@/lib/opsPtRecordSample";
 import { PT_REPORT_KIND_LABEL, emptyPtReportDraft, ptReportFixReply, type PtReport, type PtReportFix } from "@/lib/opsPtReport";
 import { useOpsPtRecord, useOpsPtRecordActions } from "@/services/opsPtRecordService";
 import { useOpsPtReportActions, useOpsPtReports } from "@/services/opsPtReportService";
+import OpsPtPay from "./OpsPtPay";
 import { ptTicketLabel } from "./OpsPtPanel";
 import { PtReportLink, PtReportList, PtReportResolveSheet, PtReportSheet, type PtReportInit, type PtResolveInit } from "./OpsPtReport";
 import { OpsButton, OpsChip, OpsLabel, OpsSheet, fmtDay, kstToday, monthOf, opsInput } from "./OpsParts";
@@ -947,6 +949,15 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
   if (manage) {
     const ym = (month ?? monthOf(today)).slice(0, 7);
     const cmp = ptMonthCompare(res, data.events ?? [], ym, coachId);
+    // 「기록 + 차감」 지급 대상(2026-11-16 2단계) — 아래 수당 카드(OpsPtPay)와 같은 셈 · 여기는 횟수만
+    const payM = ptPayMonth(res, data.events ?? [], null, `${ym}-01`, coachId);
+    const recordBasis = demo || payM.basis === "record";
+    // PT 기록을 켠 달 — 이 화면의 차감은 켠 날부터만(그 달 전체는 아래 수당 카드의 「차감 기준으로 셈하면」)
+    const startMonth = !demo && res.startedOn.slice(0, 7) === ym && res.startedOn.slice(8, 10) !== "01";
+    // PT 기록을 켜기 전 달 · 넉 달이 지난 달 — 받은 자료에 그 달 기록 · 차감이 없거나 일부만 있다(0회로 보이지 않게)
+    const beforeStart = ym < res.startedOn.slice(0, 7);
+    const covered = !beforeStart && ptPayMonthCovered(`${ym}-01`, data);
+    const uncoveredNote = beforeStart ? "PT 기록을 켜기 전" : "넉 달이 지난 달";
     const monthRows = rows.filter((r) => r.s.session_date.startsWith(ym));
     const shown = more ? monthRows : monthRows.slice(0, 8);
     return (
@@ -963,13 +974,18 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-2xl border border-border p-4">
             <p className="text-label text-muted-foreground">{Number(ym.slice(5, 7))}월 차감 기준</p>
-            <p className="mt-0.5 text-title font-black tabular-nums text-foreground">{cmp.byDeduct}회</p>
-            <p className="text-label text-muted-foreground">지금 수당 기준</p>
+            <p className="mt-0.5 text-title font-black tabular-nums text-foreground">{covered ? `${cmp.byDeduct}회` : "—"}</p>
+            <p className="text-label text-muted-foreground">
+              {!covered ? uncoveredNote : startMonth ? `${mdOf(res.startedOn)}부터 잡힌 차감` : recordBasis ? "참고" : "지금 수당 기준"}
+            </p>
           </div>
           <div className="rounded-2xl border border-border p-4">
             <p className="text-label text-muted-foreground">기록 기준</p>
-            <p className="mt-0.5 text-title font-black tabular-nums text-foreground">{cmp.byRecord}회</p>
-            <p className="text-label text-muted-foreground">기록 + 차감이 맞은 수업</p>
+            <p className="mt-0.5 text-title font-black tabular-nums text-foreground">{covered ? `${payM.paidUses}회` : "—"}</p>
+            <p className="text-label text-muted-foreground">
+              {!covered ? uncoveredNote : recordBasis ? "이 달 수당 기준" : "기록 + 차감이 맞은 수업"}
+              {covered && payM.hold.total > 0 ? ` · 보류 ${payM.hold.total}` : ""}
+            </p>
           </div>
         </div>
         {cmp.noEntry > 0 && (
@@ -1032,7 +1048,7 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
             )}
           </div>
         )}
-        {payBelow && <p className="mb-1 mt-5 border-t border-border pt-4 text-label font-bold text-muted-foreground">수당 (차감 기록 기준)</p>}
+        {payBelow && <p className="mb-2 mt-5 border-t border-border pt-4 text-label font-bold text-muted-foreground">수당</p>}
         {sheetEl}
         {reportSheets}
       </div>
@@ -1175,11 +1191,19 @@ export const OpsPtRecordDemo = () => {
         </OpsChip>
       </div>
       {view === "coach" ? (
-        <OpsPtRecord branch="예시 지점" coachId={PT_SAMPLE_COACH} demo />
+        <>
+          <OpsPtRecord branch="예시 지점" coachId={PT_SAMPLE_COACH} demo />
+          {/* 「기록 + 차감」 수당 예시(2026-11-16 2단계) — 지어낸 수당표 · 이 달부터 지급 기준인 모습 */}
+          <section className="rounded-2xl border border-border bg-card p-5">
+            <h2 className="mb-3 text-heading font-black text-foreground">PT</h2>
+            <OpsPtPay branch="예시 지점" coachId={PT_SAMPLE_COACH} month={monthOf(kstToday())} rates={PT_SAMPLE_RATES} demo asOfficial />
+          </section>
+        </>
       ) : (
         <section className="rounded-2xl border border-border bg-card p-5">
           <h2 className="mb-3 text-heading font-black text-foreground">예시 코치 · PT</h2>
-          <OpsPtRecord branch="예시 지점" manage coachId={PT_SAMPLE_COACH} demo />
+          <OpsPtRecord branch="예시 지점" manage payBelow coachId={PT_SAMPLE_COACH} demo />
+          <OpsPtPay branch="예시 지점" coachId={PT_SAMPLE_COACH} month={monthOf(kstToday())} rates={PT_SAMPLE_RATES} manage demo asOfficial />
         </section>
       )}
     </div>

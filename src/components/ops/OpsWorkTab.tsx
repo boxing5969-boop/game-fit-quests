@@ -22,6 +22,9 @@
  *   PT 예약 (2026-11-14 PT 프리미엄 1단계): 켠 지점만 — 코치님 화면 「오늘 PT」 위 · 관리자 화면 '확인할 것' 아래에 「PT 예약」 판
  *     (예약 넣기 · 날짜별 수업 · 결과 고르기 · 예약 가능 시간 · PT 회원). 알림 링크 ?pt=book 으로 오면 그 판으로 내려온다.
  *     ?demo=1 예시도 맨 위에 — OpsPtBook · src/lib/ptBooking.ts
+ *   PT 수당 2단계 (2026-11-16 2-1): PT 기록을 켠 지점 — 근무자 카드 'PT' 탭 · 코치님 화면 'PT' 카드에 「기록 + 차감」 수당 카드.
+ *     전환 달(12월 수업분 · 지점마다 ptPayFirstRecordMonth)부터 PT 수당 합계 · 근무자 줄도 기록 기준, 그 앞 달은 미리 보기만
+ *     — OpsPtPay · src/lib/opsPtPay.ts
  *   계산은 src/lib/opsWork.ts 한 곳 — 서버는 자료만.
  */
 import { useEffect, useMemo, useState } from "react";
@@ -65,8 +68,9 @@ import {
   type OpsMonthData,
 } from "@/services/opsService";
 import { computePtMonth, type OpsPtSummary } from "@/lib/opsPt";
+import { ptPayBasis, ptPayMonth, ptPayMonthCovered, type PtPayMonth } from "@/lib/opsPtPay";
 import { matchPtRecord, ptCounts } from "@/lib/opsPtRecord";
-import { PT_SAMPLE_COACH } from "@/lib/opsPtRecordSample";
+import { PT_SAMPLE_COACH, PT_SAMPLE_RATES } from "@/lib/opsPtRecordSample";
 import { ptReportOpenCount } from "@/lib/opsPtReport";
 import { useOpsPtRecord } from "@/services/opsPtRecordService";
 import { dutyLiveFor, dutyOpen, type DutyKind } from "@/lib/opsDuty";
@@ -76,6 +80,7 @@ import { useOpsPtReports } from "@/services/opsPtReportService";
 import OpsContractSheet from "./OpsContractSheet";
 import OpsDaySheet from "./OpsDaySheet";
 import OpsPtPanel, { PtCheckItem } from "./OpsPtPanel";
+import OpsPtPay from "./OpsPtPay";
 import OpsPtBook, { OpsPtBookDemo } from "./OpsPtBook";
 import OpsPtRecord, { OpsPtRecordDemo } from "./OpsPtRecord";
 import OpsStaffSheet, { type OpsStaffTab } from "./OpsStaffSheet";
@@ -255,7 +260,6 @@ const ManagerView = ({ data, ptDemo }: { data: OpsMonthData; ptDemo: boolean }) 
     return m;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pt, data.staff, ptPay]);
-  const ptGross = [...ptByCoach.values()].reduce((s, x) => s + (x.gross ?? 0), 0);
   const ptToCheck = pt ? pt.events.filter((e) => e.status === "check") : [];
   // PT 기록(2026-11-11) — 켠 지점만: 코치별 확인 필요(사유 없는 차감 · 차감 대기 · 기록 없는 입장 · 늦은 기록)
   const ptRecQ = useOpsPtRecord(data.branch, { enabled: ptCoaches.length > 0, demo: ptDemo, demoManage: true });
@@ -263,6 +267,20 @@ const ManagerView = ({ data, ptDemo }: { data: OpsMonthData; ptDemo: boolean }) 
   const ptRecTodo = ptRec
     ? ptCoaches.map((c) => ({ staff: c, n: ptCounts(ptRec, ptDemo ? PT_SAMPLE_COACH : c.id, true).total })).filter((x) => x.n > 0)
     : [];
+  // PT 수당 2단계(2026-11-16) — 전환 달부터는 「기록 + 차감」이 그 달 수당이다. 그 앞 달은 차감 기록 기준 그대로(미리 보기만)
+  const ptRecordBasis = !ptDemo && !!ptRec && ptPayBasis(data.month, ptRec.startedOn) === "record";
+  //   넉 달이 지난 달은 받은 자료에 그 달 기록이 일부만 있다 — 셈하지 않고 PT 수당 줄을 비운다(닫은 달은 2-2 월 마감 기록에서)
+  const ptRecordCovered = ptRecordBasis && !!ptRecQ.data && ptPayMonthCovered(data.month, ptRecQ.data);
+  const ptPayByCoach = useMemo(() => {
+    const m = new Map<string, PtPayMonth>();
+    if (!ptRecordCovered || !ptRec || !ptRecQ.data) return m;
+    for (const c of ptCoaches) m.set(c.id, ptPayMonth(ptRec, ptRecQ.data.events ?? [], ptPay && pt ? pt.rates : null, data.month, c.id, pt?.events));
+    return m;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ptRecordCovered, ptRec, ptRecQ.data, pt, data.staff, data.month, ptPay]);
+  const ptGross = ptRecordBasis
+    ? [...ptPayByCoach.values()].reduce((s, x) => s + (x.gross ?? 0), 0)
+    : [...ptByCoach.values()].reduce((s, x) => s + (x.gross ?? 0), 0);
   // PT 기록 오류 신고(2026-11-12) — 코치별 열린 신고. 코치가 정해지지 않은 신고는 첫 PT 코치 줄에 더한다
   const ptRepQ = useOpsPtReports(data.branch, { enabled: !!ptRec, demo: ptDemo, demoManage: true });
   const ptRepTodo = ptRepQ.data?.available
@@ -559,11 +577,22 @@ const ManagerView = ({ data, ptDemo }: { data: OpsMonthData; ptDemo: boolean }) 
                         ) : null}
                         {sched || "시간표를 넣어 주세요"}
                       </p>
-                      {s.pt_freelancer && ptByCoach.get(s.id) && (
-                        <p className="mt-0.5 text-label font-bold tabular-nums text-primary">
-                          PT {ptByCoach.get(s.id)!.uses}회
-                          {ptByCoach.get(s.id)!.gross != null ? ` · ${fmtWon(ptByCoach.get(s.id)!.gross ?? 0)}` : ""}
-                        </p>
+                      {s.pt_freelancer && ptRecordBasis ? (
+                        ptPayByCoach.get(s.id) && (
+                          <p className="mt-0.5 text-label font-bold tabular-nums text-primary">
+                            PT {ptPayByCoach.get(s.id)!.paidUses}회
+                            {ptPayByCoach.get(s.id)!.gross != null ? ` · ${fmtWon(ptPayByCoach.get(s.id)!.gross ?? 0)}` : ""}
+                            {ptPayByCoach.get(s.id)!.hold.total > 0 ? ` · 보류 ${ptPayByCoach.get(s.id)!.hold.total}` : ""}
+                          </p>
+                        )
+                      ) : (
+                        s.pt_freelancer &&
+                        ptByCoach.get(s.id) && (
+                          <p className="mt-0.5 text-label font-bold tabular-nums text-primary">
+                            PT {ptByCoach.get(s.id)!.uses}회
+                            {ptByCoach.get(s.id)!.gross != null ? ` · ${fmtWon(ptByCoach.get(s.id)!.gross ?? 0)}` : ""}
+                          </p>
+                        )
                       )}
                     </div>
                     <div className="shrink-0 text-right">
@@ -621,6 +650,17 @@ const ManagerView = ({ data, ptDemo }: { data: OpsMonthData; ptDemo: boolean }) 
           openStaff?.pt_freelancer && pt && ptByCoach.get(openStaff.id) ? (
             <>
               <OpsPtRecord branch={data.branch} manage payBelow coachId={ptDemo ? PT_SAMPLE_COACH : openStaff.id} month={data.month} demo={ptDemo} />
+              <OpsPtPay
+                branch={data.branch}
+                coachId={ptDemo ? PT_SAMPLE_COACH : openStaff.id}
+                month={data.month}
+                rates={ptDemo ? PT_SAMPLE_RATES : ptPay ? pt.rates : null}
+                monthEvents={ptDemo ? undefined : pt.events}
+                manage
+                demo={ptDemo}
+                asOfficial={ptDemo}
+                panelBelow
+              />
               <OpsPtPanel
                 summary={ptByCoach.get(openStaff.id)!}
                 events={pt.events.filter((e) => e.coach_staff_id === openStaff.id)}
@@ -811,6 +851,10 @@ const CoachView = ({ data, onOpenContract, ptDemo }: { data: OpsMonthData; onOpe
       {ptSummary && ptQ.data && (
         <section className={card}>
           <h2 className="mb-3 text-heading font-black text-foreground">PT</h2>
+          {/* 「기록 + 차감」 수당(2026-11-16 2단계) — 전환 달 앞은 미리 보기 · PT 기록을 안 켠 지점은 안 보인다 */}
+          {!ptDemo && (
+            <OpsPtPay branch={data.branch} coachId={mine.id} month={data.month} rates={ptPay ? ptQ.data.rates : null} monthEvents={ptQ.data.events} panelBelow />
+          )}
           <OpsPtPanel summary={ptSummary} events={ptQ.data.events.filter((e) => e.coach_staff_id === mine.id)} manage={false} showPay={ptPay} />
         </section>
       )}

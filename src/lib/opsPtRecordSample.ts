@@ -3,7 +3,7 @@
  *   서버에 함수가 아직 없을 때(DB 적용 전 · 옛 DB 를 보는 preview-* 미리보기)와 `?demo=1` 에서 화면을 채운다.
  *   오늘을 기준으로 날짜를 만든다 — 줄마다 화면의 한 가지 모습(차감 확인 · 확인 중 · 대기 · 사유 없는 차감 · 기록 없는 입장 …).
  */
-import type { OpsPtEvent } from "./opsPt";
+import type { OpsPtEvent, OpsPtRate } from "./opsPt";
 import {
   addDays,
   isUseKind,
@@ -16,6 +16,11 @@ import {
 } from "./opsPtRecord";
 
 export const PT_SAMPLE_COACH = "sample-coach";
+/** 예시 수당표 — 지어낸 금액(실제 수당표는 DB 에만) · 「기록 + 차감」 수당 예시(OpsPtPay)에 쓴다 */
+export const PT_SAMPLE_RATES: OpsPtRate[] = [
+  { team_size: 1, sessions: 10, session_rate: 30000, valid_from: "2026-01-01" },
+  { team_size: 1, sessions: 20, session_rate: 30000, valid_from: "2026-01-01" },
+];
 const TICKET20 = "퍼스널 트레이닝 20회권";
 const TICKET10 = "퍼스널 트레이닝 10회권";
 
