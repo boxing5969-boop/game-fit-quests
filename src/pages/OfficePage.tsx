@@ -32,6 +32,11 @@
  *   「매뉴얼」 탭 (2026-11-11 대표님 「넘어가자」 · 보고서 「153 매뉴얼 책 · 운영본부 「153 매뉴얼」 탭 보고서」):
  *   · ?tab=manual — ManualTab: 153 매뉴얼 1권 서재 · 목차 · 한 장씩 읽기 · 확인 문제 · 서명(?ch=<장>), 대표님 · 지점장님은 읽음 현황
  *   · 코치진 모두(전략 회의와 같은 기준) — 서명 · 현황 권한은 서버 coach_manual_* 가 정한다
+ *
+ *   「오늘 청소」 (2026-11-16 대표님 「운영본부 탭에 청소 매뉴얼 … 코치님들이 직관적으로 보고 수행할수있도록」 · 1단계):
+ *   · 탭 줄 바로 아래 띠(OpsCleanEntry) — 오늘 내 차례가 남은 코치님은 어느 탭에서나, 대표님 · 지점 관리자는 근무 · 일정 탭에서
+ *   · 누르면 전체 화면 한 장 · /office?clean=<시간대|1>(&cd=날짜) 로 바로 열기 · 예시 ?cleandemo=coach|manager
+ *   · 무엇을 보여 줄지는 서버 ops_clean_day 가 정한다(함수가 없는 DB면 아무것도 안 그림)
  */
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -49,6 +54,7 @@ import OpsWorkTab from "@/components/ops/OpsWorkTab";
 import { OpsPtBookDemo } from "@/components/ops/OpsPtBook";
 import { OpsPtRecordDemo } from "@/components/ops/OpsPtRecord";
 import OpsPlanTab from "@/components/ops/OpsPlanTab";
+import { OpsCleanEntry } from "@/components/ops/OpsClean";
 import OpsSalesTab from "@/components/ops/OpsSalesTab";
 import { useOpsMe } from "@/services/opsService";
 import { useOpsSalesScope } from "@/services/opsSalesService";
@@ -280,6 +286,8 @@ const OfficePage = () => {
             ))}
           </div>
         )}
+        {/* 오늘 청소 — 내 차례가 남은 코치님은 어느 탭에서나 · 관리자는 근무 · 일정 탭에서 (볼 것이 없으면 안 그린다, 2026-11-16) */}
+        <OpsCleanEntry enabled={staff || hasWork} tab={tab} />
         {!hasOffice && tab === "strategy" && (
           <p className="px-1 text-label text-muted-foreground">사무실 · 회의는 아직 우리 지점에 열리지 않았어요</p>
         )}

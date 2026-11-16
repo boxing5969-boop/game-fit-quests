@@ -70,6 +70,7 @@ import GoodsNudgeCard from "@/components/goods/GoodsNudgeCard";
 import BirthdayCongratsCard from "@/components/home/BirthdayCongratsCard";
 import GrowthLessonCard from "@/components/home/GrowthLessonCard";
 import OfficeEntryCard from "@/components/office/OfficeEntryCard";
+import HomeCleanCard from "@/components/home/HomeCleanCard";
 import CommunityTodayStrip from "@/components/home/CommunityTodayStrip";
 import HomePullToRefresh from "@/components/home/HomePullToRefresh";
 import { useTodayBirthdays } from "@/services/birthdayService";
@@ -633,6 +634,9 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
           {/* 🥊 PT 수업 — PT 회원에게만: 다음 수업 · 「수업 받았어요」 · 남은 횟수 · 예약 · 취소 (2026-11-14 대표님
               「홈화면에 PT 회원님들을 위한 스케줄관리」). PT 예약을 켠 지점의 PT 회원이 아니면 아무것도 그리지 않는다 */}
           <HomePtCard />
+          {/* 🧹 오늘 청소 — 오늘 내 차례 청소가 남은 코치님에게만 한 줄 · 누르면 운영본부에서 그 화면이 바로 (2026-11-16 대표님
+              「코치님들이 직관적으로 보고 수행할수있도록」). 회원 · 차례 없는 날 · 다 끝낸 뒤에는 안 그린다 */}
+          <HomeCleanCard />
           {/* 🎯 다음 레벨까지 — 몇 번 더 오면 되는지 + 이번 레벨 미션 (2026-11-16 대표님 「홈화면에 회원님들에게 다음 레벨로
               가려면 얼마나 출석하면 될지? 또 어떤 미션을 달성하면 되는지 알려주자」). 훈련 탭 '레벨업까지'와 같은 카드 —
               막대 · 숫자는 바로 위 내 카드에 있어 끄고(같은 숫자는 한 화면에 한 번) 「미션」 칸을 켠다.
