@@ -11,9 +11,11 @@
  *     → 정상가(있을 때만) 줄 긋고 25,000원 · 원가 그대로 한 줄 · 선착순 남은 벌 수. 다 차면 그리지 않는다(런칭 이벤트가 화면 전체).
  *   ④ 11/13 「체육관에 사이즈별 샘플도 있어서 직접 보고 입어볼수있다고 이야기하자」 → 샘플이 있는 지점 TV 만 '샘플' 줄
  *     (hasGoodsSample — 지금 선릉역점. 다른 지점 TV 에는 없는 샘플을 말하지 않는다).
+ *   ⑤ 11/17 「오늘의 1분 성장」 2단계 — 이 칸을 「오늘의 1분」과 번갈아 쓴다(LiveBoardSideSlot 이 fill 로 감싼다 · 사전예약이 끝나면 그쪽이 이어받는다).
  */
 import { useQuery } from "@tanstack/react-query";
 import { GOODS_FLEECE_SLUG, ddayLabel, deadlineLabel, hasGoodsSample, isAccepting, listPriceOf, stockLabel, won } from "@/lib/goodsPreorder";
+import { cn } from "@/lib/utils";
 import { getGoodsCampaign } from "@/services/goodsService";
 
 const PHOTOS = [
@@ -21,7 +23,8 @@ const PHOTOS = [
   { src: "/goods/fleece/img/model-back-gray.webp?v=2", label: "진회색 인쇄", dot: "#63666A" },
 ];
 
-const LiveBoardGoodsCard = ({ branchName }: { branchName?: string }) => {
+/** fill = 감싼 칸을 꽉 채운다(LiveBoardSideSlot) — 없으면 예전처럼 화면 너비 1/3 */
+const LiveBoardGoodsCard = ({ branchName, fill = false }: { branchName?: string; fill?: boolean }) => {
   const { data: c } = useQuery({
     queryKey: ["goods-campaign", GOODS_FLEECE_SLUG, "tv"],
     queryFn: () => getGoodsCampaign(GOODS_FLEECE_SLUG),
@@ -44,7 +47,12 @@ const LiveBoardGoodsCard = ({ branchName }: { branchName?: string }) => {
   ];
 
   return (
-    <aside className="flex min-h-0 w-1/3 shrink-0 flex-col border-l border-gray-800/60 bg-gradient-to-b from-gray-900 via-gray-900/90 to-black px-8 pb-7 pt-6">
+    <aside
+      className={cn(
+        "flex min-h-0 flex-col border-l border-gray-800/60 bg-gradient-to-b from-gray-900 via-gray-900/90 to-black px-8 pb-7 pt-6",
+        fill ? "w-full" : "w-1/3 shrink-0",
+      )}
+    >
       <div className="flex items-center gap-3">
         <span className="rounded-full bg-emerald-400/15 px-3.5 py-1 text-xl font-black text-emerald-300">연말 원가 판매</span>
         <span className="text-xl font-black tracking-[0.2em] text-gray-500">153 GOODS</span>
