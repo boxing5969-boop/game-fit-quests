@@ -331,7 +331,7 @@ function ItemSheet({
     .join(" · ");
 
   return (
-    <DmSheet open={open} onClose={onClose} title={title} subtitle={sub}>
+    <DmSheet backClose open={open} onClose={onClose} title={title} subtitle={sub}>
       <div className="space-y-3 pb-2">
         {rows.length > 0 ? (
           <div className="rounded-2xl bg-secondary px-4 py-3">
@@ -508,7 +508,7 @@ function MergeSheet({
   const main = mainKey === a.key ? a : b;
   const dup = main === a ? b : a;
   return (
-    <DmSheet open={open} onClose={onClose} title="두 카드를 어떻게 할까요?" subtitle={`‘${leafName(a)}’ → ‘${leafName(b)}’`}>
+    <DmSheet backClose open={open} onClose={onClose} title="두 카드를 어떻게 할까요?" subtitle={`‘${leafName(a)}’ → ‘${leafName(b)}’`}>
       <div className="space-y-3 pb-2">
         <div className="space-y-2 rounded-2xl border border-border p-3">
           <p className="px-1 text-body font-bold text-foreground">합치기 — 한 장만 보여요</p>
@@ -578,7 +578,7 @@ function ShelvesSheet({ open, onClose, layout, apply }: { open: boolean; onClose
     commit(list, `칸 순서 · ${list[j].label}`);
   };
   return (
-    <DmSheet open={open} onClose={onClose} title="칸 순서 · 이름" subtitle="회원님 칩 순서와 이름이 바뀌어요 (비우면 원래 이름)">
+    <DmSheet backClose open={open} onClose={onClose} title="칸 순서 · 이름" subtitle="회원님 칩 순서와 이름이 바뀌어요 (비우면 원래 이름)">
       <ul className="space-y-2 pb-2">
         {order.map((s, i) => (
           <li key={s.id} className="flex items-center gap-2 rounded-2xl bg-secondary p-2">
@@ -639,7 +639,7 @@ function HiddenSheet({
       .map((t) => ({ t, shelf: s })),
   );
   return (
-    <DmSheet open={open} onClose={onClose} title="숨긴 카드" subtitle="회원님께 안 보이는 카드 — 코치님 화면엔 흐리게 남아요">
+    <DmSheet backClose open={open} onClose={onClose} title="숨긴 카드" subtitle="회원님께 안 보이는 카드 — 코치님 화면엔 흐리게 남아요">
       {rows.length === 0 ? (
         <p className="rounded-2xl bg-secondary px-4 py-8 text-center text-body text-muted-foreground">숨긴 카드가 없어요</p>
       ) : (
@@ -690,7 +690,7 @@ function OverlapSheet({
 }) {
   const label = (s: Shelf) => shelfLabel(layout, s);
   return (
-    <DmSheet open={open} onClose={onClose} tall title={`겹쳐 보이는 카드 ${overlaps.length}`} subtitle="같은 동작이 여러 곳에 있으면 회원님이 헷갈려요 — 합치거나 묶어 주세요">
+    <DmSheet backClose open={open} onClose={onClose} tall title={`겹쳐 보이는 카드 ${overlaps.length}`} subtitle="같은 동작이 여러 곳에 있으면 회원님이 헷갈려요 — 합치거나 묶어 주세요">
       {overlaps.length === 0 ? (
         <p className="rounded-2xl bg-secondary px-4 py-8 text-center text-body text-muted-foreground">겹쳐 보이는 카드가 없어요</p>
       ) : (
@@ -815,7 +815,7 @@ function HistorySheet({
   }, [open]);
   const list = q.data ?? [];
   return (
-    <DmSheet open={open} onClose={onClose} tall title="정리 기록" subtitle="저장할 때마다 한 줄 — 지난 정리로 한 번에 되돌릴 수 있어요">
+    <DmSheet backClose open={open} onClose={onClose} tall title="정리 기록" subtitle="저장할 때마다 한 줄 — 지난 정리로 한 번에 되돌릴 수 있어요">
       {q.isLoading ? (
         <div className="space-y-2">
           {[0, 1, 2].map((i) => (

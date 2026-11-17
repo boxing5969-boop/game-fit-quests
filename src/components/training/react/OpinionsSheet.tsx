@@ -24,7 +24,7 @@ export default function OpinionsSheet({
   onClose: () => void;
   onOpenCard: (item: string) => void;
 }) {
-  useModalDismiss(open, onClose);
+  useModalDismiss(open, onClose, { back: true }); // 휴대폰 뒤로가기 = 닫기 (2026-11-17)
   if (!open || typeof document === "undefined") return null;
   const opinions = list?.opinions ?? [];
   return createPortal(

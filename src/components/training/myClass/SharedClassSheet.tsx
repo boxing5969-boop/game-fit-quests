@@ -52,7 +52,7 @@ const Body = ({ cls, flow, posterOf }: { cls: SharedClass; flow: MyClassFlow; po
 
   return (
     <>
-      <DmSheet
+      <DmSheet backClose
         open
         onClose={flow.closeShared}
         tall

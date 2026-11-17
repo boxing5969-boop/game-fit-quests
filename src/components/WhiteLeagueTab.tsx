@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useBackClose } from "@/hooks/useBackClose";
 import { whiteLevels, WhiteLevelDetail } from "@/data/whiteLevelData";
 import LevelUpRequestCard from "@/components/LevelUpRequestCard";
 import {
@@ -124,6 +125,11 @@ const WhiteLeagueTab = ({ onOpenMissionVideos, warmups, onOpenWarmup }: WhiteLea
     next.delete("open");
     setParams(next, { replace: true });
   }, [openParam, params, setParams, currentRank, currentLevel]);
+
+  // 휴대폰 뒤로가기 = 탭 안 화면 닫기 (2026-11-17 대표님 「훈련탭에서 … 뒤로가기 누르면 홈화면으로 나가져서」)
+  //   내 레벨 연습하기 · 레벨 자세히는 주소가 안 바뀌는 화면이라 예전엔 뒤로가기가 훈련 탭을 떠났다
+  useBackClose(!!practiceView, () => setPracticeView(null));
+  useBackClose(!!detailView, () => setDetailView(null));
 
   if (practiceView) {
     return <MyLevelPractice league={practiceView.league} levelNumber={practiceView.level} onBack={() => setPracticeView(null)} />;
@@ -387,6 +393,12 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack, initialDetail = fals
   const [drillSheet, setDrillSheet] = useState<TrainingExercise | null>(null);
   // 배우기 탭 보조 섹션 접기 — 기본은 접힘(회원은 필수훈련·그림·학습모듈만 보면 됨)
   const [openLearnMore, setOpenLearnMore] = useState(false);
+  // 휴대폰 뒤로가기 = 이 화면 위의 화면 · 창 닫기 (2026-11-17) — 맨 위에 열린 것부터 하나씩
+  useBackClose(showPractice, () => setShowPractice(false));
+  useBackClose(showSession && !!sessionBlocks, () => setShowSession(false));
+  useBackClose(showChecklist, () => setShowChecklist(false));
+  useBackClose(showSparring, () => setShowSparring(false));
+  useBackClose(showSessionEditor, () => setShowSessionEditor(false));
 
   if (!ul) return <div className="p-4 text-center text-muted-foreground">레벨 데이터를 불러올 수 없습니다</div>;
 

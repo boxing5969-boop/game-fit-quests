@@ -180,8 +180,8 @@ const PlayerBody = ({ playing, flow, posterOf }: { playing: PlayingClass; flow: 
     if (phase === "run" && worked >= 60) finish(worked);
     else flow.closePlayer();
   };
-  // 뒤 화면 스크롤 잠금 · Esc
-  useModalDismiss(true, close);
+  // 뒤 화면 스크롤 잠금 · Esc · 휴대폰 뒤로가기(재생 중 1분 넘었으면 끝 화면으로 — ✕ 와 같다)
+  useModalDismiss(true, close, { back: true });
 
   const item = seg ? resolved[seg.item] : resolved[segs[0]?.item ?? 0] ?? null;
   const nextSeg = seg ? segs.slice(idx + 1).find((s) => s.item !== seg.item) : null;

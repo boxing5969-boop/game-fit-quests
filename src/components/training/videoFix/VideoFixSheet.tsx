@@ -30,7 +30,7 @@ export default function VideoFixSheet({
   hasVideo: boolean;
   onClose: () => void;
 }) {
-  useModalDismiss(open, onClose);
+  useModalDismiss(open, onClose, { back: true }); // 휴대폰 뒤로가기 = 닫기 (2026-11-17)
   const actions = useVideoFixActions();
   const [cat, setCat] = useState<VideoFixCat>("motion");
   const [motion, setMotion] = useState("");

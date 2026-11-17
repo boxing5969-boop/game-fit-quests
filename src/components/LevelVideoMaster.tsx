@@ -8,6 +8,7 @@ import {
   type LevelVideo,
 } from "@/hooks/useLevelVideos";
 import { OverlayMedia } from "@/components/common/VideoOverlay";
+import { useBackClose } from "@/hooks/useBackClose";
 import { overlayVariants } from "@/lib/missionVideos";
 
 interface Props {
@@ -19,6 +20,8 @@ const LevelVideoMaster = ({ league, levelNumber }: Props) => {
   const { data: videos = [], isLoading } = useLevelVideos(league, levelNumber);
   const { watched, toggle, countFor } = useWatchedVideos();
   const [playing, setPlaying] = useState<LevelVideo | null>(null);
+  // 휴대폰 뒤로가기 = 영상 닫기 (2026-11-17)
+  useBackClose(!!playing, () => setPlaying(null));
 
   if (isLoading) {
     return (

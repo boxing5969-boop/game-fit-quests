@@ -114,7 +114,7 @@ export default function ShelfDataSheet({
   const leagues = t ? totalsLeagueLine(t) : null;
 
   return (
-    <DmSheet
+    <DmSheet backClose
       open={open}
       onClose={onClose}
       title="영상으로 배우기 데이터"

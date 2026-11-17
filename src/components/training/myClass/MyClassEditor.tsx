@@ -194,7 +194,7 @@ const EditorBody = ({
 
   return (
     <>
-      <DmSheet
+      <DmSheet backClose
         open
         onClose={onClose}
         tall

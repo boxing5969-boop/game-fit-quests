@@ -107,7 +107,7 @@ const StepCard = ({
 
 const LessonDaySheet = ({ day, byDayNo, today, onClose, onOpenDay }: Props) => {
   const open = !!day;
-  useModalDismiss(open, onClose);
+  useModalDismiss(open, onClose, { back: true }); // 휴대폰 뒤로가기 = 닫기 (2026-11-17)
   const [playing, setPlaying] = useState<OverlayVideo | null>(null);
   const closeVideo = useCallback(() => setPlaying(null), []);
   // 시트가 닫히면(뒤로가기 포함) 틀어 둔 영상도 같이 닫는다

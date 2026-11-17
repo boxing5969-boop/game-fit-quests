@@ -57,7 +57,7 @@ const MyClassCardPicker = ({
   if (typeof document === "undefined") return null;
 
   return createPortal(
-    <DmSheet open={open} onClose={onClose} tall title="카드 더 담기" subtitle={full ? `${MAX_ITEMS}장이 다 찼어요` : `${count}/${MAX_ITEMS}장 — 누르면 담겨요`}>
+    <DmSheet backClose open={open} onClose={onClose} tall title="카드 더 담기" subtitle={full ? `${MAX_ITEMS}장이 다 찼어요` : `${count}/${MAX_ITEMS}장 — 누르면 담겨요`}>
       <label className="sticky top-0 z-10 flex h-11 items-center gap-2 rounded-2xl border border-border bg-background px-3">
         <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
         <input

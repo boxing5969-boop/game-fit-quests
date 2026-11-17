@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { X, Play, Pause, Maximize, RotateCcw, FlipHorizontal2 } from "lucide-react";
 import VideoVariantTabs from "@/components/common/VideoVariantTabs";
 import { instagramEmbedUrl, isInstagramUrl } from "@/lib/learnExtras";
+import { useBackClose } from "@/hooks/useBackClose";
 
 /** 같은 동작의 다른 버전 (실사 · 애니메이션 — 2026-10-01) */
 export interface PlayerVariant {
@@ -57,6 +58,8 @@ const VideoPlayer = ({
   aspect,
 }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  // 보일 때만 그려지는 창 — 휴대폰 뒤로가기가 영상을 닫는다(화면을 떠나지 않게, 2026-11-17)
+  useBackClose(true, onClose);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(() => (SPEED_OPTIONS.includes(initialSpeed) ? initialSpeed : 1));
   const [error, setError] = useState(false);

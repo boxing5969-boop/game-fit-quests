@@ -90,7 +90,7 @@ export default function AutoClassSheet({
   const full = classCount >= MAX_CLASSES;
 
   return (
-    <DmSheet
+    <DmSheet backClose
       open={open}
       onClose={onClose}
       title="내 수업 자동으로 짜기"

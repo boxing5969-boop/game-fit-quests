@@ -18,6 +18,17 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261117-back-closes",
+    date: "2026-11-17",
+    title: "뒤로가기 — 보던 영상 · 창만 닫혀요",
+    lines: [
+      "훈련 탭에서 영상 · 동작 카드를 보다 뒤로가기를 누르면 그 창만 닫혀요",
+      "레벨 자세히 · 내 레벨 연습하기도 뒤로가기로 훈련 탭에 돌아와요",
+      "홈으로 나가지 않고 보던 자리 그대로예요",
+    ],
+    link: { to: "/missions", label: "훈련 탭 열기" },
+  },
+  {
     id: "20261117-market",
     date: "2026-11-17",
     title: "153 마켓 — 복싱 용품을 앱에서 주문",

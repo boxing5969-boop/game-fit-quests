@@ -1,13 +1,14 @@
 /**
  * 영상 크게 보기 — 화면 위에 떠서 바로 재생한다 (검색 결과 · 수업 시트가 같이 쓴다).
  * body 로 띄워서 transform 애니메이션이 걸린 부모 안에서도 화면 기준으로 덮는다.
- * 유튜브 주소면 유튜브 플레이어, 아니면 기본 video. 바깥 누르기 · 닫기 · Esc 로 닫힌다.
+ * 유튜브 주소면 유튜브 플레이어, 아니면 기본 video. 바깥 누르기 · 닫기 · Esc · 휴대폰 뒤로가기로 닫힌다.
  * 같은 동작의 다른 버전(실사 · 애니메이션)이 있으면 영상 아래에서 바꿔 본다 (2026-10-01).
  */
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { youtubeId } from "@/hooks/useLevelVideos";
 import VideoVariantTabs from "@/components/common/VideoVariantTabs";
+import { useBackClose } from "@/hooks/useBackClose";
 
 export interface OverlayVariant {
   label: string;
@@ -71,6 +72,8 @@ interface Props {
 }
 
 const VideoOverlay = ({ video, onClose }: Props) => {
+  // 휴대폰 뒤로가기 = 닫기 (2026-11-17 — 예전엔 뒤 화면까지 나갔다)
+  useBackClose(!!video, onClose);
   useEffect(() => {
     if (!video) return;
     const onKey = (e: KeyboardEvent) => {

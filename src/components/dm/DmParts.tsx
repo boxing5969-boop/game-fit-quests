@@ -87,11 +87,13 @@ interface SheetProps {
   footer?: ReactNode;
   /** 시트 높이 — full: 화면 대부분(검색 목록) */
   tall?: boolean;
+  /** 휴대폰 뒤로가기로도 닫기 (2026-11-17 훈련 탭 시트 — hooks/useBackClose). 저장 안 된 글이 있는 시트에는 켜지 않는다 */
+  backClose?: boolean;
 }
 
 /** 아래에서 올라오는 시트 — 라이센스 카드 시트와 같은 모양 */
-export const DmSheet = ({ open, onClose, title, subtitle, children, footer, tall }: SheetProps) => {
-  useModalDismiss(open, onClose);
+export const DmSheet = ({ open, onClose, title, subtitle, children, footer, tall, backClose }: SheetProps) => {
+  useModalDismiss(open, onClose, { back: backClose });
   return (
     <AnimatePresence>
       {open && (

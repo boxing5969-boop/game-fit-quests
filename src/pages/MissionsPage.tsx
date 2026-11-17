@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils";
 import type { Enums } from "@/integrations/supabase/types";
 
 import VideoPlayer, { type PlayerVariant } from "@/components/VideoPlayer";
+import { useBackClose } from "@/hooks/useBackClose";
 import WhiteLeagueTab from "@/components/WhiteLeagueTab";
 import { learnVideos, type LearnMissionSource } from "@/lib/learnMissions";
 import { isInstagramUrl, learnPbVideos, learnPrograms, type LearnExtra } from "@/lib/learnExtras";
@@ -170,6 +171,8 @@ const MissionsPage = () => {
 
   // Admin form state
   const [showForm, setShowForm] = useState(false);
+  // 휴대폰 뒤로가기 = 미션 추가 · 고치기 창 닫기 (2026-11-17 — 예전엔 훈련 탭을 떠났다)
+  useBackClose(showForm, () => setShowForm(false));
   const [editingId, setEditingId] = useState<string | null>(null);
   // 고치는 미션에 대표 말고 다른 영상 버전(애니메이션 등)이 붙어 있으면 그 이름들 — 폼에 안내만 한다
   const [editingExtras, setEditingExtras] = useState<string[]>([]);

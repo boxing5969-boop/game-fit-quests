@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLevelVideos, useWatchedVideos, parseVideoTitle } from "@/hooks/useLevelVideos";
 import { OverlayMedia, type OverlayVariant } from "@/components/common/VideoOverlay";
+import { useBackClose } from "@/hooks/useBackClose";
 import { overlayVariants } from "@/lib/missionVideos";
 import { hasPracticedToday } from "@/lib/levelPractice";
 import LevelUpRequestCard from "@/components/LevelUpRequestCard";
@@ -58,6 +59,8 @@ const safeSet = (k: string, v: string) => { try { localStorage.setItem(k, v); } 
 const CoachTodayCard = ({ league, levelNumber, levelTitle, onOpenPractice, onOpenDetail, onOpenVideos, extra, levelHeading }: Props) => {
   const { user, profile } = useAuth();
   const [playing, setPlaying] = useState<{ id: string; url: string; title: string; variants: OverlayVariant[] } | null>(null);
+  // 휴대폰 뒤로가기 = 영상 닫기 (2026-11-17 — 예전엔 훈련 탭을 떠나 홈으로 나갔다)
+  useBackClose(!!playing, () => setPlaying(null));
   const [collapsed, setCollapsed] = useState(() => safeGet(COURSE_KEY) === "1");
   const { data: videos = [], isFetched: videosFetched } = useLevelVideos(league, levelNumber);
   const { watched, toggle, countFor } = useWatchedVideos();

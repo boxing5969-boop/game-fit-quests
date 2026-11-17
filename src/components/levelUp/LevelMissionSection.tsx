@@ -28,8 +28,8 @@ interface Props {
 const LevelMissionSection = ({ guide, videos, onDone }: Props) => {
   const [playing, setPlaying] = useState<{ video: LevelVideo; name: string } | null>(null);
   const close = () => setPlaying(null);
-  // 뒤 화면 스크롤 잠금 · Esc — 홈 당겨서 새로고침도 창이 열린 동안은 받지 않는다
-  useModalDismiss(!!playing, close);
+  // 뒤 화면 스크롤 잠금 · Esc · 휴대폰 뒤로가기 — 홈 당겨서 새로고침도 창이 열린 동안은 받지 않는다
+  useModalDismiss(!!playing, close, { back: true });
 
   const open = (id: string, name: string) => {
     const video = videos.find((v) => v.id === id);

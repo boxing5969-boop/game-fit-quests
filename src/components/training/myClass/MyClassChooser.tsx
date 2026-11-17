@@ -14,7 +14,7 @@ const MyClassChooser = ({ flow, posterOf }: { flow: MyClassFlow; posterOf: Poste
   const c = flow.chooser;
   if (typeof document === "undefined") return null;
   return createPortal(
-    <DmSheet open={!!c} onClose={flow.closeChooser} title="어느 수업에 담을까요?" subtitle={c?.name}>
+    <DmSheet backClose open={!!c} onClose={flow.closeChooser} title="어느 수업에 담을까요?" subtitle={c?.name}>
       <ul className="space-y-2">
         {flow.classes.map((cls) => {
           const has = !!c && cls.items.some((x) => x.k === c.key);

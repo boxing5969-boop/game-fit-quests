@@ -99,7 +99,8 @@ const TrainingDrillSheet = ({
     return full ?? normalizeCard(exercise as unknown as Record<string, unknown>);
   }, [exercise, cardsQ.data]);
 
-  useModalDismiss(!!card, onClose);
+  // 휴대폰 뒤로가기 = 시트 닫기 (2026-11-17 대표님 「영상 클릭후 뒤로가기 누르면 홈화면으로 나가져서」)
+  useModalDismiss(!!card, onClose, { back: true });
 
   const video = useCardVideo(card, "member", !!card);
   const posterOf = useCardPosters(card ? [card] : []);

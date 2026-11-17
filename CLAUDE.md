@@ -1280,6 +1280,21 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - `useModalDismiss(open, onClose)` 또는 `lockBodyScroll()`([src/lib/scrollLock.ts](src/lib/scrollLock.ts))만 쓴다 — 잠금 개수를 세서 마지막 창이 닫힐 때만 푼다.
 - `document.body.style.overflow` 를 창마다 직접 기억·복원하지 않는다. 창이 겹치면(지금 운동 중 전체화면 → 회원 카드) 닫은 뒤에도 hidden 이 남아 페이지가 안 내려간다(대표님: "지금운동중 회원카드 클릭후 밑으로 스크롤이 안됨").
 
+### 뒤로가기 = 창 닫기 (2026-11-17 대표님 「훈련탭에서 영상 클릭후 뒤로가기버튼 누르면 홈화면으로 나가져서 불편해」)
+
+영상 · 시트 · 탭 안 화면(레벨 자세히 · 내 레벨 연습하기)은 주소가 안 바뀌는 '창'이라 휴대폰 뒤로가기(안드로이드 단추 · 아이폰 앱 밀기 — `allowsBackForwardNavigationGestures`)가 창 대신 화면을 떠났다(훈련 탭 → 홈).
+
+| 파일 | 역할 |
+|---|---|
+| [src/lib/backClose.ts](src/lib/backClose.ts) | 창이 열리면 같은 주소로 기록 한 칸(라우터 state 복사 + 표시 `__bc` = 창 번호, 열 때 시각에서 늘어남) · 뒤로가기 = 그 칸 위 창 닫기 · 단추로 닫으면 한 박자 뒤(setTimeout 0) 지금 칸이 아직 내 칸일 때만 `history.back()` 으로 걷기(같은 순간 navigate 를 되돌리지 않게) · 닫자마자 다른 창을 열면 칸 이어받기(replaceState) · 다른 칸 밑에 깔린 채 닫힌 칸(창 안에서 화면 이동)은 뒤로가기로 내려오면 한 번 더 뒤로(앞으로가기면 그대로 — 라우터 idx · 창 번호로 방향) · `backCloseClaims` = androidBackExit 가 '종료할까요?'를 묻기 전에 보는 것 |
+| [src/hooks/useBackClose.ts](src/hooks/useBackClose.ts) | `useBackClose(open, onClose)` — 칸은 useLayoutEffect 에서 얹는다(안쪽 화면의 scrollTo(0) 보다 먼저 → 뒤로가기로 돌아오면 브라우저가 보던 스크롤 자리로) · 닫기를 불러도 창이 그대로면(내 수업 재생 → 끝 화면) 칸을 다시 얹는다 |
+| `useModalDismiss(open, onClose, { back: true })` · `DmSheet backClose` | 쓰는 쪽이 고른다 — **모든 창의 기본이 아니다**: 종료 확인 창(뒤로가기로 열림)이 칸을 얹으면 `exitApp` 의 go(-2) 가 어긋난다 |
+
+- 켠 곳: VideoPlayer · VideoOverlay · TrainingDrillSheet(쓰는 모든 곳) · CoachTodayCard · LevelVideoMaster · LevelMissionSection(홈) 영상 창 · LessonDaySheet · MyClassPlayer · `src/components/training/**` 의 DmSheet 전부 · OpinionsSheet · VideoFixListSheet · VideoFixSheet · WhiteLeagueTab(내 레벨 연습하기 · 레벨 자세히 · 그 안의 연습 · 수업 실행 · 체크테스트 · 스파링 동의 · 수업 편집) · MissionsPage 미션 폼. 새 창도 훈련 탭 · 영상이면 켠다. 쓰던 글이 있는 창도 손해가 없다(예전엔 뒤로가기가 화면째 떠나 글이 사라졌다).
+- 창 안에서 다른 화면으로 갈 때(`navigate`)는 그대로 — 닫기와 이동이 같은 순간이면 이동이 이긴다.
+- iframe 안(앱 안 미리보기 · TV 맞춤 틀)에서는 칸을 얹지 않는다 — iframe 의 기록은 바깥 화면 뒤로가기와 섞여서. 그때는 예전처럼 단추로만 닫힌다.
+- 시험: vitest backClose(10) · androidBackExit.backClose(홈 종료 확인과 함께) · useBackClose(2) — 지키는 장치를 하나씩 빼면 깨지는 것까지 확인 / 실제 크로미움(가짜 화면 · 390px · `page.go_back`) 27가지: 영상 · 시트 위 영상 · 시트 안 화면 이동 · 이어받기 · 앞으로가기 · 탭 안 화면 스크롤 자리 · 홈 종료 확인.
+
 ### 아이폰(사파리 · 웹킷)에서만 어긋나는 그림 (2026-11-09 대표님 "아이폰은 ui가 싱크가 잘안맞아")
 
 - `svg` · `img` 를 `position:absolute` + `inset`(양쪽 0 아닌 값)만으로 크기 잡지 않는다 — 크롬(안드로이드 · PC)은 칸 안으로 늘려 멀쩡해 보이지만, 웹킷(아이폰 앱 · 사파리)은 제 크기(width/height 없는 svg 는 칸의 100%)로 그린 뒤 left/top 만큼 밀어 **오른쪽 아래로 칸 밖에 넘친다**. left · top · width · height 를 직접 주거나, 크기 가진 span 안에 `h-full w-full` 로 넣는다. 같은 일: 10/18 붕대 그림 img(2562114) · 11/09 전체 메뉴 글리프 svg(`GlyphTile` — `SVG_GLYPH_BOX`). 크롬 390px 화면 확인만으로는 안 보인다.

@@ -36,7 +36,7 @@ export default function VideoFixListSheet({
   onClose: () => void;
   onOpenCard: (cardId: string) => void;
 }) {
-  useModalDismiss(open, onClose);
+  useModalDismiss(open, onClose, { back: true }); // 휴대폰 뒤로가기 = 닫기 (2026-11-17)
   if (!open || typeof document === "undefined") return null;
   const review = (data?.candidates ?? []).filter((c) => c.state === "review");
   const openFixes = (data?.fixes ?? []).filter((f) => f.state === "requested" || f.state === "doing");
