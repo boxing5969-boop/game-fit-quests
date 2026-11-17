@@ -15,6 +15,7 @@ vi.mock("@/services/trainingCardService", () => ({
 }));
 vi.mock("@/services/shelfLayoutService", () => ({ logCardEvent: vi.fn() }));
 vi.mock("@/services/cardReactService", () => ({ useCardSocial: () => ({ data: undefined }) }));
+vi.mock("@/services/videoFixService", () => ({ useVideoFixes: () => ({ data: undefined }) }));
 vi.mock("@/components/common/VideoOverlay", () => ({ default: () => null }));
 vi.mock("@/components/training/react/CardReact", () => ({ CardHeartButton: () => null, CardReactSection: () => null }));
 vi.mock("@/features/myboxer-visualization/mindAudio", () => ({

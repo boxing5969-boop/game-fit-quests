@@ -36,7 +36,7 @@ import { createPortal } from "react-dom";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { BarChart3, Check, ChevronDown, ChevronRight, ChevronUp, MessageCircle, Minus, Plus, Search, Wand2, X } from "lucide-react";
+import { BarChart3, Check, ChevronDown, ChevronRight, ChevronUp, Clapperboard, MessageCircle, Minus, Plus, Search, Wand2, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toGlobalLevel } from "@/lib/rankLabels";
 import { cn } from "@/lib/utils";
@@ -104,6 +104,10 @@ import { titleMatches } from "@/lib/learnMissions";
 import { primeLearnAudio } from "@/lib/learnAudio";
 import { logSearchMiss, useCardOpinions, useCardReactActions } from "@/services/cardReactService";
 import OpinionsSheet from "@/components/training/react/OpinionsSheet";
+import { useVideoFixes } from "@/services/videoFixService";
+import { fixCounts } from "@/lib/videoFix";
+import { sceneCardFor } from "@/lib/learnScene";
+import VideoFixListSheet from "@/components/training/videoFix/VideoFixListSheet";
 
 export interface ShelfWarmup {
   id: string;
@@ -116,8 +120,10 @@ export interface ShelfWarmup {
   extra?: boolean;
   /** 153 영상 타일 아래 한 줄 — 「153 레슨」 · 「153 PB 종목」 … */
   badge?: string;
-  /** 인스타 릴스 — 첫 장면 그림이 없다 */
+  /** 인스타 릴스 — 첫 장면 그림이 없다 → 153 동작 장면 + 제목 썸네일 */
   reel?: boolean;
+  /** 썸네일 장면을 고를 글 — 제목 + 꼬리표 */
+  scene?: string;
 }
 
 interface TrainingShelfProps {
@@ -213,6 +219,11 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
   const [opinionFocus, setOpinionFocus] = useState<string | null>(null);
   const [open, setOpen] = useState<OpenCard | null>(null);
   const [sheet, setSheet] = useState<EditSheet>(null);
+  // 🎬 영상 고치기 (2026-11-17 · 대표님 · 운영진) — 머리 단추 → 새 영상 확인 · 고쳐 달라고 한 것 · 다 고친 것
+  const fixQ = useVideoFixes(canEdit);
+  const fixData = fixQ.data?.available && fixQ.data.data?.canEdit ? fixQ.data.data : null;
+  const fixN = fixCounts(fixData);
+  const [fixListOpen, setFixListOpen] = useState(false);
   // 4단계 데이터 창 (대표님 · 운영진) — 기간 · 지점 · 카드에 숫자 붙이기(이 기기에 기억)
   const [dataOpen, setDataOpen] = useState(false);
   const [dataDays, setDataDays] = useState<number>(DEFAULT_DATA_DAYS);
@@ -320,7 +331,17 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
   const missions: ShelfMission[] = useMemo(
     () =>
       onOpenWarmup
-        ? warmups.map((w) => ({ id: w.id, title: w.title, poster: w.poster, level: w.level, shelf: w.shelf, extra: w.extra, badge: w.badge, reel: w.reel }))
+        ? warmups.map((w) => ({
+            id: w.id,
+            title: w.title,
+            poster: w.poster,
+            level: w.level,
+            shelf: w.shelf,
+            extra: w.extra,
+            badge: w.badge,
+            reel: w.reel,
+            scene: w.scene,
+          }))
         : [],
     [warmups, onOpenWarmup],
   );
@@ -334,6 +355,13 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
   const current: Shelf = shelfIds.includes(shelf) ? shelf : shelfIds[0] ?? allowed[0];
   const cur = arranged.find((s) => s.id === current) ?? null;
   const posterOf = useCardPosters(visible);
+  // 🖼 릴스 썸네일 (2026-11-17) — 그 영상이 다루는 동작의 153 카드 첫 장면(회원에게 보이고 첫 장면이 있는 카드) + 제목
+  const sceneCards = useMemo(() => visible.filter((c) => !!c.poster_path && isMemberVisible(c)), [visible]);
+  const scenePoster = (m: ShelfMission): string | null => {
+    if (!m.extra || !m.reel) return m.poster;
+    const c = sceneCardFor(m.scene || m.title, m.id, sceneCards);
+    return c ? posterOf(c) : null;
+  };
 
   // ── 내 수업 (2단계) ──
   const flow = useMyClassFlow({
@@ -780,10 +808,10 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
     } else if (t.kind === "mission") {
       thumb = (
         <Thumb
-          src={t.mission.poster}
+          src={scenePoster(t.mission)}
           color={missionInfo(t.mission).color}
-          label={t.mission.reel ? "릴스" : missionInfo(t.mission).label}
-          reel={t.mission.reel}
+          label={missionInfo(t.mission).label}
+          caption={t.mission.extra && t.mission.reel ? t.mission.title : undefined}
           video
           pinned={t.pinned}
           count={count}
@@ -979,6 +1007,26 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
             className="flex h-9 shrink-0 items-center gap-1 rounded-full border border-border bg-card px-3.5 text-label font-bold text-foreground active:scale-95"
           >
             <Wand2 className="h-4 w-4" aria-hidden /> 수업 짜기
+          </button>
+        )}
+        {canEdit && !editing && fixData && (
+          <button
+            type="button"
+            onClick={() => setFixListOpen(true)}
+            aria-label={`영상 고치기${fixN.review ? ` · 새 영상 ${fixN.review}` : ""}${fixN.open ? ` · 고치는 중 ${fixN.open}` : ""}`}
+            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-card text-foreground active:scale-95"
+          >
+            <Clapperboard className="h-4 w-4" strokeWidth={2.4} aria-hidden />
+            {fixN.review + fixN.open > 0 && (
+              <span
+                className={cn(
+                  "absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-micro font-black",
+                  fixN.review ? "bg-primary text-primary-foreground" : "bg-foreground text-background",
+                )}
+              >
+                {fixN.review || fixN.open}
+              </span>
+            )}
           </button>
         )}
         {canEdit && !editing && (
@@ -1220,7 +1268,9 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
             aria-expanded={upperOpen}
             className="flex h-12 w-full items-center justify-between rounded-2xl border border-dashed border-border px-4 text-left active:scale-[0.99]"
           >
-            <span className="text-body font-bold text-muted-foreground">다음 리그에서 배울 동작 {upper.length}개</span>
+            <span className="text-body font-bold text-muted-foreground">
+              {current === "lesson" ? `다음 리그 153 레슨 ${upper.length}개` : `다음 리그에서 배울 동작 ${upper.length}개`}
+            </span>
             {upperOpen ? <ChevronUp className="h-5 w-5 text-muted-foreground" /> : <ChevronRight className="h-5 w-5 text-muted-foreground" />}
           </button>
           {upperOpen && grid(upper, "upper", mainCards)}
@@ -1287,6 +1337,20 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
           classCount={flow.classes.length}
           busy={flow.busy}
           onSave={saveAuto}
+        />
+      )}
+
+      {canEdit && fixData && (
+        <VideoFixListSheet
+          open={fixListOpen}
+          data={fixData}
+          onClose={() => setFixListOpen(false)}
+          onOpenCard={(cardId) => {
+            const c = (cardsQ.data ?? []).find((x) => x.id === cardId);
+            if (!c) return;
+            primeLearnAudio();
+            setOpen({ card: c, list: [c] });
+          }}
         />
       )}
 

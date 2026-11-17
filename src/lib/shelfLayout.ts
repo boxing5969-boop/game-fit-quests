@@ -206,8 +206,10 @@ export interface ShelfMission {
   extra?: boolean;
   /** 153 영상 타일 아래 한 줄 — 「153 레슨」 · 「153 PB 종목」 … */
   badge?: string;
-  /** 인스타 릴스 — 첫 장면 그림이 없어 타일에 「릴스」 */
+  /** 인스타 릴스 — 첫 장면 그림이 없다 → 153 동작 장면 + 제목으로 썸네일 (2026-11-17 · lib/learnScene) */
   reel?: boolean;
+  /** 썸네일 장면을 고를 글 — 제목 + 꼬리표 (153 영상만) */
+  scene?: string;
 }
 
 interface LeafBase {

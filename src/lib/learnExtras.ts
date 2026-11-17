@@ -2,7 +2,9 @@
 //   활용해서 영상으로 배우기 컨텐츠에 넣어놓자」 · 같은 날 「영상으로 배우기 탭에는 다른동작에 설명이 나와」)
 //   ① 153플레이에 모아 둔 153복싱짐 영상(유튜브 · 인스타 릴스 — 관장 레슨 · 분석 · 미트 · 샌드백 …)
 //      · 레벨 미션 영상과 같은 영상은 빼고(그건 레벨 미션 칸으로) · 코치 교육 자료(블랙 리그 · 코치교육)는 빼고 · 꺼진 · 관리자 전용 영상도 빼고
-//      · 리그로 레벨(화이트 1 · 블루 11 · 레드 21 — 위 리그는 카드처럼 「다음 리그에서 배울 동작」으로 접힘) · 꼬리표로 칸
+//      · 리그로 레벨(화이트 1 · 블루 11 · 레드 21 — 위 리그는 카드처럼 「다음 리그에서 배울 동작」으로 접힘)
+//      · 칸 = 「153 레슨」 하나(2026-11-17 대표님 「릴스 유튜브와 연결된 기본기 관련 영상은 따로 분류하자」 — 동작 카드 칸에서 뺌)
+//        꼬리표 · 제목으로 고른 예전 칸(topic)은 릴스 썸네일의 153 동작 장면을 고르는 데 쓴다(lib/learnScene)
 //   ② 153 PB 종목 시범 영상 8편(대표님 10/29 촬영 · public/test153) — 체력 칸
 //   설명은 그 영상의 자료 그대로(153플레이 요약 · 153 PB 기준 · 방법 · 요령) — 카드 글과 섞지 않는다.
 //   회원 화면 글이라 조회수와 '국가대표' 말은 뺀다(153 브랜드 기준 · 회원용 콘텐츠엔 '국가대표' 0회). 원본(153플레이)은 그대로.
@@ -45,7 +47,14 @@ export interface LearnExtra {
   poster: string | null;
   /** 리그를 이은 레벨 (화이트 1 · 블루 11 · 레드 21 · 153 PB 1) */
   level: number;
+  /** 놓일 칸 — 153플레이 영상은 「153 레슨」 칸 하나(2026-11-17 대표님 「따로 분류하자」) · 153 PB 는 체력 칸 */
   shelf: Shelf;
+  /** 무슨 동작 이야기인가(예전 칸 — 꼬리표 · 제목으로) — 썸네일 장면 고르기 */
+  topic: Shelf;
+  /** 인스타 릴스 — 첫 장면 그림이 없다 → 153 동작 장면 + 제목 썸네일 */
+  reel: boolean;
+  /** 썸네일 장면을 고를 글 — 제목 + 꼬리표 */
+  sceneText: string;
   /** 타일 아래 한 줄 — 「153 레슨」 · 「153 분석」 · 「153 PB 종목」 … */
   badge: string;
   /** 유튜브(https://youtu.be/…) · 인스타 릴스(https://www.instagram.com/reel/…/) · 153 PB(/test153/pbN.mp4) */
@@ -231,7 +240,10 @@ export function learnPrograms(programs: readonly LearnProgramSource[], missionVi
       title,
       poster,
       level: LEAGUE_LEVEL[league] ?? 1,
-      shelf: programShelf(p),
+      shelf: "lesson",
+      topic: programShelf(p),
+      reel: platform === "instagram",
+      sceneText: [title, ...tags].join(" "),
       badge: programBadge(p.title),
       videoUrl,
       description,
@@ -258,6 +270,9 @@ export function learnPbVideos(stations: readonly LearnPbSource[]): LearnExtra[] 
       poster: s.video.poster || null,
       level: 1,
       shelf: "fitness",
+      topic: "fitness",
+      reel: false,
+      sceneText: s.name,
       badge: "153 PB 종목",
       videoUrl: s.video.src,
       description: s.howTo,

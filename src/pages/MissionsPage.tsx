@@ -253,6 +253,7 @@ const MissionsPage = () => {
         extra: true,
         badge: x.badge,
         reel: isInstagramUrl(x.videoUrl),
+        scene: x.sceneText,
       })),
     ],
     [learnList, learnExtras],

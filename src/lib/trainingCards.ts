@@ -32,7 +32,7 @@ export interface TrainingCard extends TrainingExercise {
  *   2026-11-13 대표님 「8칸으로 다시」: 거울 앞 자세 연습 같은 기본기는 '기본기' 칸으로 따로, 미트 · 샌드백 · 짝 연습(스파링 준비)은 '드릴' 칸으로.
  *   옛 칸 id 'mitt'(미트·샌드백)는 주소 · 기기 기억값에서 'drill' 로 이어받는다(normalizeShelf).
  */
-export type Shelf = "warmup" | "basics" | "step" | "skill" | "defense" | "drill" | "fitness" | "cooldown" | "prep" | "coach";
+export type Shelf = "warmup" | "basics" | "step" | "skill" | "defense" | "drill" | "fitness" | "cooldown" | "lesson" | "prep" | "coach";
 
 export interface ShelfInfo {
   id: Shelf;
@@ -54,12 +54,14 @@ export const SHELF_INFO: Record<Shelf, ShelfInfo> = {
   drill: { id: "drill", label: "드릴", color: "#FF5A5F", minutes: 8, words: "미트·샌드백 · 짝 연습 · 스파링 준비" },
   fitness: { id: "fitness", label: "체력", color: "#D6336C", minutes: 6 },
   cooldown: { id: "cooldown", label: "쿨다운", color: "#1098AD", minutes: 5 },
+  // 2026-11-17 대표님 「릴스 유튜브와 연결된 기본기 관련 영상은 따로 분류하자」 → 「153 레슨 칸 하나」 — 153플레이의 153복싱짐 영상(레슨 · 분석 · 연타 · 기술)만. 카드는 오지 않는다
+  lesson: { id: "lesson", label: "153 레슨", color: "#E03131", minutes: 5, words: "153 영상 · 레슨 · 분석 · 연타 · 유튜브 · 릴스" },
   prep: { id: "prep", label: "준비", color: "#6B7684", minutes: 5 },
   coach: { id: "coach", label: "코치", color: "#191F28", minutes: 5 },
 };
 
 /** 회원 훈련 탭 칩 순서 (준비 = 맨 위 '붕대 감기' 한 줄 · 코치 = 코치진만) */
-export const MEMBER_SHELVES: readonly Shelf[] = ["warmup", "basics", "step", "skill", "defense", "drill", "fitness", "cooldown"];
+export const MEMBER_SHELVES: readonly Shelf[] = ["warmup", "basics", "step", "skill", "defense", "drill", "fitness", "cooldown", "lesson"];
 /** 전략 회의(코치진) 칩 순서 */
 export const STAFF_SHELVES: readonly Shelf[] = [...MEMBER_SHELVES, "coach"];
 

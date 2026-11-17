@@ -18,6 +18,17 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261117-learn-lesson153",
+    date: "2026-11-17",
+    title: "영상으로 배우기 — 「153 레슨」 칸",
+    lines: [
+      "153 레슨 · 분석 영상을 「153 레슨」 칸 하나에 모았어요",
+      "동작 칸에는 동작 카드만 — 찾기 쉬워졌어요",
+      "릴스 영상도 장면과 제목으로 한눈에 보여요",
+    ],
+    link: { to: "/missions?learn=1&shelf=lesson", label: "153 레슨 보기" },
+  },
+  {
     id: "20261117-ops-cleaning",
     date: "2026-11-17",
     title: "운영본부 — 「오늘 청소」 체크리스트",

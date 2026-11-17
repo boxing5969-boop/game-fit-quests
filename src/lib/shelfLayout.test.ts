@@ -464,6 +464,22 @@ describe("153 영상(153플레이 · 153 PB) — 영상으로 배우기 (2026-11
     for (const o of findOverlaps(a, EMPTY_LAYOUT)) for (const k of o.kind === "pair" ? [o.a, o.b] : o.keys) expect(extraKeys.has(k)).toBe(false);
   });
 
+  it("「153 레슨」 칸 (2026-11-17) — 153플레이 영상만 · 동작 카드 칸에는 안 섞임 · 칩 맨 뒤 · 다음 리그는 접힘", () => {
+    const L = X.filter((m) => m.badge !== "153 PB 종목").map((m) => ({ ...m, shelf: "lesson" as const }));
+    const a = arrangeShelves(MEMBER_CARDS, [...LV, ...L], EMPTY_LAYOUT, { audience: "member", myLevel: 3 });
+    expect(a[a.length - 1].id).toBe("lesson");
+    const lesson = shelf(a, "lesson");
+    expect(keysOf(lesson.tiles)).toEqual([]);
+    expect(keysOf(lesson.upper)).toEqual([missionKey(L[0].id), missionKey(L[1].id)]);
+    const step = shelf(a, "step");
+    for (const m of L) expect([...keysOf(step.tiles), ...keysOf(step.upper)]).not.toContain(missionKey(m.id));
+    // 레드 회원 — 다 보임 · 레벨 순
+    const red = arrangeShelves(MEMBER_CARDS, L, EMPTY_LAYOUT, { audience: "member", myLevel: 25 });
+    expect(keysOf(shelf(red, "lesson").tiles)).toEqual([missionKey(L[0].id), missionKey(L[1].id)]);
+    // 영상이 없으면 칸도 없다
+    expect(arrangeShelves(MEMBER_CARDS, LV, EMPTY_LAYOUT, { audience: "member", myLevel: 3 }).some((s) => s.id === "lesson")).toBe(false);
+  });
+
   it("153 영상이 없으면 예전 순서 그대로", () => {
     const before = arrangeShelves(MEMBER_CARDS, [...MISSIONS, ...LV], EMPTY_LAYOUT, { audience: "member", myLevel: 3 });
     const after = arrangeShelves(MEMBER_CARDS, [...MISSIONS, ...LV, ...X.map((m) => ({ ...m, shelf: "cooldown" as const }))], EMPTY_LAYOUT, {

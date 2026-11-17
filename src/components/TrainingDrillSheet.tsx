@@ -49,6 +49,8 @@ import {
 } from "@/lib/learnAudio";
 import { cardVoiceUrl } from "@/lib/cardVoice";
 import VideoOverlay from "@/components/common/VideoOverlay";
+import { useVideoFixes } from "@/services/videoFixService";
+import VideoFixPanel from "@/components/training/videoFix/VideoFixPanel";
 
 interface TrainingDrillSheetProps {
   exercise: TrainingExercise | TrainingCard | null;
@@ -105,6 +107,10 @@ const TrainingDrillSheet = ({
   const reactItem = card ? `c:${card.id}` : null;
   const socialQ = useCardSocial(reactItem, !!card && !!user, staffViewer);
   const social = socialQ.data?.available ? socialQ.data.social : null;
+  // 🎬 영상 고치기 (2026-11-17) — 대표님 · 운영진만 · 서버가 다시 본다(can_edit) · 함수가 없는 DB면 칸 없음
+  const fixViewer = role === "admin" || role === "super_admin";
+  const fixQ = useVideoFixes(!!card && !!user && fixViewer);
+  const fixData = fixQ.data?.available && fixQ.data.data?.canEdit ? fixQ.data.data : null;
   const [coachOpen, setCoachOpen] = useState(false);
   const coachVideo = useCardVideo(card, "coach", !!card && coachOpen);
   const [slow, setSlow] = useState(false);
@@ -554,6 +560,18 @@ const TrainingDrillSheet = ({
                 </>
               )}
             </button>
+          )}
+
+          {/* 🎬 영상 고치기 — 대표님 · 운영진: 새 영상 확인 · 숨긴 영상 · 보낸 요청 · 「이 장면 고쳐 달라기」 */}
+          {fixData && (
+            <VideoFixPanel
+              cardId={card.id}
+              cardName={card.name}
+              hasVideo={!!card.video_path}
+              data={fixData}
+              getTime={() => videoRef.current?.currentTime ?? 0}
+              pauseVideo={() => videoRef.current?.pause()}
+            />
           )}
 
           {card.description && <p className="mt-4 text-body leading-relaxed text-muted-foreground">{card.description}</p>}

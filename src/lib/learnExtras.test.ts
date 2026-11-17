@@ -115,7 +115,9 @@ describe("영상으로 배우기 — 153플레이 영상 (2026-11-16)", () => {
       kind: "program",
       title: "원투 잘하는 3가지 방법",
       level: 1,
-      shelf: "basics",
+      shelf: "lesson",
+      topic: "basics",
+      reel: true,
       badge: "153 레슨",
       poster: null,
       videoUrl: "https://www.instagram.com/reel/C0TsXI3vBcG/",
@@ -123,8 +125,11 @@ describe("영상으로 배우기 — 153플레이 영상 (2026-11-16)", () => {
       points: ["기본 자세", "잽으로 길을 열고", "투에 체중 싣기"],
     });
     expect(list[1]).toMatchObject({ videoUrl: "https://youtu.be/AAAAAAAAAAA", poster: "https://i.ytimg.com/vi/AAAAAAAAAAA/mqdefault.jpg", level: 1 });
-    expect(list[2]).toMatchObject({ level: 11, shelf: "drill" });
-    expect(list[3]).toMatchObject({ level: 21, shelf: "skill", badge: "153 분석" });
+    expect(list[1]).toMatchObject({ shelf: "lesson", topic: "basics", reel: false });
+    expect(list[2]).toMatchObject({ level: 11, shelf: "lesson", topic: "drill" });
+    expect(list[3]).toMatchObject({ level: 21, shelf: "lesson", topic: "skill", badge: "153 분석" });
+    // 썸네일 장면을 고를 글 = 다듬은 제목 + 꼬리표
+    expect(ig.sceneText).toBe("원투 잘하는 3가지 방법 레슨 기본기 콤비네이션");
     // 회원 화면 글에 '국가대표' · 조회수가 남지 않는다
     for (const x of list) {
       expect(`${x.title} ${x.description} ${x.points.join(" ")}`).not.toMatch(/국가대표|만\s*조회|만뷰/);
@@ -139,6 +144,8 @@ describe("영상으로 배우기 — 153플레이 영상 (2026-11-16)", () => {
       kind: "pb",
       title: "복서 버피",
       shelf: "fitness",
+      topic: "fitness",
+      reel: false,
       level: 1,
       badge: "153 PB 종목",
       videoUrl: "/test153/pb1.mp4",

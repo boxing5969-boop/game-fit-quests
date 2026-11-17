@@ -58,10 +58,12 @@ describe("153 콘텐츠 카드 — 분류 → 칸 · 블록", () => {
     expect(categoryToBlockKind(undefined)).toBe("skill");
   });
 
-  it("회원 칩 8개 · 코치진은 코치 칸까지 — 준비는 칩이 아니라 붕대 감기 한 줄", () => {
-    expect(MEMBER_SHELVES.map((s) => SHELF_INFO[s].label)).toEqual(["워밍업", "기본기", "스텝", "기술", "방어", "드릴", "체력", "쿨다운"]);
+  it("회원 칩 8개 + 「153 레슨」 · 코치진은 코치 칸까지 — 준비는 칩이 아니라 붕대 감기 한 줄", () => {
+    expect(MEMBER_SHELVES.map((s) => SHELF_INFO[s].label)).toEqual(["워밍업", "기본기", "스텝", "기술", "방어", "드릴", "체력", "쿨다운", "153 레슨"]);
     expect(STAFF_SHELVES).toContain("coach");
     expect(MEMBER_SHELVES).not.toContain("prep");
+    // 「153 레슨」은 153플레이 영상만 — 어떤 카드 분류도 그 칸으로 가지 않는다 (2026-11-17)
+    for (const c of ["기본기", "레슨", "153", "분석", "미트"]) expect(categoryToShelf(c)).not.toBe("lesson");
   });
 
   it("8칸 (11/13 대표님) — 기본기는 따로, 미트 · 샌드백 · 스파링 준비는 드릴 · 기술은 콤비 · 카운터", () => {
@@ -121,8 +123,9 @@ describe("레벨 · 순서 · 다음 동작", () => {
 
   it("칸으로 나누면 빈 칸은 키가 없다", () => {
     const g = groupByShelf(SAMPLE_TRAINING_CARDS);
-    for (const s of MEMBER_SHELVES) expect((g[s] ?? []).length).toBeGreaterThan(0);
+    for (const s of MEMBER_SHELVES.filter((x) => x !== "lesson")) expect((g[s] ?? []).length).toBeGreaterThan(0);
     expect(g.prep).toBeUndefined();
+    expect(g.lesson).toBeUndefined();
   });
 });
 
