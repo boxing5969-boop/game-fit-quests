@@ -296,7 +296,7 @@ const SlotSheet = ({
           </div>
           <p className="mt-1.5 text-label text-muted-foreground">담당이 쉬는 날은 그 시간 근무자 모두에게 보여요</p>
           <OpsLabel>미완료 알림</OpsLabel>
-          <Toggle on={d.alertOn} onChange={(v) => set({ alertOn: v })} label="안 끝나면 지점장님께 알림" sub={d.alertOn && alertAt ? `${alertAt}에 체크 안 한 항목이 남아 있으면 한 번` : "끔"} />
+          <Toggle on={d.alertOn} onChange={(v) => set({ alertOn: v })} label="안 끝나면 대표님 · 지점장님께 알림" sub={d.alertOn && alertAt ? `${alertAt}에 체크 안 한 항목이 남아 있으면 한 번` : "끔"} />
           {d.alertOn && (
             <>
               <div className="mt-1 flex items-center gap-2">

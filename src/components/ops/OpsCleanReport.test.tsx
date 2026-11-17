@@ -112,7 +112,7 @@ describe("청소 현황", () => {
     // 시간대 — 미완료 알림 끄기
     fireEvent.click(within(edit).getByRole("button", { name: /50분 안에/ }));
     const ss = screen.getByRole("dialog", { name: "시간대 고치기" });
-    fireEvent.click(within(ss).getByRole("switch", { name: /안 끝나면 지점장님께 알림/ }));
+    fireEvent.click(within(ss).getByRole("switch", { name: /안 끝나면 대표님 · 지점장님께 알림/ }));
     fireEvent.click(within(ss).getByRole("button", { name: "저장" }));
     expect(last!.slots[0].alertMin).toBeNull();
   });

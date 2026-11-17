@@ -7,9 +7,9 @@
 --   현황 · 문제 처리 · 고치기 = 대표님 · 그 지점 관리자(_ops_plan_can_view_all — 1단계 '대신 체크'와 같은 기준).
 --   문제 처리: 처리한 시각이 그 문제를 남긴 시각(at)보다 뒤면 '처리됨' — 코치님이 같은 항목을 다시 '문제'로 남기면 at 이 바뀌어 다시 열린다.
 --     처음 처리할 때 그 문제를 남긴 분께 알림(_ops_plan_notify — 밤 10시 ~ 아침 8시는 알림함에만).
---   미완료 알림(5분마다 ops-clean-late): 시작 + alert_min 분이 지나도 끝내기 전이고 체크 안 한 항목이 남으면 그 지점 지점장(없으면 전체관리자)께 그날 한 번
+--   미완료 알림(5분마다 ops-clean-late): 시작 + alert_min 분이 지나도 끝내기 전이고 체크 안 한 항목이 남으면 대표님(super_admin · admin) + 그 지점 지점장께 그날 한 번
 --     · 1시간 넘게 지난 차례 · 휴관일 · 도는 요일이 아닌 날은 안 보냄 · alert_loud = false 면 밤 10시 ~ 아침 8시는 알림함에만
---     · 처음 값: 오픈 · 마감 = 끝낼 때까지 분(선릉역점 11:50 · 23:00) · 저녁은 끔 — 마감 23:00 알림을 휴대폰으로 받으려면 alert_loud = true
+--     · 처음 값: 오픈 · 마감 = 끝낼 때까지 분(선릉역점 11:50 · 23:00) · 저녁은 끔 · 마감은 밤에도 휴대폰으로(alert_loud — 대표님 2026-11-17, 문단속이 들어 있어서)
 --   항목별 '보통 걸린 분' = 바로 앞 체크(첫 항목은 청소 시작)부터 이 항목을 완료로 누를 때까지 — 30초 안에 연달아 누른 것 · 1시간 넘는 것 ·
 --     청소 시작 전 · 끝낸 뒤(끝내기 전이면 시작 3시간 뒤) 체크는 빼고 가운데 값. 화면은 3번 넘게 잰 항목만 보여 준다.
 --   화면 src/lib/opsCleanReport.ts 와 같은 검사 말 · 시험 opsCleanReport.test.ts
@@ -21,16 +21,17 @@ alter table public.ops_clean_checks add column if not exists resolved_by uuid;
 alter table public.ops_clean_checks add column if not exists resolve_note text
   check (resolve_note is null or char_length(resolve_note) <= 200);
 
+alter table public.ops_clean_slots add column if not exists alert_loud boolean not null default false;
 do $$
 begin
   if not exists (select 1 from information_schema.columns
                   where table_schema = 'public' and table_name = 'ops_clean_slots' and column_name = 'alert_min') then
     alter table public.ops_clean_slots add column alert_min smallint check (alert_min is null or alert_min between 0 and 240);
-    -- 처음 한 번만: 오픈 · 마감은 끝낼 때까지 분에 알림
+    -- 처음 한 번만: 오픈 · 마감은 끝낼 때까지 분에 알림 · 마감(23:00 — 문단속)은 밤에도 휴대폰으로
     update public.ops_clean_slots set alert_min = budget_min where slot in ('open', 'close');
+    update public.ops_clean_slots set alert_loud = true where slot = 'close';
   end if;
 end $$;
-alter table public.ops_clean_slots add column if not exists alert_loud boolean not null default false;
 
 create table if not exists public.ops_clean_notices (
   branch_name text not null,
@@ -660,14 +661,13 @@ begin
               || coalesce(' · ' || v_people, '');
     v_link := '/office?clean=' || s.slot;
     v_n := 0;
+    -- 받는 분 = 대표님(super_admin · admin — 문제 알림과 같은 분들) + 그 지점 지점장 (대표님 2026-11-17)
     for u in
+      select ur.user_id from public.user_roles ur
+       where ur.role::text in ('super_admin', 'admin')
+      union
       select m.user_id from public.ops_managers m
        where m.title = '지점장' and (m.branch_name is null or m.branch_name = s.branch_name)
-      union
-      select ur.user_id from public.user_roles ur
-       where ur.role::text = 'super_admin'
-         and not exists (select 1 from public.ops_managers m2
-                          where m2.title = '지점장' and (m2.branch_name is null or m2.branch_name = s.branch_name))
     loop
       if s.alert_loud then
         insert into public.notifications (user_id, title, body, link) values (u.user_id, left(v_title, 120), left(v_body, 300), v_link);

@@ -35,7 +35,7 @@ export const buildCleanReportSample = (today: string, nowHm: string): CleanRepor
     budget: s.budget,
     weekdays: [...s.days],
     alertMin: s.slot === "evening" ? null : s.budget,
-    alertLoud: false,
+    alertLoud: s.slot === "close",
     assignee: s.slot === "open" ? "demo-a" : s.slot === "close" ? "demo-c" : null,
     assigneeName: s.slot === "open" ? "예시 코치 A" : s.slot === "close" ? "예시 코치 C" : null,
   }));

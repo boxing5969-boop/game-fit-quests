@@ -18,6 +18,19 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261117-ops-cleaning-report",
+    date: "2026-11-17",
+    title: "오늘 청소 — 현황 · 문제 처리 · 미완료 알림",
+    lines: [
+      "대표님 · 지점장님은 「청소 현황」에서 주마다 요일별로 한눈에 봐요",
+      "문제는 「처리했어요」로 닫고, 항목 · 시간 · 담당도 앱에서 고쳐요",
+      "끝낼 시각까지 안 끝나면 대표님 · 지점장님께 알림이 가요",
+    ],
+    link: { to: "/office?clean=1", label: "오늘 청소 열기" },
+    audience: "staff",
+    branches: SEOLLEUNG,
+  },
+  {
     id: "20261117-learn-lesson153",
     date: "2026-11-17",
     title: "영상으로 배우기 — 「153 레슨」 칸",
