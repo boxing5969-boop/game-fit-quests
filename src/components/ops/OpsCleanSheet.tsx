@@ -8,7 +8,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { AlertTriangle, ArrowDown, Check, ChevronDown, ChevronLeft, ChevronRight, Pause, Sparkles, X } from "lucide-react";
+import { AlertTriangle, ArrowDown, BarChart3, Check, ChevronDown, ChevronLeft, ChevronRight, Pause, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { useModalDismiss } from "@/hooks/useModalDismiss";
@@ -55,6 +55,12 @@ export interface CleanSheetActions {
 
 interface Props {
   day: CleanDay;
+  /** (대표님 · 지점 관리자) 「청소 현황」 열기 — 2단계 */
+  onReport?: () => void;
+  /** (대표님 · 지점 관리자) 지점 고르기 — 둘 이상일 때 */
+  onBranch?: (branch: string) => void;
+  /** 위에 다른 전체 화면(현황)이 떠 있다 — Esc 로 닫지 않는다 */
+  covered?: boolean;
   /** 보고 있는 시간대 (없으면 첫 칸) */
   slotKey: string | null;
   onSlot: (slot: string) => void;
@@ -239,7 +245,7 @@ const ItemRow = ({
   const s = item.state;
   const sub =
     s === "hold" || s === "issue"
-      ? [CLEAN_STATE_LABEL[s], item.note].filter(Boolean).join(" · ")
+      ? [CLEAN_STATE_LABEL[s], item.note, s === "issue" && item.resolved ? (item.resolveNote ? `처리됨 · ${item.resolveNote}` : "처리됨") : null].filter(Boolean).join(" · ")
       : s === "done"
         ? [cleanHm(item.at), item.byName].filter(Boolean).join(" · ")
         : item.doneText;
@@ -553,14 +559,14 @@ const FinishSheet = ({
 
 // ── 전체 화면 ────────────────────────────────────────────────
 
-export default function OpsCleanSheet({ day, slotKey, onSlot, onClose, actions, demo = false, onDate, loading = false }: Props) {
+export default function OpsCleanSheet({ day, slotKey, onSlot, onClose, actions, demo = false, onDate, loading = false, onReport, onBranch, covered = false }: Props) {
   const slot = useMemo(() => day.slots.find((s) => s.slot === slotKey) ?? day.slots[0] ?? null, [day.slots, slotKey]);
   const [itemId, setItemId] = useState<string | null>(null);
   const [finishOpen, setFinishOpen] = useState(false);
   const [rulesOpen, setRulesOpen] = useState(false);
   // Esc — 항목 · 끝내기 시트가 떠 있으면 그 시트만 닫힌다(시트가 맡는다)
   useModalDismiss(true, () => {
-    if (!itemId && !finishOpen) onClose();
+    if (!itemId && !finishOpen && !covered) onClose();
   });
 
   // 시계 — 15초마다.
@@ -650,9 +656,22 @@ export default function OpsCleanSheet({ day, slotKey, onSlot, onClose, actions, 
               {onDate ? (slot ? `${slot.label} ${slot.time}` : day.branch.replace("153복싱짐", "").trim()) : [cleanDayLabel(day.date), slot ? `${slot.label} ${slot.time}` : null].filter(Boolean).join(" · ")}
             </p>
           </div>
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center">
-            {demo && <span className="rounded-full bg-secondary px-2 py-0.5 text-micro font-black text-muted-foreground">예시</span>}
-          </span>
+          {onReport && demo && <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-micro font-black text-muted-foreground">예시</span>}
+          {onReport ? (
+            <button
+              type="button"
+              onClick={onReport}
+              aria-label="청소 현황"
+              className="flex h-10 shrink-0 items-center gap-1 rounded-full bg-secondary px-3 text-label font-bold text-secondary-foreground active:scale-95"
+            >
+              <BarChart3 className="h-4 w-4" aria-hidden />
+              현황
+            </button>
+          ) : (
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center">
+              {demo && <span className="rounded-full bg-secondary px-2 py-0.5 text-micro font-black text-muted-foreground">예시</span>}
+            </span>
+          )}
         </div>
 
         {/* 관리자 — 날짜 넘기기 (7일 전까지) */}
@@ -677,6 +696,26 @@ export default function OpsCleanSheet({ day, slotKey, onSlot, onClose, actions, 
             >
               <ChevronRight className="h-5 w-5" aria-hidden />
             </button>
+          </div>
+        )}
+
+        {/* 지점 — 대표님 · 지점 관리자, 둘 이상일 때 */}
+        {onBranch && day.branches.length > 1 && (
+          <div className="mx-auto flex w-full max-w-md gap-1.5 overflow-x-auto px-3 pb-2" aria-label="지점">
+            {day.branches.map((b) => (
+              <button
+                key={b.branch}
+                type="button"
+                aria-pressed={b.branch === day.branch}
+                onClick={() => onBranch(b.branch)}
+                className={cn(
+                  "shrink-0 rounded-full border px-3 py-1.5 text-label font-bold active:scale-95",
+                  b.branch === day.branch ? "border-primary bg-primary/10 text-primary" : "border-border bg-background text-muted-foreground",
+                )}
+              >
+                {b.branch.replace("153복싱짐", "").trim() || b.branch}
+              </button>
+            ))}
           </div>
         )}
 

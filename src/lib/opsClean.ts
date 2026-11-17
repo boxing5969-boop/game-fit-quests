@@ -25,6 +25,9 @@ export interface CleanItem {
   note: string | null;
   at: string | null;
   byName: string | null;
+  /** 2단계 — 대표님 · 지점 관리자가 이 문제를 처리했다 */
+  resolved?: boolean;
+  resolveNote?: string | null;
 }
 
 export interface CleanRun {
@@ -48,6 +51,10 @@ export interface CleanHandover {
   done: number;
   due: number;
   finished: boolean;
+  /** 2단계 — 처리한 문제 */
+  resolved?: boolean;
+  resolveNote?: string | null;
+  resolvedByName?: string | null;
 }
 
 export interface CleanSlot {
@@ -164,6 +171,8 @@ const readItem = (raw: unknown): CleanItem | null => {
     note: strOrNull(r.note),
     at: strOrNull(r.at),
     byName: strOrNull(r.by_name),
+    resolved: r.resolved === true,
+    resolveNote: strOrNull(r.resolve_note),
   };
 };
 
@@ -195,6 +204,9 @@ const readHandover = (raw: unknown): CleanHandover | null => {
     done: Math.max(0, Math.round(num(r.done))),
     due: Math.max(0, Math.round(num(r.due))),
     finished: r.finished === true,
+    resolved: r.resolved === true,
+    resolveNote: strOrNull(r.resolve_note),
+    resolvedByName: strOrNull(r.resolved_by_name),
   };
 };
 
@@ -535,6 +547,14 @@ export const handoverView = (h: CleanHandover, date: string): HandoverView => {
   if (h.kind === "note") {
     return { tone: "plain", badge: "한마디", main: h.text ?? "", sub: [when, h.byName].filter(Boolean).join(" · ") };
   }
+  if (h.kind === "issue" && h.resolved) {
+    return {
+      tone: "plain",
+      badge: "처리됨",
+      main: h.text ? `${h.title ?? ""} · ${h.text}` : (h.title ?? ""),
+      sub: [when, h.byName, h.resolveNote ? `처리 · ${h.resolveNote}` : h.resolvedByName ? `${h.resolvedByName} 처리` : null].filter(Boolean).join(" · "),
+    };
+  }
   return {
     tone: h.kind,
     badge: CLEAN_STATE_LABEL[h.kind],
@@ -576,7 +596,7 @@ export const withItemState = (day: CleanDay, itemId: string, state: CleanState |
     if (!s.items.some((i) => i.id === itemId)) return s;
     const items = s.items.map((i) =>
       i.id === itemId
-        ? { ...i, state, note: state === "hold" || state === "issue" ? note : null, at: state ? nowIso : null, byName: state ? (byName ?? i.byName) : null }
+        ? { ...i, state, note: state === "hold" || state === "issue" ? note : null, at: state ? nowIso : null, byName: state ? (byName ?? i.byName) : null, resolved: false, resolveNote: null }
         : i,
     );
     const startedNow = state && day.date === day.today && !s.run?.startedAt;
