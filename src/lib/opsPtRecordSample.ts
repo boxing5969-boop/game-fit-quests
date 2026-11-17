@@ -2,6 +2,7 @@
  * 153운영본부 · PT 기록 — 예시 자료 (지어낸 이름 · 실제 회원 정보 아님)
  *   서버에 함수가 아직 없을 때(DB 적용 전 · 옛 DB 를 보는 preview-* 미리보기)와 `?demo=1` 에서 화면을 채운다.
  *   오늘을 기준으로 날짜를 만든다 — 줄마다 화면의 한 가지 모습(차감 확인 · 확인 중 · 대기 · 사유 없는 차감 · 기록 없는 입장 …).
+ *   team: 단체 PT(3단계) 예시 — 그제 4인 팀 수업에 셋(둘 수업 · 하나 미참석) → 수당 줄은 「온유 외 2명」 한 줄 · 팀 1회 수당.
  */
 import type { OpsPtEvent, OpsPtRate } from "./opsPt";
 import type { PtMemberCheck } from "./opsPtCheck";
@@ -21,9 +22,11 @@ export const PT_SAMPLE_COACH = "sample-coach";
 export const PT_SAMPLE_RATES: OpsPtRate[] = [
   { team_size: 1, sessions: 10, session_rate: 30000, valid_from: "2026-01-01" },
   { team_size: 1, sessions: 20, session_rate: 30000, valid_from: "2026-01-01" },
+  { team_size: 4, sessions: 10, session_rate: 80000, valid_from: "2026-01-01" },
 ];
 const TICKET20 = "퍼스널 트레이닝 20회권";
 const TICKET10 = "퍼스널 트레이닝 10회권";
+const TEAM10 = "팀PT 4인 10회권";
 
 const MEMBERS: PtRecMember[] = [
   { user_id: "sample-m1", name: "sky_01", label: "한하늘", tail: "1001", ticket: TICKET20, remaining: 12, end_date: null, checked_at: null },
@@ -32,14 +35,22 @@ const MEMBERS: PtRecMember[] = [
   { user_id: "sample-m4", name: "오별", label: null, tail: "1004", ticket: TICKET20, remaining: 15, end_date: null, checked_at: null },
   { user_id: "sample-m5", name: "구름", label: null, tail: "1005", ticket: TICKET10, remaining: 9, end_date: null, checked_at: null },
 ];
-const nameOf = (id: string) => MEMBERS.find((m) => m.user_id === id)?.name ?? "회원";
-const ticketOf = (id: string) => MEMBERS.find((m) => m.user_id === id)?.ticket ?? null;
+/** 단체 PT 예시 팀원(team 예시에만) */
+const TEAM_MEMBERS: PtRecMember[] = [
+  { user_id: "sample-t1", name: "온유", label: null, tail: "2001", ticket: TEAM10, remaining: 6, end_date: null, checked_at: null },
+  { user_id: "sample-t2", name: "윤슬", label: null, tail: "2002", ticket: TEAM10, remaining: 6, end_date: null, checked_at: null },
+  { user_id: "sample-t3", name: "이든", label: null, tail: "2003", ticket: TEAM10, remaining: 7, end_date: null, checked_at: null },
+];
+const ALL = [...MEMBERS, ...TEAM_MEMBERS];
+const nameOf = (id: string) => ALL.find((m) => m.user_id === id)?.name ?? "회원";
+const ticketOf = (id: string) => ALL.find((m) => m.user_id === id)?.ticket ?? null;
 
 /**
  * 예시 한 벌 — manage: 관리자 화면(지점 전체) / 코치 화면(본인)
  *   auto: 자동 기록을 켠 지점처럼(2026-11-12 근무 1단계) — 어제 수업 하나가 서버가 넣은 자동 기록 · 이틀 안의 입장은 묻지 않음
+ *   team: 단체 PT 예시(3단계)를 더한다 — 화면 예시(`?demo=1`)에서만 켠다(시험의 낱수는 그대로)
  */
-export const buildPtSample = (today: string, manage: boolean, opts: { auto?: boolean } = {}): PtRecordData => {
+export const buildPtSample = (today: string, manage: boolean, opts: { auto?: boolean; team?: boolean } = {}): PtRecordData => {
   const d = (n: number) => addDays(today, n);
   const at = (n: number, hm: string) => `${d(n)}T${hm}:00+09:00`;
   let seq = 0;
@@ -135,6 +146,16 @@ export const buildPtSample = (today: string, manage: boolean, opts: { auto?: boo
     came("sample-m4", -3, "20:01"),
     came("sample-m1", -7, "18:05"),
   ];
+  if (opts.team) {
+    // 그제 4인 팀 수업 — 온유 · 윤슬 수업, 이든 미참석(차감 셋) → 수당은 수업 한 번(팀 1회)
+    sessions.push(
+      session("sample-t1", -2, "lesson", { created_at: at(-2, "20:20") }),
+      session("sample-t2", -2, "lesson", { created_at: at(-2, "20:21") }),
+      session("sample-t3", -2, "noshow", { created_at: at(-2, "20:22") }),
+    );
+    events.push(event("sample-t1", -2), event("sample-t2", -2), event("sample-t3", -2));
+    attendance.push(came("sample-t1", -2, "18:56"), came("sample-t2", -2, "19:02"));
+  }
   return {
     branch: "예시 지점",
     on: true,
@@ -151,7 +172,7 @@ export const buildPtSample = (today: string, manage: boolean, opts: { auto?: boo
     coaches: [{ id: PT_SAMPLE_COACH, name: "예시 코치" }],
     check: { on: true, started_at: at(-10, "10:00"), can_set: manage && !!opts.auto, can_close: manage },
     checks,
-    members: MEMBERS,
+    members: opts.team ? ALL : MEMBERS,
     sessions,
     events,
     attendance,

@@ -54,7 +54,7 @@ export const useOpsPtRecord = (branch: string | null, { enabled = true, demo = f
     refetchInterval: demo ? false : 60_000,
     retry: false,
     queryFn: async (): Promise<PtRecordData> => {
-      if (demo) return buildPtSample(kstToday(), demoManage, { auto: true });
+      if (demo) return buildPtSample(kstToday(), demoManage, { auto: true, team: true });
       const [{ data, error }, chk] = await Promise.all([
         rpc("ops_pt_record", { p_branch: branch }),
         rpc("ops_pt_member_check_list", { p_branch: branch }) as Promise<{ data: unknown; error: RpcError }>,

@@ -14,8 +14,19 @@
  *     · 전환 달 경계: 차감 기준이던 달(11월)의 수업인데 차감이 기록 기준 달(12월)에 잡힌 것은 그 차감이 잡힌 달에
  *       「지난달 수업」 줄로 지급한다 — 그대로 두면 어느 달에도 잡히지 않는다(10/31 수업이 11/1 로 잡힌 것과 같은 모양).
  *   월 마감(잠금) · 「보정」 · 「정산」 줄은 2-2 — 여기는 지금 자료로 셈한 미리 보기다(닫은 달이 없다).
+ *
+ *   단체 PT(2026-11-17 3단계 · 결정 6 「수업 1회당 고정 — 참석 인원과 무관」): 팀 수업권 기록은 팀원마다 한 줄씩 들어오지만
+ *   수당은 팀 수업 한 번에 팀 1회 수당이다 → 같은 코치 · 같은 날 · 같은 정원(4인 · 5인) 팀 줄을 수업 하나로 묶는다(teamClasses).
+ *     · 묶은 수업 = 한 줄(대표 줄 = 팀원 한 명의 기록 — 월 마감 서버가 기록으로 확인한다) · 금액 = 팀 1회 수당 그대로(÷ 정원 없음)
+ *     · 팀원 한 명이라도 「기록 + 차감」이 맞으면 지급 대상 — 전날 취소해 기록이 없는 팀원이 있어도 금액은 같다
+ *     · 같은 날 같은 정원 팀 수업을 두 번 하면 수업한 팀원의 입장 시각(90분 넘게 차이)으로 나눈다 — 두 명 이상 함께 들어온 무리만
+ *       따로 수업으로 본다(한 명뿐인 무리는 하루 두 번 들어온 회원일 수 있어 가까운 수업에 붙인다) · 미참석 · 당일 취소 · 입장 없는
+ *       팀원은 첫 수업에 · 연속 2회 수업의 둘째 칸은 따로
+ *     · 한 팀에 10회권 · 20회권이 섞이면 많은 쪽 수업권의 팀 1회 수당(같으면 먼저 적은 기록 쪽) — 두 줄로 나눠 두 번 나가지 않게
+ *     · 대표 줄: 이미 지급한 줄(장부)이 있으면 그 줄 — 없으면 지급 대상 줄 가운데 먼저 적은 기록 → 대표가 바뀌어 두 번 나가지 않게
+ *     · 전환 달 경계의 「지난달 수업」 줄(carry)은 묶지 않는다 — 차감 기준이던 달 몫이라 그 기준(팀원 1명 = 팀 1회 ÷ 정원) 그대로
  */
-import { countsForPay, perUseRate, withholding33, type OpsPtEvent, type OpsPtRate } from "./opsPt";
+import { classifyTicket, countsForPay, perUseRate, sessionRateFor, withholding33, type OpsPtEvent, type OpsPtRate } from "./opsPt";
 import {
   addDays,
   isUseKind,
@@ -105,7 +116,149 @@ export interface PtPayLine {
   carry: boolean;
   /** 이 줄이 드는 달(YYYY-MM) — 수업한 달, carry 는 차감이 잡힌 달 */
   payYm: string;
+  /** 단체 PT 수업 한 번(3단계) — 팀원 줄을 묶은 한 줄. 금액은 팀 1회 수당(참석 인원과 무관) */
+  team?: PtPayTeam;
 }
+
+export interface PtPayTeam {
+  /** 정원(4인 팀 = 4) */
+  size: number;
+  /** 이 수업에 기록된 팀원(이름 · 가나다순) */
+  names: string[];
+  /** 그중 「기록 + 차감」이 맞은 팀원 수 */
+  paid: number;
+  /** 이 수업에 짝지은 차감(팀원 차감 수) — 차감 기준과 견줄 때 */
+  deducts: number;
+  /** 10회권 · 20회권처럼 횟수가 다른 수업권이 섞였다(많은 쪽 수업권의 수당) */
+  mixed: boolean;
+  /** 장부와 맞추는 열쇠 — 수업한 날 | 정원(대표 줄이 바뀌어도 같다) */
+  key: string;
+}
+
+/** 단체 PT 수업의 열쇠 — 장부의 줄(날짜 · 수업권)로도 같은 값을 만든다. 1:1 이면 null */
+export const ptTeamKey = (date: string, ticket: string | null | undefined): string | null => {
+  const k = classifyTicket(ticket);
+  return k.teamSize > 1 ? `${date}|${k.teamSize}` : null;
+};
+
+/** 수업 줄 아래 글 — 「4인 팀(가온 · 나래 · 다솜)」 · 1:1 이면 빈 글 */
+export const ptTeamText = (l: Pick<PtPayLine, "team">): string =>
+  l.team ? `${l.team.size}인 팀${l.team.names.length > 1 ? `(${l.team.names.join(" · ")})` : ""}` : "";
+
+/** 줄에 붙이는 「4인 팀」 — 1:1 이면 빈 글 */
+export const ptTeamTag = (ticket: string | null | undefined): string => {
+  const n = classifyTicket(ticket).teamSize;
+  return n > 1 ? `${n}인 팀` : "";
+};
+
+/** 같은 날 같은 종류 팀 수업을 두 번 했다고 보는 입장 시각 차이 */
+export const PT_TEAM_SPLIT_MIN = 90;
+
+interface TeamMeta {
+  coach: string | null;
+  createdAt: string;
+  entryAt: string | null;
+}
+
+/**
+ * 단체 PT — 팀원 줄을 수업 하나로 묶는다(결정 6). 1:1 줄 · 전환 달 경계의 「지난달 수업」 줄은 그대로 둔다.
+ *   paidKeys = 이미 지급한 줄 열쇠(월 마감 장부) — 있으면 그 줄을 대표로 둔다.
+ */
+const teamClasses = (lines: PtPayLine[], meta: Map<string, TeamMeta>, rates: OpsPtRate[] | null, paidKeys?: ReadonlySet<string>): PtPayLine[] => {
+  const out: PtPayLine[] = [];
+  const groups = new Map<string, PtPayLine[]>();
+  for (const l of lines) {
+    const size = classifyTicket(l.ticket).teamSize;
+    if (size <= 1 || l.carry) {
+      out.push(l);
+      continue;
+    }
+    const useIdx = l.id.slice(l.id.lastIndexOf(":") + 1);
+    const gk = `${meta.get(l.sessionId)?.coach ?? ""}|${l.date}|${size}|${useIdx}`;
+    groups.set(gk, [...(groups.get(gk) ?? []), l]);
+  }
+  const entryMs = (l: PtPayLine) => {
+    const at = meta.get(l.sessionId)?.entryAt;
+    return at ? Date.parse(at) : NaN;
+  };
+  const created = (l: PtPayLine) => meta.get(l.sessionId)?.createdAt ?? "";
+  const byCreated = (a: PtPayLine, b: PtPayLine) => created(a).localeCompare(created(b)) || a.id.localeCompare(b.id);
+  const sessionsOf = (l: PtPayLine) => classifyTicket(l.ticket).sessions;
+  const kindSize = (g: PtPayLine[]) => classifyTicket(g[0]?.ticket).teamSize;
+  for (const group of groups.values()) {
+    // 입장 시각으로 나누기 — 수업한 팀원(lesson)의 입장이 90분 넘게 벌어지면 다른 무리
+    const timed = group.filter((l) => l.kind === "lesson" && Number.isFinite(entryMs(l))).sort((a, b) => entryMs(a) - entryMs(b) || byCreated(a, b));
+    const raw: PtPayLine[][] = [];
+    let last = NaN;
+    for (const l of timed) {
+      const at = entryMs(l);
+      if (!raw.length || at - last > PT_TEAM_SPLIT_MIN * 60_000) raw.push([]);
+      raw[raw.length - 1].push(l);
+      last = at;
+    }
+    // 두 명 이상 함께 들어온 무리만 따로 수업 — 한 명뿐인 무리는 가장 가까운 수업에 붙인다(하루 두 번 들어온 회원일 수 있다)
+    const solid = raw.filter((c) => new Set(c.map((l) => l.key)).size >= 2);
+    const clusters: PtPayLine[][] = solid.length ? solid.map((c) => [...c]) : new Set(timed.map((l) => l.key)).size > kindSize(group) ? raw : raw.length ? [raw.flat()] : [];
+    if (solid.length) {
+      for (const c of raw) {
+        if (solid.includes(c)) continue;
+        const at = entryMs(c[0]);
+        let best = 0;
+        let bestGap = Infinity;
+        solid.forEach((x, i) => {
+          const gap = Math.min(...x.map((l) => Math.abs(entryMs(l) - at)));
+          if (gap < bestGap) {
+            bestGap = gap;
+            best = i;
+          }
+        });
+        clusters[best].push(...c);
+      }
+    }
+    // 미참석 · 당일 취소 · 입장 없는 팀원 — 첫 수업에
+    const rest = group.filter((l) => !timed.includes(l));
+    if (rest.length) {
+      if (clusters.length) clusters[0].push(...rest);
+      else clusters.push(rest);
+    }
+    for (const c of clusters) {
+      const paidOnes = c.filter((l) => l.state === "paid").sort(byCreated);
+      // 수업권 횟수 — 지급 대상 팀원(없으면 모두) 가운데 많은 쪽, 같으면 먼저 적은 기록 쪽
+      const pool = paidOnes.length ? paidOnes : [...c].sort(byCreated);
+      const tally = new Map<string, number>();
+      for (const l of pool) tally.set(String(sessionsOf(l)), (tally.get(String(sessionsOf(l))) ?? 0) + 1);
+      const top = Math.max(...tally.values());
+      const pick = pool.find((l) => tally.get(String(sessionsOf(l))) === top) as PtPayLine;
+      // 대표 줄 — 이미 지급한 줄이 있으면 그 줄(두 번 나가지 않게) · 없으면 고른 수업권의 먼저 적은 기록
+      const carrier = c.find((l) => paidKeys?.has(l.id)) ?? pick;
+      const kind = classifyTicket(carrier.ticket);
+      const names = [...new Set(c.map((l) => l.name))].sort((a, b) => a.localeCompare(b, "ko"));
+      const lessons = c.filter((l) => l.kind === "lesson");
+      out.push({
+        ...carrier,
+        key: `team:${kind.teamSize}:${kind.sessions ?? ""}`,
+        name: names.length > 1 ? `${names[0]} 외 ${names.length - 1}명` : names[0],
+        kind: lessons.length ? "lesson" : carrier.kind,
+        deductDate: carrier.deductDate ?? paidOnes[0]?.deductDate ?? null,
+        // 출석 체크 없는 수업 = 수업한 팀원 누구도 입장이 없음
+        noEntry: lessons.length > 0 && lessons.every((l) => l.noEntry),
+        // 팀원 한 명이라도 맞으면 지급 대상 — 아니면 대표 줄의 보류 사유
+        state: paidOnes.length > 0 ? "paid" : carrier.state,
+        // 팀 1회 수당 그대로(참석 인원과 무관 · ÷ 정원 없음)
+        rate: rates ? sessionRateFor(rates, kind, carrier.date) : null,
+        team: {
+          size: kind.teamSize,
+          names,
+          paid: paidOnes.length,
+          deducts: c.filter((l) => l.deductDate != null).length,
+          mixed: new Set(c.map((l) => String(sessionsOf(l)))).size > 1,
+          key: ptTeamKey(carrier.date, carrier.ticket) ?? "",
+        },
+      });
+    }
+  }
+  return out;
+};
 
 export interface PtPayMemberRow {
   key: string;
@@ -149,6 +302,8 @@ export interface PtPayMonth {
     held: number;
     /** PT 기록을 켜기 전에 잡힌 차감 — 기록이 없어 견줄 수 없다(켠 달에만) */
     preStart: number;
+    /** 단체 PT — 차감이 짝지어진 팀 수업(회)과 그 팀원 차감(회) */
+    team: { classes: number; deducts: number };
   };
   /** 출석 체크 없는 수업(건) */
   noEntry: number;
@@ -170,13 +325,23 @@ const stateOf = (r: PtRow, matched: boolean): PtPayLineState => {
  * 한 코치(coachId) 또는 지점 전체(null)의 모든 수업 줄 — 달을 가리지 않는다. 줄마다 드는 달(payYm)과 지금 상태가 붙는다.
  *   월 마감(opsPtClose.ts)이 닫은 달의 줄과 견줄 때도 이 줄을 쓴다(줄 id = 기록 id:몇 번째 회).
  */
-export const ptPayLinesAll = (res: PtMatchResult, events: OpsPtEvent[], rates: OpsPtRate[] | null, coachId: string | null, firstYm?: string): PtPayLine[] => {
+export const ptPayLinesAll = (
+  res: PtMatchResult,
+  events: OpsPtEvent[],
+  rates: OpsPtRate[] | null,
+  coachId: string | null,
+  firstYm?: string,
+  /** 월 마감 장부에서 이미 지급한 줄 열쇠 — 단체 PT 대표 줄을 그대로 두는 데 쓴다 */
+  paidKeys?: ReadonlySet<string>,
+): PtPayLine[] => {
   const first = firstYm ?? ptPayFirstRecordMonth(res.startedOn);
   const eventById = new Map(events.map((e) => [e.id, e]));
   const rows = coachId ? res.rows.filter((r) => r.s.coach_staff_id === coachId) : res.rows;
   const lines: PtPayLine[] = [];
+  const meta = new Map<string, TeamMeta>();
   for (const r of rows) {
     if (!isUseKind(r.s.kind)) continue;
+    meta.set(r.s.id, { coach: r.s.coach_staff_id, createdAt: r.s.created_at, entryAt: r.entryAt });
     const s = ymOf(r.s.session_date);
     const uses = Math.max(1, r.s.uses || 1);
     for (let i = 0; i < uses; i += 1) {
@@ -208,7 +373,7 @@ export const ptPayLinesAll = (res: PtMatchResult, events: OpsPtEvent[], rates: O
       });
     }
   }
-  return lines.sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
+  return teamClasses(lines, meta, rates, paidKeys).sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
 };
 
 /**
@@ -225,17 +390,22 @@ export const ptPayMonth = (
   monthEvents?: OpsPtEvent[],
   /** 예시 화면 — 「기록 + 차감」 첫 달을 억지로(YYYY-MM) */
   firstYm?: string,
+  /** 월 마감 장부에서 이미 지급한 줄 열쇠(단체 PT 대표 줄) — opsPtClose 명세에서만 */
+  paidKeys?: ReadonlySet<string>,
 ): PtPayMonth => {
   const ym = ymOf(month);
   const first = firstYm ?? ptPayFirstRecordMonth(res.startedOn);
   const basis: PtPayBasis = ym >= first ? "record" : "deduct";
-  const all = ptPayLinesAll(res, events, rates, coachId, first);
+  const all = ptPayLinesAll(res, events, rates, coachId, first, paidKeys);
   const lines = all.filter((l) => l.payYm === ym);
   // 차감 기준과 다른 까닭(회)
   const prevLesson = all.filter((l) => l.deductDate != null && ymOf(l.deductDate) === ym && ymOf(l.date) < ym).length;
   const nextMonth = all.filter((l) => ymOf(l.date) === ym && l.deductDate != null && ymOf(l.deductDate) > ym).length;
   const carryOut = all.filter((l) => ymOf(l.date) === ym && l.payYm > ym).length;
   const held = lines.filter((l) => l.deductDate != null && (l.state === "review" || l.state === "reason" || l.state === "member")).length;
+  // 단체 PT — 팀원 차감 여럿이 수업 한 번(팀 1회 수당)이 된다
+  const teamLines = lines.filter((l) => l.team && l.team.deducts > 0);
+  const team = { classes: teamLines.length, deducts: teamLines.reduce((n, l) => n + (l.team?.deducts ?? 0), 0) };
 
   const paid = lines.filter((l) => l.state === "paid");
   const unpriced = rates ? paid.filter((l) => l.rate == null).length : 0;
@@ -270,7 +440,8 @@ export const ptPayMonth = (
 
   const byMember = new Map<string, PtPayMemberRow>();
   for (const l of paid) {
-    const m = byMember.get(l.key) ?? { key: l.key, name: l.name, uses: 0, pay: rates ? 0 : null };
+    // 단체 PT 는 수업권 종류마다 한 줄(「4인 팀 수업」) — 팀원 이름은 줄마다 다르다
+    const m = byMember.get(l.key) ?? { key: l.key, name: l.team ? `${l.team.size}인 팀 수업` : l.name, uses: 0, pay: rates ? 0 : null };
     m.uses += 1;
     if (rates) m.pay = (m.pay ?? 0) + (l.rate ?? 0);
     byMember.set(l.key, m);
@@ -289,7 +460,7 @@ export const ptPayMonth = (
     hold,
     extras,
     byDeduct: { uses: dUses, gross: dGross },
-    diff: { prevLesson, nextMonth, carryOut, extra, held, preStart },
+    diff: { prevLesson, nextMonth, carryOut, extra, held, preStart, team },
     noEntry,
     noEntryOver: noEntry > PT_NO_ENTRY_MONTH_LIMIT,
     members: [...byMember.values()].sort((a, b) => b.uses - a.uses || a.name.localeCompare(b.name)),
@@ -312,6 +483,8 @@ export const ptPayDiffNotes = (p: PtPayMonth): string[] => {
   if (p.diff.extra > 0) out.push(`기록 없는 차감 ${p.diff.extra}회 — 수업 기록이 생길 때까지 보류해요`);
   if (p.diff.held > 0) out.push(`차감은 맞았지만 확인 · 사유를 기다리는 기록 ${p.diff.held}회 — 풀리면 지급 대상이 돼요`);
   if (p.diff.preStart > 0) out.push(`PT 기록을 켜기 전에 잡힌 차감 ${p.diff.preStart}회 — 기록이 없어 차감 기준으로만 셈해요`);
+  if (p.diff.team.classes > 0)
+    out.push(`단체 PT 수업 ${p.diff.team.classes}회 · 팀원 차감 ${p.diff.team.deducts}회 — 수업 한 번에 팀 1회 수당이라 차감 기준(팀원 1명 = 팀 1회 ÷ 정원)과 달라요`);
   return out;
 };
 

@@ -8,6 +8,7 @@
  *   금액은 수당표를 받은 화면만(대표님 · 회계매니저 · 그 코치 본인) — rates 가 null 이면 횟수만.
  *   월 마감(2-2 · 2026-11-16): 「기록 + 차감」 지급 달이고 서버에 마감 함수가 있으면 한 달 명세(확정 · 승인 · 「보정」 · 「정산」)를
  *   그린다 — OpsPtClose.tsx PtCloseCard · src/lib/opsPtClose.ts. 미리 보기 달 · 마감 함수가 없는 서버는 아래 2-1 카드 그대로.
+ *   단체 PT(3단계): 팀 수업 한 번 = 한 줄 「가온 외 2명」 · 아래 글 「4인 팀(가온 · 나래 · 다솜)」 · 금액 = 팀 1회 수당(opsPtPay teamClasses).
  */
 import { useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
@@ -15,7 +16,7 @@ import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fmtWon } from "@/lib/opsWork";
 import type { OpsPtEvent, OpsPtRate } from "@/lib/opsPt";
-import { PT_PAY_STATE_LABEL, ptPayDiffNotes, ptPayFirstRecordMonth, ptPayHoldText, ptPayMonth, ptPayMonthCovered, type PtPayLine } from "@/lib/opsPtPay";
+import { PT_PAY_STATE_LABEL, ptPayDiffNotes, ptPayFirstRecordMonth, ptPayHoldText, ptPayMonth, ptPayMonthCovered, ptTeamText, type PtPayLine } from "@/lib/opsPtPay";
 import { PT_KIND_LABEL, PT_NO_ENTRY_MONTH_LIMIT, matchPtRecord, mdOf } from "@/lib/opsPtRecord";
 import { useOpsPtRecord } from "@/services/opsPtRecordService";
 import { PtCloseCard, usePtCloseBook } from "./OpsPtClose";
@@ -27,6 +28,7 @@ const monthLabel = (ym: string) => `${Number(ym.slice(5, 7))}월`;
 
 const LineRow = ({ l, money }: { l: PtPayLine; money: boolean }) => {
   const sub = [
+    ptTeamText(l),
     PT_KIND_LABEL[l.kind],
     l.auto ? "자동 기록" : "",
     l.noEntry ? "출석 없음" : "",

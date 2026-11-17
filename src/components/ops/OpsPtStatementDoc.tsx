@@ -7,6 +7,7 @@
  *   종이처럼 늘 흰 바탕 · 검은 글씨다(어두운 화면에서도). PDF 쪽 나누기는 [data-pdf-block] 경계에서 —
  *   계약서와 같은 길(src/lib/contractPdf.ts renderContractPdf · savePdf).
  *   금액을 보는 화면(대표님 · 회계매니저 · 그 코치 본인)만 그린다 — 지점장은 줄 목록(횟수)만 본다.
+ *   단체 PT(3단계): 「회원별 수업」의 팀 줄은 「4인 팀 수업」 한 묶음(1회 수당 = 팀 1회) · 보정 · 정산 줄에는 「4인 팀」.
  */
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
@@ -27,7 +28,7 @@ import {
   type PtStatement,
   type PtStatementItem,
 } from "@/lib/opsPtClose";
-import { PT_PAY_STATE_LABEL, type PtPayLineState } from "@/lib/opsPtPay";
+import { PT_PAY_STATE_LABEL, ptTeamTag, type PtPayLineState } from "@/lib/opsPtPay";
 import { PT_KIND_LABEL, mdOf, type PtKind } from "@/lib/opsPtRecord";
 import { OpsButton } from "./OpsParts";
 
@@ -152,7 +153,7 @@ const OpsPtStatementDoc = ({ branch, coachName, st, employer, print = false }: P
         {mdOf(l.date)} · {l.name}
       </td>
       <td {...P.td}>
-        {[kindOf(l.kind), l.from ? `${monthNo(l.from)}월 ${minus ? "지급" : "수업"}` : "", !minus && l.deduct ? `차감 ${mdOf(l.deduct)}` : ""]
+        {[ptTeamTag(l.ticket), kindOf(l.kind), l.from ? `${monthNo(l.from)}월 ${minus ? "지급" : "수업"}` : "", !minus && l.deduct ? `차감 ${mdOf(l.deduct)}` : ""]
           .filter(Boolean)
           .join(" · ")}
       </td>

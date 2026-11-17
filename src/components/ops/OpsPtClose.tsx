@@ -12,6 +12,7 @@
  *   2-3 PT 명세서(2026-11-16): 승인한 달의 시트는 명세서 종이(OpsPtStatementDoc) + [PDF 저장 · 보내기] · 돈을 보는 분은 [세무 자료 복사].
  *     줄 목록은 「날짜순 · 회원별」로 바꿔 볼 수 있다(코치가 회원별 날짜 · 합계를 보고 확정).
  *   금액은 수당표를 받은 화면만(대표님 · 회계매니저 · 그 코치 본인) — 지점장은 횟수와 상태만.
+ *   단체 PT(3단계 · 2026-11-17): 팀 수업 한 번 = 한 줄(「가온 외 2명」 · 「4인 팀」) · 회원별 보기는 「4인 팀 수업」 한 묶음 — 셈은 opsPtPay · opsPtClose.
  */
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ChevronDown, ChevronRight, ReceiptText } from "lucide-react";
@@ -37,7 +38,7 @@ import {
   type PtSettleLine,
   type PtStatement,
 } from "@/lib/opsPtClose";
-import { PT_PAY_STATE_LABEL, ptPayDiffNotes, type PtPayLine, type PtPayLineState } from "@/lib/opsPtPay";
+import { PT_PAY_STATE_LABEL, ptPayDiffNotes, ptTeamTag, ptTeamText, type PtPayLine, type PtPayLineState } from "@/lib/opsPtPay";
 import { PT_KIND_LABEL, PT_NO_ENTRY_MONTH_LIMIT, matchPtRecord, mdOf, type PtKind } from "@/lib/opsPtRecord";
 import { useOpsPtCloseActions, useOpsPtCloses, useOpsPtStatementHead } from "@/services/opsPtCloseService";
 import { useOpsPtRecord } from "@/services/opsPtRecordService";
@@ -114,6 +115,7 @@ const CloseRow = ({
   // 열린 달의 정산 줄만 — 까닭 · 동의 상태(잠긴 달은 승인본 그대로)
   const s = settle && !locked && "why" in l ? l : null;
   const sub = [
+    l.team?.length ? `${ptTeamTag(l.ticket)}(${l.team.join(" · ")})` : ptTeamTag(l.ticket),
     kindLabel(l.kind),
     l.t === "carry" ? "지난달 수업" : "",
     l.t === "adj" && l.from ? `${monthLabel(l.from)} 수업` : "",
@@ -166,7 +168,7 @@ const HoldRow = ({ l }: { l: PtPayLine }) => (
         {mdw(l.date)} · {l.name}
       </p>
       <p className="text-label text-muted-foreground">
-        {[kindLabel(l.kind), l.auto ? "자동 기록" : "", l.noEntry ? "출석 없음" : "", l.deductDate ? `차감 ${mdOf(l.deductDate)}` : ""]
+        {[ptTeamText(l), kindLabel(l.kind), l.auto ? "자동 기록" : "", l.noEntry ? "출석 없음" : "", l.deductDate ? `차감 ${mdOf(l.deductDate)}` : ""]
           .filter(Boolean)
           .join(" · ")}
       </p>
