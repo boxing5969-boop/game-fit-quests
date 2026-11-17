@@ -144,7 +144,7 @@ const ItemSheet = ({
           <OpsLabel>언제 하나요?</OpsLabel>
           <div className="flex flex-wrap gap-1.5">
             {([
-              ["all", "청소하는 날마다"],
+              ["all", "매일"],
               ["days", "요일 고르기"],
               ["month", "한 달에 한 번"],
             ] as [ItemWhen, string][]).map(([w, t]) => (

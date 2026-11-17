@@ -30,7 +30,7 @@ import {
 } from "@/lib/opsClean";
 import { applyCleanDemo, buildCleanSample, type CleanDemoWho } from "@/lib/opsCleanSample";
 import { reportRange, type CleanReport } from "@/lib/opsCleanReport";
-import { applyReportDemo, buildCleanReportSample, type ReportDemoAction } from "@/lib/opsCleanReportSample";
+import { applyReportDemo, buildCleanReportSample, withTodayFromDay, type ReportDemoAction } from "@/lib/opsCleanReportSample";
 import { useOpsCleanActions, useOpsCleanDay } from "@/services/opsCleanService";
 import { useOpsCleanReport, useOpsCleanReportActions } from "@/services/opsCleanReportService";
 import type { CleanReportActions } from "./OpsCleanReport";
@@ -313,10 +313,11 @@ const DemoEntry = ({ who }: { who: CleanDemoWho }) => {
     setWeeks(null);
   }, [who]);
   const shownRep = useMemo(() => {
-    if (weeks === null) return rep;
-    const from = reportRange(rep.today, weeks).from;
-    return { ...rep, from, days: rep.days.filter((d) => d.date >= from) };
-  }, [rep, weeks]);
+    const r = withTodayFromDay(rep, day);
+    if (weeks === null) return r;
+    const from = reportRange(r.today, weeks).from;
+    return { ...r, from, days: r.days.filter((d) => d.date >= from) };
+  }, [rep, day, weeks]);
   const demoRep = (a: ReportDemoAction) => setRep((r) => applyReportDemo(r, a, new Date().toISOString()));
   const reportActions: CleanReportActions = {
     resolve: (itemId, date, note, done) => {

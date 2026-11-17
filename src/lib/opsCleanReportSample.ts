@@ -3,7 +3,7 @@
  *   첫 자료(CLEAN_SEED_*) 로 최근 4주 기록을 지어낸다(날짜 · 시간대로 정해지는 값이라 열 때마다 같다).
  *   applyReportDemo = 서버 ops_clean_issue_resolve · ops_clean_item_save · ops_clean_items_order · ops_clean_slot_save 와 같은 규칙
  */
-import { cleanDue, shiftCleanDay } from "./opsClean";
+import { cleanDue, shiftCleanDay, type CleanDay } from "./opsClean";
 import { CLEAN_SEED_BRANCH, CLEAN_SEED_ITEMS, CLEAN_SEED_SLOTS } from "./opsCleanSample";
 import { reportRange, ruleOf, type CleanReport, type ReportDay, type ReportIssue, type ReportItem, type ReportRun, type ReportSlot } from "./opsCleanReport";
 
@@ -255,4 +255,23 @@ export const applyReportDemo = (rep: CleanReport, a: ReportDemoAction, nowIso: s
     items = renumber(items, slot.id, order);
   }
   return { ...rep, items: sortItems(rep, items) };
+};
+
+/** 예시 오늘 칸 = 「오늘 청소」 예시(buildCleanSample)와 같은 숫자 — 띠 · 시트에서 누른 것이 현황에도 */
+export const withTodayFromDay = (rep: CleanReport, day: CleanDay): CleanReport => {
+  if (day.date !== rep.today) return rep;
+  const runs: ReportRun[] = day.slots.map((s) => ({
+    slot: s.slot,
+    due: s.items.length,
+    done: s.items.filter((i) => i.state === "done").length,
+    hold: s.items.filter((i) => i.state === "hold").length,
+    issue: s.items.filter((i) => i.state === "issue").length,
+    startedAt: s.run?.startedAt ?? null,
+    finishedAt: s.run?.finishedAt ?? null,
+    note: s.run?.note ?? null,
+    finishedByName: s.run?.finishedByName ?? null,
+  }));
+  const has = rep.days.some((d) => d.date === rep.today);
+  const days = has ? rep.days.map((d) => (d.date === rep.today ? { ...d, runs } : d)) : [...rep.days, { date: rep.today, closed: day.closed, runs }];
+  return { ...rep, days };
 };
