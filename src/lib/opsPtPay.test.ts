@@ -1,7 +1,18 @@
 import { describe, expect, it } from "vitest";
 
 import { withholding33, type OpsPtEvent, type OpsPtRate } from "./opsPt";
-import { ptPayBasis, ptPayDiffNotes, ptPayFirstRecordMonth, ptPayHoldText, ptPayMonth, ptPayMonthCovered, PT_PAY_BY_RECORD_FROM } from "./opsPtPay";
+import {
+  ptPayBasis,
+  ptPayDiffNotes,
+  ptPayFirstRecordMonth,
+  ptPayHoldText,
+  ptPayLinesAll,
+  ptPayMonth,
+  ptPayMonthCovered,
+  ptTeamKey,
+  ptTeamTag,
+  PT_PAY_BY_RECORD_FROM,
+} from "./opsPtPay";
 import { PT_NO_ENTRY_MONTH_LIMIT, matchPtRecord, type PtRecAttendance, type PtRecMember, type PtRecSession, type PtRecordData } from "./opsPtRecord";
 
 // ───────── 지어낸 자료 (실제 회원 · 금액 아님 — 수당표는 DB 에만) ─────────
@@ -89,7 +100,7 @@ describe("한 달 셈 — 기록 + 차감", () => {
     expect(p.unpriced).toBe(0);
     expect(p.hold.total).toBe(0);
     expect(p.byDeduct).toEqual({ uses: 3, gross: 90000 });
-    expect(p.diff).toEqual({ prevLesson: 0, nextMonth: 0, carryOut: 0, extra: 0, held: 0, preStart: 0 });
+    expect(p.diff).toEqual({ prevLesson: 0, nextMonth: 0, carryOut: 0, extra: 0, held: 0, preStart: 0, team: { classes: 0, deducts: 0 } });
     expect(ptPayDiffNotes(p)).toEqual([]);
     expect(p.members).toEqual([
       { key: "a", name: "가온", uses: 2, pay: 60000 },
@@ -173,7 +184,7 @@ describe("한 달 셈 — 기록 + 차감", () => {
       ["나래", "pending"],
     ]);
     expect(p.extras.map((x) => [x.name, x.workDate, x.count])).toEqual([["마루", "2026-12-15", 1]]);
-    expect(p.diff).toEqual({ prevLesson: 0, nextMonth: 0, carryOut: 0, extra: 1, held: 2, preStart: 0 });
+    expect(p.diff).toEqual({ prevLesson: 0, nextMonth: 0, carryOut: 0, extra: 1, held: 2, preStart: 0, team: { classes: 0, deducts: 0 } });
     expect(ptPayHoldText(p.hold)).toBe("차감 대기 1 · 차감 확인 중 1 · 늦은 기록 확인 전 1 · 사유 필요 1 · 기록 없는 차감 1");
     expect(ptPayDiffNotes(p)).toEqual([
       "기록 없는 차감 1회 — 수업 기록이 생길 때까지 보류해요",
@@ -263,17 +274,17 @@ describe("한 달 셈 — 기록 + 차감", () => {
     expect(p.gross).toBe(90000);
   });
 
-  it("단가 — 팀 수업권은 팀 1회 ÷ 정원 · 수당표에 없는 수업권은 금액 없이 따로 센다 · 수당표를 못 받으면 금액 없음", () => {
+  it("단가 — 팀 수업권은 팀 1회 수당 그대로(단체 PT 결정 6) · 수당표에 없는 수업권은 금액 없이 따로 센다 · 수당표를 못 받으면 금액 없음", () => {
     const d = data("2026-12-20", {
       sessions: [ses("a", "2026-12-03", "lesson", { ticket_name: TEAM }), ses("b", "2026-12-04", "lesson", { ticket_name: "체험 3회권" }), ses("c", "2026-12-05")],
       events: [ev("a", "2026-12-03", 1, { ticket_name: TEAM }), ev("b", "2026-12-04", 1, { ticket_name: "체험 3회권" }), ev("c", "2026-12-05")],
       attendance: [came("a", "2026-12-03"), came("b", "2026-12-04"), came("c", "2026-12-05")],
     });
     const p = pay(d, "2026-12-01");
-    expect(p.lines.map((l) => l.rate)).toEqual([20000, null, 30000]);
+    expect(p.lines.map((l) => l.rate)).toEqual([80000, null, 30000]);
     expect(p.paidUses).toBe(3);
     expect(p.unpriced).toBe(1);
-    expect(p.gross).toBe(50000);
+    expect(p.gross).toBe(110000);
 
     const blind = pay(d, "2026-12-01", { rates: null });
     expect(blind.paidUses).toBe(3);
@@ -334,5 +345,165 @@ describe("한 달 셈 — 기록 + 차감", () => {
     const p = pay(d, "2026-12-01");
     expect(p.lines[0]).toMatchObject({ state: "paid", lateDeduct: true, deductDate: "2026-12-20" });
     expect(p.paidUses).toBe(1);
+  });
+});
+
+describe("단체 PT — 수업 1회당 고정, 참석 인원과 무관 (3단계 · 결정 6)", () => {
+  // 팀 수업권 기록은 팀원마다 한 줄 — 같은 코치 · 같은 날 · 같은 정원은 수업 하나(팀 1회 수당 80,000 · 지어낸 금액)
+  const team = (m: string, date: string, kind: PtRecSession["kind"] = "lesson", more: Partial<PtRecSession> = {}) =>
+    ses(m, date, kind, { ticket_name: TEAM, ...more });
+  const tev = (m: string, date: string, used = 1, more: Partial<OpsPtEvent> = {}) => ev(m, date, used, { ticket_name: TEAM, ...more });
+  const at = (m: string, date: string, hm: string) => came(m, date, hm);
+
+  it("셋이 온 4인 팀 수업 = 한 줄 · 팀 1회 수당 그대로 — 안 온 팀원(기록 없음)이 있어도 같다", () => {
+    const d = data("2026-12-20", {
+      sessions: [
+        team("a", "2026-12-03", "lesson", { created_at: "2026-12-03T20:00:00+09:00" }),
+        team("b", "2026-12-03", "lesson", { created_at: "2026-12-03T20:01:00+09:00" }),
+        team("c", "2026-12-03", "lesson", { created_at: "2026-12-03T20:02:00+09:00" }),
+      ],
+      events: [tev("a", "2026-12-03"), tev("b", "2026-12-03"), tev("c", "2026-12-04")],
+      attendance: [at("a", "2026-12-03", "19:00"), at("b", "2026-12-03", "19:05"), at("c", "2026-12-03", "19:12")],
+    });
+    const p = pay(d, "2026-12-01");
+    expect(p.lines).toHaveLength(1);
+    expect(p.lines[0]).toMatchObject({
+      name: "가온 외 2명",
+      kind: "lesson",
+      state: "paid",
+      rate: 80000,
+      deductDate: "2026-12-03",
+      team: { size: 4, names: ["가온", "나래", "다솜"], paid: 3, deducts: 3, mixed: false, key: "2026-12-03|4" },
+    });
+    // 대표 줄 = 먼저 적은 기록(가온) — 월 마감 서버가 이 기록으로 확인한다
+    expect(p.lines[0].id).toBe(`${d.sessions?.[0].id}:0`);
+    expect(p.paidUses).toBe(1);
+    expect(p.gross).toBe(80000);
+    expect(p.net).toBe(withholding33(80000).net);
+    expect(p.members).toEqual([{ key: "team:4:10", name: "4인 팀 수업", uses: 1, pay: 80000 }]);
+    // 차감 기준(예전) = 팀원 1명 = 팀 1회 ÷ 정원 → 3회 · 60,000 — 왜 다른지 한 줄
+    expect(p.byDeduct).toEqual({ uses: 3, gross: 60000 });
+    expect(p.diff.team).toEqual({ classes: 1, deducts: 3 });
+    expect(ptPayDiffNotes(p)).toEqual([
+      "단체 PT 수업 1회 · 팀원 차감 3회 — 수업 한 번에 팀 1회 수당이라 차감 기준(팀원 1명 = 팀 1회 ÷ 정원)과 달라요",
+    ]);
+    // 한 명만 온 날도 팀 1회 수당
+    const one = data("2026-12-20", { sessions: [team("d", "2026-12-10")], events: [tev("d", "2026-12-10")], attendance: [at("d", "2026-12-10", "19:00")] });
+    expect(pay(one, "2026-12-01").lines.map((l) => [l.name, l.rate, l.team?.paid])).toEqual([["라온", 80000, 1]]);
+  });
+
+  it("미참석 · 당일 취소 팀원이 있어도 수업 한 번 · 모두 미참석이어도 차감이 맞으면 1회(1:1 미참석과 같다)", () => {
+    const d = data("2026-12-20", {
+      sessions: [team("a", "2026-12-03"), team("b", "2026-12-03", "noshow"), team("c", "2026-12-03", "late_cancel"), team("a", "2026-12-05", "noshow"), team("b", "2026-12-05", "noshow")],
+      events: [tev("a", "2026-12-03"), tev("b", "2026-12-03"), tev("c", "2026-12-03"), tev("a", "2026-12-05"), tev("b", "2026-12-05")],
+      attendance: [at("a", "2026-12-03", "19:00")],
+    });
+    const p = pay(d, "2026-12-01");
+    expect(p.lines.map((l) => [l.date, l.kind, l.state, l.rate, l.team?.paid])).toEqual([
+      ["2026-12-03", "lesson", "paid", 80000, 3],
+      ["2026-12-05", "noshow", "paid", 80000, 2],
+    ]);
+    expect(p.paidUses).toBe(2);
+    expect(p.noEntry).toBe(0);
+  });
+
+  it("차감이 아직이면 수업 한 줄로 보류 — 팀원 한 명이라도 차감이 맞으면 지급 대상", () => {
+    const sessions = [team("a", "2026-12-10"), team("b", "2026-12-10", "lesson", { created_at: "2026-12-10T20:05:00+09:00" })];
+    const attendance = [at("a", "2026-12-10", "19:00"), at("b", "2026-12-10", "19:02")];
+    const wait = pay(data("2026-12-20", { sessions, attendance }), "2026-12-01");
+    expect(wait.lines.map((l) => [l.name, l.state, l.rate])).toEqual([["가온 외 1명", "wait", 80000]]);
+    expect(wait.hold).toMatchObject({ wait: 1, total: 1 });
+    expect(wait.paidUses).toBe(0);
+    // 나래 차감만 잡힘 → 나래가 대표 줄로 지급 대상
+    const d = data("2026-12-20", { sessions, attendance, events: [tev("b", "2026-12-11")] });
+    const ok = pay(d, "2026-12-01");
+    expect(ok.lines.map((l) => [l.id, l.state, l.rate, l.team?.paid])).toEqual([[`${sessions[1].id}:0`, "paid", 80000, 1]]);
+    expect(ok.hold.total).toBe(0);
+  });
+
+  it("같은 날 두 팀 수업 — 함께 들어온 무리가 90분 넘게 떨어지면 따로 · 한 명뿐인 무리(하루 두 번 입장)는 가까운 수업에", () => {
+    const two = data("2026-12-20", {
+      sessions: [team("a", "2026-12-03"), team("b", "2026-12-03"), team("c", "2026-12-03"), team("d", "2026-12-03"), team("e", "2026-12-03")],
+      events: ["a", "b", "c", "d", "e"].map((m) => tev(m, "2026-12-03")),
+      attendance: [at("a", "2026-12-03", "10:00"), at("b", "2026-12-03", "10:05"), at("c", "2026-12-03", "19:00"), at("d", "2026-12-03", "19:10"), at("e", "2026-12-03", "07:30")],
+    });
+    const p = pay(two, "2026-12-01");
+    expect(p.lines.map((l) => l.team?.names)).toEqual([
+      ["가온", "나래", "마루"],
+      ["다솜", "라온"],
+    ]);
+    expect(p.paidUses).toBe(2);
+    expect(p.gross).toBe(160000);
+    // 한 수업인데 한 명이 아침에도 들어왔다 — 두 수업으로 나누지 않는다
+    const once = data("2026-12-20", {
+      sessions: [team("a", "2026-12-03"), team("b", "2026-12-03"), team("c", "2026-12-03")],
+      events: ["a", "b", "c"].map((m) => tev(m, "2026-12-03")),
+      attendance: [at("a", "2026-12-03", "19:00"), at("b", "2026-12-03", "19:04"), at("c", "2026-12-03", "07:10")],
+    });
+    expect(pay(once, "2026-12-01").lines.map((l) => [l.team?.names.length, l.rate])).toEqual([[3, 80000]]);
+  });
+
+  it("연속 2회 팀 수업은 두 줄(둘째 칸 따로) · 다른 코치 · 1:1 수업권은 묶지 않는다", () => {
+    const d = data("2026-12-20", {
+      sessions: [team("a", "2026-12-03", "lesson", { uses: 2 }), team("b", "2026-12-03", "lesson", { uses: 2 }), team("c", "2026-12-03", "lesson", { coach_staff_id: COACH2 }), ses("d", "2026-12-03")],
+      events: [tev("a", "2026-12-03", 2), tev("b", "2026-12-03", 2), tev("c", "2026-12-03", 1, { coach_staff_id: COACH2 }), ev("d", "2026-12-03")],
+      attendance: [at("a", "2026-12-03", "19:00"), at("b", "2026-12-03", "19:01"), at("c", "2026-12-03", "19:02"), at("d", "2026-12-03", "18:00")],
+    });
+    const mine = pay(d, "2026-12-01");
+    expect(mine.lines.map((l) => [l.id.slice(l.id.lastIndexOf(":")), l.name, l.rate])).toEqual([
+      [":0", "가온 외 1명", 80000],
+      [":1", "가온 외 1명", 80000],
+      [":0", "라온", 30000],
+    ]);
+    expect(mine.gross).toBe(190000);
+    const all = pay(d, "2026-12-01", { coach: null });
+    expect(all.lines.filter((l) => l.team).map((l) => l.name)).toEqual(["가온 외 1명", "가온 외 1명", "다솜"]);
+  });
+
+  it("한 팀에 10회권 · 20회권이 섞이면 많은 쪽 수업권의 팀 1회 수당 — 두 줄로 나누지 않는다(같으면 먼저 적은 기록 쪽)", () => {
+    const T4_20 = "팀PT 4인 20회";
+    const mixedRates = [...rates, { team_size: 4, sessions: 20, session_rate: 70000, valid_from: "2026-01-01" }];
+    const d = data("2026-12-20", {
+      sessions: [team("a", "2026-12-03", "lesson", { ticket_name: T4_20 }), team("b", "2026-12-03", "lesson", { ticket_name: T4_20 }), team("c", "2026-12-03")],
+      events: [tev("a", "2026-12-03", 1, { ticket_name: T4_20 }), tev("b", "2026-12-03", 1, { ticket_name: T4_20 }), tev("c", "2026-12-03")],
+      attendance: [at("a", "2026-12-03", "19:00"), at("b", "2026-12-03", "19:01"), at("c", "2026-12-03", "19:02")],
+    });
+    const p = pay(d, "2026-12-01", { rates: mixedRates });
+    expect(p.lines.map((l) => [l.ticket, l.rate, l.team?.mixed])).toEqual([[T4_20, 70000, true]]);
+    const tie = data("2026-12-20", {
+      sessions: [team("a", "2026-12-03"), team("b", "2026-12-03", "lesson", { ticket_name: T4_20, created_at: "2026-12-03T20:30:00+09:00" })],
+      events: [tev("a", "2026-12-03"), tev("b", "2026-12-03", 1, { ticket_name: T4_20 })],
+      attendance: [at("a", "2026-12-03", "19:00"), at("b", "2026-12-03", "19:01")],
+    });
+    expect(pay(tie, "2026-12-01", { rates: mixedRates }).lines.map((l) => [l.ticket, l.rate])).toEqual([[TEAM, 80000]]);
+  });
+
+  it("전환 달 경계 — 11월 팀 수업의 차감이 12월에 잡힌 줄(지난달 수업)은 묶지 않고 차감 기준대로(팀원 1명 = 팀 1회 ÷ 정원)", () => {
+    const d = data("2026-12-20", {
+      sessions: [team("a", "2026-11-30"), team("b", "2026-11-30")],
+      events: [tev("a", "2026-11-30"), tev("b", "2026-12-01")],
+      attendance: [at("a", "2026-11-30", "19:00"), at("b", "2026-11-30", "19:03")],
+    });
+    const dec = pay(d, "2026-12-01");
+    expect(dec.lines.map((l) => [l.name, l.carry, l.rate, !!l.team])).toEqual([["나래", true, 20000, false]]);
+    expect(dec.carryUses).toBe(1);
+    expect(dec.gross).toBe(20000);
+  });
+
+  it("장부에 지급한 대표 줄이 있으면 그 줄이 대표 — 먼저 적은 기록이 새로 생겨도 바뀌지 않는다 · 열쇠 · 표시 글", () => {
+    const d = data("2026-12-20", {
+      sessions: [team("a", "2026-12-03", "lesson", { created_at: "2026-12-03T21:00:00+09:00" }), team("b", "2026-12-03", "lesson", { created_at: "2026-12-03T20:00:00+09:00" })],
+      events: [tev("a", "2026-12-03"), tev("b", "2026-12-03")],
+      attendance: [at("a", "2026-12-03", "19:00"), at("b", "2026-12-03", "19:01")],
+    });
+    const res = matchPtRecord(d);
+    const [aId, bId] = [d.sessions?.[0].id, d.sessions?.[1].id];
+    expect(ptPayLinesAll(res, d.events ?? [], rates, COACH).map((l) => l.id)).toEqual([`${bId}:0`]);
+    expect(ptPayLinesAll(res, d.events ?? [], rates, COACH, undefined, new Set([`${aId}:0`])).map((l) => l.id)).toEqual([`${aId}:0`]);
+    expect(ptTeamKey("2026-12-03", TEAM)).toBe("2026-12-03|4");
+    expect(ptTeamKey("2026-12-03", T20)).toBeNull();
+    expect(ptTeamTag(TEAM)).toBe("4인 팀");
+    expect(ptTeamTag("5:1 PT 20회")).toBe("5인 팀");
+    expect(ptTeamTag(T20)).toBe("");
   });
 });

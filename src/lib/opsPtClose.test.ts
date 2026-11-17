@@ -696,3 +696,97 @@ describe("2-3 PT 명세서 — 승인한 달의 줄을 한 장으로", () => {
     expect(ptCloseBook(decData, matchPtRecord(decData), { ...cd, today: "2027-01-12" }, rates).fresh(COACH)).toBeNull();
   });
 });
+
+describe("단체 PT — 월 마감과 맞추기 (3단계 · 결정 6)", () => {
+  // 지어낸 팀 수업권 · 금액(팀 1회 80,000)
+  const TEAM = "팀PT 4인 10회";
+  const teamRates: OpsPtRate[] = [...rates, { team_size: 4, sessions: 10, session_rate: 80000, valid_from: "2026-01-01" }];
+  const tses = (id: string, m: string, date: string, more: Partial<PtRecSession> = {}) => ses(id, m, date, { ticket_name: TEAM, ...more });
+  const tev = (m: string, date: string) => ev(m, date, { ticket_name: TEAM });
+  // 12/3 4인 팀 수업 — 가온 · 나래 · 다솜(가온 기록을 먼저 적음)
+  const decTeam = {
+    sessions: [
+      tses("t1", "a", "2026-12-03", { created_at: "2026-12-03T20:00:00+09:00" }),
+      tses("t2", "b", "2026-12-03", { created_at: "2026-12-03T20:01:00+09:00" }),
+      tses("t3", "c", "2026-12-03", { created_at: "2026-12-03T20:02:00+09:00" }),
+    ],
+    events: [tev("a", "2026-12-03"), tev("b", "2026-12-03"), tev("c", "2026-12-03")],
+  };
+  const decOpen = stmt(data("2027-01-02", decTeam), "2026-12-01", { rates: teamRates });
+  const dec = approved(decOpen);
+
+  it("12월 — 팀 수업 한 번 = 한 줄 · 팀 1회 수당 · 승인하면 대표 줄(가온 기록)이 장부에 · 명세서는 「4인 팀 수업」 한 묶음", () => {
+    expect(decOpen.pay.map((l) => [l.k, l.name, l.rate])).toEqual([["t1:0", "가온 외 2명", 80000]]);
+    expect(decOpen.uses).toBe(1);
+    expect(decOpen.gross).toBe(80000);
+    expect(dec.lines?.map((l) => l.k)).toEqual(["t1:0"]);
+    // 팀원 이름은 화면에만 — 서버에 보내는 줄은 예전 모양 그대로
+    expect(decOpen.pay[0].team).toEqual(["가온", "나래", "다솜"]);
+    expect(ptCloseSnapshot(decOpen).lines[0]).not.toHaveProperty("team");
+    expect(ptStatementGroups(decOpen.pay).map((g) => [g.name, ptTicketText(g.ticket), g.uses, g.amount, g.rate])).toEqual([["4인 팀 수업", "4인 팀 10회", 1, 80000, 80000]]);
+  });
+
+  it("먼저 적은 것처럼 보이는 팀원 기록이 새로 생겨도 대표 줄은 장부 그대로 — 다시 넣지도, 정산하지도 않는다", () => {
+    const d = data("2027-02-02", {
+      sessions: [...decTeam.sessions, tses("t4", "d", "2026-12-03", { created_at: "2026-12-03T19:30:00+09:00" })],
+      events: [...decTeam.events, tev("d", "2026-12-03")],
+    });
+    const jan = stmt(d, "2027-01-01", { rates: teamRates, closes: [dec] });
+    expect(jan.adj).toEqual([]);
+    expect(jan.settle).toEqual([]);
+    expect(stmt(d, "2026-12-01", { rates: teamRates, closes: [dec] }).after).toEqual({ adj: 0, settle: 0 });
+  });
+
+  it("대표 줄의 기록을 지워도 다른 팀원이 남아 있으면 대표만 바뀐다 — 「정산」 · 「보정」 없이 한 번만 지급", () => {
+    const d = data("2027-02-02", { sessions: decTeam.sessions.slice(1), events: decTeam.events.slice(1) });
+    const jan = stmt(d, "2027-01-01", { rates: teamRates, closes: [dec] });
+    expect(jan.adj).toEqual([]);
+    expect(jan.settle).toEqual([]);
+    expect(jan.gross).toBe(0);
+    expect(stmt(d, "2026-12-01", { rates: teamRates, closes: [dec] }).after).toEqual({ adj: 0, settle: 0 });
+  });
+
+  it("팀원 기록을 모두 지우면(수업이 없던 일) 대표 줄을 정산한다 — 팀 1회 수당만큼", () => {
+    const d = data("2027-02-02", { sessions: [ses("j1", "a", "2027-01-05")], events: [ev("a", "2027-01-05")] });
+    const jan = stmt(d, "2027-01-01", { rates: teamRates, closes: [dec] });
+    expect(jan.settle.map((l) => [l.k, l.why, l.rate, l.from])).toEqual([["t1:0", "gone", 80000, "2026-12"]]);
+  });
+
+  it("12월에 차감이 안 잡혀 보류였던 팀 수업 — 1월에 풀리면 「보정」 한 줄(팀 1회 수당) · 두 번 넣지 않는다", () => {
+    const decOpen2 = stmt(data("2027-01-02", { sessions: decTeam.sessions, events: [] }), "2026-12-01", { rates: teamRates });
+    expect(decOpen2.pay).toEqual([]);
+    expect(decOpen2.holdLines.map((l) => [l.name, l.state])).toEqual([["가온 외 2명", "wait"]]);
+    const dec2 = approved(decOpen2);
+    const d = data("2027-02-02", { sessions: decTeam.sessions, events: [tev("b", "2027-01-03"), tev("c", "2027-01-03")] });
+    const jan = stmt(d, "2027-01-01", { rates: teamRates, closes: [dec2] });
+    expect(jan.adj.map((l) => [l.k, l.t, l.rate, l.from])).toEqual([["t2:0", "adj", 80000, "2026-12"]]);
+    expect(jan.gross).toBe(80000);
+    const feb = stmt(data("2027-03-02", { sessions: decTeam.sessions, events: [tev("b", "2027-01-03"), tev("c", "2027-01-03")] }), "2027-02-01", {
+      rates: teamRates,
+      closes: [dec2, approved(jan)],
+    });
+    expect(feb.adj).toEqual([]);
+    expect(feb.settle).toEqual([]);
+  });
+
+  it("예시 화면(`?demo=1`) — 그제 4인 팀 수업이 「온유 외 2명」 한 줄 · 팀 1회 수당 · 팀 예시를 끄면 예전 예시 그대로", () => {
+    const today = "2026-12-20";
+    const d = buildPtSample(today, true, { auto: true, team: true });
+    const st = ptStatement({
+      res: matchPtRecord(d),
+      events: d.events ?? [],
+      rates: PT_SAMPLE_RATES,
+      month: "2026-12-01",
+      coachId: PT_SAMPLE_COACH,
+      closes: [],
+      today: "2027-01-02",
+      firstYm: "2026-12",
+    });
+    expect(st.pay.filter((l) => l.name.includes("외")).map((l) => [l.name, l.date, l.kind, l.rate, l.ticket])).toEqual([
+      ["온유 외 2명", "2026-12-18", "lesson", 80000, "팀PT 4인 10회권"],
+    ]);
+    const plain = buildPtSample(today, true, { auto: true });
+    expect(plain.members?.length).toBe(5);
+    expect(plain.sessions?.length).toBe(9);
+  });
+});

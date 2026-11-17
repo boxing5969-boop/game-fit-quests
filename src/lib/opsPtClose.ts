@@ -14,9 +14,14 @@
  *   2-3 PT 명세서(2026-11-16 대표님 「다음작업시작」): 승인한 달의 줄을 회원별로 묶은 한 장 — ptStatementGroups ·
  *   지급 예정일 ptPayDate(다음 달 10일) · 세무 담당에게 보낼 글 ptStatementTaxText(회원 이름 없이 금액 네 가지) ·
  *   코치 화면 맨 위에 명세서를 띄울 달 ptStatementFreshYm. 종이 모양은 components/ops/OpsPtStatementDoc.tsx.
+ *
+ *   단체 PT(2026-11-17 3단계 · 결정 6): 팀 수업 한 번 = 한 줄(opsPtPay teamClasses — 대표 줄 = 팀원 한 명의 기록).
+ *   장부에 이미 지급한 대표 줄이 있으면 그 줄을 대표로 둔다(paidKeys). 대표 줄의 기록이 지워지거나 지급 대상에서 빠졌는데
+ *   같은 수업(날짜 · 정원)이 다른 팀원으로 아직 지급 대상이면 대표만 바뀐 것 — 「정산」도 「보정」도 만들지 않는다(한 번만 지급).
+ *   서버(승인)는 줄마다 그 기록이 이 코치의 열린 기록인지 · 이미 지급했는지만 본다 — DB 변경 없음.
  */
 import { classifyTicket, withholding33, type OpsPtEvent, type OpsPtRate } from "./opsPt";
-import { ptPayFirstRecordMonth, ptPayHoldText, ptPayLinesAll, ptPayMonth, ptPayMonthCovered, type PtPayLine, type PtPayMonth } from "./opsPtPay";
+import { ptPayFirstRecordMonth, ptPayHoldText, ptPayLinesAll, ptPayMonth, ptPayMonthCovered, ptTeamKey, type PtPayLine, type PtPayMonth } from "./opsPtPay";
 import { addDays, type PtExtra, type PtMatchResult, type PtRecordData } from "./opsPtRecord";
 
 /** line 그 달 수업 · carry 지난달 수업(전환 달 경계) · adj 보정(+) · settle 정산(−) */
@@ -38,6 +43,8 @@ export interface PtCloseLine {
   deduct?: string | null;
   /** 보정 · 정산: 그 수업이 든 달(YYYY-MM) */
   from?: string | null;
+  /** 단체 PT 팀원 이름(열린 달 화면에만 — 서버에는 보내지 않는다) */
+  team?: string[];
 }
 
 /** 승인할 때 남아 있던 보류 줄(참고) */
@@ -203,6 +210,7 @@ const toCloseLine = (l: PtPayLine, t: PtCloseLineType, from?: string): PtCloseLi
   ticket: l.ticket,
   deduct: l.deductDate,
   ...(from ? { from } : {}),
+  ...(l.team && l.team.names.length > 1 ? { team: l.team.names } : {}),
 });
 
 /** 그 코치가 마감을 시작하는 달(YYYY-MM) — 지점의 「기록 + 차감」 첫 달과 코치 카드가 생긴 달 가운데 늦은 쪽 */
@@ -243,16 +251,38 @@ export const ptStatement = (inp: PtStatementInput): PtStatement => {
   const ym = ymOf(month);
   const first = inp.firstYm ?? ptPayFirstRecordMonth(res.startedOn);
   const startYm = ptCloseStartYm(first, inp.start);
-  const base = ptPayMonth(res, events, rates, month, coachId, inp.monthEvents, first);
-  const all = ptPayLinesAll(res, events, rates, coachId, first);
+  const ledger = ptCloseLedger(closes, coachId);
+  // 단체 PT(3단계) — 이미 지급한 대표 줄은 그대로 대표로 둔다(대표가 바뀌어 두 번 나가지 않게)
+  const paidKeys = new Set([...ledger.entries()].filter(([, e]) => e.n > 0).map(([k]) => k));
+  const base = ptPayMonth(res, events, rates, month, coachId, inp.monthEvents, first, paidKeys);
+  const all = ptPayLinesAll(res, events, rates, coachId, first, paidKeys);
   const mine = closes.filter((c) => c.coach_staff_id === coachId);
   const approvedYm = new Set(mine.filter((c) => c.status === "approved").map((c) => ymOf(c.month)));
   const close = mine.find((c) => ymOf(c.month) === ym) ?? null;
   const locked = close?.status === "approved";
   const monthEnded = ymOf(today) > ym;
-  const ledger = ptCloseLedger(closes, coachId);
   const isPaid = (k: string) => (ledger.get(k)?.n ?? 0) > 0;
   const eligible = new Set(all.filter((l) => l.state === "paid").map((l) => l.id));
+  // 단체 PT(3단계) — 지급한 대표 줄의 기록이 지워지거나 지급 대상에서 빠졌는데, 같은 수업(날짜 · 정원)이 다른 팀원으로
+  //   아직 지급 대상이면 대표만 바뀐 것이다 → 그 장부 줄은 정산하지 않고, 새 대표 줄은 이미 지급한 것으로 본다(한 번만 지급).
+  const teamMoved = new Set<string>();
+  const teamKept = new Set<string>();
+  {
+    const gone = new Map<string, string[]>();
+    for (const [k, e] of [...ledger.entries()].sort((a, b) => a[1].line.date.localeCompare(b[1].line.date) || a[0].localeCompare(b[0]))) {
+      if (e.n <= 0 || eligible.has(k)) continue;
+      const tk = ptTeamKey(e.line.date, e.line.ticket);
+      if (tk) gone.set(tk, [...(gone.get(tk) ?? []), k]);
+    }
+    for (const l of all) {
+      if (!l.team || l.state !== "paid" || isPaid(l.id)) continue;
+      const left = gone.get(l.team.key);
+      if (!left?.length) continue;
+      teamKept.add(left.shift() as string);
+      teamMoved.add(l.id);
+    }
+  }
+  const paidNow = (l: PtPayLine) => isPaid(l.id) || teamMoved.has(l.id);
   const inData = new Set(all.map((l) => l.id));
   // 서버가 창을 잘랐으면(넉 달 넘게 씀) 창 맨 앞 수업은 짝이 창 밖에 있을 수 있다 — 정산을 따지지 않는다
   const clipped = inp.from && inp.from > addDays(res.startedOn, -14) ? inp.from : null;
@@ -295,22 +325,22 @@ export const ptStatement = (inp: PtStatementInput): PtStatement => {
     holdText = hold > 0 ? `승인할 때 보류 ${hold}회` : "";
     // 잠긴 뒤 달라진 것 — 이 달 수업이 뒤늦게 풀렸거나, 지급한 수업이 없던 일이 됐다
     after = {
-      adj: all.filter((l) => l.payYm === ym && l.state === "paid" && !isPaid(l.id)).length,
-      settle: lines.filter((l) => l.t !== "settle" && isPaid(l.k) && !eligible.has(l.k) && evaluable(l.date)).length,
+      adj: all.filter((l) => l.payYm === ym && l.state === "paid" && !paidNow(l)).length,
+      settle: lines.filter((l) => l.t !== "settle" && isPaid(l.k) && !eligible.has(l.k) && !teamKept.has(l.k) && evaluable(l.date)).length,
     };
   } else {
     const monthLines = all.filter((l) => l.payYm === ym);
-    pay = monthLines.filter((l) => l.state === "paid" && !isPaid(l.id)).map((l) => toCloseLine(l, l.carry ? "carry" : "line"));
-    already = monthLines.filter((l) => l.state === "paid" && isPaid(l.id)).length;
+    pay = monthLines.filter((l) => l.state === "paid" && !paidNow(l)).map((l) => toCloseLine(l, l.carry ? "carry" : "line"));
+    already = monthLines.filter((l) => l.state === "paid" && paidNow(l)).length;
     holdLines = monthLines.filter((l) => l.state !== "paid");
     if (turn) {
       // 보정 — 닫은 달의 수업이 지금은 지급 대상인데 지급한 적이 없다
-      adj = all.filter((l) => l.payYm < ym && approvedYm.has(l.payYm) && l.state === "paid" && !isPaid(l.id)).map((l) => toCloseLine(l, "adj", l.payYm));
+      adj = all.filter((l) => l.payYm < ym && approvedYm.has(l.payYm) && l.state === "paid" && !paidNow(l)).map((l) => toCloseLine(l, "adj", l.payYm));
       // 정산 — 지급한 수업이 지금은 지급 대상이 아니다
       const agreedKeys = close?.status === "confirmed" ? new Set(close.confirm?.settle ?? []) : new Set<string>();
       settle = [...ledger.entries()]
         // 금액을 보는 화면에서 나간 돈이 0원인 줄은 뺄 것이 없다(서버도 받지 않는다)
-        .filter(([k, e]) => e.n > 0 && (e.line.rate == null || e.amount > 0) && !eligible.has(k) && evaluable(e.line.date))
+        .filter(([k, e]) => e.n > 0 && (e.line.rate == null || e.amount > 0) && !eligible.has(k) && !teamKept.has(k) && evaluable(e.line.date))
         .map(([k, e]) => ({
           ...e.line,
           t: "settle" as const,
@@ -410,7 +440,8 @@ export const ptCloseConfirmSummary = (st: PtStatement) => ({
 
 /** 승인 때 서버에 보내는 줄 — 서버가 다시 보고(이 코치의 수업 · 이중 지급 · 정산 동의) 합계 · 3.3%를 셈해 잠근다 */
 export const ptCloseSnapshot = (st: PtStatement) => ({
-  lines: [...st.pay, ...st.adj, ...st.settle.filter((s) => s.included).map(({ agreed: _a, included: _i, why: _w, ...l }) => l)],
+  // 팀원 이름(team)은 화면에만 — 서버에는 예전과 같은 모양으로 보낸다
+  lines: [...st.pay, ...st.adj, ...st.settle.filter((s) => s.included).map(({ agreed: _a, included: _i, why: _w, ...l }) => l)].map(({ team: _t, ...l }) => l),
   holds: [
     ...st.holdLines.map((l): PtCloseHold => ({ k: l.id, date: l.date, name: l.name, state: l.state })),
     ...st.extras.map((x): PtCloseHold => ({ date: x.workDate, name: x.name, state: "extra", n: x.count })),
@@ -506,8 +537,12 @@ export const ptStatementGroups = (lines: PtCloseLine[]): PtStatementGroup[] => {
   const map = new Map<string, PtStatementGroup>();
   for (const l of [...lines].sort((a, b) => a.date.localeCompare(b.date) || a.k.localeCompare(b.k))) {
     const rate = l.rate ?? null;
-    const key = `${l.name}|${l.ticket ?? ""}|${rate ?? ""}`;
-    const g = map.get(key) ?? { key, name: l.name, ticket: l.ticket ?? null, rate, items: [], uses: 0, amount: rate == null ? null : 0 };
+    // 단체 PT(3단계) — 팀원 이름은 수업마다 다르니 팀 종류(정원 · 횟수)마다 한 묶음(「4인 팀 수업」)
+    const tk = classifyTicket(l.ticket);
+    const team = tk.teamSize > 1;
+    const name = team ? `${tk.teamSize}인 팀 수업` : l.name;
+    const key = team ? `team|${tk.teamSize}|${tk.sessions ?? ""}|${rate ?? ""}` : `${l.name}|${l.ticket ?? ""}|${rate ?? ""}`;
+    const g = map.get(key) ?? { key, name, ticket: l.ticket ?? null, rate, items: [], uses: 0, amount: rate == null ? null : 0 };
     g.items.push({ k: l.k, date: l.date, kind: l.kind, t: l.t });
     g.uses += 1;
     if (g.amount != null) g.amount += rate ?? 0;
