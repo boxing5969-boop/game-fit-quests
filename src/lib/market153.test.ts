@@ -5,6 +5,7 @@ import { FEATURES, visibleFor } from "@/lib/appSearch";
 import { buildMenuView, canSee, menuCatalog, resolveEntries, type MenuViewer } from "@/lib/menuLayout";
 import {
   MARKET_CATEGORIES,
+  MAX_OFF_LOWEST_PCT,
   MEMBER_STEPS,
   NOTE_MAX,
   ORDER_STATUS_LABEL,
@@ -41,6 +42,7 @@ import {
   parseWon,
   placeError,
   priceFlags,
+  priceFromLowest,
   productDraftError,
   productPayload,
   productTitle,
@@ -49,7 +51,6 @@ import {
   purchaseTotals,
   sellerLines,
   staffActions,
-  suggestPrice,
   todayKst,
   wishError,
   won,
@@ -179,18 +180,41 @@ describe("153 마켓 — 운영진 가격 점검", () => {
     expect(keys(product({ cost: 52_000 }), false)).toEqual([]);
   });
 
-  it("남는 돈 · 도매가에 얹기(100원 단위 올림)", () => {
+  it("남는 돈 — 도매가에 몇 % 얹은 셈인가", () => {
     expect(marginOf({ price: 50_000, cost: 40_000 })).toEqual({ amount: 10_000, percent: 25 });
     expect(marginOf({ price: 50_000, cost: null })).toBeNull();
     expect(marginOf({ price: 50_000 })).toBeNull();
     expect(marginOf({ price: 50_000, cost: 0 })).toEqual({ amount: 50_000, percent: 0 });
-    // 얹기 단추(+10%)로 정한 회원가는 「도매가 +10%」로 읽힌다
-    expect(marginText(marginOf({ price: suggestPrice(49_700, 10), cost: 49_700 })!)).toBe("5,000원 남아요 (도매가 +10%)");
+    expect(marginText(marginOf({ price: 54_700, cost: 49_700 })!)).toBe("5,000원 남아요 (도매가 +10%)");
     expect(marginText(marginOf({ price: 40_000, cost: 40_000 })!)).toBe("0원 남아요");
     expect(marginText(marginOf({ price: 38_000, cost: 40_000 })!)).toBe("2,000원 모자라요");
-    expect(suggestPrice(40_000, 0)).toBe(40_000);
-    expect(suggestPrice(41_230, 10)).toBe(45_400);
-    expect(suggestPrice(33_333, 5)).toBe(35_000);
+  });
+
+  it("회원가 원칙 — 인터넷 최저가에서 최대 15%까지 낮게 (100원 단위 올림)", () => {
+    expect(MAX_OFF_LOWEST_PCT).toBe(15);
+    expect(priceFromLowest(10_000)).toBe(8_500); // 딱 15%
+    expect(priceFromLowest(20_000)).toBe(17_000);
+    expect(priceFromLowest(67_560)).toBe(57_500); // 57,426 → 올림
+    expect(priceFromLowest(17_140)).toBe(14_600); // 14,569 → 올림
+    expect(priceFromLowest(289_690)).toBe(246_300);
+    expect(priceFromLowest(55_000, 0)).toBe(55_000);
+    // 올림이라 낮추는 폭은 15% 를 넘지 않는다
+    for (const lowest of [9_990, 13_000, 39_000, 109_000, 248_040]) {
+      const price = priceFromLowest(lowest);
+      expect((lowest - price) / lowest).toBeLessThanOrEqual(0.15);
+      expect(price % 100).toBe(0);
+    }
+  });
+
+  it("원칙보다 더 싸면 대표님 · 관리자 화면에 한 줄 (info) — 딱 15% 는 괜찮다", () => {
+    expect(keys(product({ price: 46_700, cost: 40_000 }), true)).toEqual(["too_low:info"]); // 최저가 55,000 → 원칙 46,800
+    expect(priceFlags(product({ price: 46_700, cost: 40_000 }), TODAY, 14, true).find((f) => f.key === "too_low")?.text).toBe(
+      "최저가보다 15% 넘게 싸요 — 원칙대로면 46,800원",
+    );
+    expect(keys(product({ price: 46_800, cost: 40_000 }), true)).toEqual([]);
+    expect(keys(product({ price: 46_700 }), false)).toEqual([]); // 지점장 · 코치 화면에는 없음
+    expect(keys(product({ price: 46_700, cost: 40_000, compareOn: "2026-10-30" }), true)).toEqual(["stale:warn"]); // 오래된 최저가로는 셈하지 않는다
+    expect(keys(product({ price: 30_000, cost: 40_000 }), true)).toEqual(["below_cost:warn", "too_low:info"]);
   });
 });
 

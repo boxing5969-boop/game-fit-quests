@@ -5,6 +5,7 @@
  *   대표님 · 관리자(board.boss)만: 도매가 · 남는 돈 · 넣기 · 고치기 · 켜기 · 품절 · 「오늘 가격 그대로」.
  *     — 도매가는 서버가 대표님 · 관리자에게만 보낸다(지점장 · 코치 화면에는 칸이 없다).
  *   「인터넷 최저가보다 저렴」은 근거가 있어야 하는 말이라, 최저가를 확인한 날을 꼭 같이 넣는다(14일 지나면 회원 화면에서 내려간다).
+ *   회원가 원칙(2026-11-17 대표님): 인터넷 최저가에서 최대 15%까지만 낮게 — 「최저가 −15%」 단추 · 더 낮으면 점검에 한 줄.
  */
 import { useMemo, useState, type ReactNode } from "react";
 import { Plus } from "lucide-react";
@@ -19,13 +20,14 @@ import {
   compareShort,
   draftOfProduct,
   emptyProductDraft,
+  MAX_OFF_LOWEST_PCT,
   marginOf,
   marginText,
   parseWon,
   priceFlags,
+  priceFromLowest,
   productDraftError,
   productTitle,
-  suggestPrice,
   won,
   type MarketBoard,
   type MarketProduct,
@@ -110,6 +112,9 @@ const ProductEditor = ({
       )
     : null;
   const notLower = okNum(price) && okNum(comparePrice) && comparePrice <= price;
+  // 회원가 원칙: 인터넷 최저가에서 최대 15%까지만 낮춘다(100원 올림)
+  const rulePrice = okNum(comparePrice) && comparePrice >= 500 ? priceFromLowest(comparePrice) : null;
+  const tooLow = rulePrice != null && okNum(price) && !notLower && price < rulePrice;
 
   const submit = async () => {
     const e = productDraftError(d);
@@ -178,33 +183,6 @@ const ProductEditor = ({
           </section>
 
           <section className="space-y-3 rounded-2xl bg-secondary/50 p-3.5" aria-label="가격">
-            <Field id="mk-cost" label="도매가" hint="대표님 · 관리자만 봐요">
-              <input id="mk-cost" value={d.cost} inputMode="numeric" onChange={(e) => set("cost", e.target.value)} placeholder="원" className={inputCls} />
-            </Field>
-            {okNum(cost) && cost > 0 && (
-              <div className="flex flex-wrap items-center gap-2" aria-label="도매가에 얹어 회원가 정하기">
-                <span className="text-label text-muted-foreground">회원가로</span>
-                {[0, 5, 10, 15].map((pct) => (
-                  <button
-                    key={pct}
-                    type="button"
-                    onClick={() => set("price", String(suggestPrice(cost, pct)))}
-                    className="h-9 rounded-full bg-card px-3 text-label font-bold tabular-nums text-foreground shadow-elev-1 active:scale-95"
-                  >
-                    {pct === 0 ? "도매가 그대로" : `+${pct}%`}
-                  </button>
-                ))}
-              </div>
-            )}
-            <Field id="mk-price" label="회원가">
-              <input id="mk-price" value={d.price} inputMode="numeric" onChange={(e) => set("price", e.target.value)} placeholder="원" className={inputCls} />
-            </Field>
-            {margin && (
-              <p className={cn("text-label font-bold tabular-nums", margin.amount < 0 ? "text-destructive" : "text-muted-foreground")}>
-                한 개에 {marginText(margin)}
-              </p>
-            )}
-
             <div className="grid grid-cols-[1.4fr_1fr] gap-2">
               <Field id="mk-compare" label="인터넷 최저가" hint="배송비 포함">
                 <input id="mk-compare" value={d.comparePrice} inputMode="numeric" onChange={(e) => set("comparePrice", e.target.value)} placeholder="원" className={inputCls} />
@@ -215,6 +193,30 @@ const ProductEditor = ({
             </div>
             <Field id="mk-compare-src" label="어디서 봤나요" hint="회원에게 보여요">
               <input id="mk-compare-src" value={d.compareSource} maxLength={40} onChange={(e) => set("compareSource", e.target.value)} placeholder="예: 네이버 쇼핑" className={inputCls} />
+            </Field>
+            {rulePrice != null && (
+              <div className="flex flex-wrap items-center gap-2" aria-label="인터넷 최저가에서 회원가 정하기">
+                <span className="text-label text-muted-foreground">회원가로</span>
+                <button
+                  type="button"
+                  onClick={() => set("price", String(rulePrice))}
+                  className="h-9 rounded-full bg-card px-3 text-label font-bold tabular-nums text-foreground shadow-elev-1 active:scale-95"
+                >
+                  최저가 −{MAX_OFF_LOWEST_PCT}% · {won(rulePrice)}
+                </button>
+              </div>
+            )}
+            <Field id="mk-price" label="회원가" hint={`원칙: 최저가에서 ${MAX_OFF_LOWEST_PCT}%까지 낮게`}>
+              <input id="mk-price" value={d.price} inputMode="numeric" onChange={(e) => set("price", e.target.value)} placeholder="원" className={inputCls} />
+            </Field>
+            {margin && (
+              <p className={cn("text-label font-bold tabular-nums", margin.amount < 0 ? "text-destructive" : "text-muted-foreground")}>
+                한 개에 {marginText(margin)}
+              </p>
+            )}
+
+            <Field id="mk-cost" label="도매가" hint="대표님 · 관리자만 봐요">
+              <input id="mk-cost" value={d.cost} inputMode="numeric" onChange={(e) => set("cost", e.target.value)} placeholder="원" className={inputCls} />
             </Field>
             <div className="grid grid-cols-[1.4fr_1fr] gap-2">
               <Field id="mk-list" label="공식몰 판매가">
@@ -232,6 +234,11 @@ const ProductEditor = ({
                   ? `회원 화면 · ${compareShort(shownCompare)} (${shownCompare.percent}%)`
                   : "회원 화면 · 가격 비교 없이 회원가만 보여요"}
             </p>
+            {tooLow && rulePrice != null && (
+              <p className="text-label font-bold leading-snug text-muted-foreground">
+                최저가보다 {MAX_OFF_LOWEST_PCT}% 넘게 싸요 — 원칙대로면 {won(rulePrice)}
+              </p>
+            )}
           </section>
 
           <section className="space-y-3" aria-label="주문 · 표시">

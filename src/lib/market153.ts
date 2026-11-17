@@ -404,8 +404,15 @@ export const compareEvidence = (c: PriceCompare): string =>
 
 // ── 운영진: 가격 점검 ───────────────────────────────────────
 
+/** 회원가 원칙 (2026-11-17 22시 대표님 「인터넷 최저가보다 최대 15% 낮게 팔자」) — 최저가에서 이만큼까지만 낮춘다 */
+export const MAX_OFF_LOWEST_PCT = 15;
+
+/** 인터넷 최저가에서 pct% 낮춘 회원가 — 100원 단위로 올림(그래서 낮추는 폭은 pct% 를 넘지 않는다) */
+export const priceFromLowest = (lowest: number, pct: number = MAX_OFF_LOWEST_PCT): number =>
+  Math.ceil((lowest * (100 - pct)) / 10_000) * 100;
+
 export interface PriceFlag {
-  key: "not_lower" | "stale" | "no_compare" | "below_cost" | "no_cost";
+  key: "not_lower" | "stale" | "no_compare" | "below_cost" | "no_cost" | "too_low";
   text: string;
   /** warn: 회원에게 한 약속(최저가보다 저렴)이 흔들리는 것 · info: 채우면 좋은 것 */
   tone: "warn" | "info";
@@ -429,20 +436,24 @@ export function priceFlags(p: MarketProduct, today: string, staleDays: number, b
   if (boss) {
     if (p.cost == null) out.push({ key: "no_cost", text: "도매가를 아직 안 넣었어요", tone: "info" });
     else if (p.price < p.cost) out.push({ key: "below_cost", text: "회원가가 도매가보다 낮아요", tone: "warn" });
+    // 회원가 원칙(최저가 −15%까지)보다 더 낮으면 알려만 준다 — 회원에게 한 약속은 그대로라 info
+    if (p.comparePrice != null && isFreshDay(p.compareOn, today, staleDays) && p.comparePrice > p.price) {
+      const floor = priceFromLowest(p.comparePrice);
+      if (p.price < floor) {
+        out.push({ key: "too_low", text: `최저가보다 ${MAX_OFF_LOWEST_PCT}% 넘게 싸요 — 원칙대로면 ${won(floor)}`, tone: "info" });
+      }
+    }
   }
   return out;
 }
 
-/** 대표님 · 관리자: 한 개 팔 때 남는 돈 · 도매가에 몇 % 얹었나 (도매가를 모르면 null) — 얹기 단추(+5% · +10%)와 같은 셈 */
+/** 대표님 · 관리자: 한 개 팔 때 남는 돈 · 도매가에 몇 % 얹은 셈인가 (도매가를 모르면 null) */
 export const marginOf = (p: Pick<MarketProduct, "price" | "cost">): { amount: number; percent: number } | null =>
   p.cost == null ? null : { amount: p.price - p.cost, percent: p.cost > 0 ? Math.round(((p.price - p.cost) / p.cost) * 100) : 0 };
 
 /** 한 개에 5,000원 남아요 (도매가 +10%) · 모자라면 「2,000원 모자라요」 */
 export const marginText = (m: { amount: number; percent: number }): string =>
   m.amount < 0 ? `${won(-m.amount)} 모자라요` : `${won(m.amount)} 남아요${m.amount > 0 ? ` (도매가 +${m.percent}%)` : ""}`;
-
-/** 도매가에 운영비 pct% 를 얹은 회원가 — 100원 단위로 올림 */
-export const suggestPrice = (cost: number, pct: number): number => Math.ceil((cost * (1 + pct / 100)) / 100) * 100;
 
 // ── 주문 ────────────────────────────────────────────────────
 
