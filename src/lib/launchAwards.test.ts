@@ -79,15 +79,19 @@ describe("수상자 축하 — 화면 글", () => {
     expect(v.cards[0].others).toEqual(["2위 예시 복서 둘", "3위 예시 복서 셋"]);
     expect(v.cards[1].others).toEqual(["2위 예시 복서 넷"]);
     expect(v.cards[2].others).toEqual(["2위 예시 복서 둘", "3위 회원님"]);
-    expect(v.cards[0].character?.parts?.style).toBe("boxer_a");
   });
 
-  it("이름을 뺀 1위는 '1위 회원님' · 캐릭터 없음", () => {
+  it("캐릭터는 카드에 싣지 않는다 — 서버가 보내도 (2026-11-17 대표님 「캐릭터는 안보이게」)", () => {
+    for (const c of v.cards) expect(Object.keys(c)).not.toContain("character");
+    const row = normalizeAwards(RAW)!.items[0].rows[0];
+    expect(Object.keys(row)).not.toContain("character");
+  });
+
+  it("이름을 뺀 1위는 '1위 회원님'", () => {
     const raw = structuredClone(RAW);
     raw.items[0].rows[0] = { rank: 1, name: null, hidden: true, score: 34, paid_points: null, character: null } as never;
     const h = awardsView(normalizeAwards(raw))!;
     expect(h.cards[0].name).toBe("1위 회원님");
-    expect(h.cards[0].character).toBeNull();
     expect(h.title).toBe("축하합니다! 런칭 이벤트 왕좌 3명");
   });
 
@@ -146,11 +150,13 @@ describe("숫자 · 크기", () => {
     expect(eventDays("2026-10-01", null)).toBeNull();
     expect(eventDays("2026-11-09", "2026-10-01")).toBeNull();
   });
-  it("이름 글씨는 칸에 맞게 48 → 40 → 34", () => {
+  it("이름 글씨는 칸에 맞게 48 → 40 → 34 (캐릭터를 뺀 카드 너비)", () => {
     expect(nameSize("봄비")).toBe(48);
     expect(nameSize("1위 회원님")).toBe(48);
     expect(nameSize("Boxer Kim")).toBe(48); // 영문은 한 글자 0.58칸 — 9글자도 한 줄에 들어간다
-    expect(nameSize("예시복서 Kim")).toBe(40);
-    expect(nameSize("아주긴닉네임여덟자")).toBe(34);
+    expect(nameSize("예시복서 Kim")).toBe(48);
+    expect(nameSize("일곱글자닉네임")).toBe(48);
+    expect(nameSize("여덟글자닉네임이")).toBe(40);
+    expect(nameSize("아주긴닉네임아홉자")).toBe(34);
   });
 });

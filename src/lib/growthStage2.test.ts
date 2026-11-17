@@ -7,7 +7,6 @@ import {
   GROWTH_STAMPS,
   GROWTH_TV_BRANCHES,
   MY_GROWTH_OFF,
-  TV_ROTATE_MS,
   coachLineOf,
   coachSaidLine,
   growthCheckOf,
@@ -195,19 +194,12 @@ describe("TV 「오늘의 1분」", () => {
     expect([none.actionTitle, none.actionBody]).toEqual(["", ""]);
   });
 
-  it("번갈아 보여 주기 — 둘 다 있으면 40초마다 · 하나면 그쪽만 · 없으면 칸이 없다", () => {
-    expect(TV_ROTATE_MS).toBe(40_000);
-    expect(tvSideOf(0, false, false)).toBeNull();
-    expect(tvSideOf(0, true, false)).toBe("goods");
-    expect(tvSideOf(123_456, false, true)).toBe("growth");
-    const at = (ms: number) => tvSideOf(ms, true, true);
-    expect([at(0), at(39_999), at(40_000), at(79_999), at(80_000)]).toEqual(["growth", "growth", "goods", "goods", "growth"]);
-    // 하루 동안 반반
-    let growth = 0;
-    for (let ms = 0; ms < 86_400_000; ms += 10_000) if (at(ms) === "growth") growth += 1;
-    expect(growth).toBe(8640 / 2);
-    // 틀린 간격이 와도 멈추지 않는다
-    expect(tvSideOf(1_500, true, true, 0)).toBe("goods");
+  it("TV 오른쪽 칸 — 사전예약이 열린 동안은 플리스만 · 닫히면 「오늘의 1분」 · 둘 다 없으면 칸이 없다", () => {
+    expect(tvSideOf(false, false)).toBeNull();
+    expect(tvSideOf(true, false)).toBe("goods");
+    expect(tvSideOf(false, true)).toBe("growth");
+    // 2026-11-17 13시 대표님 「폴리스집업 그대로 나오게」 — 둘 다 있어도 번갈아 보이지 않고 플리스만
+    expect(tvSideOf(true, true)).toBe("goods");
   });
 });
 

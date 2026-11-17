@@ -46,7 +46,31 @@ beforeEach(() => {
 });
 afterEach(() => vi.restoreAllMocks());
 
-describe("라이브보드 2번 화면 오른쪽 칸 — 사전예약 안내 ↔ 오늘의 1분", () => {
+describe("라이브보드 2번 화면 오른쪽 칸 — 사전예약 동안은 플리스 · 끝나면 오늘의 1분", () => {
+  it("사전예약이 열린 동안은 켠 지점 TV 도 플리스 안내만 — 시간이 지나도 번갈아 바뀌지 않는다 (2026-11-17 대표님 「폴리스집업 그대로」)", async () => {
+    getGoodsCampaign.mockResolvedValue(OPEN);
+    const first = show(SUNREUNG);
+    await waitFor(() => expect(goods()).toBeInTheDocument());
+    expect(shown(goods())).toBe(true);
+    expect(growth()).toBeNull();
+    first.unmount();
+    now = 40_000;
+    show(SUNREUNG);
+    await waitFor(() => expect(goods()).toBeInTheDocument());
+    expect(growth()).toBeNull();
+  });
+
+  it("사전예약 정보를 읽는 동안은 칸을 그리지 않는다 — 「오늘의 1분」이 잠깐 비쳤다가 바뀌지 않게", async () => {
+    let resolve: (v: unknown) => void = () => undefined;
+    getGoodsCampaign.mockReturnValue(new Promise((r) => (resolve = r)));
+    const { container } = show(SUNREUNG);
+    await waitFor(() => expect(getGoodsCampaign).toHaveBeenCalledTimes(1));
+    expect(container).toBeEmptyDOMElement();
+    resolve(OPEN);
+    await waitFor(() => expect(goods()).toBeInTheDocument());
+    expect(growth()).toBeNull();
+  });
+
   it("사전예약이 닫혔으면 켠 지점 TV 는 「오늘의 1분」이 그 칸을 이어받는다", async () => {
     getGoodsCampaign.mockResolvedValue({ ...OPEN, open: false });
     show(SUNREUNG);
@@ -56,18 +80,11 @@ describe("라이브보드 2번 화면 오른쪽 칸 — 사전예약 안내 ↔ 
     expect(goods()).toBeNull();
   });
 
-  it("둘 다 있으면 번갈아 — 두 쪽 모두 그려 둔 채 한쪽만 보인다 (40초마다)", async () => {
-    getGoodsCampaign.mockResolvedValue(OPEN);
-    const first = show(SUNREUNG);
-    await waitFor(() => expect(goods()).toBeInTheDocument());
-    await waitFor(() => expect(growth()).toBeInTheDocument());
-    expect([shown(growth()), shown(goods())]).toEqual([true, false]);
-    first.unmount();
-    now = 40_000;
+  it("선착순이 다 차도 「오늘의 1분」이 이어받는다", async () => {
+    getGoodsCampaign.mockResolvedValue({ ...OPEN, stock_left: 0, sold_out: true });
     show(SUNREUNG);
-    await waitFor(() => expect(goods()).toBeInTheDocument());
     await waitFor(() => expect(growth()).toBeInTheDocument());
-    expect([shown(growth()), shown(goods())]).toEqual([false, true]);
+    expect(goods()).toBeNull();
   });
 
   it("켜지 않은 지점 TV — 사전예약만(예전 그대로) · 둘 다 없으면 칸이 없다", async () => {
@@ -86,7 +103,8 @@ describe("라이브보드 2번 화면 오른쪽 칸 — 사전예약 안내 ↔ 
   it("서버에 닿지 않아도(사전예약 정보를 못 읽어도) 「오늘의 1분」은 나온다 — 글은 앱에 들어 있다", async () => {
     getGoodsCampaign.mockRejectedValue(new Error("offline"));
     show(SUNREUNG);
-    await waitFor(() => expect(growth()).toBeInTheDocument());
+    // 한 번 더 물어본 뒤(retry 1 · 약 1초) 「오늘의 1분」으로
+    await waitFor(() => expect(growth()).toBeInTheDocument(), { timeout: 4000 });
     expect(shown(growth())).toBe(true);
   });
 });

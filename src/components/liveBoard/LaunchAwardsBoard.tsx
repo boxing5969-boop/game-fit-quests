@@ -3,7 +3,8 @@
  *
  * 끝난 런칭 이벤트 자리(화면 왼쪽 2/3, 가로 약 1280px)를 한 장으로 — 돌아가지 않는다(켤 때 한 번 페이드).
  *   ① 금빛 띠: 축하합니다! 런칭 이벤트 왕좌 n명 · 1위께 153 마일리지 50,000점(같은 숫자는 여기 한 번)
- *   ② 수상자 카드 3장: 왕좌 · 받았어요(받기 전이면 '드릴 예정') · 앱 캐릭터(사진 없음) · 이름 · 기록 · 2위 · 3위
+ *   ② 수상자 카드 3장: 왕좌 · 받았어요(받기 전이면 '드릴 예정') · 이름 · 기록 · 2위 · 3위
+ *      (캐릭터 · 사진은 그리지 않는다 — 2026-11-17 13시 대표님 「캐릭터는 안보이게 해주고」)
  *   ③ 증거와 내 마일리지: 40일 동안 레벨업 · 운동으로 쌓인 마일리지 → 회원님 마일리지도 쌓이고 있어요 → 오면 +300 → …
  *   ④ QR 하나: 내 마일리지 보기(내 정보의 153 마일리지 칸)
  *   맨 아래: 사람의 한마디 · 서명 「153 건강과 행복. 153복싱짐」
@@ -16,12 +17,11 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Check, ChevronRight, Crown, Trophy } from "lucide-react";
 
-import CharacterSprite from "@/components/CharacterSprite";
 import type { AwardCardView, AwardsView } from "@/lib/launchAwards";
 
 /** 안쪽 높이(px, 위아래 여백 뺀 값)가 이보다 낮으면 안내 줄 · 한마디 아랫줄을 접는다.
  *  2026-11-17 1920×1080 실측: 아래 띠 4줄(오늘 다녀간 회원 · 코치 · 랭킹 · 명예의 전당) = 637px → 모두 그림,
- *  153 RECORD 띠까지 5줄 = 578px → 접음. 모두 그리면 카드 한 장 ≈ 270px(캐릭터 · 이름 · 기록 · 2위 · 3위가 들어가는 높이). */
+ *  153 RECORD 띠까지 5줄 = 578px → 접음. 모두 그리면 카드 한 장 ≈ 270px(이름 · 기록 · 2위 · 3위가 들어가는 높이). */
 export const AWARDS_COMPACT_BELOW = 600;
 
 const NAME_CLASS: Record<AwardCardView["nameSize"], string> = {
@@ -92,33 +92,15 @@ const AwardCard = ({ card }: { card: AwardCardView }) => {
           )}
         </div>
 
-        <div className="mt-2 flex min-w-0 items-center gap-4">
-          <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center">
-            {card.character?.parts ? (
-              <CharacterSprite
-                partsJson={card.character.parts as never}
-                size="md"
-                animate={false}
-                league={card.character.league ?? undefined}
-                level={card.character.level ?? undefined}
-                auraMode="compact"
-              />
-            ) : (
-              <span className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-yellow-500/60 bg-yellow-500/15">
-                <Trophy className="h-10 w-10 text-yellow-300" />
-              </span>
-            )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p
-              className={`font-black text-white [overflow-wrap:anywhere] ${NAME_CLASS[card.nameSize]}`}
-            >
-              {card.name}
-            </p>
-            <p className="text-[30px] font-bold leading-[1.15] tabular-nums text-gray-200">
-              {card.record}
-            </p>
-          </div>
+        <div className="mt-2 min-w-0">
+          <p
+            className={`font-black text-white [overflow-wrap:anywhere] ${NAME_CLASS[card.nameSize]}`}
+          >
+            {card.name}
+          </p>
+          <p className="text-[30px] font-bold leading-[1.15] tabular-nums text-gray-200">
+            {card.record}
+          </p>
         </div>
 
         {others.length > 0 && (

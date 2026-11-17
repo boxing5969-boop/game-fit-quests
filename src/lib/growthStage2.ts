@@ -198,9 +198,6 @@ export function coachSaidLine(s: GrowthCoachState): string {
 export const GROWTH_TV_BRANCHES: readonly string[] = ["153복싱짐 선릉역점"];
 export const growthTvOn = (branch: string | null | undefined): boolean => !!branch && GROWTH_TV_BRANCHES.includes(branch.trim());
 
-/** TV 오른쪽 칸을 번갈아 보여 주는 시간 (사전예약 안내 ↔ 오늘의 1분) */
-export const TV_ROTATE_MS = 40_000;
-
 export interface TvGrowth {
   /** 요일 코너 — TV 에는 「O/X」를 붙이지 않는다 */
   corner: string;
@@ -234,9 +231,9 @@ export function tvGrowthOf(lesson: GrowthLesson | null | undefined, today: strin
   };
 }
 
-/** 지금 어느 쪽을 보여 줄까 — 둘 다 있으면 TV_ROTATE_MS 마다 번갈아(시계 기준이라 새로고침해도 이어진다) */
-export function tvSideOf(nowMs: number, hasGoods: boolean, hasGrowth: boolean, rotateMs = TV_ROTATE_MS): "goods" | "growth" | null {
-  if (hasGoods && hasGrowth) return Math.floor(nowMs / Math.max(1_000, rotateMs)) % 2 === 0 ? "growth" : "goods";
-  if (hasGrowth) return "growth";
-  return hasGoods ? "goods" : null;
+/** TV 오른쪽 칸에 무엇을 보여 줄까 — 사전예약이 열린 동안은 플리스 안내만, 닫히면 「오늘의 1분」, 둘 다 없으면 칸이 없다.
+ *  2026-11-17 아침엔 40초마다 번갈아 → 같은 날 13시 대표님 「폴리스집업 그대로 나오게 해줘」로 사전예약 동안은 플리스만. */
+export function tvSideOf(hasGoods: boolean, hasGrowth: boolean): "goods" | "growth" | null {
+  if (hasGoods) return "goods";
+  return hasGrowth ? "growth" : null;
 }

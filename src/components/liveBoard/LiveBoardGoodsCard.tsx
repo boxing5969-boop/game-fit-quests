@@ -11,7 +11,8 @@
  *     → 정상가(있을 때만) 줄 긋고 25,000원 · 원가 그대로 한 줄 · 선착순 남은 벌 수. 다 차면 그리지 않는다(런칭 이벤트가 화면 전체).
  *   ④ 11/13 「체육관에 사이즈별 샘플도 있어서 직접 보고 입어볼수있다고 이야기하자」 → 샘플이 있는 지점 TV 만 '샘플' 줄
  *     (hasGoodsSample — 지금 선릉역점. 다른 지점 TV 에는 없는 샘플을 말하지 않는다).
- *   ⑤ 11/17 「오늘의 1분 성장」 2단계 — 이 칸을 「오늘의 1분」과 번갈아 쓴다(LiveBoardSideSlot 이 fill 로 감싼다 · 사전예약이 끝나면 그쪽이 이어받는다).
+ *   ⑤ 11/17 「오늘의 1분 성장」 2단계 — LiveBoardSideSlot 이 fill 로 감싼다. 아침엔 「오늘의 1분」과 번갈아 → 같은 날 13시 대표님
+ *      「폴리스집업 그대로 나오게」로 사전예약이 열린 동안은 이 카드만 · 사전예약이 끝나면 「오늘의 1분」이 이어받는다.
  */
 import { useQuery } from "@tanstack/react-query";
 import { GOODS_FLEECE_SLUG, ddayLabel, deadlineLabel, hasGoodsSample, isAccepting, listPriceOf, stockLabel, won } from "@/lib/goodsPreorder";

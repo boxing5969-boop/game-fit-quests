@@ -25,12 +25,6 @@ export const AWARDS_QUOTE = "자주 와 주신 날들이 왕관이 됐어요. �
 /** QR 이 여는 곳 — 내 정보의 153 마일리지 칸 (로그인 전이면 로그인 뒤 그 자리로) */
 export const AWARDS_QR_URL = "https://myboxer153.com/mypage?focus=mileage&from=tv-awards";
 
-export interface AwardCharacter {
-  league: "white" | "blue" | "red" | "black" | null;
-  level: number | null;
-  parts: { style?: string; customization?: Record<string, unknown> } | null;
-}
-
 export interface AwardRow {
   rank: number;
   name: string | null;
@@ -38,7 +32,6 @@ export interface AwardRow {
   score: number;
   /** 1위만 — 받은 마일리지(받기 전이면 null) */
   paidPoints: number | null;
-  character: AwardCharacter | null;
 }
 
 export interface AwardsData {
@@ -56,9 +49,10 @@ const num = (v: unknown): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 const str = (v: unknown): string | null => (typeof v === "string" && v.trim() !== "" ? v.trim() : null);
-const LEAGUES = new Set(["white", "blue", "red", "black"]);
 
-/** 서버 값을 믿지 않고 다듬는다 — 모양이 다르면 null (화면은 예전 보드) */
+/** 서버 값을 믿지 않고 다듬는다 — 모양이 다르면 null (화면은 예전 보드)
+ *  서버가 1위에 붙여 보내는 character(캐릭터 모양)는 읽지 않는다 — TV 카드에 캐릭터를 그리지 않는다
+ *  (2026-11-17 13시 대표님 「캐릭터는 안보이게 해주고」). */
 export function normalizeAwards(raw: unknown): AwardsData | null {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
   const r = raw as Record<string, unknown>;
@@ -76,9 +70,6 @@ export function normalizeAwards(raw: unknown): AwardsData | null {
       const rank = num(x.rank);
       const score = num(x.score);
       if (rank == null || rank < 1 || score == null) continue;
-      const c = (x.character ?? null) as Record<string, unknown> | null;
-      const league = typeof c?.league === "string" && LEAGUES.has(c.league) ? (c.league as AwardCharacter["league"]) : null;
-      const parts = c?.parts && typeof c.parts === "object" && !Array.isArray(c.parts) ? (c.parts as AwardCharacter["parts"]) : null;
       const paid = num(x.paid_points);
       rows.push({
         rank,
@@ -86,7 +77,6 @@ export function normalizeAwards(raw: unknown): AwardsData | null {
         hidden: x.hidden === true,
         score,
         paidPoints: paid != null && paid > 0 ? paid : null,
-        character: c ? { league, level: num(c.level), parts } : null,
       });
     }
     rows.sort((a, b) => a.rank - b.rank);
@@ -121,11 +111,13 @@ export function formatPoints(n: number): string {
   return rest === 0 ? `${man.toLocaleString("ko-KR")}만 점` : `${man.toLocaleString("ko-KR")}만 ${rest.toLocaleString("ko-KR")}점`;
 }
 
-/** 이름 글씨 크기(TV px) — 한글 1칸 · 그 밖 0.58칸으로 어림해 칸에 맞춘다(28px 아래로는 줄이지 않음) */
+/** 이름 글씨 크기(TV px) — 한글 1칸 · 그 밖 0.58칸으로 어림해 칸에 맞춘다(28px 아래로는 줄이지 않음)
+ *  카드 안쪽 너비 약 358px(왼쪽 2/3 = 1280px · 카드 3장) — 캐릭터를 뺀 뒤(11/17 13시) 이름 칸이 그 너비를 다 쓴다:
+ *  48px 이면 7.4칸 · 40px 이면 8.8칸까지 한 줄, 그보다 길면 34px 두 줄. */
 export function nameSize(name: string): 48 | 40 | 34 {
   let units = 0;
   for (const ch of name) units += /[ㄱ-ㆎ가-힣一-鿿]/.test(ch) ? 1 : 0.58;
-  return units <= 5.5 ? 48 : units <= 6.6 ? 40 : 34;
+  return units <= 7.4 ? 48 : units <= 8.8 ? 40 : 34;
 }
 
 const recordText = (cat: AwardCategory, score: number) => {
@@ -153,7 +145,6 @@ export interface AwardCardView {
   chip: string;
   /** 2위 · 3위 — 한 줄에 한 명(멀리서도 읽히게 · 없으면 빈 배열) */
   others: string[];
-  character: AwardCharacter | null;
 }
 
 export interface AwardsView {
@@ -190,7 +181,6 @@ export function awardsView(data: AwardsData | null): AwardsView | null {
       paid: king.paidPoints != null,
       chip: king.paidPoints != null ? "받았어요" : "드릴 예정",
       others: rest,
-      character: king.hidden ? null : king.character,
     });
   }
   if (!cards.length) return null;
