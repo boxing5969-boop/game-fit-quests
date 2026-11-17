@@ -151,7 +151,7 @@ const ArtPbRecord = () => (
 
 const BOARDS: { no: LiveBoardId; desc: string; art: ReactNode; light?: boolean }[] = [
   { no: 1, desc: "지금 운동 중인 회원을 크게 · QR 출석", art: <ArtNow /> },
-  { no: 2, desc: "런칭 이벤트 — 출석왕 · 앱 활동왕 · 좋아요왕", art: <ArtEvent /> },
+  { no: 2, desc: "수상자 축하 — 출석왕 · 앱 활동왕 · 좋아요왕 · 내 마일리지 QR", art: <ArtEvent /> },
   { no: 3, desc: "회원 안내 카드뉴스가 자동으로 넘어가요", art: <ArtGuide /> },
   { no: 4, desc: "전체 한 화면 — 운동 중 · 방문 명단 · 명예의 전당", art: <ArtAll /> },
   { no: "pb1", desc: "8동작 시범 · 총 개수 · 25:00 타이머 · 측정 위치", art: <ArtPbCourse />, light: true },

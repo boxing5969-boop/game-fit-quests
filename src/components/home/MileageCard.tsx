@@ -52,9 +52,10 @@ const MileageCard = () => {
 
   return (
     <motion.div
+      id="my-mileage"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full overflow-hidden rounded-card border border-border bg-card"
+      className="w-full scroll-mt-24 overflow-hidden rounded-card border border-border bg-card"
     >
       {/* 지금까지 마일리지로 아낀 금액 — 배민 클럽처럼 맨 위에 크게 (2026-10-30 대표님). 할인받은 적이 없으면 안 그린다 */}
       <MileageSavedBanner

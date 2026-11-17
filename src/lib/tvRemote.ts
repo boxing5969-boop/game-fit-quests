@@ -16,7 +16,7 @@ export const TV_SLOTS: readonly TvSlot[] = ["1", "2", "3", "4"];
 /** 고를 수 있는 화면 — 라이브보드 화면 버튼 순서 */
 export const TV_SCREENS: readonly { id: TvScreen; label: string; short: string }[] = [
   { id: "1", label: "지금 운동 중", short: "운동 중" },
-  { id: "2", label: "런칭 이벤트", short: "이벤트" },
+  { id: "2", label: "수상자 축하", short: "수상자" },
   { id: "3", label: "회원 안내", short: "회원 안내" },
   { id: "4", label: "전체 한 화면", short: "전체" },
   { id: "pb1", label: "153 PB 코스", short: "PB 코스" },

@@ -942,10 +942,26 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 
 ### 라이브보드 TV 화면 바꾸기 (2026-11-08 대표님 「라이브보드 탭에서 내가 버튼을 누르면 라이브보드 변경 가능하게해줘 모든 모드 별로」)
 
-- 관리자 앱 › 라이브보드([LiveBoardPickerPage](src/pages/LiveBoardPickerPage.tsx) 맨 위 [TvRemotePanel](src/components/liveBoard/TvRemotePanel.tsx)): TV 번호마다 화면 6개 버튼 — 지금 운동 중 · 런칭 이벤트 · 회원 안내 · 전체 한 화면 · 153 PB 코스 · 153 PB 기록. 누르면 그 TV 가 몇 초 안에 넘어가고 **다시 바꿀 때까지 그대로**(TV 를 껐다 켜도). 줄마다 켜짐 · 지금 화면 · 바꾸는 중(TV 가 1분마다 · 화면이 바뀔 때 알림, 5초마다 다시 읽음). 1 · 2번은 늘, 3 · 4번은 켠 적이 있거나 골라 둔 것만(나머지 '더 보기'). 미리보기에도 153 PB 코스 · 기록(P1 · P2 — [liveBoards.ts](src/lib/liveBoards.ts) `LIVE_BOARD_IDS`).
+- 관리자 앱 › 라이브보드([LiveBoardPickerPage](src/pages/LiveBoardPickerPage.tsx) 맨 위 [TvRemotePanel](src/components/liveBoard/TvRemotePanel.tsx)): TV 번호마다 화면 6개 버튼 — 지금 운동 중 · 수상자 축하(2026-11-17 전엔 '런칭 이벤트') · 회원 안내 · 전체 한 화면 · 153 PB 코스 · 153 PB 기록. 누르면 그 TV 가 몇 초 안에 넘어가고 **다시 바꿀 때까지 그대로**(TV 를 껐다 켜도). 줄마다 켜짐 · 지금 화면 · 바꾸는 중(TV 가 1분마다 · 화면이 바뀔 때 알림, 5초마다 다시 읽음). 1 · 2번은 늘, 3 · 4번은 켠 적이 있거나 골라 둔 것만(나머지 '더 보기'). 미리보기에도 153 PB 코스 · 기록(P1 · P2 — [liveBoards.ts](src/lib/liveBoards.ts) `LIVE_BOARD_IDS`).
 - TV 번호(slot) = TV 를 켜는 주소 끝 번호 1 · 2 · 3, 번호 없는 /tv/<지점> = 4. 번호와 다른 화면을 보여 주는 동안은 주소에 `?tv=<번호>`(20분 새로고침에도 자기 번호를 안다) · 열쇠 `?k=` 등은 그대로. 그 번호의 원래 화면 = 'home'(기본) — **153 PB 자동 전환은 1 · 2번 TV 가 기본일 때만**(`?tv=` 가 있으면 자동 전환 끔). 자동 전환으로 들어온 PB 화면(`?auto=1`)은 들어온 뒤 새로 고른 화면만 따르고, 자동 복귀는 그 번호에 골라 둔 화면으로.
 - TV 쪽 [useTvRemote](src/hooks/useTvRemote.ts) — LiveBoardPage(1 · 2 · 4) · SignageBoardPage(3) · LiveBoardPb153Page(pb1 · pb2)가 쓴다: `board_tv_mode(지점, 열쇠, 번호, 지금 화면)`(TV 열쇠 `_board_branch_ok` · 지금 화면을 `tv_board_seen` 에 남기고 고른 화면을 받음) · 채널 `tv-mode:<지점 이름>`(event `mode`, payload `{slot, t}` — 이름 없음)을 들으면 바로 다시 읽음 · **앱 안 미리보기(iframe)에서는 아무것도 안 함** — 단 TvFitFrame 이 띄운 `embed=1` iframe(창이 1920×1080 이 아닌 TV — 부모 주소가 /tv/…) 안은 TV 그 자체라 그대로 한다(넘어가는 것도 그 iframe 안에서). **한 번도 화면을 고르지 않은 번호(set_at 없음)는 TV 시작 주소 그대로 둔다**(시작 페이지를 /tv/<지점>/pb1 로 직접 넣은 TV 등) — 앱에서 한 번 고른 뒤부터 따른다. PB 화면도 20분마다 새로고침(달리는 측정이 없을 때). 규칙 · 글은 [tvRemote.ts](src/lib/tvRemote.ts)(시험 tvRemote.test.ts) — 앱 줄 글: 켜짐 · ○○ / 측정 중 자동 / 바꾸는 중… / 꺼져 있어요.
 - 서버 [20261108192720_tv_board_modes.sql](supabase/migrations/20261108192720_tv_board_modes.sql): `tv_board_modes`(지점 · 번호 · mode · 누가 · 언제) · `tv_board_seen` · `set_tv_board_mode` · `get_tv_board_modes`(그 지점 운영진 — `get_board_tv_key` 와 같은 기준 `_tv_board_staff_branch`; 그 번호의 원래 화면을 고르면 'home' 으로 저장) · `board_tv_mode`(anon). 같은 화면 부품을 쓰는 주소(/1 ↔ /2 ↔ /tv/<지점>)끼리는 다시 그려지지 않으므로 화면이 바뀌면 바로 알린다.
+
+### 라이브보드 TV 2번 「수상자 축하」 (2026-11-17 대표님 「사이니지 런칭이벤트 내리고 수상자들 축하 사이니지로 … 어떤 혜택이 돌아갔는지 · 앱 사용 권장 · 앱 가치 전달」 → 보고서 → 「적용해」 · 보고서 https://claude.ai/artifact/3Sh1bLdd7x5LwCwJAh9Jqr)
+
+끝난 런칭 이벤트 자리(TV2 왼쪽 2/3)를 한 장으로 — 3초 안에 ① 축하 띠(왕좌 n명 · 1위 혜택 50,000점은 여기 한 번) → ② 수상자 카드 3장(왕좌 · 받았어요/드릴 예정 · 앱 캐릭터(사진 없음) · 이름 · 기록 · 2위 · 3위 한 줄씩) → ③ 증거(40일 동안 레벨업 n번 · 운동으로 쌓인 마일리지)와 「회원님 마일리지도 쌓이고 있어요 · 오면 +300 › 레벨업 +300 › 결제 때 할인으로」 → ④ QR 하나(내 마일리지 보기) · 맨 아래 코치진 한마디 · 서명. 돌아가지 않는다(켤 때 한 번 페이드).
+
+| 파일 | 역할 |
+|---|---|
+| [20261117122327_board_launch_awards.sql](supabase/migrations/20261117122327_board_launch_awards.sql) | `board_launch_awards(p_branch, p_key)` — TV 열쇠(`_board_branch_ok`)로만 · 이벤트가 'ended' 일 때만 수상자(아니면 status 만 → 예전 보드) · 왕좌마다 1~3위 = `get_launch_event_board` 와 같은 순위(`_king_scores` · 지점 회원 `_is_rankable_member`) · 1위만 `paid_points`(받은 마일리지 — idem `launch-top1-<왕좌>-%`, 앱 활동왕은 11/9 의 `app-top1-%` 도 · 없으면 null) · `character`(리그 · 레벨 · 캐릭터 모양) · `stats`(운동한 회원 · 레벨업 줄 · 운동으로 쌓인 마일리지 = kind attendance · level_up · milestone · record · title_match · pt 의 + 합 — **따로 드린 adjust(재등록 혜택 · 1위 상품)는 뺀다** · 마일리지가 쌓인 회원) · `rules`(app_settings.mileage_rules). user_id · 사진 · 전화번호는 안 나간다. 새 표 없음 |
+| [src/lib/launchAwards.ts](src/lib/launchAwards.ts) | 서버 값 → 화면 글 한 곳(`normalizeAwards` · `awardsView` — 끝났고 1위가 있을 때만 · `formatPoints` 74만 7,700점 · `nameSize` 48/40/34) · QR `AWARDS_QR_URL` — 시험 launchAwards.test.ts('원' 금액 · 국가대표 · 긴 줄표 · 못한 말 없음) |
+| [LaunchAwardsBoard](src/components/liveBoard/LaunchAwardsBoard.tsx) · [LaunchEventBoard](src/components/liveBoard/LaunchEventBoard.tsx) | 그리기 — 이벤트가 끝났으면 `board_launch_awards` 를 같이 읽어 이 한 장으로, 함수가 없거나(옛 DB) 막히면 예전 '최종 결과' 보드 그대로 · 다음 이벤트가 열리면 저절로 예전 보드 |
+
+- 받았어요 / 드릴 예정: 1위 마일리지를 드리면(위 idem 로 `grant_mileage`) 다음 읽기(1분)에 저절로 '받았어요'. 문구에 '원'을 쓰지 않는다(점 · 할인).
+- 이름 빼기: 수상자가 TV 에 이름을 빼 달라고 하면 `internal_sync_config` key `launch_awards_hide` = JSON 배열(user_id 글자) — 1위는 '1위 회원님'(캐릭터 없음) · 2 · 3위는 '회원님'. 틀린 값이면 아무도 빼지 않는다.
+- 높이(1920×1080 실측): 아래 띠 4줄(오늘 다녀간 회원 · 코치 · 랭킹 · 명예의 전당)이면 보드 안쪽 637px = 모두 그림 · 153 RECORD 띠까지 5줄이면 578px = 얼굴 인식 안내 줄 · 코치진 줄을 접음(`AWARDS_COMPACT_BELOW` 600). 카드가 모자라면(이름 두 줄) 2위 · 3위를 한 줄로 합치고 넉넉해지면 다시 나눈다. 글씨는 28px 아래로 줄이지 않는다.
+- QR = `https://myboxer153.com/mypage?focus=mileage&from=tv-awards` → 내정보가 153 마일리지 칸(`#my-mileage`)으로 내려가고 주소에서 지운다(로그인 전이면 로그인 뒤 돌아옴).
+- 적용 (2026-11-17 12:5x): 운영 DB = MCP `apply_migration`(기록 이름 `board_launch_awards` · 본문은 파일 그대로) → 본문 md5 = 로컬 기준본(d751cf31… · 5,545자) · security definer · anon · authenticated · service_role 실행 · PUBLIC 0 → 되돌림 시험(DO 블록 예외) ALL_OK 17: 선릉(열쇠 없는 지점) 열림 · 세 왕좌 1~3위 = 예전 보드 · 앱 활동왕 1위 50,000 · 출석왕 · 좋아요왕 1위 null · 2위부터 칸 없음 · 40일 숫자 = 표를 직접 센 수 · 규칙 300/300 · 아이디 없음 · 이름 빼기(1위 · 틀린 값) · 칠금(열쇠 지점) 열쇠 없음 · 틀린 열쇠 막힘 · 맞는 열쇠 = 칠금 순위 · 없는 지점 null · anon 역할로 부르기 → 남은 줄 0 → DB 어긋남 점검에서 이 함수 0.
 
 ### 수강권 화면 — PT 남은 횟수 · 락카 번호 (2026-10-19 대표님)
 

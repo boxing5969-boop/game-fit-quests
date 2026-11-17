@@ -14,11 +14,17 @@
  *
  * 2026-09-23 검수 반영: ① 부제를 서버 정의(이벤트 기간 얼굴 인식 출석 일수)와 맞춤 · 첫 응답 전엔 상태 문구를 비움 ·
  * 2~4m 거리용 보조 글자 키움 · 닉네임은 '설정' 에서 정한다 · 앱활동은 행동 종류별 하루 1점.
+ *
+ * 2026-11-17 「수상자 축하」: 이벤트가 끝났으면 board_launch_awards(TV 열쇠)를 같이 읽어 LaunchAwardsBoard 한 장으로.
+ * 그 함수가 없거나(옛 DB) 막히면(열쇠) 아래 '최종 결과' 보드 그대로 — 다음 이벤트가 열리면 저절로 예전 보드.
  */
 import { useEffect, useState } from "react";
 import { Crown, Heart, Smartphone, CalendarCheck, Trophy } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { readBoardKey } from "@/lib/boardKey";
+import { awardsView, normalizeAwards, type AwardsView } from "@/lib/launchAwards";
+import LaunchAwardsBoard from "@/components/liveBoard/LaunchAwardsBoard";
 import { LAUNCH_EVENT_CATEGORIES, KING_META, fmtKstDate, type KingCategory, type LaunchEventStatus } from "@/services/king153Service";
 
 interface TvRow { rank: number; display_name: string; score: number | string }
@@ -50,6 +56,8 @@ interface Props {
 const LaunchEventBoard = ({ branchName }: Props) => {
   const [data, setData] = useState<TvBoard | null>(null);
   const [stale, setStale] = useState(false);
+  /** 끝난 이벤트의 수상자 축하 — 못 읽으면 마지막 값을 그대로 둔다(처음부터 못 읽으면 예전 보드) */
+  const [awards, setAwards] = useState<AwardsView | null>(null);
 
   useEffect(() => {
     if (!branchName) return;
@@ -62,6 +70,16 @@ const LaunchEventBoard = ({ branchName }: Props) => {
         if (error || !res) { setStale(true); return; }
         setData(res as TvBoard);
         setStale(false);
+        if ((res as TvBoard).status === "ended") {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { data: aw, error: awErr } = await (supabase as any).rpc("board_launch_awards", {
+            p_branch: branchName,
+            p_key: readBoardKey(branchName),
+          });
+          if (!cancelled && !awErr) setAwards(awardsView(normalizeAwards(aw)));
+        } else {
+          setAwards(null);
+        }
       } catch {
         if (!cancelled) setStale(true);
       }
@@ -89,6 +107,8 @@ const LaunchEventBoard = ({ branchName }: Props) => {
       : data.end_date
         ? `${fmtKstDate(data.start_date)} ~ ${fmtKstDate(data.end_date)}`
         : `${fmtKstDate(data.start_date)}부터 진행 중`;
+
+  if (ended && awards) return <LaunchAwardsBoard view={awards} />;
 
   return (
     <section aria-label="153 마이복서 런칭 이벤트" className="flex h-full min-h-0 flex-col px-6 py-4">

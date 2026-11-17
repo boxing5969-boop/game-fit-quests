@@ -83,6 +83,25 @@ const MyPage = () => {
     next.delete("cheers");
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams]);
+  // 라이브보드 「수상자 축하」 QR — /mypage?focus=mileage 면 153 마일리지 칸으로 내려간다 (2026-11-17).
+  // 로그인 전이면 ProtectedRoute 가 주소를 기억해 로그인 뒤 여기로 돌아온다. 내려간 뒤 주소에서 지운다.
+  useEffect(() => {
+    if (searchParams.get("focus") !== "mileage") return;
+    let tries = 0;
+    // 마일리지 칸은 서버 값을 받은 뒤에 그려져서, 나타날 때까지 0.4초마다 3초 동안 찾아본다
+    const t = window.setInterval(() => {
+      const el = document.getElementById("my-mileage");
+      tries += 1;
+      if (!el && tries < 8) return;
+      window.clearInterval(t);
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      const next = new URLSearchParams(searchParams);
+      next.delete("focus");
+      next.delete("from");
+      setSearchParams(next, { replace: true });
+    }, 400);
+    return () => window.clearInterval(t);
+  }, [searchParams, setSearchParams]);
   const [birthLoading, setBirthLoading] = useState(false);
   const [birthError, setBirthError] = useState("");
   const [tutorialRestartBusy, setTutorialRestartBusy] = useState(false);
