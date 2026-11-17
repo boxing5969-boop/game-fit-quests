@@ -18,6 +18,31 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261117-market",
+    date: "2026-11-17",
+    title: "153 마켓 — 복싱 용품을 앱에서 주문",
+    lines: [
+      "글러브 · 핸드랩 · 마우스피스 · 복싱화를 앱에서 골라 주문해요",
+      "상품마다 인터넷 최저가와 견준 금액이 함께 보여요",
+      "데스크에서 결제하면 체육관으로 와요 · 도착하면 알림이 가요",
+    ],
+    link: { to: "/market", label: "153 마켓 열기" },
+    branches: SEOLLEUNG,
+  },
+  {
+    id: "20261117-market-staff",
+    date: "2026-11-17",
+    title: "153 마켓 주문함 — 결제 확인부터 전달까지",
+    lines: [
+      "회원님이 앱에서 주문하면 알림이 오고 「마켓 주문함」에 쌓여요",
+      "데스크 결제 → 「결제 확인」 → 「발주했어요」 → 「도착했어요」 → 「전달했어요」",
+      "줄마다 다음 단계 단추 하나 · 한 칸 되돌리기도 있어요",
+    ],
+    link: { to: "/manager?tab=market", label: "마켓 주문함" },
+    audience: "staff",
+    branches: SEOLLEUNG,
+  },
+  {
     id: "20261117-pt-team",
     date: "2026-11-17",
     title: "근무 — 단체 PT 수당 「수업 1회당」",

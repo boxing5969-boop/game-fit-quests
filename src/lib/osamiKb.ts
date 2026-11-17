@@ -314,7 +314,8 @@ export function osamiFaqIndex(): string {
     byCat.set(f.category, arr);
   }
   return Array.from(byCat.entries())
-    .map(([cat, qs]) => `· ${OSAMI_FAQ_CATEGORY_LABEL[cat as OsamiFaqCategory] ?? cat}: ${qs.join(" / ")}`)
+    // 질문 사이는 "/"(빈칸 없이) — 서버(chat-assistant KB_MAX_INDEX)가 2,500자에서 자르므로 글자를 아낀다(2026-11-17 153 마켓 항목을 넣을 때 " / " 로는 넘쳤다)
+    .map(([cat, qs]) => `· ${OSAMI_FAQ_CATEGORY_LABEL[cat as OsamiFaqCategory] ?? cat}: ${qs.join("/")}`)
     .join("\n");
 }
 
@@ -332,7 +333,7 @@ export interface OsamiKbContext {
  */
 export function buildKbContext(query: string): OsamiKbContext {
   const hints = pickOsamiKbHints(query).map(({ q, answer }) => ({ q, answer }));
-  // 기능 지도(≈1,600자)는 앱을 묻는 말에만 — 복싱·식단 질문에 붙이면 무료 한도(분당 토큰)만 먹는다.
+  // 기능 지도(≈2,300자 · 서버가 2,500자에서 자름)는 앱을 묻는 말에만 — 복싱·식단 질문에 붙이면 무료 한도(분당 토큰)만 먹는다.
   const index = APP_TOPIC_RE.test(query) ? osamiFaqIndex() : undefined;
   return index ? { hints, index } : { hints };
 }
