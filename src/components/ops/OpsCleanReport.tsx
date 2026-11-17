@@ -84,9 +84,7 @@ const CellBody = ({ cell, slot }: { cell: ReportCell; slot: ReportSlot }) => {
   if (cell.kind === "doing" || cell.kind === "partial")
     return (
       <>
-        <span className="text-label font-black tabular-nums">
-          {r?.done ?? 0}/{r?.due ?? 0}
-        </span>
+        <span className="whitespace-nowrap text-micro font-black tabular-nums">남은 {r ? Math.max(0, r.due - r.done - r.hold - r.issue) : 0}</span>
         <span className="text-micro font-bold">{cell.kind === "doing" ? "진행" : "끝 전"}</span>
       </>
     );
@@ -144,7 +142,7 @@ const WeekGrid = ({
                 >
                   <CellBody cell={cell} slot={s} />
                   {!!r && (r.issue > 0 || r.hold > 0) && (
-                    <span className={cn("absolute right-1 top-1 h-2 w-2 rounded-full", r.issue > 0 ? "bg-red-500" : "bg-amber-400")} aria-hidden />
+                    <span className={cn("absolute right-0.5 top-0.5 h-1.5 w-1.5 rounded-full", r.issue > 0 ? "bg-red-500" : "bg-amber-400")} aria-hidden />
                   )}
                 </button>
               );
@@ -281,6 +279,7 @@ const IssueSection = ({ rep, onResolve }: { rep: CleanReport; onResolve: (i: Rep
 const ItemTimes = ({ rep }: { rep: CleanReport }) => {
   const [slotId, setSlotId] = useState<string | null>(null);
   const [help, setHelp] = useState(false);
+  const [showRest, setShowRest] = useState(false);
   const slot = rep.slots.find((s) => s.id === slotId) ?? rep.slots[0] ?? null;
   const items = slot ? slotItems(rep, slot.id) : [];
   const flags = items.map((i) => itemFlag(i));
@@ -313,7 +312,14 @@ const ItemTimes = ({ rep }: { rep: CleanReport }) => {
       {rep.slots.length > 1 && (
         <div className="mt-2 flex gap-1.5 overflow-x-auto px-1 pb-1">
           {rep.slots.map((s) => (
-            <OpsChip key={s.id} on={s.id === slot?.id} onClick={() => setSlotId(s.id)}>
+            <OpsChip
+              key={s.id}
+              on={s.id === slot?.id}
+              onClick={() => {
+                setSlotId(s.id);
+                setShowRest(false);
+              }}
+            >
               {s.label}
             </OpsChip>
           ))}
@@ -325,6 +331,8 @@ const ItemTimes = ({ rep }: { rep: CleanReport }) => {
       <ul className="mt-2 divide-y divide-border/70">
         {items.map((i, k) => {
           const f = flags[k];
+          // 확인할 항목(표시가 붙은 것) 먼저 — 나머지는 접어 둔다
+          if (!f && !showRest && flags.some(Boolean)) return null;
           return (
             <li key={i.id} className="flex items-center gap-3 px-1 py-2.5">
               <span className="min-w-0 flex-1">
@@ -345,6 +353,17 @@ const ItemTimes = ({ rep }: { rep: CleanReport }) => {
           );
         })}
       </ul>
+      {flags.some(Boolean) && flags.some((f) => !f) && (
+        <button
+          type="button"
+          onClick={() => setShowRest((v) => !v)}
+          aria-expanded={showRest}
+          className="mt-1 flex h-10 w-full items-center justify-between px-1 text-label font-bold text-muted-foreground"
+        >
+          {showRest ? "다른 항목 접기" : `다른 항목 ${flags.filter((f) => !f).length}개`}
+          <ChevronDown className={cn("h-4 w-4 transition-transform", showRest && "rotate-180")} aria-hidden />
+        </button>
+      )}
     </section>
   );
 };
@@ -416,7 +435,7 @@ export default function OpsCleanReport({ rep, weeks, onWeeks, onBranch, onClose,
             list.map((w) => <WeekGrid key={w.monday} rep={rep} week={w} onCell={onCell} />)
           )}
           <p className="px-2 text-label leading-relaxed text-muted-foreground">
-            <Check className="inline h-3.5 w-3.5 text-primary" strokeWidth={3} aria-hidden /> 끝(걸린 분) · 9/13 끝내기 전 · – 체크 없음 · 점 = 보류 · 문제 · 칸을 누르면 그날 목록
+            <Check className="inline h-3.5 w-3.5 text-primary" strokeWidth={3} aria-hidden /> 끝(걸린 분) · 남은 n = 끝내기 전 · – 체크 없음 · 점 = 보류 · 문제 · 누르면 그날 목록
           </p>
           <IssueSection rep={rep} onResolve={setResolving} />
           <ItemTimes rep={rep} />
