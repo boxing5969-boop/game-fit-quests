@@ -18,6 +18,19 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261117-pt-team",
+    date: "2026-11-17",
+    title: "근무 — 단체 PT 수당 「수업 1회당」",
+    lines: [
+      "팀 수업 한 번은 수당 한 줄 — 팀 1회 수당 그대로예요",
+      "몇 명이 와도 같아요 · 줄 아래에 팀원 이름이 보여요",
+      "12월 수업분부터 · 명세서에는 「4인 팀 수업」으로 묶여요",
+    ],
+    link: { to: "/office?tab=work", label: "근무 탭 열기" },
+    audience: "staff",
+    branches: SEOLLEUNG,
+  },
+  {
     id: "20261117-ops-cleaning-report",
     date: "2026-11-17",
     title: "오늘 청소 — 현황 · 문제 처리 · 미완료 알림",
