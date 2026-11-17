@@ -187,8 +187,9 @@ export const launchEventDday = (w: LaunchEventWindow | null | undefined): string
 export const LAUNCH_EVENT_PRIZE = {
   amount: "50,000",
   unit: "마일리지",
-  /** 대표님 확인 2026-10-15 (커밋 7d30222) — 지급 방식·시점은 아직 정하지 않음 */
-  note: "지급 방식과 시점은 끝난 뒤 공지로 알려 드려요",
+  /** 대표님 확인 2026-10-15 (커밋 7d30222) · 지급 = 153 마일리지(adjust · idem 'launch-top1-<왕좌>-…') + 알림 —
+   *  선릉역점 앱 활동왕 1위 11/9 · 출석왕 · 좋아요왕 1위 11/17 (TV 2번 수상자 카드 '받았어요'가 이 기록을 본다) */
+  note: "153 마일리지로 드려요 · 들어오면 알림이 가요",
 };
 
 /** 세 왕좌 한 줄 설명 (시트 안 한 줄 — 짧게). 자세한 규칙은 왕좌를 눌렀을 때 KING_META.what */

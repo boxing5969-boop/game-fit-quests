@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: vi.fn() } }));
 
-import { AWARDS_QR_URL, awardsView, eventDays, formatPoints, nameSize, normalizeAwards } from "./launchAwards";
+import { AWARDS_QR_URL, awardsView, eventDays, formatPoints, nameSize, normalizeAwards, otherText } from "./launchAwards";
 
 // 지어낸 이름만 — 저장소가 공개라 회원 이름을 시험에 쓰지 않는다
 const RAW = {
@@ -14,24 +14,24 @@ const RAW = {
     {
       category: "attendance",
       rows: [
-        { rank: 1, name: "Boxer Kim", hidden: false, score: 34, paid_points: null, character: { league: "blue", level: 3, parts: { style: "boxer_a" } } },
-        { rank: 2, name: "예시 복서 둘", hidden: false, score: 32 },
-        { rank: 3, name: "예시 복서 셋", hidden: false, score: 26 },
+        { rank: 1, name: "Boxer Kim", hidden: false, score: 34, paid_points: null, league: "blue", level: 3, photo: null, character: { league: "blue", level: 3, parts: { style: "boxer_a" } } },
+        { rank: 2, name: "예시 복서 둘", hidden: false, score: 32, league: "white", level: 10, photo: "https://example.com/a/2.jpg?t=1" },
+        { rank: 3, name: "예시 복서 셋", hidden: false, score: 26, league: "red", level: 1, photo: null },
       ],
     },
     {
       category: "app",
       rows: [
-        { rank: 1, name: "봄비", hidden: false, score: 119, paid_points: 50000, character: { league: "white", level: 7, parts: null } },
+        { rank: 1, name: "봄비", hidden: false, score: 119, paid_points: 50000, league: "white", level: 7, photo: "https://example.com/a/1.jpg" },
         { rank: 2, name: "예시 복서 넷", hidden: false, score: 54 },
       ],
     },
     {
       category: "nickname",
       rows: [
-        { rank: 1, name: "예시 복서", hidden: false, score: 8, paid_points: null, character: { league: null, level: null, parts: null } },
-        { rank: 3, name: null, hidden: true, score: 7 },
-        { rank: 2, name: "예시 복서 둘", hidden: false, score: 7 },
+        { rank: 1, name: "예시 복서", hidden: false, score: 8, paid_points: null, league: "black", level: 10, photo: "http://example.com/a/3.jpg" },
+        { rank: 3, name: null, hidden: true, score: 7, league: "blue", level: 4, photo: "https://example.com/a/4.jpg" },
+        { rank: 2, name: "예시 복서 둘", hidden: false, score: 7, league: "white", level: 10, photo: "https://example.com/a/2.jpg?t=1" },
       ],
     },
   ],
@@ -41,7 +41,7 @@ const RAW = {
 
 const allText = (v: NonNullable<ReturnType<typeof awardsView>>) =>
   [v.title, v.prizeLine, v.evidence ?? "", v.quote, v.byline, v.signature, ...v.qrCaption, v.band?.title ?? "", ...(v.band?.steps ?? []), v.band?.note ?? "",
-    ...v.cards.flatMap((c) => [c.throne, c.name, c.record, c.chip, ...c.others])].join("\n");
+    ...v.cards.flatMap((c) => [c.throne, c.name, c.record, c.chip, c.level?.text ?? "", ...c.others.map(otherText), ...c.others.map((o) => o.level?.text ?? "")])].join("\n");
 
 describe("수상자 축하 — 서버 값 다듬기", () => {
   it("모양이 다르면 null", () => {
@@ -68,7 +68,7 @@ describe("수상자 축하 — 화면 글", () => {
   it("① 띠: 왕좌 n명 · 1위 혜택은 띠에 한 번", () => {
     expect(v.title).toBe("축하합니다! 런칭 이벤트 왕좌 3명");
     expect(v.prizeLine).toBe("1위께 153 마일리지 50,000점");
-    for (const c of v.cards) expect(`${c.chip}${c.record}${c.others.join("")}`).not.toContain("50,000");
+    for (const c of v.cards) expect(`${c.chip}${c.record}${c.others.map(otherText).join("")}`).not.toContain("50,000");
   });
 
   it("② 카드: 왕좌 순서 · 기록 · 받았어요는 받은 분만", () => {
@@ -76,9 +76,50 @@ describe("수상자 축하 — 화면 글", () => {
     expect(v.cards.map((c) => c.record)).toEqual(["출석 34일", "활동 119점", "하트 8개"]);
     expect(v.cards.map((c) => c.chip)).toEqual(["드릴 예정", "받았어요", "드릴 예정"]);
     expect(v.cards.map((c) => c.paid)).toEqual([false, true, false]);
-    expect(v.cards[0].others).toEqual(["2위 예시 복서 둘", "3위 예시 복서 셋"]);
-    expect(v.cards[1].others).toEqual(["2위 예시 복서 넷"]);
-    expect(v.cards[2].others).toEqual(["2위 예시 복서 둘", "3위 회원님"]);
+    expect(v.cards[0].others.map(otherText)).toEqual(["2위 예시 복서 둘", "3위 예시 복서 셋"]);
+    expect(v.cards[1].others.map(otherText)).toEqual(["2위 예시 복서 넷"]);
+    expect(v.cards[2].others.map(otherText)).toEqual(["2위 예시 복서 둘", "3위 회원님"]);
+  });
+
+  it("이름 옆 사진 · 레벨 — 사진은 https 만 · 레벨은 누적 Lv (2026-11-17 14시 대표님)", () => {
+    // 1위: 사진 없음(Boxer Kim) · 있음(봄비) · http 라 버림(예시 복서)
+    expect(v.cards.map((c) => c.photo)).toEqual([null, "https://example.com/a/1.jpg", null]);
+    expect(v.cards.map((c) => c.level?.text)).toEqual(["Lv.13", "Lv.7", "Lv.40"]);
+    expect(v.cards.map((c) => c.level?.league)).toEqual(["blue", "white", "black"]);
+    // 2위 · 3위도 사진(있는 분만) · 레벨
+    expect(v.cards[0].others.map((o) => [o.photo, o.level?.text])).toEqual([
+      ["https://example.com/a/2.jpg?t=1", "Lv.10"],
+      [null, "Lv.21"],
+    ]);
+    // 레벨 칸이 없는 서버(예전 판)면 레벨 없이
+    expect(v.cards[1].others[0].level).toBeNull();
+    expect(v.cards[1].others[0].photo).toBeNull();
+  });
+
+  it("이름을 뺀 분은 사진 · 레벨도 없이", () => {
+    const hidden = v.cards[2].others.find((o) => o.rank === 3)!;
+    expect(hidden).toEqual({ rank: 3, name: "회원님", photo: null, level: null });
+    const row = normalizeAwards(RAW)!.items[2].rows.find((r) => r.rank === 3)!;
+    expect([row.photo, row.league, row.level]).toEqual([null, null, null]);
+  });
+
+  it("사진 · 리그 · 레벨이 이상한 값이면 버린다", () => {
+    const d = normalizeAwards({
+      ...RAW,
+      items: [{ category: "attendance", rows: [
+        { rank: 1, name: "a", score: 3, photo: "javascript:alert(1)", league: "gold", level: 99 },
+        { rank: 2, name: "b", score: 2, photo: "https://x.example/ 띄어쓰기.jpg", league: "red", level: 0 },
+        { rank: 3, name: "c", score: 1, photo: 7, league: null, level: "5" },
+      ] }],
+    })!;
+    expect(d.items[0].rows.map((r) => [r.photo, r.league, r.level])).toEqual([
+      [null, null, null],
+      [null, "red", null],
+      [null, null, 5],
+    ]);
+    const c = awardsView(d)!.cards[0];
+    expect(c.level).toBeNull();
+    expect(c.others[1].level).toEqual({ text: "Lv.5", league: null });
   });
 
   it("캐릭터는 카드에 싣지 않는다 — 서버가 보내도 (2026-11-17 대표님 「캐릭터는 안보이게」)", () => {
@@ -150,7 +191,7 @@ describe("숫자 · 크기", () => {
     expect(eventDays("2026-10-01", null)).toBeNull();
     expect(eventDays("2026-11-09", "2026-10-01")).toBeNull();
   });
-  it("이름 글씨는 칸에 맞게 48 → 40 → 34 (캐릭터를 뺀 카드 너비)", () => {
+  it("이름 글씨는 칸에 맞게 48 → 40 → 34 (사진이 없으면 카드 너비를 다 쓴다)", () => {
     expect(nameSize("봄비")).toBe(48);
     expect(nameSize("1위 회원님")).toBe(48);
     expect(nameSize("Boxer Kim")).toBe(48); // 영문은 한 글자 0.58칸 — 9글자도 한 줄에 들어간다
@@ -158,5 +199,14 @@ describe("숫자 · 크기", () => {
     expect(nameSize("일곱글자닉네임")).toBe(48);
     expect(nameSize("여덟글자닉네임이")).toBe(40);
     expect(nameSize("아주긴닉네임아홉자")).toBe(34);
+  });
+  it("사진이 있으면 이름 칸이 좁아 더 일찍 줄인다", () => {
+    expect(nameSize("봄비", true)).toBe(48);
+    expect(nameSize("다섯글자임", true)).toBe(48);
+    expect(nameSize("Boxer Kim", true)).toBe(48); // 9 × 0.58 = 5.2칸
+    expect(nameSize("여섯글자이름", true)).toBe(40);
+    expect(nameSize("Boxer Kim Lee", true)).toBe(34); // 13 × 0.58 = 7.5칸
+    expect(nameSize("일곱글자닉네임", true)).toBe(34);
+    expect(nameSize("일곱글자닉네임")).toBe(48);
   });
 });
