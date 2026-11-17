@@ -11,9 +11,9 @@
  *   서버에 함수가 없으면(DB 적용 전 · 옛 DB 미리보기) 아무것도 그리지 않는다 — 예시만 보인다.
  *   읽고 쓰기 src/services/opsCleanService.ts · 계산 src/lib/opsClean.ts · DB 20261116211742_ops_clean_stage1.sql
  */
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
+import { BarChart3, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
@@ -29,11 +29,19 @@ import {
   type CleanSlot,
 } from "@/lib/opsClean";
 import { applyCleanDemo, buildCleanSample, type CleanDemoWho } from "@/lib/opsCleanSample";
+import { reportRange, type CleanReport } from "@/lib/opsCleanReport";
+import { applyReportDemo, buildCleanReportSample, type ReportDemoAction } from "@/lib/opsCleanReportSample";
 import { useOpsCleanActions, useOpsCleanDay } from "@/services/opsCleanService";
+import { useOpsCleanReport, useOpsCleanReportActions } from "@/services/opsCleanReportService";
+import type { CleanReportActions } from "./OpsCleanReport";
 import OpsCleanSheet, { type CleanSheetActions } from "./OpsCleanSheet";
 import { OpsChip, kstToday } from "./OpsParts";
 
 const isDay = (v: string | null): v is string => !!v && /^\d{4}-\d{2}-\d{2}$/.test(v);
+// 2단계 「청소 현황」 · 「항목 고치기」 — 대표님 · 지점 관리자만 열어서 따로 받는다
+const OpsCleanReport = lazy(() => import("./OpsCleanReport"));
+const kstNowHm = (): string =>
+  new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date());
 
 // ── 띠 ───────────────────────────────────────────────────────
 
@@ -63,12 +71,15 @@ export const CleanStrip = ({
   wide,
   demo = false,
   onOpen,
+  onReport,
 }: {
   day: CleanDay;
   /** 「근무」 · 「일정」 탭 — 끝난 것까지 다 보여 준다 */
   wide: boolean;
   demo?: boolean;
   onOpen: (slot: string | null) => void;
+  /** (대표님 · 지점 관리자) 「청소 현황」 — 2단계 */
+  onReport?: () => void;
 }) => {
   const mine = myOpenSlots(day);
   const rows = wide || demo ? day.slots : mine;
@@ -121,6 +132,19 @@ export const CleanStrip = ({
           })}
         </ul>
       )}
+      {onReport && wide && day.manage && (
+        <button
+          type="button"
+          onClick={onReport}
+          className="mt-2 flex h-11 w-full items-center justify-between rounded-2xl px-1 text-left text-body font-bold text-foreground active:opacity-70"
+        >
+          <span className="flex items-center gap-1.5">
+            <BarChart3 className="h-4 w-4 text-muted-foreground" aria-hidden />
+            청소 현황 · 문제 · 항목 고치기
+          </span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden />
+        </button>
+      )}
     </section>
   );
 };
@@ -131,10 +155,29 @@ const LiveEntry = ({ enabled, tab }: { enabled: boolean; tab: string }) => {
   const [params, setParams] = useSearchParams();
   // 열린 화면 — 보고 있는 시간대 · (관리자) 넘겨 본 날. null = 닫힘
   const [open, setOpen] = useState<{ slot: string | null; date: string | null } | null>(null);
-  const todayQ = useOpsCleanDay(null, null, enabled, !!open);
-  const pastQ = useOpsCleanDay(null, open?.date ?? null, enabled && !!open?.date, true);
+  // (대표님 · 지점 관리자) 고른 지점 · 「청소 현황」(몇 주) — null = 닫힘
+  const [branch, setBranch] = useState<string | null>(null);
+  const [weeks, setWeeks] = useState<number | null>(null);
+  const todayQ = useOpsCleanDay(branch, null, enabled, !!open);
+  const pastQ = useOpsCleanDay(branch, open?.date ?? null, enabled && !!open?.date, true);
   const act = useOpsCleanActions();
   const today = todayQ.data;
+  const range = reportRange(today?.today || kstToday(), weeks ?? 2);
+  const repQ = useOpsCleanReport(branch, range.from, range.to, enabled && weeks !== null && !!today?.manage);
+  const ract = useOpsCleanReportActions();
+  const rep = repQ.data;
+  useEffect(() => {
+    if (weeks !== null && rep && !rep.on) {
+      toast(rep.available ? "볼 수 있는 청소 현황이 없어요" : "청소 현황은 준비 중이에요");
+      setWeeks(null);
+    }
+  }, [weeks, rep]);
+  useEffect(() => {
+    if (weeks !== null && repQ.isError) {
+      toast.error((repQ.error as Error).message);
+      setWeeks(null);
+    }
+  }, [weeks, repQ.isError, repQ.error]);
   const shown = open?.date && pastQ.data?.on ? pastQ.data : today;
 
   // 링크 /office?clean=<시간대|1>(&cd=날짜) — 읽은 뒤에 열고 주소에서 지운다
@@ -186,14 +229,38 @@ const LiveEntry = ({ enabled, tab }: { enabled: boolean; tab: string }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shown, act.start.isPending, act.finish.isPending]);
 
+  const reportActions: CleanReportActions = useMemo(() => {
+    const onError = (e: unknown) => toast.error((e as Error).message);
+    return {
+      resolve: (itemId, date, note, done) =>
+        ract.resolve.mutate(
+          { itemId, date, note },
+          {
+            onError,
+            onSuccess: () => {
+              done();
+              toast.success("처리했어요 · 남긴 분께 알렸어요");
+            },
+          },
+        ),
+      saveItem: (payload, done) => ract.saveItem.mutate(payload, { onError, onSuccess: () => done() }),
+      order: (slotId, ids) => ract.order.mutate({ slotId, ids }, { onError }),
+      saveSlot: (payload, done) => ract.saveSlot.mutate(payload, { onError, onSuccess: () => done() }),
+      busy: ract.resolve.isPending || ract.saveItem.isPending || ract.order.isPending || ract.saveSlot.isPending,
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ract.resolve.isPending, ract.saveItem.isPending, ract.order.isPending, ract.saveSlot.isPending]);
+
   if (!today?.available || !today.on) return null;
   const wide = tab === "work" || tab === "plan";
+  const openReport = today.manage ? () => setWeeks((w) => w ?? 2) : undefined;
   return (
     <>
       <CleanStrip
         day={today}
         wide={wide}
         onOpen={(slot) => setOpen({ slot: slot ?? pickSlot(today, null, Date.now())?.slot ?? null, date: null })}
+        onReport={openReport}
       />
       {open && shown?.on && (
         <OpsCleanSheet
@@ -204,7 +271,27 @@ const LiveEntry = ({ enabled, tab }: { enabled: boolean; tab: string }) => {
           actions={actions}
           onDate={today.manage ? (d) => setOpen((o) => (o ? { ...o, date: d >= today.today ? null : d } : o)) : undefined}
           loading={!!open.date && pastQ.data?.date !== open.date && pastQ.isFetching}
+          onReport={openReport}
+          onBranch={today.manage ? (b) => setBranch(b) : undefined}
+          covered={weeks !== null}
         />
+      )}
+      {weeks !== null && rep?.on && (
+        <Suspense fallback={null}>
+          <OpsCleanReport
+            rep={rep}
+            weeks={weeks}
+            onWeeks={setWeeks}
+            onBranch={(b) => setBranch(b)}
+            onClose={() => setWeeks(null)}
+            onOpenDay={(date, slot) => {
+              setWeeks(null);
+              setOpen({ slot, date: date >= today.today ? null : date });
+            }}
+            actions={reportActions}
+            loading={repQ.isFetching && repQ.isPlaceholderData}
+          />
+        </Suspense>
       )}
     </>
   );
@@ -216,10 +303,39 @@ const DemoEntry = ({ who }: { who: CleanDemoWho }) => {
   const [params, setParams] = useSearchParams();
   const [day, setDay] = useState<CleanDay>(() => buildCleanSample(kstToday(), who));
   const [slot, setSlot] = useState<string | null | undefined>(undefined);
+  // 관리자 예시 — 「청소 현황」 · 「항목 고치기」 (최근 4주 지어낸 기록)
+  const [rep, setRep] = useState<CleanReport>(() => buildCleanReportSample(kstToday(), kstNowHm()));
+  const [weeks, setWeeks] = useState<number | null>(null);
   useEffect(() => {
     setDay(buildCleanSample(kstToday(), who));
     setSlot(undefined);
+    setRep(buildCleanReportSample(kstToday(), kstNowHm()));
+    setWeeks(null);
   }, [who]);
+  const shownRep = useMemo(() => {
+    if (weeks === null) return rep;
+    const from = reportRange(rep.today, weeks).from;
+    return { ...rep, from, days: rep.days.filter((d) => d.date >= from) };
+  }, [rep, weeks]);
+  const demoRep = (a: ReportDemoAction) => setRep((r) => applyReportDemo(r, a, new Date().toISOString()));
+  const reportActions: CleanReportActions = {
+    resolve: (itemId, date, note, done) => {
+      demoRep({ type: "resolve", itemId, date, note });
+      done();
+      toast.success("예시에서 처리했어요 · 저장되지 않아요");
+    },
+    saveItem: (payload, done) => {
+      demoRep({ type: "item", payload });
+      done();
+    },
+    order: (slotId, ids) => demoRep({ type: "order", slotId, ids }),
+    saveSlot: (payload, done) => {
+      demoRep({ type: "slot", payload });
+      done();
+    },
+    busy: false,
+  };
+  const openReport = who === "manager" ? () => setWeeks((w) => w ?? 2) : undefined;
 
   // 예시도 /office?cleandemo=coach&clean=open 으로 바로 열 수 있다
   const want = params.get("clean");
@@ -275,9 +391,35 @@ const DemoEntry = ({ who }: { who: CleanDemoWho }) => {
           </OpsChip>
         </div>
       </section>
-      <CleanStrip day={day} wide demo onOpen={(s) => setSlot(s ?? pickSlot(day, null, Date.now())?.slot ?? null)} />
+      <CleanStrip day={day} wide demo onOpen={(s) => setSlot(s ?? pickSlot(day, null, Date.now())?.slot ?? null)} onReport={openReport} />
       {slot !== undefined && (
-        <OpsCleanSheet day={day} slotKey={slot} onSlot={setSlot} onClose={() => setSlot(undefined)} actions={actions} demo />
+        <OpsCleanSheet
+          day={day}
+          slotKey={slot}
+          onSlot={setSlot}
+          onClose={() => setSlot(undefined)}
+          actions={actions}
+          demo
+          onReport={openReport}
+          covered={weeks !== null}
+        />
+      )}
+      {weeks !== null && (
+        <Suspense fallback={null}>
+          <OpsCleanReport
+            rep={shownRep}
+            weeks={weeks}
+            onWeeks={setWeeks}
+            onClose={() => setWeeks(null)}
+            onOpenDay={(date, s) => {
+              if (date !== day.today) return toast("예시는 오늘 목록만 열려요");
+              setWeeks(null);
+              setSlot(s);
+            }}
+            actions={reportActions}
+            demo
+          />
+        </Suspense>
       )}
     </>
   );
