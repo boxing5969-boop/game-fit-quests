@@ -5,6 +5,8 @@
  * 회원에게 무엇이 보이는지 확인하고 설명할 수 있게, 주소에 ?lvdemo= 를 붙이면 지어낸 진행 상황으로 카드를 그린다.
  *   /home?lvdemo=4    화이트 레벨 4 · 1번 왔어요 → 「2번 더 오면 돼요」 + 레벨 4 미션
  *   /home?lvdemo=1    처음 온 회원 → 「3번 더 오면 돼요」 + 레벨 1 미션
+ *   /home?lvdemo=today 화이트 레벨 4 · 오늘 두 번째 수업 → 「오늘 수업」 도장 + 「1번 더 오면 레벨 5」 (2026-11-18 레벨 퀘스트)
+ *   /home?lvdemo=up   화이트 레벨 5 · 오늘 레벨업 → 「레벨 5 달성!」 + 꽃가루 (2026-11-18 레벨 퀘스트)
  *   /home?lvdemo=10   화이트 레벨 10 · 신청 전 → 타이틀미션 두 줄 + 타이틀매치 동작 + 신청 단추
  *   /home?lvdemo=wait 화이트 레벨 10 · 신청한 뒤 → 「심사를 기다려요」
  * 진행 상황(출석 · 심사 단계)만 지어낸 값이고 서버를 부르지 않는다. 미션 영상 목록은 그 레벨의 실제 미션을 읽는다.
@@ -17,12 +19,20 @@ export interface LevelCardDemo {
   league: string;
   /** 리그 안 레벨 1~10 */
   level: number;
+  /** 오늘 체육관에 왔나 (홈 레벨 퀘스트 — 오늘 칸 도장 · 레벨업한 날) */
+  attendedToday?: boolean;
+  /** 오늘 레벨이 올랐나 (예시는 날짜 대신 이 값으로) */
+  leveledUpToday?: boolean;
   /** get_level_cycle_progress 와 같은 모양에서 카드가 읽는 칸 */
   cycle: {
     sessions: number;
     days: number;
     minutes: number;
+    /** 진행도 (운동 종료 보너스로 소수) — 없으면 내림값 */
+    progress?: number;
     progressFloor: number;
+    /** 이번 레벨을 시작한 때 — 오늘이면 「레벨업한 날」 */
+    since?: string | null;
     reqSessions: number;
     reqDays: number;
     reqMinutes: number;
@@ -41,7 +51,7 @@ export interface LevelCardDemo {
 }
 
 export interface NextLevelDemo {
-  key: "1" | "4" | "10" | "wait";
+  key: "1" | "4" | "today" | "up" | "10" | "wait";
   /** 예시 띠에 보이는 말 */
   label: string;
   /** 예시를 바꿔 보는 칩 이름 */
@@ -49,11 +59,13 @@ export interface NextLevelDemo {
   data: LevelCardDemo;
 }
 
-const whiteCycle = (visits: number): LevelCardDemo["cycle"] => ({
+const whiteCycle = (visits: number, extra: Partial<LevelCardDemo["cycle"]> = {}): LevelCardDemo["cycle"] => ({
   sessions: visits,
   days: visits,
   minutes: 0,
+  progress: visits,
   progressFloor: visits,
+  since: "2026-11-01T01:00:00.000Z",
   reqSessions: 3,
   reqDays: 3,
   reqMinutes: 0,
@@ -63,6 +75,7 @@ const whiteCycle = (visits: number): LevelCardDemo["cycle"] => ({
   rank: "white",
   autoAdvances: true,
   fastTrackGates: 0,
+  ...extra,
 });
 
 const titleState = (over: Partial<TitleMatchState>): TitleMatchState => ({
@@ -93,6 +106,35 @@ const DEMOS: Record<NextLevelDemo["key"], NextLevelDemo> = {
     chip: "레벨 4",
     data: { league: "white", level: 4, cycle: whiteCycle(1), reviewStatus: null, titleFlow: false, titleState: null },
   },
+  today: {
+    key: "today",
+    label: "레벨 4 · 오늘 두 번째 수업 (운동 보너스 조금)",
+    chip: "오늘 온 날",
+    data: {
+      league: "white",
+      level: 4,
+      attendedToday: true,
+      cycle: whiteCycle(2, { progress: 2.25 }),
+      reviewStatus: null,
+      titleFlow: false,
+      titleState: null,
+    },
+  },
+  up: {
+    key: "up",
+    label: "레벨 5 · 오늘 레벨업한 날",
+    chip: "레벨업한 날",
+    data: {
+      league: "white",
+      level: 5,
+      attendedToday: true,
+      leveledUpToday: true,
+      cycle: whiteCycle(0),
+      reviewStatus: null,
+      titleFlow: false,
+      titleState: null,
+    },
+  },
   "10": {
     key: "10",
     label: "레벨 10 · 타이틀매치 신청 전",
@@ -118,7 +160,7 @@ const DEMOS: Record<NextLevelDemo["key"], NextLevelDemo> = {
 };
 
 /** 예시 종류 — 띠에서 바꿔 볼 수 있게 순서대로 */
-export const NEXT_LEVEL_DEMOS: readonly NextLevelDemo[] = [DEMOS["1"], DEMOS["4"], DEMOS["10"], DEMOS.wait];
+export const NEXT_LEVEL_DEMOS: readonly NextLevelDemo[] = [DEMOS["1"], DEMOS["4"], DEMOS.today, DEMOS.up, DEMOS["10"], DEMOS.wait];
 
 /** 예시 주소 */
 export const nextLevelDemoLink = (key: NextLevelDemo["key"]) => `/home?lvdemo=${key}`;
