@@ -411,6 +411,26 @@ export const MAX_OFF_LOWEST_PCT = 15;
 export const priceFromLowest = (lowest: number, pct: number = MAX_OFF_LOWEST_PCT): number =>
   Math.ceil((lowest * (100 - pct)) / 10_000) * 100;
 
+/** 남는 돈 바닥 (2026-11-18 대표님 「남는 돈이 있으면 모두 올려」) — 최저가 −15%가 도매가에 너무 붙으면
+ *  도매가 +3%(최소 1,000원)에서 멈춘다. 카드 수수료를 내고도 남게. */
+export const MIN_MARGIN_PCT = 3;
+export const MIN_MARGIN_WON = 1_000;
+/** 그렇게 정한 회원가가 최저가보다 이만큼(%) 넘게 싸야 「최저가보다 저렴」으로 올린다 — 값이 조금만 움직여도 거짓말이 되지 않게 */
+export const MIN_SAVE_PCT = 1;
+
+/** 도매가 바닥 — 도매가 +3% 와 +1,000원 중 큰 쪽, 100원 단위 올림 (정수 셈 — 소수 오차 없이) */
+export const marginFloor = (cost: number): number =>
+  Math.ceil(Math.max(cost * (100 + MIN_MARGIN_PCT), (cost + MIN_MARGIN_WON) * 100) / 10_000) * 100;
+
+/** 원칙대로 정한 회원가 — 최저가 −15%, 도매가를 알면 바닥 아래로는 안 내림.
+ *  ok=false 면 최저가보다 1% 넘게 싸게 못 판다(올리지 않는 게 원칙) */
+export function rulePriceOf(lowest: number, cost: number | null): { price: number; byFloor: boolean; ok: boolean } {
+  const off = priceFromLowest(lowest);
+  const floor = cost != null && cost > 0 ? marginFloor(cost) : 0;
+  const price = Math.max(off, floor);
+  return { price, byFloor: floor > off, ok: price * 100 <= lowest * (100 - MIN_SAVE_PCT) };
+}
+
 export interface PriceFlag {
   key: "not_lower" | "stale" | "no_compare" | "below_cost" | "no_cost" | "too_low";
   text: string;

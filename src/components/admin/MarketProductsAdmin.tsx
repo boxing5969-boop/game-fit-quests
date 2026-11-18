@@ -21,6 +21,8 @@ import {
   draftOfProduct,
   emptyProductDraft,
   MAX_OFF_LOWEST_PCT,
+  MIN_MARGIN_PCT,
+  MIN_SAVE_PCT,
   marginOf,
   marginText,
   parseWon,
@@ -28,6 +30,7 @@ import {
   priceFromLowest,
   productDraftError,
   productTitle,
+  rulePriceOf,
   won,
   type MarketBoard,
   type MarketProduct,
@@ -112,9 +115,11 @@ const ProductEditor = ({
       )
     : null;
   const notLower = okNum(price) && okNum(comparePrice) && comparePrice <= price;
-  // 회원가 원칙: 인터넷 최저가에서 최대 15%까지만 낮춘다(100원 올림)
-  const rulePrice = okNum(comparePrice) && comparePrice >= 500 ? priceFromLowest(comparePrice) : null;
-  const tooLow = rulePrice != null && okNum(price) && !notLower && price < rulePrice;
+  // 회원가 원칙: 인터넷 최저가에서 최대 15%까지만 낮춘다(100원 올림) · 도매가를 알면 +3%(최소 1,000원) 밑으로는 안 내림
+  const rule = okNum(comparePrice) && comparePrice >= 500 ? rulePriceOf(comparePrice, okNum(cost) ? cost : null) : null;
+  const rulePrice = rule?.price ?? null;
+  const offPrice = okNum(comparePrice) && comparePrice >= 500 ? priceFromLowest(comparePrice) : null;
+  const tooLow = offPrice != null && okNum(price) && !notLower && price < offPrice;
 
   const submit = async () => {
     const e = productDraftError(d);
@@ -202,11 +207,14 @@ const ProductEditor = ({
                   onClick={() => set("price", String(rulePrice))}
                   className="h-9 rounded-full bg-card px-3 text-label font-bold tabular-nums text-foreground shadow-elev-1 active:scale-95"
                 >
-                  최저가 −{MAX_OFF_LOWEST_PCT}% · {won(rulePrice)}
+                  {rule?.byFloor ? `도매가 +${MIN_MARGIN_PCT}%` : `최저가 −${MAX_OFF_LOWEST_PCT}%`} · {won(rulePrice)}
                 </button>
+                {rule && !rule.ok && (
+                  <span className="text-label font-bold text-destructive">최저가보다 {MIN_SAVE_PCT}%도 안 싸요 — 숨기는 게 원칙이에요</span>
+                )}
               </div>
             )}
-            <Field id="mk-price" label="회원가" hint={`원칙: 최저가에서 ${MAX_OFF_LOWEST_PCT}%까지 낮게`}>
+            <Field id="mk-price" label="회원가" hint={`원칙: 최저가 −${MAX_OFF_LOWEST_PCT}%까지 · 도매가 +${MIN_MARGIN_PCT}%는 남기기`}>
               <input id="mk-price" value={d.price} inputMode="numeric" onChange={(e) => set("price", e.target.value)} placeholder="원" className={inputCls} />
             </Field>
             {margin && (
@@ -234,9 +242,9 @@ const ProductEditor = ({
                   ? `회원 화면 · ${compareShort(shownCompare)} (${shownCompare.percent}%)`
                   : "회원 화면 · 가격 비교 없이 회원가만 보여요"}
             </p>
-            {tooLow && rulePrice != null && (
+            {tooLow && offPrice != null && (
               <p className="text-label font-bold leading-snug text-muted-foreground">
-                최저가보다 {MAX_OFF_LOWEST_PCT}% 넘게 싸요 — 원칙대로면 {won(rulePrice)}
+                최저가보다 {MAX_OFF_LOWEST_PCT}% 넘게 싸요 — 원칙대로면 {won(offPrice)}
               </p>
             )}
           </section>

@@ -7,6 +7,8 @@ import {
   MARKET_CATEGORIES,
   MAX_OFF_LOWEST_PCT,
   MEMBER_STEPS,
+  MIN_MARGIN_PCT,
+  MIN_SAVE_PCT,
   NOTE_MAX,
   ORDER_STATUS_LABEL,
   WISH_EXAMPLES,
@@ -26,6 +28,7 @@ import {
   headlineOrder,
   isFreshDay,
   isOpenOrder,
+  marginFloor,
   marginOf,
   marginText,
   marketGuide,
@@ -49,6 +52,7 @@ import {
   purchaseList,
   purchaseText,
   purchaseTotals,
+  rulePriceOf,
   sellerLines,
   staffActions,
   todayKst,
@@ -204,6 +208,25 @@ describe("153 마켓 — 운영진 가격 점검", () => {
       expect((lowest - price) / lowest).toBeLessThanOrEqual(0.15);
       expect(price % 100).toBe(0);
     }
+  });
+
+  it("남는 돈 바닥 — 최저가 −15%가 도매가에 붙으면 도매가 +3%(최소 1,000원)에서 멈추고, 최저가보다 1% 넘게 싸야 올린다", () => {
+    // 숫자는 모두 지어낸 값 (실제 도매가는 저장소에 두지 않는다)
+    expect(MIN_MARGIN_PCT).toBe(3);
+    expect(MIN_SAVE_PCT).toBe(1);
+    expect(marginFloor(52_300)).toBe(53_900); // 53,869 → 올림
+    expect(marginFloor(150_000)).toBe(154_500); // 딱 떨어지는 값은 그대로(소수 오차로 한 칸 올라가지 않게)
+    expect(marginFloor(10_000)).toBe(11_000); // +1,000원이 더 큼
+    expect(marginFloor(20_000)).toBe(21_000);
+    // 최저가 −15%가 넉넉하면 그대로
+    expect(rulePriceOf(90_000, 50_000)).toEqual({ price: 76_500, byFloor: false, ok: true });
+    // 바닥에 걸리면 도매가 +3%
+    expect(rulePriceOf(100_000, 90_000)).toEqual({ price: 92_700, byFloor: true, ok: true });
+    // 바닥이 최저가의 99%를 넘으면 올리지 않는다
+    expect(rulePriceOf(100_000, 97_000)).toEqual({ price: 100_000, byFloor: true, ok: false });
+    expect(rulePriceOf(100_000, 95_100)).toEqual({ price: 98_000, byFloor: true, ok: true }); // 97,953 → 98,000 ≤ 99,000
+    // 도매가를 모르면 −15%만
+    expect(rulePriceOf(55_000, null)).toEqual({ price: 46_800, byFloor: false, ok: true });
   });
 
   it("원칙보다 더 싸면 대표님 · 관리자 화면에 한 줄 (info) — 딱 15% 는 괜찮다", () => {
