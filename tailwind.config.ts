@@ -300,6 +300,20 @@ export default {
           "0%, 100%": { transform: "rotate(-1.6deg)" },
           "50%": { transform: "rotate(1.6deg)" },
         },
+        // 홈 「다음 레벨까지」 수업 도장 (2026-11-18) — 다음 칸이 숨 쉬고 · 오늘 칸에 도장이 찍히고 · 도장을 다 모으면 목표 칸이 살짝 뛴다
+        "quest-halo": {
+          "0%": { transform: "scale(1)", opacity: "0.6" },
+          "70%, 100%": { transform: "scale(1.55)", opacity: "0" },
+        },
+        "quest-stamp": {
+          "0%": { transform: "scale(1.9) rotate(-16deg)", opacity: "0" },
+          "55%": { transform: "scale(0.9) rotate(3deg)", opacity: "1" },
+          "100%": { transform: "scale(1) rotate(0deg)", opacity: "1" },
+        },
+        "quest-bob": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-3px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -309,6 +323,9 @@ export default {
         "bounce-in": "bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
         sheen: "sheen 4s linear infinite",
         "menu-jiggle": "menu-jiggle 0.28s ease-in-out infinite",
+        "quest-halo": "quest-halo 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite",
+        "quest-stamp": "quest-stamp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.35s both",
+        "quest-bob": "quest-bob 1.8s ease-in-out infinite",
       },
     },
   },
