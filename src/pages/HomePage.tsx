@@ -67,6 +67,7 @@ import NotificationBellButton from "@/components/notifications/NotificationBellB
 import PushOptInCard from "@/components/notifications/PushOptInCard";
 import SurveyNudgeCard from "@/components/survey/SurveyNudgeCard";
 import GoodsNudgeCard from "@/components/goods/GoodsNudgeCard";
+import GoodsPopup from "@/components/goods/GoodsPopup";
 import BirthdayCongratsCard from "@/components/home/BirthdayCongratsCard";
 import GrowthLessonCard from "@/components/home/GrowthLessonCard";
 import OfficeEntryCard from "@/components/office/OfficeEntryCard";
@@ -909,6 +910,9 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
 
       {/* 🏆 레벨 10 회원 — "타이틀매치로 다음 리그로" 팝업 + '타이틀미션 보기' (하루 한 번 · 신청 전 회원만, 2026-10-14) */}
       <TitleMatchInvitePopup />
+
+      {/* 🧥 153 플리스 집업 안내 팝업 — 신청을 받는 동안 · 아직 신청 전인 분께 · 「오늘 하루 보지 않기」 (2026-11-18 대표님) */}
+      <GoodsPopup />
 
       {/* 튜토리얼 오버레이는 App.tsx 의 글로벌 InductionCeremonyOverlay 로 이관. */}
     </AppPage>

@@ -285,3 +285,45 @@ export function matchesQuery(o: GoodsOrder, q: string): boolean {
     (digits.length >= 3 && (o.phone || "").includes(digits))
   );
 }
+
+// ── 홈 팝업 (2026-11-18 대표님 「마이복서 153 에 폴리스집업 팝업창하나띄워죠 사람들이 잘 모르는거같아서
+//    오늘하루동안 뜨지않게하기 버튼도 넣어주고」 — 화면은 components/goods/GoodsPopup) ──
+
+/** 한국 날짜 '2026-11-18' — 기기 시간대와 상관없이. 「오늘 하루 보지 않기」는 이 날이 바뀌면 풀린다 */
+export function kstDateOf(now: Date | number = Date.now()): string {
+  const k = kstParts(now);
+  return `${k.y}-${String(k.m + 1).padStart(2, "0")}-${String(k.d).padStart(2, "0")}`;
+}
+
+/** 「오늘 하루 보지 않기」 기억 칸 — 이 기기(localStorage) · 계정 · 상품 · 한국 날짜마다 */
+export const goodsPopupTodayKey = (slug: string, userId: string, now: Date | number = Date.now()): string =>
+  `153goods:popup:${slug}:${userId}:${kstDateOf(now)}`;
+
+/**
+ * 홈 팝업 시각 — 처음 보기까지(환영 편지 +1초 · 타이틀매치 팝업 1.8초가 먼저 자리 잡게) ·
+ * 다른 창이 떠 있으면 기다리는 간격 · 횟수(약 1분). 시험이 줄여 쓴다.
+ */
+export const GOODS_POPUP_TIMING = { firstCheckMs: 2600, waitMs: 1500, waitTries: 40 };
+
+/** 「닫기」 기억 칸 — 이번에 앱을 연 동안만(sessionStorage) · 다음에 앱을 열면 다시 뜬다 */
+export const goodsPopupSessionKey = (slug: string, userId: string): string => `153goods:popup:${slug}:${userId}:closed`;
+
+/** 이미 신청한 분인가 — 결제 전 · 결제 완료 · 받음이 하나라도 있으면(취소만 있으면 아니다) */
+export const hasActiveGoodsOrder = (orders: ReadonlyArray<Pick<GoodsOrder, "status">> | null | undefined): boolean =>
+  (orders ?? []).some((o) => o.status === "applied" || o.status === "paid" || o.status === "delivered");
+
+/**
+ * 홈 팝업을 띄울까 — 신청을 받는 중(기간 안 · 켜짐 · 선착순이 남음)이고 아직 신청 전일 때만.
+ * 결제 전인 분은 홈 안내 카드가 「○일까지 ○○점 데스크에서 결제」를 알려 준다 — 팝업은 모르는 분께 알리는 것.
+ */
+export const shouldShowGoodsPopup = (
+  c: Pick<GoodsCampaign, "ok" | "open" | "sold_out" | "stock_limit" | "stock_left"> | null | undefined,
+  orders: ReadonlyArray<Pick<GoodsOrder, "status">> | null | undefined,
+): boolean => isAccepting(c) && !hasActiveGoodsOrder(orders);
+
+/** 인쇄 색 이름만 — '흰색 · 진회색' (서버 색 이름 '흰색 인쇄' 에서 ' 인쇄' 를 뗀다) */
+export const printColorsText = (c: Pick<GoodsCampaign, "colors"> | null | undefined): string =>
+  (c?.colors ?? [])
+    .map((x) => x.label.replace(/\s*인쇄$/, "").trim())
+    .filter(Boolean)
+    .join(" · ");

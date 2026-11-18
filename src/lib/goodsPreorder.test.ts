@@ -6,13 +6,19 @@ import {
   ddayLabel,
   deadlineLabel,
   formatPhone,
+  goodsPopupSessionKey,
+  goodsPopupTodayKey,
+  hasActiveGoodsOrder,
   hasGoodsSample,
   isAccepting,
   isSoldOut,
+  kstDateOf,
   listPriceOf,
   matchesQuery,
   nextActions,
+  printColorsText,
   shortBranch,
+  shouldShowGoodsPopup,
   stockLabel,
   summarize,
   supplierText,
@@ -163,5 +169,48 @@ describe("goodsPreorder", () => {
     expect(matchesQuery(o, "fl-48")).toBe(true);
     expect(matchesQuery(o, "12")).toBe(false);
     expect(matchesQuery(o, "김")).toBe(false);
+  });
+
+  describe("홈 팝업 (2026-11-18 대표님 「팝업창하나 · 오늘하루동안 뜨지않게」)", () => {
+    const OPEN = { ...FLEECE_FALLBACK, stock_left: 44, stock_used: 6 };
+
+    it("한국 날짜 — 기기 시간대와 상관없이 한국 자정에 바뀐다", () => {
+      expect(kstDateOf(new Date("2026-11-18T14:59:59Z"))).toBe("2026-11-18"); // 한국 23:59:59
+      expect(kstDateOf(new Date("2026-11-18T15:00:00Z"))).toBe("2026-11-19"); // 한국 00:00
+      expect(kstDateOf(Date.UTC(2026, 0, 4, 3))).toBe("2026-01-04"); // 한 자리 달 · 날도 두 자리
+    });
+
+    it("「오늘 하루 보지 않기」 칸은 계정 · 상품 · 한국 날짜마다, 「닫기」 칸은 날짜 없이", () => {
+      const a = goodsPopupTodayKey("fleece-2026", "u1", new Date("2026-11-18T14:59:59Z"));
+      expect(a).toBe("153goods:popup:fleece-2026:u1:2026-11-18");
+      expect(goodsPopupTodayKey("fleece-2026", "u1", new Date("2026-11-18T15:00:00Z"))).not.toBe(a); // 다음 날엔 다시 뜬다
+      expect(goodsPopupTodayKey("fleece-2026", "u2", new Date("2026-11-18T14:59:59Z"))).not.toBe(a); // 다른 계정은 따로
+      expect(goodsPopupSessionKey("fleece-2026", "u1")).toBe("153goods:popup:fleece-2026:u1:closed");
+    });
+
+    it("신청 받는 중 · 아직 신청 전일 때만 — 취소만 있으면 다시 알린다", () => {
+      expect(shouldShowGoodsPopup(OPEN, [])).toBe(true);
+      expect(shouldShowGoodsPopup(OPEN, undefined)).toBe(true);
+      expect(shouldShowGoodsPopup(OPEN, [order("white", "L", 1, "canceled")])).toBe(true);
+      for (const st of ["applied", "paid", "delivered"] as const) {
+        expect(hasActiveGoodsOrder([order("white", "L", 1, st)])).toBe(true);
+        expect(shouldShowGoodsPopup(OPEN, [order("gray", "M", 1, "canceled"), order("white", "L", 1, st)])).toBe(false);
+      }
+    });
+
+    it("마감 · 꺼짐 · 선착순이 다 차면 안 뜬다", () => {
+      expect(shouldShowGoodsPopup({ ...OPEN, open: false }, [])).toBe(false);
+      expect(shouldShowGoodsPopup({ ...OPEN, ok: false }, [])).toBe(false);
+      expect(shouldShowGoodsPopup({ ...OPEN, stock_left: 0 }, [])).toBe(false);
+      expect(shouldShowGoodsPopup({ ...OPEN, sold_out: true }, [])).toBe(false);
+      expect(shouldShowGoodsPopup(null, [])).toBe(false);
+      expect(shouldShowGoodsPopup({ ...OPEN, stock_limit: null, stock_left: null }, [])).toBe(true); // 제한 없음
+    });
+
+    it("인쇄 색 이름만", () => {
+      expect(printColorsText(FLEECE_FALLBACK)).toBe("흰색 · 진회색");
+      expect(printColorsText({ colors: [] })).toBe("");
+      expect(printColorsText(null)).toBe("");
+    });
   });
 });
