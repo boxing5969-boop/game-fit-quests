@@ -26,6 +26,14 @@
 //   · 오늘 레벨이 오른 날은 「레벨 5 달성!」 + 작은 꽃가루 한 번 · 오늘 온 날은 오늘 칸에 도장 찍히는 움직임 한 번(이 기기)
 //   · 내 카드의 얇은 승급 막대와 같은 숫자라 첫 화면에서는 막대를 끄고(HomePage) 이 카드에 「레벨 지도 ›」를 둔다
 //   계산 · 말은 lib/levelQuest.ts (시험 levelQuest.test.ts)
+//
+// v2 (같은 날 15:22 대표님 「심리적으로 채우고싶은 느낌이 나고 게임처럼 레벨업 하고싶은 욕구가 강해질수있는 디자인으로」):
+//   · 맨 위 리그 막대 — 「화이트 리그 ▰▰▰◧▱▱▱▱▱ 🏆 ›」 이미 쌓은 레벨부터(부여된 진전) · 누르면 레벨 지도
+//   · 주인공 — 1번 남으면 「1번만 더 오면 레벨 5!」 (목표 기울기)
+//   · 수업 도장 게이지 — 굵은 홈에 민트가 차오르고, 빈칸은 움푹 · 마지막 칸 금색 「레벨업」 · 선물이 들썩 (LevelQuestRail)
+//   · 보상 상자 — 「레벨 5 달성 보상」 XP · 챔피언 머니 · 마일리지 + 다음에 배울 기술 · 레벨업한 날 「받았어요」
+//   · 「반복은 천재를 만든다」 + 오늘의 퀘스트 — 오면 바로 받는 것(도장 +1 · 챔피언 머니 +100 · 마일리지), 오면 「받았어요」
+//   실제로 받는 값만 · 못 한 날은 말하지 않는다 (153 감정 설계)
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, CircleHelp, Trophy } from "lucide-react";
@@ -43,15 +51,21 @@ import { missionGuide, titleFlowHero } from "@/lib/nextLevelGuide";
 import type { LevelCardDemo } from "@/lib/nextLevelGuideSample";
 import LevelMissionSection from "@/components/levelUp/LevelMissionSection";
 import { QuestLeagueRoad, QuestStampRail } from "@/components/levelUp/LevelQuestRail";
-import { QuestCheer, QuestReward, useLevelUpBurst, useOncePerDevice } from "@/components/levelUp/LevelQuestParts";
+import { QuestDailyBand, QuestLeagueStrip, QuestRewardBox, useLevelUpBurst, useOncePerDevice } from "@/components/levelUp/LevelQuestParts";
 import {
   cheerMood,
+  dailyQuest,
   kstDay,
+  lastStampTag,
+  leagueBars,
   leagueRoad,
+  levelFill,
   leveledUpToday,
   questCheerLine,
   questHero,
+  questNear,
   questReward,
+  questSkill,
   questStamps,
   usesStamps,
   type QuestHero,
@@ -95,6 +109,11 @@ interface Props {
    * 미션 영상 목록만 그 레벨의 실제 미션을 읽는다 (lib/nextLevelGuideSample.ts)
    */
   demo?: LevelCardDemo | null;
+  /**
+   * 레벨 이름 찾기 — 보상 상자 맨 아래 「새 기술 · 안정적인 원투」 (홈 레벨 퀘스트 v2). 레벨 데이터(allLevelsData)를 이미 읽는
+   * 화면(홈)이 넘긴다 — 이 카드를 쓰는 다른 화면에 큰 레벨 데이터를 끌어오지 않게. 없으면 그 줄 없이
+   */
+  levelTitle?: ((league: string, level: number) => string | null | undefined) | null;
 }
 
 const HERO_TONE = { reward: "text-reward", pending: "text-status-pending", plain: "text-foreground" } as const;
@@ -106,6 +125,7 @@ const LevelUpRequestCard = ({
   missions = false,
   levelGoal = null,
   demo = null,
+  levelTitle = null,
 }: Props) => {
   const { user, progress, profile } = useAuth();
   const navigate = useNavigate();
@@ -297,15 +317,17 @@ const LevelUpRequestCard = ({
       </button>
     ) : null;
 
-  // ─── 홈 레벨 퀘스트 (missions) — 이번 목표 · 수업 도장 길 · 응원 · 보상 (lib/levelQuest.ts) ───
+  // ─── 홈 레벨 퀘스트 (missions) — 리그 막대 · 이번 목표 · 수업 도장 게이지 · 보상 상자 · 오늘의 퀘스트 (lib/levelQuest.ts) ───
   const showStamps = usesStamps(league, level);
   const stamps = missions && showStamps
     ? questStamps({ league, level, req, progress: cycle.progress, progressFloor: cur, attendedToday, leveledUpToday: upToday })
     : [];
   const filledStamps = stamps.filter((s) => s.state === "done" || s.state === "today").length;
+  const stampedToday = stamps.some((s) => s.state === "today");
   const goalLabel = isBoss ? nextName : `레벨 ${globalLevel + 1}`;
   // 오늘 올라온 곳 — 리그 첫 레벨이면 리그 이름(타이틀매치 통과), 아니면 레벨
   const reachedLabel = level === 1 && globalLevel > 1 ? `${RANK_LABELS[league] ?? ""} 리그` : `레벨 ${globalLevel}`;
+  const newLeagueDay = upToday && level === 1 && globalLevel > 1;
   const questHeroData: QuestHero = upToday
     ? questHero({ nextLabel: goalLabel, reachedLabel, visitsLeft, daysLeft, meets: cycle.meets, needsReview, pending: isPending, revision: isRevision, leveledUpToday: true })
     : flow
@@ -322,33 +344,52 @@ const LevelUpRequestCard = ({
         cheerMood({ globalLevel, filled: filledStamps, attendedToday, leveledUpToday: upToday, meets: cycle.meets, needsReview, pending: isPending, revision: isRevision, visitsLeft, daysLeft }),
         { today, reviewer: authorityLabel(levelupRules, league, level), minDays },
       );
-  const reward = questReward({ boss: isBoss, approval: approvalOnly, nextLeague: nextName, mileage: mileageRules ?? null });
+  // 보상 상자 — 레벨업한 날은 오늘 받은 보상(리그가 바뀐 날은 다음 레벨 보상), 그 밖은 다음 목표 보상
+  const reward =
+    upToday && !newLeagueDay
+      ? questReward({ boss: false, approval: approvalOnly, nextLeague: nextName, mileage: mileageRules ?? null, goal: reachedLabel, received: true })
+      : questReward({ boss: isBoss, approval: approvalOnly, nextLeague: nextName, mileage: mileageRules ?? null, goal: goalLabel });
+  const skill = questSkill({ league, level, leveledUpToday: upToday, title: levelTitle });
+  // 리그 막대 — 지나온 레벨 가득 · 지금 레벨은 이번 레벨 진행만큼 (레벨 10 리그 길에서는 같은 그림이라 막대 없이)
+  const bars = missions && showStamps ? leagueBars(level, upToday ? 0 : levelFill({ progress: cycle.progress, progressFloor: cur, req, meets: cycle.meets })) : null;
+  // 게이지 — 1번 남으면 선물이 들썩 · 다 모으면(심사 대기 · 보완 요청이 아니면) 마지막 홈까지 차고 선물이 둥실
+  const near = showStamps && !upToday && questNear({ visitsLeft, meets: cycle.meets, pending: isPending, revision: isRevision });
+  const ready = showStamps && cycle.meets && !upToday && !isPending && !isRevision;
+  const lastAria = lastStampTag(needsReview);
+  // 오늘의 퀘스트 — 오면 바로 받는 것 (실제로 받는 값만 · 오면 「받았어요」)
+  const quest = missions
+    ? dailyQuest({
+        attendedToday,
+        leveledUpToday: upToday,
+        stamps: showStamps,
+        stampedToday,
+        visitsLeft,
+        meets: cycle.meets,
+        needsReview,
+        pending: isPending,
+        mileage: mileageRules ? { enabled: mileageRules.enabled, attendance: mileageRules.attendance } : null,
+      })
+    : null;
+  // 오늘 온 날 · 레벨업한 날 움직임 — 이 기기에서 한 번 (예시는 열 때마다)
+  const celebrateToday = demo ? attendedToday && !upToday : onceStamp;
+  const celebrateUp = demo ? upToday : onceBurst;
 
   const questBody = (
     <>
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-label font-bold text-muted-foreground">이번 목표</p>
-        <div className="-my-2 -mr-2 flex items-center">
-          {/* 내 카드 승급 막대(누르면 레벨 지도)를 첫 화면에서 끈 대신 — 같은 곳으로 */}
-          <button
-            type="button"
-            onClick={() => navigate("/rank-up")}
-            className="flex h-10 items-center gap-0.5 rounded-full px-2 text-label font-bold text-muted-foreground active:bg-muted"
-          >
-            레벨 지도 <ChevronRight className="h-4 w-4" aria-hidden />
-          </button>
-          <button
-            type="button"
-            onClick={() => setRuleOpen((v) => !v)}
-            aria-expanded={ruleOpen}
-            aria-label="레벨업 규칙 보기"
-            className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground active:bg-muted"
-          >
-            <CircleHelp className="h-5 w-5" />
-          </button>
-        </div>
+      <div className="flex items-center justify-between gap-1">
+        {/* 리그 막대 — 내 카드 승급 막대(누르면 레벨 지도)를 첫 화면에서 끈 대신, 같은 곳으로 */}
+        <QuestLeagueStrip league={league} bars={bars} onOpen={() => navigate("/rank-up")} />
+        <button
+          type="button"
+          onClick={() => setRuleOpen((v) => !v)}
+          aria-expanded={ruleOpen}
+          aria-label="레벨업 규칙 보기"
+          className="-my-2 -mr-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted-foreground active:bg-muted"
+        >
+          <CircleHelp className="h-5 w-5" />
+        </button>
       </div>
-      <p className={`mt-0.5 break-keep text-title leading-tight ${HERO_TONE[questHeroData.tone]}`}>
+      <p className={`mt-1.5 break-keep text-title leading-tight ${HERO_TONE[questHeroData.tone]}`}>
         {questHeroData.lead ? (
           <>
             <span className="text-primary">{questHeroData.lead}</span>
@@ -376,21 +417,23 @@ const LevelUpRequestCard = ({
             league={league}
             startLabel={`레벨 ${globalLevel}`}
             stamps={stamps}
-            goalNumber={isBoss ? null : globalLevel + 1}
-            goalLabel={isBoss ? nextName : "레벨업"}
-            goalReady={cycle.meets && !upToday}
+            goalKind={isBoss ? "league" : "level"}
+            goalLabel={goalLabel}
+            lastTag={{ tag: lastAria.replace(/\s*도장$/, ""), aria: lastAria }}
+            near={near}
+            ready={ready}
             invite={!attendedToday}
-            stampIn={demo ? attendedToday && !upToday : onceStamp}
+            celebrate={celebrateToday}
           />
         ) : (
           <QuestLeagueRoad road={leagueRoad(league)} />
         )}
       </div>
 
-      <div className="mt-2">
-        <QuestCheer line={cheerLine} />
+      <QuestRewardBox reward={reward} skill={skill} celebrate={celebrateUp} />
+      <div className="mt-3">
+        <QuestDailyBand line={cheerLine} quest={quest} celebrate={celebrateToday} />
       </div>
-      <QuestReward reward={reward} />
 
       {guide && <LevelMissionSection guide={guide} videos={missionVideos} onDone={markDone} />}
       {titleButtonEl}

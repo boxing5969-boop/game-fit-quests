@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
+  ATTEND_MONEY,
   CHEER_HEADLINE,
   CHEER_LINES,
   LEAGUE_VISITS,
@@ -8,19 +9,26 @@ import {
   LEVELUP_MONEY_AUTO,
   LEVELUP_XP,
   cheerMood,
+  dailyQuest,
   dayNumber,
   kstDay,
+  lastStampTag,
+  leagueBars,
   leagueRoad,
   levelDayOffset,
+  levelFill,
   levelLabel,
   leveledUpToday,
   nextLeagueLabel,
   questCheerLine,
   questHero,
+  questNear,
   questReward,
+  questSkill,
   questStamps,
   usesStamps,
   type CheerMoodInput,
+  type DailyQuestInput,
   type QuestHeroInput,
 } from "./levelQuest";
 
@@ -69,6 +77,10 @@ describe("153 수업 일차 — 레벨마다 이어서 센다", () => {
     const approve = latest("approve_level_review");
     expect(approve).toContain(`values (_member_id, ${LEVELUP_XP}, '레벨업 승인 보상')`);
     expect(approve).toContain(`grant_gems(_member_id, ${LEVELUP_MONEY_APPROVAL}, '레벨업 승인 보상')`);
+    // 오늘의 퀘스트 — 체육관 출석 챔피언 머니 (한국 날짜 하루 한 번)
+    const attend = latest("attendance_base_xp_trg");
+    expect(attend).toContain(`grant_gems(new.user_id, ${ATTEND_MONEY}, '체육관 출석 보상')`);
+    expect(attend).toContain("at time zone 'Asia/Seoul'");
   });
 });
 
@@ -167,6 +179,12 @@ describe("주인공 한 줄", () => {
     expect(questHero({ ...base, visitsLeft: 0 }).text).toBe("거의 다 왔어요");
   });
 
+  it("남은 출석이 1번이면 「1번만 … !」 — 목표가 눈앞일 때 가장 힘이 난다 (v2)", () => {
+    expect(questHero({ ...base, visitsLeft: 1 })).toEqual({ text: "1번만 더 오면 레벨 5!", lead: "1번만", rest: " 더 오면 레벨 5!", tone: "plain" });
+    expect(questHero({ ...base, visitsLeft: 1, needsReview: true }).text).toBe("1번만 더 오면 승급 심사!");
+    expect(questHero({ ...base, visitsLeft: 7 }).text).toBe("7번 더 오면 레벨 5");
+  });
+
   it("도장을 다 모았으면 — 자동 승급은 다음 출석 때 · 심사 리그는 심사", () => {
     expect(questHero({ ...base, visitsLeft: 0, meets: true })).toMatchObject({ text: "다음 출석 때 레벨 5!", tone: "reward", lead: null });
     expect(questHero({ ...base, visitsLeft: 0, meets: true, needsReview: true }).text).toBe("승급 심사가 열렸어요");
@@ -243,19 +261,22 @@ describe("응원 — 「반복은 천재를 만든다」 + 그날 한 줄", () =
 describe("레벨업 보상", () => {
   const mileage = { enabled: true, level_up: 300, title_match: 2500 };
 
-  it("레벨 1~9 자동 승급 — XP · 챔피언 머니 · 마일리지(운영 설정)", () => {
-    expect(questReward({ boss: false, approval: false, nextLeague: "블루 리그", mileage })).toEqual({
-      label: "레벨업하면 받아요",
+  it("레벨 1~9 자동 승급 — 「레벨 5 달성 보상」 XP · 챔피언 머니 · 마일리지(운영 설정)", () => {
+    expect(questReward({ boss: false, approval: false, nextLeague: "블루 리그", mileage, goal: "레벨 5" })).toEqual({
+      label: "레벨 5 달성 보상",
+      received: false,
       items: [
-        { name: "XP", value: "+50" },
-        { name: "챔피언 머니", value: "+500" },
-        { name: "마일리지", value: "+300" },
+        { key: "xp", name: "XP", value: "+50" },
+        { key: "money", name: "챔피언 머니", value: "+500" },
+        { key: "mileage", name: "마일리지", value: "+300" },
       ],
     });
+    // 이름을 모르면 「레벨업 보상」
+    expect(questReward({ boss: false, approval: false, nextLeague: "블루 리그", mileage }).label).toBe("레벨업 보상");
   });
 
   it("코치 승인 리그(레드 · 블랙)는 챔피언 머니 +1,000", () => {
-    expect(questReward({ boss: false, approval: true, nextLeague: "블랙 리그", mileage }).items[1]).toEqual({ name: "챔피언 머니", value: "+1,000" });
+    expect(questReward({ boss: false, approval: true, nextLeague: "블랙 리그", mileage }).items[1]).toEqual({ key: "money", name: "챔피언 머니", value: "+1,000" });
   });
 
   it("마일리지를 끄거나 못 읽었으면 마일리지 칸 없이", () => {
@@ -264,15 +285,122 @@ describe("레벨업 보상", () => {
     expect(questReward({ boss: false, approval: false, nextLeague: "블루 리그", mileage: { ...mileage, level_up: 0 } }).items).toHaveLength(2);
   });
 
-  it("레벨 10 — 다음 리그 · 타이틀매치 마일리지", () => {
+  it("레벨 10 — 「타이틀매치 통과 보상」 다음 리그 · 타이틀매치 마일리지", () => {
     expect(questReward({ boss: true, approval: false, nextLeague: "블루 리그", mileage })).toEqual({
-      label: "타이틀매치를 넘으면",
+      label: "타이틀매치 통과 보상",
+      received: false,
       items: [
-        { name: "승급", value: "블루 리그" },
-        { name: "마일리지", value: "+2,500" },
+        { key: "league", name: "승급", value: "블루 리그" },
+        { key: "mileage", name: "마일리지", value: "+2,500" },
       ],
     });
-    expect(questReward({ boss: true, approval: true, nextLeague: "마스터 로드", mileage: null }).items).toEqual([{ name: "승급", value: "마스터 로드" }]);
+    expect(questReward({ boss: true, approval: true, nextLeague: "마스터 로드", mileage: null }).items).toEqual([{ key: "league", name: "승급", value: "마스터 로드" }]);
+  });
+
+  it("레벨업한 날 — 오늘 받은 보상 (레벨 10에 막 오른 날도 레벨업 보상)", () => {
+    const r = questReward({ boss: true, approval: false, nextLeague: "블루 리그", mileage, goal: "레벨 10", received: true });
+    expect(r).toMatchObject({ label: "레벨 10 달성 보상", received: true });
+    expect(r.items.map((it) => it.key)).toEqual(["xp", "money", "mileage"]);
+  });
+});
+
+describe("v2 — 리그 막대 · 목표가 눈앞 · 마지막 도장", () => {
+  it("이번 레벨 진행 0 ~ 1 — 진행도 ÷ 필요 출석 · 다 모았으면 1", () => {
+    expect(levelFill({ progress: 1, progressFloor: 1, req: 3, meets: false })).toBeCloseTo(1 / 3);
+    expect(levelFill({ progress: 2.25, progressFloor: 2, req: 3, meets: false })).toBeCloseTo(0.75);
+    expect(levelFill({ progress: null, progressFloor: 2, req: 5, meets: false })).toBeCloseTo(0.4);
+    expect(levelFill({ progress: 5.5, progressFloor: 5, req: 3, meets: true })).toBe(1);
+    expect(levelFill({ progress: Number.NaN, progressFloor: Number.NaN, req: 0, meets: false })).toBe(0);
+  });
+
+  it("리그 막대 9칸 — 지나온 레벨 1 · 지금 레벨은 진행만큼 · 앞 레벨 0 (레벨 10 = 모두 참)", () => {
+    expect(leagueBars(4, 1 / 3)).toEqual([1, 1, 1, 0.33, 0, 0, 0, 0, 0]);
+    expect(leagueBars(1, 0)).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    expect(leagueBars(10, 0)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 1]);
+    expect(leagueBars(9, 2)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 1]);
+  });
+
+  it("목표가 눈앞 = 남은 출석 1번 (다 모음 · 심사 대기 · 보완 요청은 아님) · 마지막 칸 이름", () => {
+    const base = { visitsLeft: 1, meets: false, pending: false, revision: false };
+    expect(questNear(base)).toBe(true);
+    expect(questNear({ ...base, visitsLeft: 2 })).toBe(false);
+    expect(questNear({ ...base, meets: true })).toBe(false);
+    expect(questNear({ ...base, pending: true })).toBe(false);
+    expect(questNear({ ...base, revision: true })).toBe(false);
+    expect(lastStampTag(false)).toBe("레벨업 도장");
+    expect(lastStampTag(true)).toBe("마지막 도장");
+  });
+});
+
+describe("v2 — 오늘의 퀘스트 (실제로 받는 값만)", () => {
+  const mileage = { enabled: true, attendance: 300 };
+  const base: DailyQuestInput = {
+    attendedToday: false,
+    leveledUpToday: false,
+    stamps: true,
+    stampedToday: false,
+    visitsLeft: 2,
+    meets: false,
+    needsReview: false,
+    pending: false,
+    mileage,
+  };
+  const values = (q: ReturnType<typeof dailyQuest>) => q.items.map((it) => `${it.name} ${it.value}`);
+
+  it("오기 전 — 도장 +1 · 챔피언 머니 +100 · 마일리지(운영 설정)", () => {
+    const q = dailyQuest(base);
+    expect(q).toMatchObject({ done: false, title: "오늘의 퀘스트", note: "오면 받아요" });
+    expect(values(q)).toEqual(["도장 +1", "챔피언 머니 +100", "마일리지 +300"]);
+  });
+
+  it("도장을 다 모았으면 — 출석 리그는 「레벨업!」 · 심사 리그 · 심사 대기 · 레벨 10은 도장 칸 없이", () => {
+    expect(values(dailyQuest({ ...base, visitsLeft: 0, meets: true }))[0]).toBe("레벨업 레벨업!");
+    expect(values(dailyQuest({ ...base, visitsLeft: 0, meets: true, needsReview: true }))).toEqual(["챔피언 머니 +100", "마일리지 +300"]);
+    expect(values(dailyQuest({ ...base, pending: true }))).toEqual(["챔피언 머니 +100", "마일리지 +300"]);
+    expect(values(dailyQuest({ ...base, stamps: false }))).toEqual(["챔피언 머니 +100", "마일리지 +300"]);
+  });
+
+  it("오늘 왔으면 「받았어요」 — 오늘 칸이 찍힌 날 도장 +1 · 레벨업한 날 레벨업", () => {
+    const q = dailyQuest({ ...base, attendedToday: true, stampedToday: true });
+    expect(q).toMatchObject({ done: true, title: "오늘의 퀘스트 완료!", note: "받았어요" });
+    expect(values(q)).toEqual(["도장 +1", "챔피언 머니 +100", "마일리지 +300"]);
+    expect(values(dailyQuest({ ...base, attendedToday: true, leveledUpToday: true }))[0]).toBe("레벨업 레벨업!");
+    // 칸이 늘지 않은 날(심사 대기 등)은 도장 없이
+    expect(values(dailyQuest({ ...base, attendedToday: true, pending: true }))).toEqual(["챔피언 머니 +100", "마일리지 +300"]);
+  });
+
+  it("마일리지를 끄거나 못 읽었으면 마일리지 칸 없이", () => {
+    expect(values(dailyQuest({ ...base, mileage: null }))).toEqual(["도장 +1", "챔피언 머니 +100"]);
+    expect(values(dailyQuest({ ...base, mileage: { enabled: false, attendance: 300 } }))).toHaveLength(2);
+    expect(values(dailyQuest({ ...base, mileage: { enabled: true, attendance: 0 } }))).toHaveLength(2);
+  });
+});
+
+describe("v2 — 다음에 배울 것 한 줄", () => {
+  const titles: Record<string, string> = {
+    "white-5": "안정적인 원투",
+    "white-6": "리드 피벗과 연결 드릴",
+    "blue-1": "움직이며 자세 유지",
+    "black-1": "자세 설명하기",
+    "black-3": "강도 조절과 안전",
+  };
+  const title = (lg: string, lv: number) => titles[`${lg}-${lv}`] ?? null;
+
+  it("레벨 1~8 = 새 기술 · 레벨 9 = 타이틀매치 도전 · 레벨 10 = 다음 리그 첫 기술", () => {
+    expect(questSkill({ league: "white", level: 4, leveledUpToday: false, title })).toEqual({ label: "새 기술", value: "안정적인 원투" });
+    expect(questSkill({ league: "white", level: 9, leveledUpToday: false, title })).toEqual({ label: "다음 단계", value: "타이틀매치 도전" });
+    expect(questSkill({ league: "white", level: 10, leveledUpToday: false, title })).toEqual({ label: "블루 리그 첫 기술", value: "움직이며 자세 유지" });
+    expect(questSkill({ league: "red", level: 10, leveledUpToday: false, title })).toEqual({ label: "블랙 리그 첫 과제", value: "자세 설명하기" });
+    expect(questSkill({ league: "black", level: 2, leveledUpToday: false, title })).toEqual({ label: "새 과제", value: "강도 조절과 안전" });
+    expect(questSkill({ league: "black", level: 10, leveledUpToday: false, title })).toBeNull();
+  });
+
+  it("레벨업한 날 = 오늘부터 배워요 (레벨 10에 막 오른 날은 타이틀매치) · 이름을 모르면 줄 없이", () => {
+    expect(questSkill({ league: "white", level: 5, leveledUpToday: true, title })).toEqual({ label: "오늘부터 배워요", value: "안정적인 원투" });
+    expect(questSkill({ league: "white", level: 10, leveledUpToday: true, title })).toEqual({ label: "다음 단계", value: "타이틀매치 도전" });
+    expect(questSkill({ league: "white", level: 7, leveledUpToday: false, title })).toBeNull();
+    expect(questSkill({ league: "white", level: 4, leveledUpToday: false, title: null })).toBeNull();
+    expect(questSkill({ league: "white", level: 4, leveledUpToday: false, title: () => "  " })).toBeNull();
   });
 });
 

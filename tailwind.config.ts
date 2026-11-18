@@ -314,6 +314,29 @@ export default {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-3px)" },
         },
+        // 홈 레벨 퀘스트 v2 (2026-11-18 「채우고싶은 느낌 · 게임처럼」) — 홈이 차오름 · +1 떠오름 · 톡 · 선물 들썩
+        "quest-fill": {
+          "0%": { transform: "scaleX(0)" },
+          "100%": { transform: "scaleX(1)" },
+        },
+        "quest-float": {
+          "0%": { opacity: "0", transform: "translateY(6px) scale(0.7)" },
+          "18%": { opacity: "1", transform: "translateY(-4px) scale(1.08)" },
+          "65%": { opacity: "1", transform: "translateY(-14px) scale(1)" },
+          "100%": { opacity: "0", transform: "translateY(-24px) scale(0.95)" },
+        },
+        "quest-pop": {
+          "0%": { opacity: "0", transform: "scale(0.6)" },
+          "60%": { opacity: "1", transform: "scale(1.08)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        "quest-wiggle": {
+          "0%, 64%, 100%": { transform: "rotate(0deg) scale(1)" },
+          "70%": { transform: "rotate(-11deg) scale(1.06)" },
+          "76%": { transform: "rotate(9deg) scale(1.06)" },
+          "82%": { transform: "rotate(-6deg) scale(1.03)" },
+          "88%": { transform: "rotate(3deg) scale(1)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -324,8 +347,12 @@ export default {
         sheen: "sheen 4s linear infinite",
         "menu-jiggle": "menu-jiggle 0.28s ease-in-out infinite",
         "quest-halo": "quest-halo 2.4s cubic-bezier(0.22, 1, 0.36, 1) infinite",
-        "quest-stamp": "quest-stamp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.35s both",
+        "quest-stamp": "quest-stamp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.55s both",
         "quest-bob": "quest-bob 1.8s ease-in-out infinite",
+        "quest-fill": "quest-fill 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both",
+        "quest-float": "quest-float 1.5s ease-out 1.05s both",
+        "quest-pop": "quest-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both",
+        "quest-wiggle": "quest-wiggle 2.6s ease-in-out infinite",
       },
     },
   },
