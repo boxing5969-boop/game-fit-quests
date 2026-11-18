@@ -36,6 +36,8 @@ interface VideoPlayerProps {
   description?: string;
   /** 영상 칸 비율(가로 ÷ 세로) — 없으면 16:9 · 153 PB 시범은 정사각(1) */
   aspect?: number;
+  /** 2컷 동작 그림 — 영상 바로 아래 · 설명 바로 위 (2026-11-18 영상으로 배우기 · data/learnIllust) · 못 불러오면 자리째 감춤 */
+  illustration?: string | null;
 }
 
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -56,6 +58,7 @@ const VideoPlayer = ({
   initialSpeed = 1,
   description,
   aspect,
+  illustration,
 }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   // 보일 때만 그려지는 창 — 휴대폰 뒤로가기가 영상을 닫는다(화면을 떠나지 않게, 2026-11-17)
@@ -69,6 +72,9 @@ const VideoPlayer = ({
     versions ? Math.min(Math.max(0, Math.floor(initialVariant) || 0), versions.length - 1) : 0,
   );
   const [mirrored, setMirrored] = useState(false);
+  // 동작 그림을 못 불러오면 그 주소만 감춘다 (다른 그림이 오면 다시 그린다)
+  const [illustFailed, setIllustFailed] = useState<string | null>(null);
+  const illust = illustration && illustration !== illustFailed ? illustration : null;
   // '이 장면 영상으로 보기' — 처음 연 영상에서 한 번만 그 초로 간다
   const seekRef = useRef<number | null>(typeof startAt === "number" && startAt > 0 ? startAt : null);
   const current = versions ? versions[Math.min(versionIdx, versions.length - 1)] : null;
@@ -241,6 +247,16 @@ const VideoPlayer = ({
 
       {/* Key Points + CTA */}
       <div className="flex-1 overflow-y-auto px-4 py-4">
+        {/* 2컷 동작 그림 — 영상 바로 아래 · 설명 바로 위 (2026-11-18) */}
+        {illust && (
+          <img
+            src={illust}
+            alt={`${title} 동작 그림`}
+            loading="lazy"
+            onError={() => setIllustFailed(illust)}
+            className="mb-4 w-full rounded-2xl border border-border bg-card"
+          />
+        )}
         {description && <p className="mb-4 whitespace-pre-line text-body leading-relaxed text-foreground">{description}</p>}
         {keyPoints.filter(Boolean).length > 0 && (
           <div className="mb-4">
