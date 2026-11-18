@@ -34,6 +34,7 @@ export const APP_UPDATES: readonly AppUpdate[] = [
     title: "영상으로 배우기 — 동작마다 2컷 그림",
     lines: [
       "동작 카드 영상 바로 아래에 ① ② 순서 그림이 붙었어요",
+      "레벨 미션 · 워밍업 영상과 153 PB 8종목에도 같은 그림이 있어요",
       "영상을 보고, 그림으로 순서를 짚고, 설명을 읽어요",
     ],
     link: { to: "/missions?learn=1", label: "영상으로 배우기" },
