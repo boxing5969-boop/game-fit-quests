@@ -10,10 +10,11 @@
 --     · 이 지점에서 켠 기능: 운동 약속(+ 다시 시작 보너스 · 코치 한마디) · 153 마켓(+ 상품 수) · 날씨 도장
 --   화면은 숫자가 작으면(회원 10명 아래 등) 그리지 않는다(src/lib/appValueReel.ts) — 여기는 센 값을 그대로.
 --   새 함수 하나 — 표 · 다른 함수 · 권한은 그대로. 줄을 지우는 문장이 없다.
+--   volatile(다른 board_* 와 같이) — _board_branch_ok 가 대기 열쇠로 처음 연 TV 의 열쇠를 저장한다.
+--   stable 이면 API 가 읽기 전용으로 불러, 그 TV 의 첫 부름이 이 함수일 때 막힌다.
 create or replace function public.board_app_pulse(p_branch text, p_key text default null)
 returns jsonb
 language plpgsql
-stable
 security definer
 set search_path to 'public', 'pg_temp'
 as $function$
