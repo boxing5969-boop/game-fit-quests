@@ -50,7 +50,14 @@ export interface AwardsData {
   endDate: string | null;
   items: { category: AwardCategory; rows: AwardRow[] }[];
   stats: { membersTrained: number; levelUps: number; earnedPoints: number; membersWithPoints: number } | null;
-  rules: { enabled: boolean; attendance: number | null; levelUp: number | null } | null;
+  /** 마일리지 규칙 — 2026-11-18 부터 타이틀매치 · 153 레코드도(가치 전달 화면이 board_app_pulse 가 없을 때 쓴다) */
+  rules: {
+    enabled: boolean;
+    attendance: number | null;
+    levelUp: number | null;
+    titleMatch: number | null;
+    record: number | null;
+  } | null;
 }
 
 const num = (v: unknown): number | null => {
@@ -120,7 +127,15 @@ export function normalizeAwards(raw: unknown): AwardsData | null {
           membersWithPoints: Math.max(0, num(s.members_with_points) ?? 0),
         }
       : null,
-    rules: rl ? { enabled: rl.enabled === true, attendance: num(rl.attendance), levelUp: num(rl.level_up) } : null,
+    rules: rl
+      ? {
+          enabled: rl.enabled === true,
+          attendance: num(rl.attendance),
+          levelUp: num(rl.level_up),
+          titleMatch: num(rl.title_match),
+          record: num(rl.record),
+        }
+      : null,
   };
 }
 

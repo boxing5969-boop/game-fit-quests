@@ -1382,7 +1382,9 @@ const LiveBoardPage = () => {
         <div className="flex flex-col min-w-0 overflow-hidden flex-1">
           {/* 2번 화면(TV2): 스포트라이트 대신 런칭 이벤트 보드 — ① 출석왕 ② 앱 활동왕 ③ 닉네임 좋아요왕 (2026-09-23 대표님 지시).
               아래 띠(오늘 다녀간 회원·COACHING STAFF·명예의 전당)는 그대로 둔다. 오른쪽 패널은 2026-11-12 부터 플리스 안내 1/3(LiveBoardGoodsCard) — 활동 중 · QR 없음 · 사전예약이 끝나면 「오늘의 1분」(LiveBoardSideSlot).
-              2026-11-17 런칭 이벤트가 끝나 왼쪽은 「수상자 축하」(LaunchAwardsBoard — 캐릭터 없이). */}
+              2026-11-17 런칭 이벤트가 끝나 왼쪽은 「수상자 축하」(LaunchAwardsBoard — 캐릭터 없이).
+              2026-11-18 대표님 「시상식은 한줄로 작게 · 마이복서153 가치전달 영상을 1분 간격으로」 → 맨 위 수상자 한 줄 +
+              「마이복서153 가치 전달」(AppValueReel — 1분마다 장면, 숫자는 board_app_pulse). 이벤트가 다시 열리면 이벤트 보드. */}
           {only2 && branchName && (
             <div className="flex-1 min-h-0 overflow-hidden">
               <LaunchEventBoard branchName={branchName} />

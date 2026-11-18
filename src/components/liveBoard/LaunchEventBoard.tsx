@@ -17,14 +17,22 @@
  *
  * 2026-11-17 「수상자 축하」: 이벤트가 끝났으면 board_launch_awards(TV 열쇠)를 같이 읽어 LaunchAwardsBoard 한 장으로.
  * 그 함수가 없거나(옛 DB) 막히면(열쇠) 아래 '최종 결과' 보드 그대로 — 다음 이벤트가 열리면 저절로 예전 보드.
+ *
+ * 2026-11-18 대표님 「현재 시상식 있잖아 그건 한줄로 작게 만들어주고 마이복서153 가치전달하는 영상을 돌리자 1분 간격으로」:
+ *   이벤트가 끝났으면 맨 위 수상자 한 줄(LaunchAwardsStrip) + 그 아래 「마이복서153 가치 전달」(AppValueReel, 1분마다 장면).
+ *   수상자를 못 읽으면(함수 없음 · 열쇠) 한 줄 없이 가치 전달만 · 이벤트 정보를 못 읽어도 가치 전달(TV 가 비면 안 된다).
+ *   새 이벤트가 열리면(upcoming · active) 저절로 예전 이벤트 보드. 첫 응답 전엔 비워 둔다(이벤트 보드 ↔ 가치 전달 깜빡임 막기).
+ *   11/17 「수상자 축하」 한 장(LaunchAwardsBoard)은 지우지 않고 둔다(다음 시상 때 다시 쓸 수 있게).
  */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Crown, Heart, Smartphone, CalendarCheck, Trophy } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { readBoardKey } from "@/lib/boardKey";
-import { awardsView, normalizeAwards, type AwardsView } from "@/lib/launchAwards";
-import LaunchAwardsBoard from "@/components/liveBoard/LaunchAwardsBoard";
+import { awardsView, normalizeAwards, type AwardsData } from "@/lib/launchAwards";
+import { awardsStripOf } from "@/lib/appValueReel";
+import AppValueReel from "@/components/liveBoard/AppValueReel";
+import LaunchAwardsStrip from "@/components/liveBoard/LaunchAwardsStrip";
 import { LAUNCH_EVENT_CATEGORIES, KING_META, fmtKstDate, type KingCategory, type LaunchEventStatus } from "@/services/king153Service";
 
 interface TvRow { rank: number; display_name: string; score: number | string }
@@ -56,8 +64,10 @@ interface Props {
 const LaunchEventBoard = ({ branchName }: Props) => {
   const [data, setData] = useState<TvBoard | null>(null);
   const [stale, setStale] = useState(false);
-  /** 끝난 이벤트의 수상자 축하 — 못 읽으면 마지막 값을 그대로 둔다(처음부터 못 읽으면 예전 보드) */
-  const [awards, setAwards] = useState<AwardsView | null>(null);
+  /** 첫 응답(성공이든 실패든)이 왔나 — 그 전엔 아무것도 그리지 않는다 */
+  const [loaded, setLoaded] = useState(false);
+  /** 끝난 이벤트의 수상자 — 못 읽으면 마지막 값을 그대로 둔다(처음부터 못 읽으면 한 줄 없이) */
+  const [awardsData, setAwardsData] = useState<AwardsData | null>(null);
 
   useEffect(() => {
     if (!branchName) return;
@@ -67,7 +77,7 @@ const LaunchEventBoard = ({ branchName }: Props) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: res, error } = await (supabase as any).rpc("get_launch_event_board", { p_branch: branchName, p_limit: 5 });
         if (cancelled) return;
-        if (error || !res) { setStale(true); return; }
+        if (error || !res) { setStale(true); setLoaded(true); return; }
         setData(res as TvBoard);
         setStale(false);
         if ((res as TvBoard).status === "ended") {
@@ -76,12 +86,16 @@ const LaunchEventBoard = ({ branchName }: Props) => {
             p_branch: branchName,
             p_key: readBoardKey(branchName),
           });
-          if (!cancelled && !awErr) setAwards(awardsView(normalizeAwards(aw)));
+          if (!cancelled && !awErr) setAwardsData(normalizeAwards(aw));
         } else {
-          setAwards(null);
+          setAwardsData(null);
         }
+        if (!cancelled) setLoaded(true);
       } catch {
-        if (!cancelled) setStale(true);
+        if (!cancelled) {
+          setStale(true);
+          setLoaded(true);
+        }
       }
     };
     load();
@@ -108,7 +122,21 @@ const LaunchEventBoard = ({ branchName }: Props) => {
         ? `${fmtKstDate(data.start_date)} ~ ${fmtKstDate(data.end_date)}`
         : `${fmtKstDate(data.start_date)}부터 진행 중`;
 
-  if (ended && awards) return <LaunchAwardsBoard view={awards} />;
+  const awards = useMemo(() => awardsView(awardsData), [awardsData]);
+
+  if (!loaded) return null;
+  // 끝난 이벤트(또는 이벤트 정보를 못 읽음) → 수상자 한 줄 + 마이복서153 가치 전달
+  if (!data || ended) {
+    const strip = ended ? awardsStripOf(awards) : null;
+    return (
+      <section aria-label="마이복서153 가치 전달" className="flex h-full min-h-0 flex-col gap-3 px-6 py-3">
+        {strip && <LaunchAwardsStrip strip={strip} />}
+        <div className="min-h-0 flex-1">
+          <AppValueReel branchName={branchName} awardsRules={awardsData?.rules ?? null} />
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section aria-label="153 마이복서 런칭 이벤트" className="flex h-full min-h-0 flex-col px-6 py-4">
