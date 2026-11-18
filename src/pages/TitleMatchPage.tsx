@@ -18,6 +18,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Check, CheckCircle2, ChevronLeft, ChevronRight, Clapperboard, Play, RotateCcw } from "lucide-react";
 import { AppPage, PageHeader } from "@/components/ui/rankingup";
 import VideoPlayer from "@/components/VideoPlayer";
+import { learnIllustOf } from "@/data/learnIllust";
 import { useAuth } from "@/contexts/AuthContext";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { parseVideoTitle, useWatchedVideos, youtubeId, youtubeThumb } from "@/hooks/useLevelVideos";
@@ -431,6 +432,7 @@ const TitleMatchPage = () => {
             variants={playing.variants.map((x) => ({ label: x.label, videoUrl: playableUrl(x.videoUrl), posterUrl: x.posterUrl }))}
             title={parseVideoTitle(playing.title).name || playing.title}
             keyPoints={playing.keyPoints}
+            illustration={learnIllustOf([playing.id])}
             onClose={closePlayer}
             onStartChallenge={() => {
               markWatched(playing.id);
