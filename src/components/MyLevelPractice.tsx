@@ -20,6 +20,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getLevelById } from "@/data/allLevelsData";
 import { RANK_LABELS, RANK_ORDER, formatRank, toGlobalLevel } from "@/lib/rankLabels";
 import VideoPlayer from "@/components/VideoPlayer";
+import { learnIllustOf } from "@/data/learnIllust";
 import {
   useLevelVideos, useWarmupVideos, useWatchedVideos, parseVideoTitle, youtubeId, youtubeThumb,
   type LevelVideo,
@@ -454,6 +455,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
           variants={playerVariants(playing)}
           title={parseVideoTitle(playing.title).name}
           keyPoints={playing.keyPoints}
+          illustration={learnIllustOf([playing.id])}
           onClose={() => setPlaying(null)}
           onStartChallenge={() => {
             markWatched(playing.id);
@@ -472,6 +474,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
           variants={playerVariants(warmupPlaying)}
           title={parseVideoTitle(warmupPlaying.title).name}
           keyPoints={warmupPlaying.keyPoints}
+          illustration={learnIllustOf([warmupPlaying.id])}
           onClose={() => setWarmupPlaying(null)}
         />,
         document.body,

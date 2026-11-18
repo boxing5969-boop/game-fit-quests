@@ -38,6 +38,7 @@ import { useBackClose } from "@/hooks/useBackClose";
 import WhiteLeagueTab from "@/components/WhiteLeagueTab";
 import { learnVideos, type LearnMissionSource } from "@/lib/learnMissions";
 import { isInstagramUrl, learnPbVideos, learnPrograms, type LearnExtra } from "@/lib/learnExtras";
+import { learnIllustOf } from "@/data/learnIllust";
 import { TEST153_STATIONS } from "@/lib/test153";
 import { useLearnPrograms } from "@/services/learnExtrasService";
 import {
@@ -199,6 +200,8 @@ const MissionsPage = () => {
     description?: string;
     /** 영상 칸 비율(가로 ÷ 세로) — 153 PB 시범은 정사각 1 · 없으면 16:9 */
     aspect?: number;
+    /** 2컷 동작 그림 — 영상 아래 · 설명 위 (2026-11-18 · data/learnIllust) */
+    illustration?: string | null;
   } | null>(null);
 
   // League expand/collapse — default: current rank expanded.
@@ -357,11 +360,12 @@ const MissionsPage = () => {
       missionId: mission.id,
       canSubmit: status === "active",
       variants: playerVariantsOf(mission.mission_videos),
+      illustration: learnIllustOf([mission.id]),
     });
   };
 
   // 🔥 워밍업 참고 영상 — 제출·즉시 클리어 없이 보기만 한다
-  const openWarmup = (mission: WarmupMission, variantsOverride?: PlayerVariant[]) => {
+  const openWarmup = (mission: WarmupMission, variantsOverride?: PlayerVariant[], illustIds?: string[]) => {
     const video = primaryMissionVideo(mission.mission_videos);
     if (!video) {
       toast.error("영상이 아직 등록되지 않았습니다");
@@ -381,6 +385,7 @@ const MissionsPage = () => {
       canSubmit: false,
       reference: true,
       variants: variantsOverride ?? playerVariantsOf(mission.mission_videos),
+      illustration: learnIllustOf(illustIds ?? [mission.id]),
     });
   };
 
@@ -400,6 +405,7 @@ const MissionsPage = () => {
         canSubmit: false,
         reference: true,
         aspect: extra.kind === "pb" ? 1 : undefined,
+        illustration: learnIllustOf([extra.id]),
       });
       return;
     }
@@ -408,7 +414,7 @@ const MissionsPage = () => {
     if (!main) return;
     const item = learnList.find((v) => v.id === id);
     if (!item || item.memberIds.length < 2) {
-      openWarmup(main);
+      openWarmup(main, undefined, [main.id, ...(item?.memberIds ?? [])]);
       return;
     }
     const variants: PlayerVariant[] = item.memberIds.flatMap((mid, i) => {
@@ -416,7 +422,7 @@ const MissionsPage = () => {
       const url = (v?.video_url ?? "").trim();
       return url ? [{ label: item.variantLabels[i] || `영상 ${i + 1}`, videoUrl: url, posterUrl: v?.poster_url ?? null }] : [];
     });
-    openWarmup(main, variants);
+    openWarmup(main, variants, [main.id, ...item.memberIds]);
   };
 
   const handleFileUpload = async (file: File, type: "video" | "poster") => {
@@ -812,6 +818,7 @@ const MissionsPage = () => {
           keyPoints={videoModal.keyPoints}
           description={videoModal.description}
           aspect={videoModal.aspect}
+          illustration={videoModal.illustration}
           onClose={() => setVideoModal(null)}
           onStartChallenge={
             !videoModal.reference && (videoModal.canSubmit || isAdmin)
