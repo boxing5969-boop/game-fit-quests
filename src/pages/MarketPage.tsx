@@ -5,12 +5,13 @@
  *   앱에서 주문 → 체육관 데스크에서 결제 → 결제한 주문만 발주 → 도착 알림 → 체육관에서 받기.
  *   입구: 전체 메뉴 「153 마켓」(우리 지점 마켓이 켜져 있을 때만) · 검색 · 주문 알림(/market?orders=1 = 내 주문 창).
  *   서버 market_home 이 {on:false} 면(켜지 않은 지점 · 상품이 아직 없음) 준비 중 안내만 보인다.
+ *   「어디서 사 오나」 줄(2026-11-18 — 골든챔스에서 체육관 도매가로 사 온다)은 늘 보이고, 누르면 판매 안내 첫 칸으로.
  *   예시 화면 /market?demo=1 — 서버를 부르지 않는다(가격은 지어낸 숫자).
  *   계산 · 글 lib/market153 · 읽고 쓰기 services/marketService.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ChevronDown, ChevronRight, RotateCcw, ShoppingBag } from "lucide-react";
+import { ChevronDown, ChevronRight, RotateCcw, ShoppingBag, Store } from "lucide-react";
 
 import { AppPage, PageHeader } from "@/components/ui/rankingup";
 import { OsBackButton, OsEmpty, OsLoading } from "@/components/os/OsParts";
@@ -21,6 +22,7 @@ import MarketWishSheet from "@/components/market/MarketWishSheet";
 import { useAuth } from "@/contexts/AuthContext";
 import { isManagerRole } from "@/lib/rankLabels";
 import {
+  MARKET_SOURCE,
   categoriesOf,
   compareOf,
   headlineOrder,
@@ -79,6 +81,7 @@ const MarketPage = () => {
   const [ordersOpen, setOrdersOpen] = useState(false);
   const [wishOpen, setWishOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const guideRef = useRef<HTMLElement>(null);
 
   // 알림 링크 /market?orders=1 → 내 주문 창 (한 번 열고 주소에서 지운다)
   useEffect(() => {
@@ -109,6 +112,15 @@ const MarketPage = () => {
   const openProduct = (p: MarketProduct) => {
     setPicked(p);
     setProductOpen(true);
+  };
+
+  // 「어디서 사 오나」 줄 → 판매 안내를 펼치고 그 칸으로 (첫 칸 = 어디서 사 오나요?)
+  const openGuide = () => {
+    setGuideOpen(true);
+    window.requestAnimationFrame(() => {
+      const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      guideRef.current?.scrollIntoView({ behavior: still ? "auto" : "smooth", block: "start" });
+    });
   };
 
   return (
@@ -208,6 +220,21 @@ const MarketPage = () => {
             </ol>
           )}
 
+          <button
+            type="button"
+            onClick={openGuide}
+            className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 text-left shadow-elev-1 active:scale-[0.99]"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10" aria-hidden>
+              <Store className="h-5 w-5 text-primary" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-body font-bold leading-snug text-foreground [text-wrap-style:balance]">{MARKET_SOURCE.line}</span>
+              <span className="mt-0.5 block text-label text-muted-foreground">{MARKET_SOURCE.sub}</span>
+            </span>
+            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+          </button>
+
           {cats.length > 1 && (
             <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="분류">
               {[{ key: "all" as const, label: "전체" }, ...cats].map((c) => (
@@ -252,7 +279,7 @@ const MarketPage = () => {
             <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
           </button>
 
-          <section className="overflow-hidden rounded-2xl border border-border bg-card">
+          <section ref={guideRef} className="scroll-mt-20 overflow-hidden rounded-2xl border border-border bg-card">
             <button
               type="button"
               aria-expanded={guideOpen}
@@ -260,7 +287,7 @@ const MarketPage = () => {
               className="flex h-14 w-full items-center gap-2 px-4 text-left"
             >
               <span className="min-w-0 flex-1 text-body font-bold text-foreground">판매 안내</span>
-              <span className="shrink-0 text-label text-muted-foreground">결제 · 받기 · 교환</span>
+              <span className="shrink-0 text-label text-muted-foreground">사 오는 곳 · 결제 · 받기</span>
               <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", guideOpen && "rotate-180")} aria-hidden />
             </button>
             {guideOpen && (

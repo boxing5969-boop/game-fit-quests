@@ -5,6 +5,7 @@ import { FEATURES, visibleFor } from "@/lib/appSearch";
 import { buildMenuView, canSee, menuCatalog, resolveEntries, type MenuViewer } from "@/lib/menuLayout";
 import {
   MARKET_CATEGORIES,
+  MARKET_SOURCE,
   MAX_OFF_LOWEST_PCT,
   MEMBER_STEPS,
   MIN_MARGIN_PCT,
@@ -493,9 +494,28 @@ describe("153 마켓 — 서버 값 읽기", () => {
 describe("153 마켓 — 판매 안내 · 회원 화면 글", () => {
   it("가격 비교 기준에 확인 날짜 규칙이 적혀 있다", () => {
     const guide = marketGuide(14);
-    expect(guide.map((g) => g.title)).toEqual(["결제", "받기", "취소", "교환 · 환불", "가격 비교"]);
-    expect(guide[4].body).toContain("14일");
-    expect(guide[4].body).toContain("배송비 포함");
+    expect(guide.map((g) => g.title)).toEqual(["어디서 사 오나요?", "결제", "받기", "취소", "교환 · 환불", "가격 비교"]);
+    const compare = guide.find((g) => g.title === "가격 비교")!;
+    expect(compare.body).toContain("14일");
+    expect(compare.body).toContain("배송비 포함");
+  });
+
+  // 2026-11-18 대표님 「골든챔스에서 체육관 도매가로 구매해 싸게 판매하는 거라고 설명하자」 — 마켓 맨 위 줄 · 판매 안내 첫 칸 · 오삼 FAQ 가 같은 말
+  it("어디서 사 오나 — 골든챔스 · 체육관 도매가를 세 곳이 같이 말한다", () => {
+    const first = marketGuide(14)[0];
+    const faq = readFileSync("src/data/osamiFaq.ts", "utf8");
+    const faqMarket = faq.slice(faq.indexOf('e("mb-market"'), faq.indexOf('e("dt-what"'));
+    for (const text of [MARKET_SOURCE.line, first.body, faqMarket]) {
+      expect(text).toContain("골든챔스");
+      expect(text).toContain("체육관 도매가");
+    }
+    expect(first.title).toBe("어디서 사 오나요?");
+    // 화면 맨 위 줄은 한 줄짜리 — 짧게 · 근거 없는 말(인터넷보다 싸다 · 정품 보장) 없이
+    expect(MARKET_SOURCE.line.length).toBeLessThanOrEqual(22);
+    expect(MARKET_SOURCE.sub.length).toBeLessThanOrEqual(16);
+    for (const banned of ["최저가", "보장", "정품", "무조건", "—"]) {
+      expect(`${MARKET_SOURCE.line} ${MARKET_SOURCE.sub} ${first.body}`, banned).not.toContain(banned);
+    }
   });
 
   it("근거 없이 쓰면 안 되는 말이 없다", () => {

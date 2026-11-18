@@ -4,12 +4,13 @@
  *   검사는 서버(market_order_place)와 같은 말 — lib/market153 placeError.
  */
 import { useEffect, useState } from "react";
-import { Check, Clock, Minus, Plus } from "lucide-react";
+import { Check, Clock, Minus, Plus, Store } from "lucide-react";
 import { toast } from "sonner";
 
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { PriceBlock, ProductThumb } from "@/components/market/MarketParts";
 import {
+  MARKET_SOURCE,
   NOTE_MAX,
   categoryMeta,
   compareOf,
@@ -130,7 +131,13 @@ const MarketProductSheet = ({ open, onOpenChange, product, home, onSeeOrders }: 
                 </span>
               </div>
 
-              <PriceBlock price={product.price} compare={compare} />
+              <div className="space-y-2">
+                <PriceBlock price={product.price} compare={compare} />
+                <p className="flex items-center gap-1.5 px-1 text-label text-muted-foreground">
+                  <Store className="h-4 w-4 shrink-0" aria-hidden />
+                  {MARKET_SOURCE.line}
+                </p>
+              </div>
 
               {product.options.length > 0 && (
                 <section aria-label={product.optionLabel ?? "옵션"}>
