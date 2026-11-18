@@ -10,6 +10,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import BottomNav from "@/components/BottomNav";
+import NewScreenScrollTop from "@/components/NewScreenScrollTop";
 import LoginPage from "@/pages/LoginPage";
 import AndroidAppGate from "@/components/install/AndroidAppGate";
 import NotFound from "@/pages/NotFound";
@@ -310,6 +311,8 @@ const AppRoutes = () => {
 
   return (
     <>
+      {/* 새 화면은 맨 위부터 — 뒤로 가기는 보던 자리 그대로 (2026-11-19 회원 오류 신고). Routes 보다 앞에 둔다(화면 쪽 스크롤이 다음에 돈다) */}
+      <NewScreenScrollTop disabled={signage} />
       <Suspense fallback={signage ? <div className="fixed inset-0 bg-background" /> : <RouteLoader />}>
       <Routes>
         <Route path="/" element={user ? <RoleBasedRedirect /> : <LoginPage />} />
