@@ -18,6 +18,11 @@ const state = vi.hoisted(() => ({
   titleLoading: false,
   titleEnabled: [] as boolean[],
   videoLevels: [] as number[],
+  // 홈 레벨 퀘스트 (2026-11-18) — 오늘 왔나 · 마일리지 설정 · 부른 함수 · 읽은 표
+  attended: false,
+  mileage: null as Record<string, unknown> | null,
+  rpcs: [] as string[],
+  tables: [] as string[],
 }));
 
 vi.mock("@/contexts/AuthContext", () => ({
@@ -29,21 +34,32 @@ vi.mock("@/contexts/AuthContext", () => ({
 }));
 
 vi.mock("@/integrations/supabase/client", () => {
-  const chain = () => {
+  const chain = (table: string) => {
+    state.tables.push(table);
     const q: Record<string, unknown> = {};
     for (const k of ["select", "eq"]) q[k] = () => q;
-    q.maybeSingle = async () => ({ data: state.reviewStatus ? { status: state.reviewStatus } : null, error: null });
+    q.maybeSingle = async () =>
+      table === "app_settings"
+        ? { data: state.mileage ? { value: state.mileage } : null, error: null }
+        : { data: state.reviewStatus ? { status: state.reviewStatus } : null, error: null };
     return q;
   };
   return {
     supabase: {
-      rpc: vi.fn(async (name: string) =>
-        name === "get_level_cycle_progress" ? { data: state.cycle, error: null } : { data: null, error: null },
-      ),
-      from: () => chain(),
+      rpc: vi.fn(async (name: string) => {
+        state.rpcs.push(name);
+        if (name === "get_level_cycle_progress") return { data: state.cycle, error: null };
+        if (name === "get_my_workout_today") return { data: { checked_in: state.attended }, error: null };
+        return { data: null, error: null };
+      }),
+      from: (table: string) => chain(table),
     },
   };
 });
+
+// 레벨업한 날 꽃가루 — 그리지 않고 불렸는지만
+const confettiFn = vi.hoisted(() => vi.fn());
+vi.mock("canvas-confetti", () => ({ default: confettiFn }));
 
 vi.mock("@/hooks/useLevelVideos", async (orig) => {
   const real = await orig<typeof import("@/hooks/useLevelVideos")>();
@@ -162,9 +178,17 @@ beforeEach(() => {
     titleLoading: false,
     titleEnabled: [],
     videoLevels: [],
+    attended: false,
+    mileage: null,
+    rpcs: [],
+    tables: [],
   });
   state.cycle = cycleOf();
+  confettiFn.mockClear();
 });
+
+/** 주인공 줄 — 숫자는 민트 조각이라 한 덩어리 글로 찾는다 */
+const heroText = (text: string) => (_: string, el: Element | null) => el?.tagName === "P" && el.textContent === text;
 
 describe("레벨업까지 카드 — 기본 모양(훈련 탭 · 심사 탭 · 랭크업)은 그대로", () => {
   it("막대 · 숫자 줄이 있고 미션 칸 · 맨 아래 줄은 없다 — 미션 영상 · 타이틀 상태도 읽지 않는다", async () => {
@@ -178,6 +202,11 @@ describe("레벨업까지 카드 — 기본 모양(훈련 탭 · 심사 탭 · �
     // 레벨 0 = 읽지 않음 · 타이틀 상태도 꺼짐
     expect(state.videoLevels.every((n) => n === 0)).toBe(true);
     expect(state.titleEnabled.every((on) => on === false)).toBe(true);
+    // 홈 레벨 퀘스트(도장 · 응원 · 보상)는 홈에만 — 오늘 출석 · 마일리지 설정도 읽지 않는다
+    expect(screen.queryByText("반복은 천재를 만든다")).toBeNull();
+    expect(screen.queryByRole("list", { name: /수업 도장/ })).toBeNull();
+    expect(state.rpcs).not.toContain("get_my_workout_today");
+    expect(state.tables).not.toContain("app_settings");
   });
 
   it("타이틀매치(레벨 10 · 시범 지점) — 예전처럼 단추가 주인공 줄 바로 아래", async () => {
@@ -190,14 +219,27 @@ describe("레벨업까지 카드 — 기본 모양(훈련 탭 · 심사 탭 · �
   });
 });
 
-describe("홈 첫 화면 「다음 레벨까지」 — 몇 번 더 오면 되는지 + 이번 레벨 미션", () => {
-  it("레벨 1~9 — 주인공 한 줄 · 이번 레벨 미션 · 맨 아래 연습 화면 가기 (막대 · 숫자 줄 없음)", async () => {
+describe("홈 첫 화면 「다음 레벨까지」 — 레벨 퀘스트(이번 목표 · 수업 도장 · 응원 · 보상) + 이번 레벨 미션", () => {
+  it("레벨 1~9 — 이번 목표 · 주인공 한 줄 · 수업 도장 · 응원 · 보상 · 이번 레벨 미션 · 맨 아래 연습 화면 가기", async () => {
     renderCard({ bar: false, missions: true });
     const card = await screen.findByRole("region", { name: "다음 레벨까지" });
-    expect(within(card).getByText("레벨 5까지")).toBeInTheDocument();
-    expect(within(card).getByText("2번 더 오면 돼요")).toBeInTheDocument();
-    // 같은 숫자는 한 화면에 한 번 — 막대와 숫자는 바로 위 내 카드에 있다
+    expect(within(card).getByText("이번 목표")).toBeInTheDocument();
+    expect(within(card).getByText(heroText("2번 더 오면 레벨 5"))).toBeInTheDocument();
+    // 막대 · 숫자 줄 대신 수업 도장 — 화이트 레벨 4 = 10 · 11 · 12일차 (153 수업 매뉴얼과 같은 셈)
     expect(within(card).queryByText("출석 1/3회")).toBeNull();
+    const rail = within(card).getByRole("list", { name: "레벨업까지 수업 도장" });
+    expect(within(rail).getAllByRole("listitem").map((li) => li.getAttribute("aria-label"))).toEqual([
+      "지금 레벨 4",
+      "10일차 수업 · 완료",
+      "11일차 수업 · 다음 수업",
+      "12일차 수업 · 남은 수업",
+      "목표 레벨업",
+    ]);
+    expect(within(rail).getByText("다음 수업")).toBeInTheDocument();
+    // 응원 — 대표님 문구 + 그날 한 줄
+    expect(within(card).getByText("반복은 천재를 만든다")).toBeInTheDocument();
+    // 보상 — XP · 챔피언 머니 (마일리지 설정을 못 읽으면 마일리지 칸 없이)
+    expect(within(card).getByLabelText("레벨업하면 받아요 — XP +50 · 챔피언 머니 +500")).toBeInTheDocument();
     expect(within(card).getByText("레벨 4 미션")).toBeInTheDocument();
     expect(within(card).getByRole("button", { name: "사이드 방향전환 스텝 영상 보기" })).toBeInTheDocument();
     expect(within(card).getByRole("button", { name: "원·투·쓰리 스텝 영상 보기" })).toBeInTheDocument();
@@ -232,7 +274,7 @@ describe("홈 첫 화면 「다음 레벨까지」 — 몇 번 더 오면 되는
   it("영상 목록을 다 읽기 전에는 미션 칸을 그리지 않는다 (목표 글이 잠깐 보였다 바뀌지 않게)", async () => {
     state.videosReady = false;
     renderCard({ bar: false, missions: true, levelGoal: { title: "인앤아웃 잽", goal: "인앤아웃 잽과 카운터를 연결한다" } });
-    expect(await screen.findByText("2번 더 오면 돼요")).toBeInTheDocument();
+    expect(await screen.findByText(heroText("2번 더 오면 레벨 5"))).toBeInTheDocument();
     expect(screen.queryByText("레벨 4 미션")).toBeNull();
     expect(screen.queryByText("인앤아웃 잽과 카운터를 연결한다")).toBeNull();
   });
@@ -241,8 +283,19 @@ describe("홈 첫 화면 「다음 레벨까지」 — 몇 번 더 오면 되는
     Object.assign(state, { rank: "blue", level: 3, videos: [] });
     state.cycle = cycleOf({ reqSessions: 5, progressFloor: 2, progress: 2.25 });
     renderCard({ bar: false, missions: true, levelGoal: { title: "스트레이트 회전 입문", goal: "스트레이트의 회전력과 체중 이동을 배운다" } });
-    expect(await screen.findByText("3번 더 오면 돼요")).toBeInTheDocument();
-    expect(screen.getByText("레벨 14까지")).toBeInTheDocument();
+    expect(await screen.findByText(heroText("3번 더 오면 레벨 14"))).toBeInTheDocument();
+    // 블루 = 한 레벨 5칸 · 레벨 13 = 41~45일차 · 보너스(0.25)는 다음 칸에
+    const rail = screen.getByRole("list", { name: "레벨업까지 수업 도장" });
+    const days = within(rail).getAllByRole("listitem").map((li) => li.getAttribute("aria-label"));
+    expect(days).toEqual([
+      "지금 레벨 13",
+      "41일차 수업 · 완료",
+      "42일차 수업 · 완료",
+      "43일차 수업 · 다음 수업 · 운동 보너스로 25% 찼어요",
+      "44일차 수업 · 남은 수업",
+      "45일차 수업 · 남은 수업",
+      "목표 레벨업",
+    ]);
     expect(screen.getByText("레벨 13 미션")).toBeInTheDocument();
     expect(screen.getByText("스트레이트의 회전력과 체중 이동을 배운다")).toBeInTheDocument();
     expect(screen.queryAllByRole("button", { name: /영상 보기/ })).toHaveLength(0);
@@ -252,7 +305,9 @@ describe("홈 첫 화면 「다음 레벨까지」 — 몇 번 더 오면 되는
     Object.assign(state, { rank: "red", level: 2, videos: [] });
     state.cycle = cycleOf({ reqSessions: 8, progressFloor: 5, progress: 5, autoAdvances: false });
     const { unmount } = renderCard({ bar: false, missions: true, levelGoal: { goal: "타이밍을 읽고 정확한 순간에 친다" } });
-    expect(await screen.findByText("3번 더 오면 심사가 열려요")).toBeInTheDocument();
+    expect(await screen.findByText(heroText("3번 더 오면 승급 심사"))).toBeInTheDocument();
+    // 코치 승인 리그 — 챔피언 머니 +1,000
+    expect(screen.getByLabelText("레벨업하면 받아요 — XP +50 · 챔피언 머니 +1,000")).toBeInTheDocument();
     unmount();
 
     state.reviewStatus = "revision_requested";
@@ -272,8 +327,8 @@ describe("홈 「다음 레벨까지」 예시 (?lvdemo= — 운영진 미리 �
     const { nextLevelDemo } = await import("@/lib/nextLevelGuideSample");
     const { unmount } = renderCard({ bar: false, missions: true, demo: nextLevelDemo("4")!.data });
     const card = await screen.findByRole("region", { name: "다음 레벨까지" });
-    expect(within(card).getByText("레벨 5까지")).toBeInTheDocument();
-    expect(within(card).getByText("2번 더 오면 돼요")).toBeInTheDocument();
+    expect(within(card).getByText("이번 목표")).toBeInTheDocument();
+    expect(within(card).getByText(heroText("2번 더 오면 레벨 5"))).toBeInTheDocument();
     expect(within(card).getByText("레벨 4 미션")).toBeInTheDocument();
     expect(supabase.rpc).not.toHaveBeenCalled();
     // 미션 영상은 예시 레벨(4)의 실제 미션을 읽는다 · 타이틀 상태는 읽지 않는다
@@ -306,8 +361,15 @@ describe("홈 「다음 레벨까지」 — 레벨 10 타이틀매치", () => {
     state.title = titleOf();
     renderCard({ bar: false, missions: true });
     const card = await screen.findByRole("region", { name: "다음 레벨까지" });
-    expect(within(card).getByText("블루 리그까지")).toBeInTheDocument();
+    expect(within(card).getByText("이번 목표")).toBeInTheDocument();
     expect(within(card).getByText("타이틀매치만 남았어요")).toBeInTheDocument();
+    // 도장 대신 리그 길 — 레벨 1~9 지나옴 → 레벨 10 타이틀매치 · 응원 한 줄 · 넘으면 블루 리그
+    const road = within(card).getByRole("list", { name: "리그 길" });
+    expect(within(road).getAllByRole("listitem")).toHaveLength(10);
+    expect(within(road).getByLabelText("레벨 10 타이틀매치 · 지금")).toBeInTheDocument();
+    expect(within(card).queryByRole("list", { name: /수업 도장/ })).toBeNull();
+    expect(within(card).getByText("아홉 레벨을 모두 지나왔어요")).toBeInTheDocument();
+    expect(within(card).getByLabelText("타이틀매치를 넘으면 — 승급 블루 리그")).toBeInTheDocument();
     expect(within(card).getByText("타이틀미션")).toBeInTheDocument();
     expect(within(card).getByText("완벽한 자세로 3번 연속 성공")).toBeInTheDocument();
     expect(within(card).getByText("같은 동작을 미트로 3번 받아주기")).toBeInTheDocument();
@@ -376,5 +438,62 @@ describe("홈 「다음 레벨까지」 — 레벨 10 타이틀매치", () => {
     await waitFor(() => expect(state.titleEnabled.every((on) => on === false)).toBe(true));
     fireEvent.click(screen.getByRole("button", { name: /타이틀매치 동작 연습하기/ }));
     expect(screen.getByTestId("where").textContent).toBe("/missions?open=practice");
+  });
+});
+
+describe("홈 레벨 퀘스트 — 오늘 온 날 · 레벨업한 날 · 레벨 지도 · 마일리지 (2026-11-18)", () => {
+  it("오늘 온 날 — 마지막 칸이 「오늘 수업」 · 응원은 오늘 말 · 다음 칸에 운동 보너스 몫", async () => {
+    state.attended = true;
+    state.cycle = cycleOf({ sessions: 2, days: 2, progressFloor: 2, progress: 2.25 });
+    renderCard({ bar: false, missions: true });
+    expect(await screen.findByText(heroText("1번 더 오면 레벨 5"))).toBeInTheDocument();
+    const rail = await screen.findByRole("list", { name: "레벨업까지 수업 도장" });
+    await waitFor(() => expect(within(rail).getByText("오늘 수업")).toBeInTheDocument());
+    expect(within(rail).getByLabelText("11일차 수업 · 오늘 완료")).toBeInTheDocument();
+    expect(within(rail).getByLabelText("12일차 수업 · 다음 수업 · 운동 보너스로 25% 찼어요")).toBeInTheDocument();
+    expect(within(rail).queryByText("다음 수업")).toBeNull();
+    const { CHEER_LINES } = await import("@/lib/levelQuest");
+    expect(CHEER_LINES.today.some((line) => screen.queryByText(line))).toBe(true);
+    // 오늘 칸 도장 움직임은 이 기기에서 하루 한 번 — 열쇠가 남는다
+    expect(Object.keys(localStorage).some((k) => k.startsWith("153lvq:stamp:u-test:"))).toBe(true);
+    expect(confettiFn).not.toHaveBeenCalled();
+  });
+
+  it("오늘 레벨이 오른 날 — 「레벨 5 달성!」 · 새 레벨 칸은 비어 있고 · 꽃가루는 이 기기에서 한 번", async () => {
+    Object.assign(state, { level: 5, attended: true });
+    state.cycle = cycleOf({ sessions: 0, days: 0, progressFloor: 0, progress: 0, since: new Date(Date.now() - 60_000).toISOString() });
+    const { unmount } = renderCard({ bar: false, missions: true });
+    expect(await screen.findByText(heroText("레벨 5 달성!🎉"))).toBeInTheDocument();
+    const rail = screen.getByRole("list", { name: "레벨업까지 수업 도장" });
+    expect(within(rail).getAllByRole("listitem").map((li) => li.getAttribute("aria-label"))).toEqual([
+      "지금 레벨 5",
+      "13일차 수업 · 다음 수업",
+      "14일차 수업 · 남은 수업",
+      "15일차 수업 · 남은 수업",
+      "목표 레벨업",
+    ]);
+    const { CHEER_LINES } = await import("@/lib/levelQuest");
+    expect(CHEER_LINES.leveledUp.some((line) => screen.queryByText(line))).toBe(true);
+    await waitFor(() => expect(confettiFn).toHaveBeenCalledTimes(1), { timeout: 2000 });
+    expect(localStorage.getItem("153lvq:up:u-test:5")).toBe("1");
+    unmount();
+
+    // 다시 열어도 꽃가루는 또 터지지 않는다
+    renderCard({ bar: false, missions: true });
+    expect(await screen.findByText(heroText("레벨 5 달성!🎉"))).toBeInTheDocument();
+    await new Promise((r) => setTimeout(r, 900));
+    expect(confettiFn).toHaveBeenCalledTimes(1);
+  });
+
+  it("「레벨 지도 ›」 — 내 카드 승급 막대 대신 랭크업 로드맵으로", async () => {
+    renderCard({ bar: false, missions: true });
+    fireEvent.click(await screen.findByRole("button", { name: /레벨 지도/ }));
+    expect(screen.getByTestId("where").textContent).toBe("/rank-up");
+  });
+
+  it("마일리지 설정을 읽으면 보상에 마일리지 칸 — 운영 값 그대로", async () => {
+    state.mileage = { enabled: true, attendance: 300, level_up: 300, title_match: 2500, record: 10000 };
+    renderCard({ bar: false, missions: true });
+    expect(await screen.findByLabelText("레벨업하면 받아요 — XP +50 · 챔피언 머니 +500 · 마일리지 +300")).toBeInTheDocument();
   });
 });

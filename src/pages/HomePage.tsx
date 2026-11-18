@@ -265,6 +265,9 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
   // (unifiedLevel 은 첫 화면 「다음 레벨까지」 카드가 미션 영상이 없는 레벨의 목표 한 줄로 쓴다 — 2026-11-16)
   void currentLevel;
 
+  // 첫 화면 「다음 레벨까지」(레벨 퀘스트) 카드가 보이는 회원 — 지도진 · 마스터(레벨 40 뒤)는 승급할 다음 레벨이 없어 카드가 없다
+  const showLevelQuest = !lvDemo && !staffCard && !isMaster40 && !onMasterTrack;
+
   const myRankRow = ranking?.find((r) => r.r_user_id === user?.id);
   const myPosition = myRankRow ? Number(myRankRow.rank_position) : null;
 
@@ -404,7 +407,9 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
   // 이번 주 순위, 오늘의 훈련 하나만". force=true 면 홈 커스터마이즈 토글(homeWidgets)과
   // 무관하게 그린다 — 첫 화면은 항상 이 네 가지가 보여야 한다. MY복서(/myboxer) 보기는
   // 기존 토글 동작 그대로(force 없이) 같은 렌더러를 쓴다.
-  const renderHero = (force = false) => {
+  // hidePromotion — 첫 화면은 바로 아래 「다음 레벨까지」 카드가 수업 도장으로 같은 숫자를 보여 줘서 막대를 끈다 (2026-11-18 레벨 퀘스트 ·
+  // 같은 숫자는 한 화면에 한 번). 막대를 누르면 가던 레벨 지도는 그 카드의 「레벨 지도 ›」로. MY복서 보기 · TV 카드는 그대로
+  const renderHero = (force = false, hidePromotion = false) => {
     if (!force && !homeWidgets.hero) return null;
     const hasAvatar = !!profile?.avatar_url;
     // 2026-10-18 대표님: "홈 화면에 캐릭터가 보여서 게임 같아 — 안 보이게" → 홈 카드는 사진 → 이니셜.
@@ -472,7 +477,9 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
         promotion={
           staffCard
             ? undefined
-            : levelCycle
+            : hidePromotion
+              ? { current: 0, target: 0 }
+              : levelCycle
               ? {
                   // 요건을 넘긴 값(승인 대기·다음 출석 때 승급)은 막대를 넘치지 않게 목표에서 자른다
                   current: Math.min(Number(levelCycle.progress ?? 0), Number(levelCycle.reqSessions ?? 0)),
@@ -631,7 +638,7 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
         //     나머지 기능은 아래 '전체 메뉴'를 펼쳐야 보인다 — 지운 게 아니라 접은 것.
         //     (2026-09-29 "첫 화면 = 전체 메뉴만" 결정은 이 결정으로 대체)
         <div className="space-y-5">
-          {renderHero(true)}
+          {renderHero(true, showLevelQuest)}
           {/* 🥊 PT 수업 — PT 회원에게만: 다음 수업 · 「수업 받았어요」 · 남은 횟수 · 예약 · 취소 (2026-11-14 대표님
               「홈화면에 PT 회원님들을 위한 스케줄관리」). PT 예약을 켠 지점의 PT 회원이 아니면 아무것도 그리지 않는다 */}
           <HomePtCard />
@@ -639,18 +646,17 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
               「코치님들이 직관적으로 보고 수행할수있도록」). 회원 · 차례 없는 날 · 다 끝낸 뒤에는 안 그린다 */}
           <HomeCleanCard />
           {/* 🎯 다음 레벨까지 — 몇 번 더 오면 되는지 + 이번 레벨 미션 (2026-11-16 대표님 「홈화면에 회원님들에게 다음 레벨로
-              가려면 얼마나 출석하면 될지? 또 어떤 미션을 달성하면 되는지 알려주자」). 훈련 탭 '레벨업까지'와 같은 카드 —
-              막대 · 숫자는 바로 위 내 카드에 있어 끄고(같은 숫자는 한 화면에 한 번) 「미션」 칸을 켠다.
-              지도진 · 마스터(레벨 40 뒤)는 내 카드에 승급 막대가 없듯 이 카드도 없다 — 그 계정은 ?lvdemo= 예시로 본다 */}
+              가려면 얼마나 출석하면 될지? 또 어떤 미션을 달성하면 되는지 알려주자」). 훈련 탭 '레벨업까지'와 같은 카드.
+              2026-11-18 레벨 퀘스트(대표님 「1일차 수업 2일차 수업 3일차 수업 반복은 천재를 만든다 … 레벨업 하는재미」) —
+              이번 목표 · 수업 도장 길 · 응원 · 레벨업 보상. 같은 숫자는 한 화면에 한 번이라 내 카드의 승급 막대는 첫 화면에서 끈다.
+              지도진 · 마스터(레벨 40 뒤)는 승급할 다음 레벨이 없어 이 카드가 없다 — 그 계정은 ?lvdemo= 예시로 본다 */}
           {lvDemo ? (
             <>
               <NextLevelDemoStrip current={lvDemo} />
               <LevelUpRequestCard bar={false} missions demo={lvDemo.data} />
             </>
           ) : (
-            !staffCard &&
-            !isMaster40 &&
-            !onMasterTrack && (
+            showLevelQuest && (
               <LevelUpRequestCard bar={false} missions levelGoal={{ title: unifiedLevel?.title, goal: unifiedLevel?.shortGoal }} />
             )
           )}

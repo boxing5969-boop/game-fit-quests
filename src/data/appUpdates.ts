@@ -18,6 +18,17 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261118-home-level-quest",
+    date: "2026-11-18",
+    title: "홈 — 이번 목표 · 수업 도장 · 레벨업 보상",
+    lines: [
+      "지금 레벨에서 다음 레벨까지 몇 번 더 오면 되는지 도장으로 보여요",
+      "1일차 · 2일차 · 3일차 수업마다 도장이 찍혀요 — 반복은 천재를 만든다",
+      "레벨업하면 받는 XP · 챔피언 머니 · 마일리지도 함께 보여요",
+    ],
+    link: { to: "/home", label: "홈에서 보기" },
+  },
+  {
     id: "20261117-back-closes",
     date: "2026-11-17",
     title: "뒤로가기 — 보던 영상 · 창만 닫혀요",

@@ -14,13 +14,20 @@ describe("홈 「다음 레벨까지」 예시 (?lvdemo=)", () => {
     expect(nextLevelDemo("10")?.data).toMatchObject({ league: "white", level: 10, titleFlow: true });
     expect(nextLevelDemo("WAIT")?.key).toBe("wait");
     expect(nextLevelDemo("true")?.key).toBe("4");
+    // 레벨 퀘스트 (2026-11-18) — 오늘 온 날 · 레벨업한 날
+    expect(nextLevelDemo("today")?.data).toMatchObject({ league: "white", level: 4, attendedToday: true });
+    expect(nextLevelDemo("today")?.data.cycle).toMatchObject({ progressFloor: 2, progress: 2.25 });
+    expect(nextLevelDemo("up")?.data).toMatchObject({ league: "white", level: 5, attendedToday: true, leveledUpToday: true });
+    expect(nextLevelDemo("up")?.data.cycle.progressFloor).toBe(0);
   });
 
   it("칩 순서 · 주소", () => {
-    expect(NEXT_LEVEL_DEMOS.map((d) => d.key)).toEqual(["1", "4", "10", "wait"]);
+    expect(NEXT_LEVEL_DEMOS.map((d) => d.key)).toEqual(["1", "4", "today", "up", "10", "wait"]);
     expect(NEXT_LEVEL_DEMOS.map((d) => nextLevelDemoLink(d.key))).toEqual([
       "/home?lvdemo=1",
       "/home?lvdemo=4",
+      "/home?lvdemo=today",
+      "/home?lvdemo=up",
       "/home?lvdemo=10",
       "/home?lvdemo=wait",
     ]);
