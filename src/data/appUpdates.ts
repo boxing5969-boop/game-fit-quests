@@ -18,6 +18,16 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261118-learn-illust",
+    date: "2026-11-18",
+    title: "영상으로 배우기 — 동작마다 2컷 그림",
+    lines: [
+      "동작 카드 영상 바로 아래에 ① ② 순서 그림이 붙었어요",
+      "영상을 보고, 그림으로 순서를 짚고, 설명을 읽어요",
+    ],
+    link: { to: "/missions?learn=1", label: "영상으로 배우기" },
+  },
+  {
     id: "20261117-back-closes",
     date: "2026-11-17",
     title: "뒤로가기 — 보던 영상 · 창만 닫혀요",
