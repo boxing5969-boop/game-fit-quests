@@ -10,9 +10,11 @@
  *     · 작은 칸 3개(총 운동 · 지난달 · 최고 달)는 뺐다 — 막대가 같은 것을 그림으로 보여 준다
  *     · 맨 아래 '운동 기록 자세히 보기' 한 줄 (카드 어디를 눌러도 같은 곳)
  *   · 오늘 줄: 출석 전 'QR 출석'(칠금점처럼 얼굴 인식이 없는 지점) · 운동 중 '운동 종료' · 끝나면 오늘 시간.
+ *   · 운동 시간 고치기 (2026-11-19 선릉역점 회원 제안 → 대표님 「이거진행」): 어제 운동 끝 기록이 없으면(기본 66분) 머리 아래
+ *     안내 줄 [시간 고치기] · 오늘 입장 3시간이 지났는데 끝 기록이 없으면 '운동 종료' 대신 [끝난 시각 고르기] → WorkoutFixSheet.
  *   숫자는 서버 get_attendance_history 한 곳(useAttendanceHistory — 내정보 · 운동 기록과 같은 캐시).
  */
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, QrCode } from "lucide-react";
 import { toast } from "sonner";
@@ -20,7 +22,9 @@ import { useAttendanceHistory } from "@/hooks/useAttendanceHistory";
 import { useMyBodyInfo, useMyFitnessExtra } from "@/hooks/useMyBodyInfo";
 import { weightBasis } from "@/lib/fitnessProfile153";
 import { valueTotals } from "@/lib/healthGains153";
-import { useFinishWorkout, useMyWorkoutToday } from "@/hooks/useWorkoutTime";
+import { useFinishWorkout, useMyWorkoutFix, useMyWorkoutToday } from "@/hooks/useWorkoutTime";
+import WorkoutFixSheet, { WorkoutFixNotice } from "@/components/home/WorkoutFixSheet";
+import { todayFix, yesterdayFix, type WorkoutFixItem } from "@/lib/workoutFix";
 import { minutesToHours } from "@/lib/achievement153";
 import { monthGain } from "@/lib/attendanceCheer";
 import { bestMonthAllTime, monthLabel } from "@/lib/attendanceHistory";
@@ -32,8 +36,8 @@ const n = (v: number) => v.toLocaleString("ko-KR");
 /** 최근 몇 달을 막대로 */
 const BAR_MONTHS = 6;
 
-/** 오늘 줄 — 출석 전 QR · 운동 중 종료 버튼 · 끝나면 오늘 시간 */
-const TodayStrip = () => {
+/** 오늘 줄 — 출석 전 QR · 운동 중 종료 버튼 · 끝나면 오늘 시간 · 3시간이 지났으면 끝난 시각 고르기 */
+const TodayStrip = ({ pickEnd, onPickEnd }: { pickEnd: WorkoutFixItem | null; onPickEnd: (item: WorkoutFixItem) => void }) => {
   const navigate = useNavigate();
   const { data, isPlaceholderData } = useMyWorkoutToday();
   const finish = useFinishWorkout();
@@ -77,6 +81,19 @@ const TodayStrip = () => {
       onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "종료 처리에 실패했습니다."),
     });
   };
+  // 입장 3시간이 지남 — 지금 누르면 180분 상한(4시간이 넘으면 기본 66분)이라 끝난 시각을 고르게 한다
+  if (pickEnd) {
+    return (
+      <button
+        type="button"
+        onClick={() => onPickEnd(pickEnd)}
+        className="h-10 shrink-0 rounded-full bg-primary px-4 text-label font-bold text-primary-foreground transition-transform active:scale-95"
+        aria-label="오늘 운동 끝난 시각 고르기"
+      >
+        끝난 시각 고르기
+      </button>
+    );
+  }
   return (
     <span className="flex shrink-0 items-center gap-2">
       <span className="text-label font-bold tabular-nums text-foreground">{formatMinutes(data.elapsed_minutes)}째</span>
@@ -100,14 +117,22 @@ const HomeWorkoutCard = ({ className }: { className?: string }) => {
   const { data: body } = useMyBodyInfo();
   const { data: extra } = useMyFitnessExtra();
   const openDetail = () => navigate("/mypage/attendance");
+  // 운동 시간 고치기 — 어제 끝 기록 없음(안내 줄) · 오늘 3시간 넘음(머리 단추). 서버에 함수가 없으면 빈 목록 = 예전 그대로
+  const { data: today } = useMyWorkoutToday();
+  const { data: fixItems } = useMyWorkoutFix();
+  const yFix = yesterdayFix(fixItems ?? []);
+  const tFix = today?.checked_in && !today.finished ? todayFix(fixItems ?? [], today.elapsed_minutes) : null;
+  const [fixOpen, setFixOpen] = useState<WorkoutFixItem | null>(null);
 
   const shell = (children: ReactNode) => (
     <section aria-label="내 운동" className={cn("overflow-hidden rounded-2xl border border-border bg-card shadow-elev-1", className)}>
       <div className="flex items-center justify-between gap-2 px-5 pt-5">
         <h2 className="min-w-0 truncate text-heading text-foreground">내 운동</h2>
-        <TodayStrip />
+        <TodayStrip pickEnd={tFix} onPickEnd={setFixOpen} />
       </div>
+      {yFix && <WorkoutFixNotice item={yFix} onOpen={() => setFixOpen(yFix)} className="mx-5 mt-3" />}
       {children}
+      <WorkoutFixSheet item={fixOpen} onClose={() => setFixOpen(null)} />
     </section>
   );
 

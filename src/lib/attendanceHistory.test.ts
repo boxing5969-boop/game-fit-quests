@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  bestMonthAllTime, bestMonthByMinutes, dayLabel, durationLabel, groupByMonth, kstTime, measuredDay, methodLabel, monthLabel, normalizeAttendanceHistory, topHourBucket, topWeekday,
+  bestMonthAllTime, bestMonthByMinutes, dayLabel, durationLabel, endSourceLabel, groupByMonth, kstTime, measuredDay, methodLabel, monthLabel, normalizeAttendanceHistory, topHourBucket, topWeekday,
 } from "./attendanceHistory";
 
 const RAW = {
@@ -76,6 +76,11 @@ describe("helpers", () => {
     expect(measuredDay({ ...day, end: "2026-10-20T10:40:00Z", endSource: "member_app", minutes: 66 })).toBe(false);
     expect(measuredDay({ ...day, end: "2026-10-20T15:00:00Z", endSource: "member_app", minutes: 66 })).toBe(false);
     expect(measuredDay({ ...day, end: null, endSource: null, minutes: 66 })).toBe(false);
+    // 운동 시간 고치기 (2026-11-19) — 회원이 고친 시간도 잰 시간 · 코치진 줄에는 「시간 고침」
+    expect(measuredDay({ ...day, end: "2026-10-20T11:40:00Z", endSource: "member_fix", minutes: 100 })).toBe(true);
+    expect(endSourceLabel("member_fix")).toBe("시간 고침");
+    expect(endSourceLabel("checkout_scan")).toBe("두 번째 체크");
+    expect(endSourceLabel("member_app")).toBe("운동 종료");
   });
   it("지금까지 가장 많이 운동한 달 — 날마다 목록 전체에서 (같으면 최근 달)", () => {
     const d = (day: string, minutes: number) => ({ day, at: `${day}T10:00:00Z`, end: null, endSource: null, minutes, method: "broj", branch: null });

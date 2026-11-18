@@ -29,6 +29,7 @@ import {
   bestMonthByMinutes,
   dayLabel,
   durationLabel,
+  endSourceLabel,
   groupByMonth,
   kstTime,
   measuredDay,
@@ -390,7 +391,7 @@ const AttendanceList = ({ data, audience }: { data: AttendanceHistory; audience:
                             <p className="truncate text-label text-muted-foreground">
                               {methodLabel(d.method)}
                               {showBranch && d.branch ? ` · ${shortBranch(d.branch)}` : ""}
-                              {measured ? (d.endSource === "checkout_scan" ? ` · ~${kstTime(d.end as string)} 두 번째 체크` : ` · ~${kstTime(d.end as string)} 운동 종료`) : " · 기본 시간"}
+                              {measured ? ` · ~${kstTime(d.end as string)} ${endSourceLabel(d.endSource)}` : " · 기본 시간"}
                             </p>
                           )}
                         </div>

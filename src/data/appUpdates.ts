@@ -18,6 +18,29 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261119-workout-fix",
+    date: "2026-11-19",
+    title: "운동 종료를 깜빡한 날 — 운동 시간 고치기",
+    lines: [
+      "자정이 지나 기본 1시간 6분이 된 어제 운동, 오늘 밤 12시까지 고칠 수 있어요",
+      "홈 「내 운동」에서 운동한 시간을 10분 단위로 골라요 · 한 번만",
+      "고친 시간만큼 XP · 승급 진행도 · 운동 시간 랭킹이 쌓여요",
+    ],
+    link: { to: "/home", label: "홈에서 보기" },
+    fromMember: true,
+  },
+  {
+    id: "20261119-scroll-top",
+    date: "2026-11-19",
+    title: "새 화면은 맨 위부터 열려요",
+    lines: [
+      "오늘 우리 체육관 · 메뉴 · 탭을 눌러 연 화면이 늘 맨 위부터 보여요",
+      "뒤로 가기는 보던 자리 그대로예요",
+    ],
+    link: { to: "/myboxer/community", label: "커뮤니티 열기" },
+    fromMember: true,
+  },
+  {
     id: "20261118-home-level-quest",
     date: "2026-11-18",
     title: "홈 — 수업 도장 · 레벨 달성 보상 · 오늘의 퀘스트",

@@ -70,6 +70,31 @@ export async function finishWorkoutSession(atGym: boolean | null = null): Promis
   return res.data ?? { success: false, error: "종료 처리에 실패했습니다." };
 }
 
+/**
+ * 운동 시간 고치기 (2026-11-19 회원 제안) — 오늘 · 어제 운동 끝 기록이 없는 날(기본 66분)을 회원이 한 번 고친다.
+ * 규칙 · XP 는 서버(get_my_workout_fix · fix_my_workout_end)에만. 모양 다듬기 · 고를 칸은 lib/workoutFix.
+ */
+export async function getMyWorkoutFix(): Promise<unknown> {
+  const res = await sbRpc<unknown>("get_my_workout_fix");
+  // 함수가 아직 없는 DB(적용 전 · 옛 DB 미리보기)면 고칠 것이 없는 것으로 — 화면은 예전 그대로
+  if (res.error) return { ok: false, items: [] };
+  return res.data ?? { ok: false, items: [] };
+}
+
+export interface FixWorkoutResult {
+  success: boolean;
+  error?: string;
+  already_finished?: boolean;
+  minutes?: number;
+  xp_granted?: number;
+}
+
+export async function fixMyWorkoutEnd(day: string, minutes: number): Promise<FixWorkoutResult> {
+  const res = await sbRpc<FixWorkoutResult>("fix_my_workout_end", { p_day: day, p_minutes: minutes });
+  if (res.error) throw new Error(res.error.message || "운동 시간을 고치지 못했어요.");
+  return res.data ?? { success: false, error: "운동 시간을 고치지 못했어요." };
+}
+
 export interface WorkoutRankRow {
   r_user_id: string;
   r_nickname: string;
