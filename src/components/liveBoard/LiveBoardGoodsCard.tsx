@@ -15,7 +15,7 @@
  *      「폴리스집업 그대로 나오게」로 사전예약이 열린 동안은 이 카드만 · 사전예약이 끝나면 「오늘의 1분」이 이어받는다.
  */
 import { useQuery } from "@tanstack/react-query";
-import { GOODS_FLEECE_SLUG, ddayLabel, deadlineLabel, hasGoodsSample, isAccepting, listPriceOf, stockLabel, won } from "@/lib/goodsPreorder";
+import { GOODS_FLEECE_SLUG, deadlineLabel, hasGoodsSample, isAccepting, listPriceOf, stockLabel, won } from "@/lib/goodsPreorder";
 import { cn } from "@/lib/utils";
 import { getGoodsCampaign } from "@/services/goodsService";
 
@@ -57,7 +57,6 @@ const LiveBoardGoodsCard = ({ branchName, fill = false }: { branchName?: string;
       <div className="flex items-center gap-3">
         <span className="rounded-full bg-emerald-400/15 px-3.5 py-1 text-xl font-black text-emerald-300">연말 원가 판매</span>
         <span className="text-xl font-black tracking-[0.2em] text-gray-500">153 GOODS</span>
-        <span className="ml-auto rounded-full bg-white px-4 py-1 text-2xl font-black tabular-nums text-gray-900">{ddayLabel(c)}</span>
       </div>
       <h2 className="mt-3 text-6xl font-black leading-tight text-white">153 플리스 집업</h2>
       <p className="mt-1 text-2xl font-bold text-gray-400">공장에 남은 물량만 · 153은 원가 그대로</p>

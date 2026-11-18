@@ -26,7 +26,6 @@ import {
   GOODS_FLEECE_PATH,
   GOODS_FLEECE_SLUG,
   GOODS_POPUP_TIMING,
-  ddayLabel,
   deadlineLabel,
   goodsPopupSessionKey,
   goodsPopupTodayKey,
@@ -193,7 +192,7 @@ const GoodsPopup = () => {
               className="aspect-[16/10] w-full object-cover object-[50%_38%]"
             />
             <span className="absolute left-3 top-3 rounded-full bg-black/70 px-2.5 py-1 text-micro font-bold text-white">
-              연말 원가 판매 · {ddayLabel(c)}
+              연말 원가 판매
             </span>
             <span className="absolute bottom-2 right-3 text-micro text-white/85 [text-shadow:0_1px_2px_rgba(0,0,0,0.6)]">
               AI 예시 이미지

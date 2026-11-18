@@ -158,20 +158,8 @@ export function deadlineLabel(closesAt: string): string {
   return `${k.m + 1}월 ${k.d}일(${"일월화수목금토".charAt(k.w)})`;
 }
 
-/** 마감까지 남은 날(한국 날짜 기준) — 마감 날이면 0, 지났으면 음수 */
-export function daysLeft(closesAt: string, now: Date | number = Date.now()): number {
-  const a = kstParts(now);
-  const b = kstParts(closesAt);
-  return Math.round((Date.UTC(b.y, b.m, b.d) - Date.UTC(a.y, a.m, a.d)) / 86400000);
-}
-
-/** 'D-3' · '오늘 마감' · '마감' */
-export function ddayLabel(c: Pick<GoodsCampaign, "open" | "closes_at">, now: Date | number = Date.now()): string {
-  const t = typeof now === "number" ? now : now.getTime();
-  if (!c.open || new Date(c.closes_at).getTime() <= t) return "마감";
-  const left = daysLeft(c.closes_at, now);
-  return left <= 0 ? "오늘 마감" : `D-${left}`;
-}
+// 마감까지 남은 날('D-8' · '오늘 마감')은 앱 · TV · 상세페이지 어디에도 쓰지 않는다
+// (2026-11-18 대표님 「몇일남았다는말은 하지말자」) — 마감 날짜(deadlineLabel)와 남은 벌 수만 보여 준다.
 
 /** 운영진 단추 — 서버 goods_admin_update 의 허용 변화와 같아야 한다 */
 export function nextActions(status: GoodsStatus): { to: GoodsStatus; label: string; tone: "primary" | "plain" | "danger" }[] {

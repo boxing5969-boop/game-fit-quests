@@ -60,6 +60,21 @@ describe("라이브보드 2번 화면 오른쪽 칸 — 사전예약 동안은 �
     expect(growth()).toBeNull();
   });
 
+  it("TV 플리스 칸에 남은 날(D-8 · 오늘 마감)을 쓰지 않는다 — 신청 마감 날짜 · 남은 벌 수만 (2026-11-18 대표님)", async () => {
+    getGoodsCampaign.mockResolvedValue({ ...OPEN, closes_at: "2026-11-26T23:59:59+09:00" });
+    // 예전 화면이면 'D-8' 이 나오던 날 · '오늘 마감' 이 나오던 날
+    for (const at of ["2026-11-18T10:00:00+09:00", "2026-11-26T10:00:00+09:00"]) {
+      now = Date.parse(at);
+      const view = show(SUNREUNG);
+      await waitFor(() => expect(goods()).toBeInTheDocument());
+      const board = goods()!.closest("aside")!;
+      expect(board).toHaveTextContent("11월 26일(목)까지");
+      expect(board).toHaveTextContent("남은 38벌");
+      expect(board.textContent).not.toMatch(/D-\d|D-day|오늘 마감|일 남/);
+      view.unmount();
+    }
+  });
+
   it("사전예약 정보를 읽는 동안은 칸을 그리지 않는다 — 「오늘의 1분」이 잠깐 비쳤다가 바뀌지 않게", async () => {
     let resolve: (v: unknown) => void = () => undefined;
     getGoodsCampaign.mockReturnValue(new Promise((r) => (resolve = r)));

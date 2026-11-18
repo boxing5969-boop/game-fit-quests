@@ -13,7 +13,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   GOODS_FLEECE_PATH,
   GOODS_FLEECE_SLUG,
-  ddayLabel,
   deadlineLabel,
   isSoldOut,
   shortBranch,
@@ -84,7 +83,7 @@ const GoodsNudgeCard = () => {
       <span className="min-w-0 flex-1">
         <span className="block text-label font-extrabold text-foreground">153 플리스 집업 · 원가 판매</span>
         <span className="mt-0.5 block text-label text-muted-foreground">
-          {won(c.price)} · {stockShort(c)} · {ddayLabel(c)}
+          {won(c.price)} · {stockShort(c)}
         </span>
       </span>
       <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />

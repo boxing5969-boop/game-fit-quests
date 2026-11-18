@@ -13,7 +13,6 @@ import {
   GOODS_FLEECE_URL,
   GOODS_STATUS_LABEL,
   colorLabel,
-  ddayLabel,
   deadlineLabel,
   isSoldOut,
   stockLabel,
@@ -201,7 +200,7 @@ const GoodsOrdersPanel = () => {
             <p className="text-label font-bold text-muted-foreground">굿즈 사전예약 · {data.scope.all ? "전 지점" : shortBranch(data.scope.branch)}</p>
             <p className="mt-0.5 text-heading text-foreground">{campaign.title}</p>
             <p className="mt-0.5 text-label text-muted-foreground">
-              {won(campaign.price)} · {deadlineLabel(campaign.closes_at)} 마감 · {ddayLabel(campaign)}
+              {won(campaign.price)} · {deadlineLabel(campaign.closes_at)} 마감
             </p>
             {/* 선착순 (2026-11-12 대표님 「50장 선착순」) — 결제 전 + 결제 완료 + 받음을 센다 · 취소하면 자리가 다시 난다 */}
             {campaign.stock_limit != null && (

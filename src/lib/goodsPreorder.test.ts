@@ -2,8 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   FLEECE_FALLBACK,
   basisStatuses,
-  daysLeft,
-  ddayLabel,
   deadlineLabel,
   formatPhone,
   goodsPopupSessionKey,
@@ -61,23 +59,6 @@ describe("goodsPreorder", () => {
     expect(deadlineLabel("2026-11-26T23:59:59+09:00")).toBe("11월 26일(목)");
     // UTC 늦은 밤이 한국 날짜로는 다음 날
     expect(deadlineLabel("2026-11-26T16:00:00Z")).toBe("11월 27일(금)");
-  });
-
-  it("counts days left by KST date", () => {
-    const close = "2026-11-26T23:59:59+09:00";
-    expect(daysLeft(close, new Date("2026-11-12T11:00:00Z"))).toBe(14);
-    expect(daysLeft(close, new Date("2026-11-26T00:30:00+09:00"))).toBe(0);
-    expect(daysLeft(close, new Date("2026-11-27T00:01:00+09:00"))).toBe(-1);
-    // 한국 자정 직후(UTC 로는 전날)도 한국 날짜로 센다
-    expect(daysLeft(close, new Date("2026-11-24T15:30:00Z"))).toBe(1);
-  });
-
-  it("d-day label", () => {
-    const c = { open: true, closes_at: "2026-11-26T23:59:59+09:00" };
-    expect(ddayLabel(c, new Date("2026-11-12T11:00:00Z"))).toBe("D-14");
-    expect(ddayLabel(c, new Date("2026-11-26T10:00:00+09:00"))).toBe("오늘 마감");
-    expect(ddayLabel(c, new Date("2026-11-27T00:00:00+09:00"))).toBe("마감");
-    expect(ddayLabel({ ...c, open: false }, new Date("2026-11-12T11:00:00Z"))).toBe("마감");
   });
 
   it("next actions mirror the server transitions", () => {

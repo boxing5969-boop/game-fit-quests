@@ -323,7 +323,7 @@ details p{margin:6px 0 0}
     <div class="price-row">
       <s class="list" data-list-price hidden></s>
       <span class="price" data-price>25,000원</span>
-      <span class="chip" id="dday">D-14</span>
+      <span class="chip off" id="dday" hidden>마감</span>
     </div>
     <p class="sub">153이 남기는 이익 0원 · 인쇄 색 2가지 중 선택</p>
     <ul class="proof" aria-label="한눈에 보기">
@@ -645,10 +645,6 @@ details p{margin:6px 0 0}
   var KST = 9 * 3600 * 1000;
   function kstDate(t) { var k = new Date(new Date(t).getTime() + KST); return { y: k.getUTCFullYear(), m: k.getUTCMonth(), d: k.getUTCDate(), w: k.getUTCDay() }; }
   function dateLabel(t) { var k = kstDate(t); return (k.m + 1) + "월 " + k.d + "일(" + "일월화수목금토".charAt(k.w) + ")"; }
-  function daysLeft(t) {
-    var a = kstDate(Date.now()), b = kstDate(t);
-    return Math.round((Date.UTC(b.y, b.m, b.d) - Date.UTC(a.y, a.m, a.d)) / 86400000);
-  }
   function isOpen() { return C.open && new Date(C.closes_at).getTime() > Date.now(); }
   // 선착순: 서버 sold_out, 없으면 남은 수로
   function soldOut() { return C.sold_out === true || (C.stock_limit != null && C.stock_left != null && C.stock_left <= 0); }
@@ -706,10 +702,8 @@ details p{margin:6px 0 0}
     $("stockLeft").textContent = soldOut() ? "마감" : "남은 " + stockLeft() + "벌";
     all("[data-deadline]").forEach(function (el) { el.textContent = dateLabel(C.closes_at); });
     all("[data-sizes]").forEach(function (el) { el.textContent = C.sizes.join(" · "); });
-    var dd = $("dday"), left = daysLeft(C.closes_at), open = isOpen();
-    if (!open || soldOut()) { dd.textContent = "마감"; dd.className = "chip off"; }
-    else if (left <= 0) { dd.textContent = "오늘 마감"; dd.className = "chip"; }
-    else { dd.textContent = "D-" + left; dd.className = "chip"; }
+    // 남은 날(D-n · 오늘 마감)은 쓰지 않는다 (2026-11-18 대표님 「몇일남았다는말은 하지말자」) — 마감했을 때만 '마감'
+    $("dday").hidden = accepting();
     $("qtyHint").textContent = "한 번에 " + C.max_qty + "벌까지";
     // 사이즈 단추
     var box = $("sizeOpts"); box.innerHTML = "";

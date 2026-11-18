@@ -93,6 +93,17 @@ describe("홈 플리스 집업 팝업 (2026-11-18 대표님 「팝업창하나�
     expect(d.textContent).not.toMatch(/—|프리미엄|최고|국가대표|보장/);
   });
 
+  it("남은 날(D-8 · 오늘 마감)은 말하지 않는다 — 마감 날짜 · 남은 벌 수만 (2026-11-18 대표님 「몇일남았다는말은 하지말자」)", async () => {
+    // 마감이 몇 분 뒤 — 예전 화면이면 '오늘 마감' 이 나오던 때
+    getGoodsCampaign.mockResolvedValue({ ...OPEN, closes_at: new Date(Date.now() + 5 * 60_000).toISOString() });
+    show();
+    const d = await screen.findByRole("dialog");
+    expect(d).toHaveTextContent("연말 원가 판매");
+    expect(d).toHaveTextContent(/신청 마감 \d+월 \d+일/);
+    expect(d).toHaveTextContent("남은 44벌");
+    expect(d.textContent).not.toMatch(/D-\d|D-day|오늘 마감|일 남/);
+  });
+
   it("「오늘 하루 보지 않기」 — 오늘 날짜 칸에 기억하고 닫힌다 · 다시 열어도 오늘은 안 뜬다", async () => {
     const first = show();
     await screen.findByRole("dialog");
