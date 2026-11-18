@@ -6,6 +6,9 @@
 //     목소리 없는 영상 · 영상 없는 카드는 열면 설명 듣기가 저절로(드라이브 영상과 같은 목소리 파일, 없으면 휴대폰 목소리) ·
 //     설명이 나오는 동안 영상 소리는 잠깐 끈다 · 소리를 끄면 이 창을 닫을 때까지 조용히(lib/learnAudio)
 //   → 이렇게 해요(포인트) → 이런 실수 조심 → 준비물 · 시간 → 「다음 동작 →」 하나로 끝 (감정 설계 ⑤)
+//   · 2026-11-18 대표님 「최상단에 영상이 먼저 나오고 설명글 바로 위에 이미지 — 모든 동작은 영상 밑에 이미지 소개글」:
+//     동작 그림(image_url — 2컷 순서 그림)은 영상이 있으면 영상 바로 아래 · 글 바로 위, 영상이 없으면 맨 위(예전 그대로).
+//     영상 첫 장면(poster_path)만 영상 표지로 쓴다 — 그림을 표지로 쓰면 같은 그림이 두 번 보이고 영상 비율도 틀어진다
 //   · 코치진이 보면 「코치용 영상(목소리)」 단추가 하나 더 (코치용 영상이 붙은 카드만)
 //   · 같은 시트를 훈련 탭 「영상으로 배우기」 · 레벨 자세히 › 필수 훈련 · 전략 회의 영상 칸 · 훈련 라이브러리가 같이 쓴다
 //   · 회원 글에는 몸에 좋다는 효과 말(benefits)을 보여 주지 않는다 — 동작과 포인트만 (회원용 글 규칙)
@@ -206,6 +209,12 @@ const TrainingDrillSheet = ({
   const isStorageVideo = !!url && !!card?.video_path;
   const yt = url && !card?.video_path ? strictYoutubeId(url) : null;
   const poster = card ? posterOf(card) : null;
+  // 동작 그림(2컷) · 영상 첫 장면을 나눠 쓴다 — posterOf 는 첫 장면이 없으면 그림을 돌려준다
+  const illust = card?.image_url?.trim() || null;
+  const framePoster = poster && poster !== illust ? poster : null;
+  // 영상 카드는 주소를 받는 동안에도 맨 위 = 첫 장면, 그림 = 그 아래 (받고 나서 그림이 아래로 뛰지 않게)
+  const videoCard = isStorageVideo || !!yt || !!url || !!card?.video_path;
+  const topPicture = videoCard ? framePoster : illust ?? framePoster;
 
   // 🔊 설명 듣기 — 목소리 파일(드라이브 영상과 같은 목소리)이 있으면 그것, 없거나 못 틀면 휴대폰 목소리로 문장마다
   const cardRef = useRef(card);
@@ -264,15 +273,15 @@ const TrainingDrillSheet = ({
     const v = videoRef.current;
     if (v) v.muted = !soundOn || blocked || speaking;
   }, [soundOn, blocked, speaking, url]);
-  // 그림 비율을 먼저 알면 영상이 오기 전부터 그 모양으로 (가로 영상이 정사각으로 잘리지 않게)
+  // 첫 장면 그림 비율을 먼저 알면 영상이 오기 전부터 그 모양으로 (가로 영상이 정사각으로 잘리지 않게)
   useEffect(() => {
-    if (!poster) return;
+    if (!framePoster) return;
     const img = new Image();
     img.onload = () => {
       if (img.naturalWidth && img.naturalHeight) setRatio((r) => r ?? clampVideoRatio(img.naturalWidth / img.naturalHeight));
     };
-    img.src = poster;
-  }, [poster]);
+    img.src = framePoster;
+  }, [framePoster]);
 
   // 🔊 들어가면 설명 듣기 — 목소리 없는 영상 · 영상 없는 카드만(목소리 있는 영상은 더빙이 설명) · 소리를 꺼 둔 회원님은 안 함
   const hasVideoPath = !!card?.video_path;
@@ -381,7 +390,7 @@ const TrainingDrillSheet = ({
               ref={videoRef}
               key={url}
               src={url}
-              poster={poster ?? undefined}
+              poster={framePoster ?? undefined}
               muted={!soundOn || blocked || speaking}
               loop={hasAudio !== true}
               playsInline
@@ -449,9 +458,9 @@ const TrainingDrillSheet = ({
           </div>
         ) : url ? (
           <video src={url} controls playsInline onPlaying={onVideoPlaying} onEnded={onLoopDone} className="aspect-video w-full rounded-t-3xl bg-black" />
-        ) : poster ? (
+        ) : topPicture ? (
           <img
-            src={poster}
+            src={topPicture}
             alt={`${card.name} 동작 그림`}
             loading="lazy"
             onError={(e) => {
@@ -461,6 +470,19 @@ const TrainingDrillSheet = ({
           />
         ) : (
           <div className="h-12" />
+        )}
+
+        {/* 동작 그림 — 영상 바로 아래 · 글 바로 위 (2026-11-18). 못 불러오면 자리째 감춤 */}
+        {videoCard && illust && (
+          <img
+            src={illust}
+            alt={`${card.name} 동작 그림`}
+            loading="lazy"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
+            className="w-full border-b border-border bg-card"
+          />
         )}
 
         <div className="px-5 pt-4">

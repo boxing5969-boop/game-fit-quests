@@ -11,7 +11,9 @@ vi.mock("@/contexts/AuthContext", () => ({
 vi.mock("@/services/trainingCardService", () => ({
   useTrainingCards: () => ({ data: undefined }),
   useCardVideo: (_c: unknown, who: string) => ({ data: who === "member" ? videoUrl.current : null, isLoading: false }),
-  useCardPosters: () => () => null,
+  // 진짜 훅처럼 — 첫 장면(poster_path)이 있으면 그것, 없으면 동작 그림(image_url)
+  useCardPosters: () => (c: { poster_path: string | null; image_url: string | null }) =>
+    c.poster_path ? `https://x/${c.poster_path}` : c.image_url,
 }));
 vi.mock("@/services/shelfLayoutService", () => ({ logCardEvent: vi.fn() }));
 vi.mock("@/services/cardReactService", () => ({ useCardSocial: () => ({ data: undefined }) }));
@@ -167,5 +169,57 @@ describe("카드 시트 — 소리 켠 영상 · 설명 듣기 자동 · 버튼"
     fireEvent.click(hint);
     expect(video().muted).toBe(false);
     expect(play.mock.calls.length).toBeGreaterThanOrEqual(3);
+  });
+});
+
+// 2026-11-18 대표님 「최상단에 영상이 먼저 나오고 설명글 바로 위에 이미지 — 모든 동작은 영상 밑에 이미지 소개글」
+describe("카드 시트 — 영상 → 동작 그림 → 글 순서", () => {
+  const ILLUST = "https://img/straight-2cut.png";
+  const before = (a: Element, b: Element) => !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+
+  it("영상 카드 — 맨 위 영상, 그 아래 동작 그림, 그 아래 이름(글)", () => {
+    videoUrl.current = "https://x/member/d.mp4";
+    render(
+      <TrainingDrillSheet
+        exercise={card({ video_path: "member/d.mp4", poster_path: "member/d.webp", image_url: ILLUST })}
+        onClose={vi.fn()}
+      />,
+    );
+    const pic = screen.getByAltText("잽 동작 그림");
+    expect(pic).toHaveAttribute("src", ILLUST);
+    expect(before(video(), pic)).toBe(true);
+    expect(before(pic, screen.getByRole("heading", { name: "잽" }))).toBe(true);
+    // 영상 표지는 첫 장면 — 그림이 두 번 보이지 않게
+    expect(video().getAttribute("poster")).toBe("https://x/member/d.webp");
+    expect(screen.getAllByAltText("잽 동작 그림")).toHaveLength(1);
+  });
+
+  it("영상 주소를 받는 중 — 맨 위 첫 장면 · 그림은 이미 아래 자리에", () => {
+    videoUrl.current = null;
+    render(
+      <TrainingDrillSheet
+        exercise={card({ video_path: "member/e.mp4", poster_path: "member/e.webp", image_url: ILLUST })}
+        onClose={vi.fn()}
+      />,
+    );
+    const imgs = screen.getAllByRole("img");
+    expect(imgs[0]).toHaveAttribute("src", "https://x/member/e.webp");
+    expect(imgs[1]).toHaveAttribute("src", ILLUST);
+  });
+
+  it("영상이 없는 카드 — 동작 그림이 맨 위(예전 그대로) · 한 번만", () => {
+    render(<TrainingDrillSheet exercise={card({ image_url: ILLUST })} onClose={vi.fn()} />);
+    const pics = screen.getAllByAltText("잽 동작 그림");
+    expect(pics).toHaveLength(1);
+    expect(pics[0]).toHaveAttribute("src", ILLUST);
+    expect(before(pics[0], screen.getByRole("heading", { name: "잽" }))).toBe(true);
+    expect(document.querySelector("video")).toBeNull();
+  });
+
+  it("그림이 없는 영상 카드 — 그림 칸 없이 영상 → 글", () => {
+    videoUrl.current = "https://x/member/f.mp4";
+    render(<TrainingDrillSheet exercise={card({ video_path: "member/f.mp4", poster_path: "member/f.webp" })} onClose={vi.fn()} />);
+    expect(screen.queryByAltText("잽 동작 그림")).toBeNull();
+    expect(video().getAttribute("poster")).toBe("https://x/member/f.webp");
   });
 });
