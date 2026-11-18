@@ -1,18 +1,23 @@
 /**
- * 🎯 홈 「다음 레벨까지」 — 수업 도장 길 (2026-11-18 대표님 「1일차 수업 2일차 수업 3일차 수업 … 레벨업 하는재미」)
+ * 🎯 홈 「다음 레벨까지」 — 수업 도장 게이지
+ * (v1 2026-11-18 대표님 「1일차 수업 2일차 수업 3일차 수업 … 레벨업 하는재미」 ·
+ *  v2 같은 날 「심리적으로 채우고싶은 느낌이 나고 게임처럼 레벨업 하고싶은 욕구가 강해질수있는 디자인으로」)
  *
- *   [지금 레벨 방패] ── (10일차 ✓) ── (11일차 · 다음 수업) ┄┄ (12일차) ┄┄ [다음 레벨 금색 🎁]
+ *   [지금 레벨 방패] ━━ (✓ 10일차) ━━ (✓ 11일차 · 오늘) ━━ (◌ 12일차 · 레벨업) ┅┅ [🎁 레벨 5]
  *
- *   · 도장 칸 = 이번 레벨에 필요한 출석 (서버 reqSessions) · 칸 이름 = 153 수업 일차 (lib/levelQuest.ts)
- *   · 오늘 왔으면 마지막 칸에 「오늘 수업」 + 도장 찍히는 움직임(이 기기에서 하루 한 번) · 아직이면 다음 칸에 「다음 수업」이 숨 쉰다
- *   · 운동 종료 보너스로 다음 칸이 조금 찼으면 다음 칸 테두리에 그만큼 민트 호
- *   · 칸이 많은 리그(블루 5 · 레드 8)는 일차 이름을 지금 칸에만, 레드부터는 작은 칸 · 블랙 20칸은 두 줄
- *   · 레벨 10(화이트 · 블루 — 도착하면 타이틀매치)은 도장 대신 리그 길: 레벨 1~9 지나온 칸 + 타이틀매치 칸
- * 칸은 크기를 지키고 사이 길만 늘었다 줄었다(flex) — 좁은 폰 · 큰 글씨에서도 동그라미가 찌그러지지 않게.
- * 색: 민트 = 해낸 것 · 금색 = 목표 · 보상 (153 브랜드 — 넓은 민트 바탕 · 네온 없이). 움직임은 '움직임 줄이기' 설정이면 멈춘다.
+ *   · 칸 사이는 굵은 홈(게이지) — 채운 만큼 민트가 차오른다. 운동 종료 보너스로 미리 찬 몫은 다음 칸 앞 홈에 그만큼
+ *   · 채운 칸 = 반짝이는 민트 동전 + 흰 체크 · 빈칸 = 움푹 파인 홈에 흐린 체크 자국 — 채우고 싶게 (미완성 효과)
+ *   · 다음 칸 = 점선 테두리 + 숨 쉬는 고리(오늘 아직이면) · 마지막 칸 = 금색 「레벨업」 칸 (목표 기울기 효과)
+ *   · 오늘 온 날(이 기기에서 하루 한 번): 홈에 민트가 차오르고 → 도장이 꾹 → 「+1」이 떠오른다
+ *   · 목표 = 금색 동전 안 선물 — 1번 남으면 들썩, 다 모으면 둥실 + 금빛 고리 (보상 기대)
+ *   · 칸 수는 서버 요건 그대로(화이트 3 · 블루 5 · 레드 8 · 블랙 20) — 많으면 작은 칸 · 일차 이름은 지금 칸에만 · 블랙은 두 줄
+ *   · 레벨 10(화이트 · 블루 — 도착하면 타이틀매치)은 도장 대신 리그 길
+ * 칸은 크기를 지키고 사이 홈만 늘었다 줄었다(flex) — 좁은 폰 · 큰 글씨에서도 동그라미가 찌그러지지 않게.
+ * 색: 민트 = 해낸 것 · 금색 = 목표 · 보상 (153 브랜드 — 넓은 민트 바탕 · 네온 없이). 움직임은 '움직임 줄이기'면 모두 멈춘다.
  */
 import { Check } from "lucide-react";
 import LeagueBadge from "@/components/badges/LeagueBadge";
+import { icon3dSrc } from "@/lib/emoji3d/map";
 import type { QuestStamp } from "@/lib/levelQuest";
 import { cn } from "@/lib/utils";
 
@@ -22,19 +27,41 @@ interface StampRailProps {
   /** "레벨 4" — 시작 칸 이름 */
   startLabel: string;
   stamps: readonly QuestStamp[];
-  /** 목표 칸 안 숫자 — 다음 누적 레벨(5) · 다음 리그로 가는 칸이면 null(트로피) */
-  goalNumber: number | null;
-  /** 목표 칸 이름 — "레벨업" · "블랙 리그" */
+  /** 목표 그림 — 다음 레벨 = 선물 · 다음 리그로 가는 칸 = 트로피 */
+  goalKind: "level" | "league";
+  /** 목표 칸 이름 — "레벨 5" · "블랙 리그" */
   goalLabel: string;
-  /** 도장을 다 모았다 — 목표 칸이 살짝 뛴다 */
-  goalReady: boolean;
-  /** 다음 칸이 「다음 수업」으로 숨 쉰다 (오늘 아직 안 왔을 때) */
+  /** 마지막 칸 — 보이는 이름표("레벨업" · "마지막")와 읽어 주는 이름("레벨업 도장" · "마지막 도장") */
+  lastTag: { tag: string; aria: string };
+  /** 남은 출석 1번 — 선물이 들썩인다 */
+  near: boolean;
+  /** 도장을 다 모았다 — 마지막 홈까지 차고 선물이 둥실 + 금빛 고리 */
+  ready: boolean;
+  /** 다음 칸이 숨 쉰다 (오늘 아직 안 왔을 때) */
   invite: boolean;
-  /** 오늘 칸에 도장 찍히는 움직임 (이 기기에서 하루 한 번) */
-  stampIn: boolean;
+  /** 오늘 온 날 — 홈이 차오르고 도장이 꾹 · 「+1」 (이 기기에서 하루 한 번) */
+  celebrate: boolean;
 }
 
-/** 다음 칸 테두리의 보너스 호 — 0 ~ 1 */
+/** 칸 크기 — 칸 수에 따라 (셋 = 큰 칸 · 다섯 = 중간 · 여덟 이상 = 작은 칸). 높이는 rem — 글씨 '크게'에서도 같은 비율 */
+type Tier = "lg" | "md" | "sm";
+const tierOf = (n: number): Tier => (n <= 3 ? "lg" : n <= 5 ? "md" : "sm");
+const SIZE: Record<Tier, { stamp: string; check: string; start: string; goal: string; gift: string; stampRem: number; goalRem: number }> = {
+  lg: { stamp: "h-11 w-11", check: "h-6 w-6", start: "h-10 w-10", goal: "h-[3.25rem] w-[3.25rem]", gift: "h-8 w-8", stampRem: 2.75, goalRem: 3.25 },
+  md: { stamp: "h-8 w-8", check: "h-[1.1rem] w-[1.1rem]", start: "h-9 w-9", goal: "h-11 w-11", gift: "h-7 w-7", stampRem: 2, goalRem: 2.75 },
+  sm: { stamp: "h-5 w-5", check: "h-3 w-3", start: "h-[1.875rem] w-[1.875rem]", goal: "h-10 w-10", gift: "h-6 w-6", stampRem: 1.25, goalRem: 2.5 },
+};
+
+/**
+ * 칸 하나(홈 + 동그라미)의 자리 — 기본 너비 = 동그라미 크기, 남는 자리는 모든 칸이 똑같이 나눠 홈 길이가 고르다
+ * (큰 목표 칸 앞 홈만 짧아지지 않게). 좁은 폰 · 큰 글씨에서는 홈이 0.2rem 까지 줄어든다(칸은 그대로 — 카드 밖으로 넘치지 않게).
+ */
+const slot = (nodeRem: number) => ({ flex: `1 1 ${nodeRem}rem`, minWidth: `${nodeRem + 0.2}rem` });
+
+/** 동전 윗부분 반짝임 */
+const Gloss = () => <span aria-hidden className="pointer-events-none absolute inset-x-[20%] top-[9%] h-[34%] rounded-full bg-white/35" />;
+
+/** 다음 칸 테두리의 보너스 호 (블랙 두 줄 칸에서만 — 줄 칸에는 홈이 없다) */
 const PartialArc = ({ value }: { value: number }) => {
   const r = 18.5;
   const c = 2 * Math.PI * r;
@@ -54,49 +81,94 @@ const PartialArc = ({ value }: { value: number }) => {
   );
 };
 
-/** 칸 크기 — 칸 수에 따라 (셋 = 큰 칸 · 다섯 = 중간 · 여덟 이상 = 작은 칸). 끝 칸(방패 · 목표)은 한 단계 크게 */
-type Tier = "lg" | "md" | "sm";
-const tierOf = (n: number): Tier => (n <= 3 ? "lg" : n <= 5 ? "md" : "sm");
-const STAMP: Record<Tier, { box: string; check: string; dot: string }> = {
-  lg: { box: "h-10 w-10", check: "h-5 w-5", dot: "h-2.5 w-2.5" },
-  md: { box: "h-8 w-8", check: "h-4 w-4", dot: "h-2 w-2" },
-  sm: { box: "h-5 w-5", check: "h-3 w-3", dot: "h-1.5 w-1.5" },
-};
-const END: Record<Tier, { box: string; px: number }> = {
-  lg: { box: "h-11 w-11", px: 44 },
-  md: { box: "h-10 w-10", px: 40 },
-  sm: { box: "h-9 w-9", px: 36 },
-};
-
-const StampNode = ({ stamp, tier, invite, stampIn }: { stamp: QuestStamp; tier: Tier; invite: boolean; stampIn: boolean }) => {
-  const t = STAMP[tier];
+const StampNode = ({
+  stamp,
+  tier,
+  last,
+  invite,
+  celebrate,
+}: {
+  stamp: QuestStamp;
+  tier: Tier;
+  last: boolean;
+  invite: boolean;
+  celebrate: boolean;
+}) => {
+  const t = SIZE[tier];
   if (stamp.state === "done" || stamp.state === "today") {
-    return (
+    const today = stamp.state === "today";
+    const landing = today && celebrate;
+    const coin = (
       <span
         className={cn(
-          "relative flex shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground",
-          t.box,
-          stamp.state === "today" && (tier === "sm" ? "ring-2 ring-primary/25" : "ring-4 ring-primary/20"),
-          stamp.state === "today" && stampIn && "motion-safe:animate-quest-stamp",
+          "flex items-center justify-center rounded-full bg-primary shadow-[inset_0_-2px_0_rgba(0,0,0,0.12)]",
+          landing ? "absolute inset-0 motion-safe:animate-quest-stamp" : cn("relative z-10 shrink-0", t.stamp),
+          today && (tier === "sm" ? "ring-2 ring-primary/30" : "ring-4 ring-primary/25"),
         )}
       >
-        <Check className={t.check} strokeWidth={3.2} aria-hidden />
+        <Gloss />
+        <Check className={cn(t.check, "relative text-white drop-shadow-[0_1px_0_rgba(0,0,0,0.18)]")} strokeWidth={3.4} aria-hidden />
+      </span>
+    );
+    if (!landing) return coin;
+    return (
+      <span className={cn("relative z-10 flex shrink-0", t.stamp)}>
+        {/* 도장이 찍히기 전에는 오늘 칸이 빈 홈으로 보인다 — 빈칸이 채워지는 순간을 보여 준다 (움직임 줄이기면 도장에 가려 안 보인다) */}
+        <span aria-hidden className="absolute inset-0 flex items-center justify-center rounded-full border-2 border-dashed border-primary/60 bg-card">
+          {tier !== "sm" ? (
+            <Check className={cn(t.check, "text-primary/30")} strokeWidth={3.4} />
+          ) : (
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+          )}
+        </span>
+        {coin}
+        {/* 오늘 도장 — 「+1」이 떠올랐다 사라진다 (움직임 줄이기면 보이지 않는다) */}
+        <span aria-hidden className="pointer-events-none absolute bottom-full left-1/2 mb-1 -translate-x-1/2">
+          <span className="block whitespace-nowrap rounded-full bg-primary px-2 py-0.5 text-micro font-black text-primary-foreground opacity-0 shadow-elev-2 motion-safe:animate-quest-float">
+            +1
+          </span>
+        </span>
       </span>
     );
   }
   if (stamp.state === "next") {
     return (
-      <span className={cn("relative flex shrink-0 items-center justify-center rounded-full border-2 border-primary/40 bg-card", t.box)}>
-        {invite && <span aria-hidden className="absolute -inset-1 rounded-full border-2 border-primary motion-safe:animate-quest-halo" />}
-        {tier !== "sm" && stamp.partial >= 0.05 && <PartialArc value={stamp.partial} />}
-        <span aria-hidden className={cn("rounded-full bg-primary", t.dot)} />
+      <span
+        className={cn(
+          "relative z-10 flex shrink-0 items-center justify-center rounded-full border-2 border-dashed",
+          last ? "border-reward bg-reward/10" : "border-primary/60 bg-card",
+          t.stamp,
+        )}
+      >
+        {invite && (
+          <span
+            aria-hidden
+            className={cn("absolute -inset-1 rounded-full border-2 motion-safe:animate-quest-halo", last ? "border-reward" : "border-primary")}
+          />
+        )}
+        {tier !== "sm" ? (
+          <Check className={cn(t.check, last ? "text-reward/45" : "text-primary/30")} strokeWidth={3.4} aria-hidden />
+        ) : (
+          <span aria-hidden className={cn("h-1.5 w-1.5 rounded-full", last ? "bg-reward" : "bg-primary")} />
+        )}
       </span>
     );
   }
-  return <span className={cn("shrink-0 rounded-full border-2 border-dashed border-border bg-card", t.box)} aria-hidden />;
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "relative z-10 flex shrink-0 items-center justify-center rounded-full",
+        last ? "border-2 border-dashed border-reward/55 bg-reward/[0.07]" : "bg-muted shadow-[inset_0_2px_3px_rgba(15,23,42,0.10)]",
+        t.stamp,
+      )}
+    >
+      {tier !== "sm" && <Check className={cn(t.check, last ? "text-reward/30" : "text-muted-foreground/20")} strokeWidth={3.4} />}
+    </span>
+  );
 };
 
-const stampAria = (s: QuestStamp) =>
+const stampAria = (s: QuestStamp, lastAria: string | null) =>
   `${s.day}일차 수업 · ${
     s.state === "today"
       ? "오늘 완료"
@@ -105,25 +177,45 @@ const stampAria = (s: QuestStamp) =>
         : s.state === "next"
           ? `다음 수업${s.partial >= 0.05 ? ` · 운동 보너스로 ${Math.round(s.partial * 100)}% 찼어요` : ""}`
           : "남은 수업"
-  }`;
+  }${lastAria ? ` · ${lastAria}` : ""}`;
 
-/** 칸 사이 길 — 해낸 길은 민트, 남은 길은 점선 (칸 가운데 높이에 · top = 칸 높이의 절반, rem) */
-const Link = ({ done, top }: { done: boolean; top: number }) =>
-  done ? (
-    <span aria-hidden className="h-[3px] min-w-[2px] flex-1 bg-primary" style={{ marginTop: `calc(${top}rem - 1.5px)` }} />
-  ) : (
-    <span aria-hidden className="h-0 min-w-[2px] flex-1 border-t-2 border-dashed border-border" style={{ marginTop: `calc(${top}rem - 1px)` }} />
-  );
-
-/** 칸 위 이름표(오늘 수업 · 다음 수업 · 지금) — 칸 크기를 밀지 않게 띄워 둔다 */
-const Tag = ({ children, tone }: { children: string; tone: "solid" | "soft" | "gold" }) => (
+/**
+ * 칸 사이 홈 — 움푹 파인 길에 채운 만큼 민트가 찬다 (0 ~ 1). 양 끝은 옆 칸 밑으로 조금 들어가 한 줄로 이어 보인다.
+ * top = 칸 가운데 높이(rem) · fill 이 움직이면(오늘 온 날) 왼쪽부터 차오른다.
+ */
+const Groove = ({ fill, top, animate }: { fill: number; top: number; animate?: boolean }) => (
   <span
-    className={cn(
-      "absolute bottom-full left-1/2 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-full px-2 py-0.5 text-micro font-bold",
-      tone === "solid" ? "bg-primary text-primary-foreground" : tone === "soft" ? "bg-primary/15 text-primary" : "bg-reward/20 text-reward",
-    )}
+    aria-hidden
+    className="relative z-0 -mx-1 h-2.5 min-w-[0.7rem] flex-1 overflow-hidden rounded-full bg-muted shadow-[inset_0_1px_2px_rgba(15,23,42,0.12)]"
+    style={{ marginTop: `calc(${top}rem - 5px)` }}
   >
-    {children}
+    {fill > 0 && (
+      <span
+        className={cn("absolute inset-y-0 left-0 origin-left rounded-full bg-primary", animate && "motion-safe:animate-quest-fill")}
+        style={{ width: `${Math.round(Math.min(1, fill) * 100)}%` }}
+      >
+        <span className="absolute inset-x-1 top-[2px] h-[2px] rounded-full bg-white/40" />
+      </span>
+    )}
+  </span>
+);
+
+/**
+ * 칸 위 이름표(오늘 · 다음 수업 · 레벨업 · 지금) — 칸 크기를 밀지 않게 띄워 둔다.
+ * 오늘 온 날은 「+1」이 떠올랐다 사라진 뒤에 「오늘」이 톡 (바깥 칸은 가운데 맞춤만 · 안 칸이 움직인다)
+ */
+const Tag = ({ children, tone, pop }: { children: string; tone: "solid" | "soft" | "gold"; pop?: boolean }) => (
+  <span className="absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2">
+    <span
+      className={cn(
+        "block whitespace-nowrap rounded-full px-2 py-0.5 text-micro font-bold",
+        tone === "solid" ? "bg-primary text-primary-foreground" : tone === "soft" ? "bg-primary/15 text-primary" : "bg-reward text-reward-foreground",
+        pop && "motion-safe:animate-quest-pop",
+      )}
+      style={pop ? { animationDelay: "2.35s" } : undefined}
+    >
+      {children}
+    </span>
   </span>
 );
 
@@ -134,69 +226,111 @@ const Caption = ({ children, className }: { children: string; className?: string
   </span>
 );
 
-/** 이번 레벨 수업 도장 길 */
-export const QuestStampRail = ({ league, startLabel, stamps, goalNumber, goalLabel, goalReady, invite, stampIn }: StampRailProps) => {
+/** 목표 칸 — 금색 동전 안 선물(다음 레벨) · 트로피(다음 리그) */
+const GoalNode = ({ kind, tier, near, ready }: { kind: "level" | "league"; tier: Tier; near: boolean; ready: boolean }) => {
+  const t = SIZE[tier];
+  return (
+    <span
+      className={cn(
+        "relative z-10 flex shrink-0 items-center justify-center rounded-full bg-reward shadow-elev-2 ring-[3px] ring-card",
+        t.goal,
+        ready ? "motion-safe:animate-quest-bob" : near && "motion-safe:animate-quest-wiggle",
+      )}
+    >
+      <Gloss />
+      {ready && <span aria-hidden className="absolute -inset-2 rounded-full border-2 border-reward motion-safe:animate-quest-halo" />}
+      <img src={icon3dSrc(kind === "league" ? "trophy" : "gift")} alt="" draggable={false} className={cn("relative select-none", t.gift)} />
+    </span>
+  );
+};
+
+/** 이번 레벨 수업 도장 게이지 */
+export const QuestStampRail = ({ league, startLabel, stamps, goalKind, goalLabel, lastTag, near, ready, invite, celebrate }: StampRailProps) => {
   const n = stamps.length;
   // 칸이 아주 많으면(블랙 20) 방패 · 목표 칸 없이 두 줄
-  if (n > 10) return <QuestStampGrid stamps={stamps} goalLabel={goalLabel} invite={invite} stampIn={stampIn} />;
+  if (n > 10) return <QuestStampGrid stamps={stamps} goalLabel={goalLabel} lastTag={lastTag} invite={invite} celebrate={celebrate} />;
 
   const tier = tierOf(n);
-  // 모든 칸을 끝 칸(방패 · 목표) 높이에 맞춘다 — 길이 칸 가운데를 지나게 (rem 이라 글씨 '크게'에서도 같은 비율)
-  const endSize = END[tier].box;
-  const boxH = END[tier].px / 16;
+  const t = SIZE[tier];
+  // 모든 칸을 목표 칸 높이에 맞춘다 — 홈이 칸 가운데를 지나게
+  const boxH = t.goalRem;
   const center = boxH / 2;
-  const focus = stamps.findIndex((s) => s.state === "today");
-  const focusIdx = focus >= 0 ? focus : stamps.findIndex((s) => s.state === "next");
-  // 일차 이름 — 칸이 셋 이하면 모두, 많으면 지금 칸(오늘 · 다음)에만
-  const showCaption = (k: number) => n <= 3 || k === focusIdx;
+  const todayIdx = stamps.findIndex((s) => s.state === "today");
+  const nextIdx = stamps.findIndex((s) => s.state === "next");
   const filled = (s: QuestStamp) => s.state === "done" || s.state === "today";
+  // 이름표 — 칸이 셋이면 오늘 · 마지막(레벨업)을 함께, 많으면 하나만(오늘 → 다음 칸)
+  const tagOf = (k: number): { text: string; tone: "solid" | "soft" | "gold"; pop?: boolean } | null => {
+    const s = stamps[k];
+    const isLast = k === n - 1;
+    if (k === todayIdx) return { text: "오늘", tone: "solid", pop: celebrate };
+    if (k !== nextIdx) return null;
+    if (todayIdx >= 0 && n > 3) return null;
+    if (isLast) return { text: lastTag.tag, tone: "gold" };
+    if (todayIdx >= 0) return null;
+    return s.state === "next" ? { text: "다음 수업", tone: "soft" } : null;
+  };
+  // 일차 이름 — 칸이 셋 이하면 모두, 많으면 지금 칸(오늘 · 다음)에만
+  const focusIdx = todayIdx >= 0 ? todayIdx : nextIdx;
+  const showCaption = (k: number) => n <= 3 || k === focusIdx;
 
   return (
-    <ol className="mt-3 flex items-start pb-6 pt-7" aria-label={`${goalLabel}까지 수업 도장`}>
+    <ol className="mt-3 flex items-start pb-6 pt-8" aria-label={`${goalLabel}까지 수업 도장`}>
       {/* 지금 레벨 */}
-      <li className="relative flex shrink-0 flex-col items-center" aria-label={`지금 ${startLabel}`}>
+      <li className="relative z-10 flex shrink-0 flex-col items-center" aria-label={`지금 ${startLabel}`}>
         <span className="flex items-center justify-center" style={{ height: `${boxH}rem` }}>
-          <LeagueBadge league={league} className={cn(endSize, "drop-shadow-sm")} animated={false} />
+          <LeagueBadge league={league} className={cn(t.start, "drop-shadow-sm")} animated={false} />
         </span>
         <Caption className="font-bold text-muted-foreground">{startLabel}</Caption>
       </li>
 
-      {stamps.map((s, k) => (
-        <li key={s.day} className="flex min-w-0 flex-1 items-start" aria-label={stampAria(s)}>
-          <Link done={filled(s)} top={center} />
-          <span className="relative flex shrink-0 flex-col items-center">
-            {k === focusIdx && <Tag tone={s.state === "today" ? "solid" : "soft"}>{s.state === "today" ? "오늘 수업" : "다음 수업"}</Tag>}
-            <span className="flex items-center justify-center" style={{ height: `${boxH}rem` }}>
-              <StampNode stamp={s} tier={tier} invite={invite} stampIn={stampIn} />
-            </span>
-            {showCaption(k) && (
-              <Caption className={s.state === "todo" ? "text-muted-foreground" : s.state === "next" ? "font-bold text-primary" : "font-bold text-foreground"}>
-                {`${s.day}일차`}
-              </Caption>
-            )}
-          </span>
-        </li>
-      ))}
-
-      {/* 목표 — 다음 레벨 (금색 · 보상 표시) */}
-      <li className="flex min-w-0 flex-1 items-start" aria-label={`목표 ${goalLabel}`}>
-        <Link done={false} top={center} />
-        <span className="relative flex shrink-0 flex-col items-center">
-          <span
-            className={cn(
-              "relative flex shrink-0 items-center justify-center rounded-full bg-reward text-reward-foreground shadow-elev-2",
-              endSize,
-              goalReady && "motion-safe:animate-quest-bob",
-            )}
+      {stamps.map((s, k) => {
+        const isLast = k === n - 1;
+        const tag = tagOf(k);
+        // 이 칸 앞 홈 — 채운 칸이면 가득 · 다음 칸이면 운동 보너스 몫만큼
+        const fill = filled(s) ? 1 : s.state === "next" ? s.partial : 0;
+        return (
+          <li
+            key={s.day}
+            className="flex items-start"
+            style={slot(t.stampRem)}
+            aria-label={stampAria(s, isLast && !filled(s) ? lastTag.aria : null)}
           >
-            {goalNumber != null ? (
-              <span className={cn("number-font font-black tabular-nums leading-none", tier === "sm" ? "text-label" : "text-body")}>{goalNumber}</span>
-            ) : (
-              <span className={tier === "sm" ? "text-label" : "text-body"}>🏆</span>
-            )}
-            <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-card text-micro shadow-elev-1 ring-1 ring-reward/40">
-              🎁
+            <Groove fill={fill} top={center} animate={celebrate && s.state === "today"} />
+            <span className="relative z-10 flex shrink-0 flex-col items-center">
+              {tag && (
+                <Tag tone={tag.tone} pop={tag.pop}>
+                  {tag.text}
+                </Tag>
+              )}
+              <span className="flex items-center justify-center" style={{ height: `${boxH}rem` }}>
+                <StampNode stamp={s} tier={tier} last={isLast} invite={invite} celebrate={celebrate} />
+              </span>
+              {showCaption(k) && (
+                <Caption
+                  className={
+                    filled(s)
+                      ? "font-bold text-foreground"
+                      : isLast
+                        ? "font-bold text-reward"
+                        : s.state === "next"
+                          ? "font-bold text-primary"
+                          : "text-muted-foreground"
+                  }
+                >
+                  {`${s.day}일차`}
+                </Caption>
+              )}
             </span>
+          </li>
+        );
+      })}
+
+      {/* 목표 — 다음 레벨(선물) · 다음 리그(트로피) */}
+      <li className="flex items-start" style={slot(t.goalRem)} aria-label={`목표 ${goalLabel}`}>
+        <Groove fill={ready ? 1 : 0} top={center} />
+        <span className="relative z-10 flex shrink-0 flex-col items-center">
+          <span className="flex items-center justify-center" style={{ height: `${boxH}rem` }}>
+            <GoalNode kind={goalKind} tier={tier} near={near} ready={ready} />
           </span>
           <Caption className="font-bold text-reward">{goalLabel}</Caption>
         </span>
@@ -206,16 +340,36 @@ export const QuestStampRail = ({ league, startLabel, stamps, goalNumber, goalLab
 };
 
 /** 칸이 아주 많은 레벨(블랙 20) — 작은 도장 두 줄 + 지금 칸 이름 한 줄 */
-const QuestStampGrid = ({ stamps, goalLabel, invite, stampIn }: { stamps: readonly QuestStamp[]; goalLabel: string; invite: boolean; stampIn: boolean }) => {
+const QuestStampGrid = ({
+  stamps,
+  goalLabel,
+  lastTag,
+  invite,
+  celebrate,
+}: {
+  stamps: readonly QuestStamp[];
+  goalLabel: string;
+  lastTag: { tag: string; aria: string };
+  invite: boolean;
+  celebrate: boolean;
+}) => {
   const focus = stamps.find((s) => s.state === "today") ?? stamps.find((s) => s.state === "next");
+  const n = stamps.length;
   return (
     <div className="mt-4">
       <ol className="grid grid-cols-10 gap-y-2.5" aria-label={`${goalLabel}까지 수업 도장`}>
-        {stamps.map((s) => (
-          <li key={s.day} className="flex justify-center" aria-label={stampAria(s)}>
-            <StampNode stamp={s} tier="sm" invite={invite} stampIn={stampIn} />
-          </li>
-        ))}
+        {stamps.map((s, k) => {
+          const isLast = k === n - 1;
+          const isFilled = s.state === "done" || s.state === "today";
+          return (
+            <li key={s.day} className="relative flex justify-center" aria-label={stampAria(s, isLast && !isFilled ? lastTag.aria : null)}>
+              <span className="relative">
+                <StampNode stamp={s} tier="sm" last={isLast} invite={invite} celebrate={celebrate} />
+                {s.state === "next" && s.partial >= 0.05 && <PartialArc value={s.partial} />}
+              </span>
+            </li>
+          );
+        })}
       </ol>
       {focus && (
         <p className="mt-2.5 text-center text-label font-bold text-primary">
@@ -231,27 +385,31 @@ interface LeagueRoadProps {
   road: readonly { level: number; state: "done" | "goal" }[];
 }
 
-/** 레벨 10 — 리그 길: 레벨 1~9 지나온 칸 + 지금 있는 타이틀매치 칸 */
+/** 레벨 10 — 리그 길: 레벨 1~9 지나온 칸(가득 찬 홈) + 지금 있는 타이틀매치 칸 */
 export const QuestLeagueRoad = ({ road }: LeagueRoadProps) => {
   const first = road[0]?.level ?? 1;
-  const boxH = 2.75; // rem — 타이틀매치 칸(h-11) 높이
+  const boxH = 2.75; // rem — 타이틀매치 칸 높이 (지나온 칸 9개 + 타이틀매치가 360px 폰 · 큰 글씨에서도 한 줄에)
   return (
-    <ol className="mt-3 flex items-start pb-6 pt-7" aria-label="리그 길">
+    <ol className="mt-3 flex items-start pb-6 pt-8" aria-label="리그 길">
       {road.map((r, i) => (
         <li
           key={r.level}
-          className={cn("flex items-start", i > 0 && "min-w-0 flex-1")}
+          className="flex items-start"
+          style={i > 0 ? slot(r.state === "goal" ? 2.75 : 1.125) : undefined}
           aria-label={r.state === "goal" ? `레벨 ${r.level} 타이틀매치 · 지금` : `레벨 ${r.level} 지나옴`}
         >
-          {i > 0 && <Link done={r.state === "done"} top={boxH / 2} />}
-          <span className="relative flex shrink-0 flex-col items-center">
+          {i > 0 && <Groove fill={1} top={boxH / 2} />}
+          <span className="relative z-10 flex shrink-0 flex-col items-center">
             {r.state === "goal" && <Tag tone="gold">지금</Tag>}
             <span className="flex items-center justify-center" style={{ height: `${boxH}rem` }}>
               {r.state === "goal" ? (
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-reward text-body shadow-elev-2">🏆</span>
+                <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-reward shadow-elev-2 ring-[3px] ring-card">
+                  <Gloss />
+                  <img src={icon3dSrc("trophy")} alt="" draggable={false} className="relative h-7 w-7 select-none" />
+                </span>
               ) : (
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                  <Check className="h-3 w-3" strokeWidth={3.4} aria-hidden />
+                <span className="relative flex h-[1.125rem] w-[1.125rem] shrink-0 items-center justify-center rounded-full bg-primary shadow-[inset_0_-2px_0_rgba(0,0,0,0.12)]">
+                  <Check className="h-2.5 w-2.5 text-white" strokeWidth={3.8} aria-hidden />
                 </span>
               )}
             </span>

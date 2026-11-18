@@ -245,6 +245,8 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
   const onMasterTrack = !!progress.master_track_unlocked && (progress.master_level ?? 0) >= 1;
   const masterDef = onMasterTrack ? getMasterLevelDefinition(progress.master_level ?? 0) : undefined;
   const unifiedLevel = getLevelById(rank, progress.current_level);
+  // 홈 레벨 퀘스트 v2 — 보상 상자 맨 아래 「새 기술 · 안정적인 원투」 (레벨 데이터는 홈이 이미 읽는다)
+  const levelTitleOf = (league: string, level: number) => getLevelById(league, level)?.title ?? null;
 
   const sessionMet = metrics.sessions;
   const minuteMet = metrics.minutes;
@@ -649,15 +651,22 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
               가려면 얼마나 출석하면 될지? 또 어떤 미션을 달성하면 되는지 알려주자」). 훈련 탭 '레벨업까지'와 같은 카드.
               2026-11-18 레벨 퀘스트(대표님 「1일차 수업 2일차 수업 3일차 수업 반복은 천재를 만든다 … 레벨업 하는재미」) —
               이번 목표 · 수업 도장 길 · 응원 · 레벨업 보상. 같은 숫자는 한 화면에 한 번이라 내 카드의 승급 막대는 첫 화면에서 끈다.
+              v2(같은 날 「채우고 싶은 느낌 · 게임처럼 레벨업하고 싶은 욕구」) — 리그 막대 · 도장 게이지 · 레벨 달성 보상 상자(다음 기술 =
+              levelTitle) · 오늘의 퀘스트.
               지도진 · 마스터(레벨 40 뒤)는 승급할 다음 레벨이 없어 이 카드가 없다 — 그 계정은 ?lvdemo= 예시로 본다 */}
           {lvDemo ? (
             <>
               <NextLevelDemoStrip current={lvDemo} />
-              <LevelUpRequestCard bar={false} missions demo={lvDemo.data} />
+              <LevelUpRequestCard bar={false} missions demo={lvDemo.data} levelTitle={levelTitleOf} />
             </>
           ) : (
             showLevelQuest && (
-              <LevelUpRequestCard bar={false} missions levelGoal={{ title: unifiedLevel?.title, goal: unifiedLevel?.shortGoal }} />
+              <LevelUpRequestCard
+                bar={false}
+                missions
+                levelGoal={{ title: unifiedLevel?.title, goal: unifiedLevel?.shortGoal }}
+                levelTitle={levelTitleOf}
+              />
             )
           )}
           {/* 👊 오늘 우리 체육관 — 커뮤니티 입구 한 줄 (2026-10-27 대표님 "니가 추천해주는대로 진행", 커뮤니티 보고서 1단계) */}

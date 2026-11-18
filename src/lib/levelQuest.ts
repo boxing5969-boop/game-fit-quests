@@ -15,6 +15,18 @@
  *   · 보상 — 레벨업하면 받는 것. XP · 챔피언 머니는 서버 함수 값(auto_advance_from_attendance · approve_level_review),
  *     마일리지는 운영 설정(app_settings.mileage_rules — 관리자가 바꾸면 바로 따라간다). PT 회원 XP 2배는 화면에 쓰지 않는다
  *     (2026-09-29 대표님 — 일반 회원님이 차별로 느낄 수 있다).
+ *
+ * v2 (같은 날 15:22 대표님 「심리적으로 채우고싶은 느낌이 나고 게임처럼 레벨업 하고싶은 욕구가 강해질수있는 디자인으로」) —
+ * 게임 설계에서 오래 검증된 동기 장치를 153 감정 설계(못한 것은 보이지 않는다) 안에서만 쓴다:
+ *   · 이미 쌓은 것 보여 주기(부여된 진전 효과) — 리그 막대 9칸 + 트로피: 지나온 레벨 · 지금 레벨은 진행만큼 (leagueBars)
+ *   · 목표가 가까울수록 더 크게(목표 기울기 효과) — 남은 출석 1번이면 「1번만 더 오면 레벨 5!」 · 마지막 칸 = 「레벨업 도장」 ·
+ *     선물이 들썩인다 (questHero · questNear · lastStampTag)
+ *   · 빈칸을 채우고 싶은 마음(미완성 효과) — 빈 홈은 움푹, 채운 칸은 반짝 · 운동 보너스로 다음 칸이 조금 찬 것도 보인다
+ *   · 바로 받는 보상 — 오늘의 퀘스트: 오늘 오면 도장 +1 · 챔피언 머니 +100 · 마일리지(운영 설정), 오면 「받았어요」 (dailyQuest)
+ *   · 다음이 궁금하게 — 보상 상자에 다음 레벨에서 배울 기술 한 줄 (questSkill — 잠금이 아니라 '배워요')
+ *   · 레벨업한 날 — 「레벨 5 달성 보상 · 받았어요」 (questReward received)
+ * 실제로 받는 값만 쓴다 — 하루 출석 챔피언 머니 100 = 서버 attendance_base_xp_trg(한국 날짜 하루 한 번) · 출석 마일리지 =
+ * mileage_on_attendance(운영 설정 attendance · 하루 한 번). 출석 XP 는 기본 분 · PT 여부로 달라져 쓰지 않는다.
  */
 import { RANK_LABELS } from "@/data/sharedConstants";
 import { toGlobalLevel } from "@/lib/rankLabels";
@@ -165,7 +177,10 @@ export interface QuestHeroInput {
   leveledUpToday: boolean;
 }
 
-/** 주인공 한 줄 — 「2번 더 오면 레벨 5」 · 「다음 출석 때 레벨 5!」 · 「레벨 5 달성!」 … (숫자는 서버 값 그대로) */
+/**
+ * 주인공 한 줄 — 「2번 더 오면 레벨 5」 · 「1번만 더 오면 레벨 5!」 · 「다음 출석 때 레벨 5!」 · 「레벨 5 달성!」 … (숫자는 서버 값 그대로).
+ * 남은 출석이 1번이면 「1번만 … !」 — 목표가 눈앞일 때 가장 힘이 난다(목표 기울기 효과, v2).
+ */
 export function questHero(i: QuestHeroInput): QuestHero {
   const plain = (text: string, tone: QuestTone = "plain"): QuestHero => ({ text, lead: null, rest: text, tone });
   if (i.leveledUpToday) {
@@ -175,8 +190,9 @@ export function questHero(i: QuestHeroInput): QuestHero {
   if (i.revision) return plain("보완 요청이 왔어요", "pending");
   if (i.meets) return plain(i.needsReview ? "승급 심사가 열렸어요" : `다음 출석 때 ${i.nextLabel}!`, "reward");
   if (i.visitsLeft > 0) {
-    const lead = `${i.visitsLeft}번`;
-    const rest = i.needsReview ? " 더 오면 승급 심사" : ` 더 오면 ${i.nextLabel}`;
+    const near = i.visitsLeft === 1;
+    const lead = near ? "1번만" : `${i.visitsLeft}번`;
+    const rest = (i.needsReview ? " 더 오면 승급 심사" : ` 더 오면 ${i.nextLabel}`) + (near ? "!" : "");
     return { text: lead + rest, lead, rest, tone: "plain" };
   }
   if (i.daysLeft > 0) {
@@ -259,6 +275,10 @@ export function questCheerLine(
 export const LEVELUP_XP = 50;
 export const LEVELUP_MONEY_AUTO = 500;
 export const LEVELUP_MONEY_APPROVAL = 1000;
+/** 체육관 출석 챔피언 머니 — 서버 attendance_base_xp_trg (한국 날짜 하루 한 번 · 바뀌면 같이) */
+export const ATTEND_MONEY = 100;
+
+export type QuestRewardKey = "xp" | "money" | "mileage" | "league";
 
 export interface QuestRewardInput {
   /** 레벨 10(타이틀매치) — 통과하면 다음 리그 */
@@ -269,9 +289,15 @@ export interface QuestRewardInput {
   nextLeague: string;
   /** 운영 마일리지 설정 (못 읽었으면 null — 마일리지 칸 없이) */
   mileage: { enabled: boolean; level_up: number; title_match: number } | null | undefined;
+  /** 보상 이름 앞 — "레벨 5" → 「레벨 5 달성 보상」 (레벨 1~9 · 레벨업한 날은 오늘 오른 레벨) */
+  goal?: string | null;
+  /** 레벨업한 날 — 오늘 받은 보상 (「… · 받았어요」) */
+  received?: boolean;
 }
 
 export interface QuestRewardItem {
+  /** 아이콘 고르기 — XP 번개 · 챔피언 머니 지폐 · 마일리지 동전 · 승급 트로피 */
+  key: QuestRewardKey;
   /** 무엇 — "XP" · "챔피언 머니" · "마일리지" · "승급" */
   name: string;
   /** 얼마 — "+50" · "블루 리그" */
@@ -279,31 +305,165 @@ export interface QuestRewardItem {
 }
 
 export interface QuestReward {
-  /** 머리 — "레벨업하면 받아요" · "타이틀매치를 넘으면" */
+  /** 머리 — 「레벨 5 달성 보상」 · 「타이틀매치 통과 보상」 */
   label: string;
   items: QuestRewardItem[];
+  /** 오늘 받은 보상인가 (레벨업한 날) */
+  received: boolean;
 }
 
 const won = (n: number) => Math.trunc(n).toLocaleString("ko-KR");
 
-/** 레벨업하면 받는 것 — 레벨 1~9 = XP · 챔피언 머니 · 마일리지 / 레벨 10 = 다음 리그 · 타이틀매치 마일리지 */
+/**
+ * 레벨업 보상 — 레벨 1~9 = XP · 챔피언 머니 · 마일리지 / 레벨 10 = 다음 리그 · 타이틀매치 마일리지.
+ * 레벨업한 날은 오늘 받은 것 — 출석 · 코치 승인으로 오른 레벨의 보상(레벨 1~9와 같은 셈, received).
+ */
 export function questReward(i: QuestRewardInput): QuestReward {
   const m = i.mileage && i.mileage.enabled ? i.mileage : null;
-  if (i.boss) {
-    const items: QuestRewardItem[] = [{ name: "승급", value: i.nextLeague }];
-    if (m && m.title_match > 0) items.push({ name: "마일리지", value: `+${won(m.title_match)}` });
-    return { label: "타이틀매치를 넘으면", items };
+  const received = !!i.received;
+  if (i.boss && !received) {
+    const items: QuestRewardItem[] = [{ key: "league", name: "승급", value: i.nextLeague }];
+    if (m && m.title_match > 0) items.push({ key: "mileage", name: "마일리지", value: `+${won(m.title_match)}` });
+    return { label: "타이틀매치 통과 보상", items, received: false };
   }
   const items: QuestRewardItem[] = [
-    { name: "XP", value: `+${LEVELUP_XP}` },
-    { name: "챔피언 머니", value: `+${won(i.approval ? LEVELUP_MONEY_APPROVAL : LEVELUP_MONEY_AUTO)}` },
+    { key: "xp", name: "XP", value: `+${LEVELUP_XP}` },
+    { key: "money", name: "챔피언 머니", value: `+${won(i.approval ? LEVELUP_MONEY_APPROVAL : LEVELUP_MONEY_AUTO)}` },
   ];
-  if (m && m.level_up > 0) items.push({ name: "마일리지", value: `+${won(m.level_up)}` });
-  return { label: "레벨업하면 받아요", items };
+  if (m && m.level_up > 0) items.push({ key: "mileage", name: "마일리지", value: `+${won(m.level_up)}` });
+  return { label: i.goal ? `${i.goal} 달성 보상` : "레벨업 보상", items, received };
 }
 
 /** 레벨 10 리그 길 — 이 리그 레벨 1~9는 지나온 칸, 레벨 10은 타이틀매치 칸 (누적 레벨) */
 export function leagueRoad(league: string): { level: number; state: "done" | "goal" }[] {
   const base = toGlobalLevel(toLeague(league), 1) - 1;
   return Array.from({ length: 10 }, (_, k) => ({ level: base + k + 1, state: k < 9 ? "done" : "goal" }));
+}
+
+// ─── v2 — 채우고 싶게 · 게임처럼 (2026-11-18 15:22) ───
+
+/** 이번 레벨 진행 0 ~ 1 — 진행도 ÷ 필요 출석 (요건을 채웠으면 1 · 이상한 값은 0) */
+export function levelFill(i: { progress?: number | null; progressFloor: number; req: number; meets: boolean }): number {
+  if (i.meets) return 1;
+  const req = Math.max(1, Math.round(Number(i.req) || 1));
+  const p = Number.isFinite(Number(i.progress)) && i.progress != null ? Number(i.progress) : Number(i.progressFloor) || 0;
+  return Math.min(1, Math.max(0, p / req));
+}
+
+/**
+ * 리그 막대 9칸 (레벨 1~9 — 레벨 10은 트로피) — 지나온 레벨 1 · 지금 레벨은 이번 레벨 진행만큼 · 앞 레벨 0.
+ * 이미 쌓은 것을 먼저 보여 준다(부여된 진전 효과) — 화이트 레벨 4 = 세 칸 반쯤 찬 리그.
+ */
+export function leagueBars(level: number, fill: number): number[] {
+  const lv = clampLevel(level);
+  const f = Math.min(1, Math.max(0, Number(fill) || 0));
+  return Array.from({ length: 9 }, (_, k) => (k + 1 < lv ? 1 : k + 1 === lv ? Math.round(f * 100) / 100 : 0));
+}
+
+/** 목표가 눈앞 — 남은 출석 1번 (도장을 다 모았거나 · 심사 대기 · 보완 요청이면 아님) */
+export function questNear(i: { visitsLeft: number; meets: boolean; pending: boolean; revision: boolean }): boolean {
+  return i.visitsLeft === 1 && !i.meets && !i.pending && !i.revision;
+}
+
+/** 마지막 도장 칸 이름 — 출석으로 오르는 리그는 「레벨업 도장」, 심사 리그(레드 · 블랙 · 레벨 10)는 「마지막 도장」 */
+export function lastStampTag(needsReview: boolean): string {
+  return needsReview ? "마지막 도장" : "레벨업 도장";
+}
+
+export type DailyQuestKey = "stamp" | "levelup" | "money" | "mileage";
+
+export interface DailyQuestItem {
+  key: DailyQuestKey;
+  /** 무엇 — "도장" · "레벨업" · "챔피언 머니" · "마일리지" (읽기 · 시험) */
+  name: string;
+  /** 얼마 — "+1" · "레벨업!" · "+100" · "+300" */
+  value: string;
+}
+
+export interface DailyQuest {
+  /** 오늘 체육관에 왔다 — 「받았어요」 */
+  done: boolean;
+  title: string;
+  /** 제목 옆 한마디 — 「오면 받아요」 · 「받았어요」 */
+  note: string;
+  items: DailyQuestItem[];
+}
+
+export interface DailyQuestInput {
+  attendedToday: boolean;
+  leveledUpToday: boolean;
+  /** 이번 레벨이 도장으로 가나 (usesStamps) */
+  stamps: boolean;
+  /** 오늘 칸이 찍혔나 (오늘 왔고 이번 레벨 칸이 하나 늘었다) */
+  stampedToday: boolean;
+  visitsLeft: number;
+  meets: boolean;
+  needsReview: boolean;
+  pending: boolean;
+  /** 운영 마일리지 설정 (못 읽었으면 null — 마일리지 칸 없이) */
+  mileage: { enabled: boolean; attendance: number } | null | undefined;
+}
+
+/**
+ * 오늘의 퀘스트 — 체육관에 오면 바로 받는 것 (게임의 하루 퀘스트처럼 · 실제로 받는 값만).
+ *   · 도장 +1 — 이번 레벨이 도장으로 가고 아직 칸이 남았을 때 (심사 대기 · 다 모은 뒤 · 레벨 10 타이틀매치는 없음)
+ *   · 레벨업! — 출석으로 오르는 리그에서 도장을 다 모았으면 다음 출석이 레벨업
+ *   · 챔피언 머니 +100 · 마일리지 — 출석하면 하루 한 번 (서버 트리거)
+ * 오늘 왔으면 같은 칸을 「받았어요」로 — 레벨업한 날은 레벨업, 오늘 칸이 찍힌 날은 도장 +1.
+ */
+export function dailyQuest(i: DailyQuestInput): DailyQuest {
+  const items: DailyQuestItem[] = [];
+  if (i.attendedToday) {
+    if (i.leveledUpToday) items.push({ key: "levelup", name: "레벨업", value: "레벨업!" });
+    else if (i.stampedToday) items.push({ key: "stamp", name: "도장", value: "+1" });
+  } else if (i.stamps && !i.pending) {
+    if (i.meets && !i.needsReview) items.push({ key: "levelup", name: "레벨업", value: "레벨업!" });
+    else if (!i.meets && i.visitsLeft > 0) items.push({ key: "stamp", name: "도장", value: "+1" });
+  }
+  items.push({ key: "money", name: "챔피언 머니", value: `+${won(ATTEND_MONEY)}` });
+  const m = i.mileage && i.mileage.enabled && i.mileage.attendance > 0 ? i.mileage : null;
+  if (m) items.push({ key: "mileage", name: "마일리지", value: `+${won(m.attendance)}` });
+  return i.attendedToday
+    ? { done: true, title: "오늘의 퀘스트 완료!", note: "받았어요", items }
+    : { done: false, title: "오늘의 퀘스트", note: "오면 받아요", items };
+}
+
+export interface QuestSkill {
+  /** 「새 기술」 · 「다음 단계」 · 「오늘부터 배워요」 · 「블루 리그 첫 기술」 */
+  label: string;
+  /** 레벨 이름 — "안정적인 원투" · "타이틀매치 도전" */
+  value: string;
+}
+
+/**
+ * 보상 상자 맨 아래 — 다음에 배울 것 한 줄 (궁금하게 · 잠금이 아니라 '배워요' — 위 레벨 영상은 잠그지 않는다).
+ * 레벨 이름은 레벨 데이터(allLevelsData)를 이미 읽는 화면이 넘긴다 (title). 이름을 모르면 줄 없이.
+ */
+export function questSkill(i: {
+  league: string;
+  level: number;
+  leveledUpToday: boolean;
+  title: ((league: string, level: number) => string | null | undefined) | null | undefined;
+}): QuestSkill | null {
+  const lg = toLeague(i.league);
+  const lv = clampLevel(i.level);
+  const name = (league: string, level: number) => {
+    const t = i.title?.(league, level);
+    return typeof t === "string" && t.trim() ? t.trim() : null;
+  };
+  const titleMatch: QuestSkill = { label: "다음 단계", value: "타이틀매치 도전" };
+  if (i.leveledUpToday) {
+    if (lv === 10) return titleMatch;
+    const v = name(lg, lv);
+    return v ? { label: "오늘부터 배워요", value: v } : null;
+  }
+  if (lv === 10) {
+    const next = LEAGUE_ORDER[LEAGUE_ORDER.indexOf(lg) + 1];
+    if (!next) return null;
+    const v = name(next, 1);
+    return v ? { label: `${RANK_LABELS[next]} 리그 첫 ${next === "black" ? "과제" : "기술"}`, value: v } : null;
+  }
+  if (lv === 9) return titleMatch;
+  const v = name(lg, lv + 1);
+  return v ? { label: lg === "black" ? "새 과제" : "새 기술", value: v } : null;
 }
