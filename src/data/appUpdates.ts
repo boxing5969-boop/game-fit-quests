@@ -18,6 +18,19 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261119-pt-ask",
+    date: "2026-11-19",
+    title: "근무 — PT 확인 필요, 코치에게 물어보기",
+    lines: [
+      "대표님 · 지점장님이 확인 필요 카드에서 그 건만 골라 담당 코치님께 물어봐요",
+      "코치님은 「오늘 PT」 맨 위에서 한 줄로 답해요 · 자주 쓰는 답을 눌러도 돼요",
+      "답은 그 카드에 달리고 물어본 분께 알림으로 가요",
+    ],
+    link: { to: "/office?tab=work&pt=today", label: "근무 탭 열기" },
+    audience: "staff",
+    branches: SEOLLEUNG,
+  },
+  {
     id: "20261119-feedback-replies",
     date: "2026-11-19",
     title: "오류 신고 — 내 신고 · 답글",

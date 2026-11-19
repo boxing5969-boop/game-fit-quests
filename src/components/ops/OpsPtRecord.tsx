@@ -51,14 +51,17 @@ import {
 } from "@/lib/opsPtRecord";
 import { ptPayMonth, ptPayMonthCovered } from "@/lib/opsPtPay";
 import { PT_SAMPLE_COACH, PT_SAMPLE_RATES } from "@/lib/opsPtRecordSample";
+import { ptAskFor, ptOpenAsks, type PtAskTarget } from "@/lib/opsPtAsk";
 import { PT_REPORT_KIND_LABEL, emptyPtReportDraft, ptReportFixReply, type PtReport, type PtReportFix } from "@/lib/opsPtReport";
 import { useOpsPtRecord, useOpsPtRecordActions } from "@/services/opsPtRecordService";
 import { useOpsPtCheckActions } from "@/services/opsPtCheckService";
 import type { PtMemberCheck } from "@/lib/opsPtCheck";
+import { useOpsPtAskActions, useOpsPtAsks } from "@/services/opsPtAskService";
 import { useOpsPtReportActions, useOpsPtReports } from "@/services/opsPtReportService";
 import { usePtCloseBook } from "./OpsPtClose";
 import OpsPtPay from "./OpsPtPay";
 import { ptTicketLabel } from "./OpsPtPanel";
+import { PtAskInbox, PtAskNote, PtAskSheet, type PtAskInit } from "./OpsPtAsk";
 import { PtReportLink, PtReportList, PtReportResolveSheet, PtReportSheet, type PtReportInit, type PtResolveInit } from "./OpsPtReport";
 import { PtCheckNote, PtCheckReplySheet, PtCheckToggle } from "./OpsPtCheck";
 import { OpsButton, OpsChip, OpsLabel, OpsSheet, fmtDay, kstToday, monthOf, opsInput } from "./OpsParts";
@@ -537,6 +540,7 @@ const TodoList = ({
   canClose = false,
   onCheckReply,
   memberName,
+  askNote,
 }: {
   res: PtMatchResult;
   rows: PtRow[];
@@ -557,6 +561,8 @@ const TodoList = ({
   canClose?: boolean;
   onCheckReply?: (c: PtMemberCheck) => void;
   memberName?: (userId: string) => string;
+  /** 관리자 — 이 건을 담당 코치에게 물어보기(2026-11-19) · 물었으면 답 한 줄 */
+  askNote?: (t: PtAskTarget) => ReactNode;
 }) => {
   const checkNote = (c: PtMemberCheck | undefined, held = false) =>
     c ? <PtCheckNote c={c} canClose={canClose && !!onCheckReply} onReply={(x) => onCheckReply?.(x)} held={held} /> : undefined;
@@ -578,6 +584,14 @@ const TodoList = ({
         ))}
       {extras.map((x) => {
         const report = onReport ? <PtReportLink onClick={() => onReport(reportFromExtra(x))} /> : undefined;
+        const ask = askNote?.({ item: "deduct", event_id: x.eventId, member_user_id: x.userId, member_name: x.name, about_date: x.workDate });
+        const xNote =
+          x.check || ask ? (
+            <>
+              {checkNote(x.check)}
+              {ask}
+            </>
+          ) : undefined;
         // 출석으로 어림한 날이 있으면 그날을 먼저 묻는다 — 차감은 수업 다음 날 잡힐 때가 많다(2026-11-12)
         if (x.guess) {
           const g = x.guess;
@@ -589,7 +603,7 @@ const TodoList = ({
               body={`${x.name} · ${x.count}회 — ${mdw(g.date)} ${hm(g.at)} 입장한 날 수업이었나요?`}
               sub="차감은 수업 다음 날 잡힐 때가 많아요 · 다른 날이면 날짜를 골라 기록해 주세요"
               footer={report}
-              note={checkNote(x.check)}
+              note={xNote}
             >
               <button
                 type="button"
@@ -617,7 +631,7 @@ const TodoList = ({
             body={`${x.name} · ${x.count}회 — 어떤 수업이었는지 기록해 주세요`}
             sub="기록이 없으면 과차감일 수 있어요 · 잘못 뺀 것이면 브로제이에서 되돌려 주세요"
             footer={report}
-            note={checkNote(x.check)}
+            note={xNote}
           >
             <button
               type="button"
@@ -660,6 +674,7 @@ const TodoList = ({
           title={`기록 없는 입장 · ${fmtDay(u.date)} ${hm(u.at)}`}
           body={res.auto ? `${u.name} — 이틀이 지나도 차감이 안 잡혔어요 · PT 수업이었나요?` : `${u.name} — PT 수업이었나요?`}
           sub={res.auto ? "수업이었으면 [수업]을 누르고 브로제이에서 차감해 주세요" : undefined}
+          note={askNote?.({ item: "entry", member_user_id: u.userId, member_name: u.name, about_date: u.date })}
         >
           <button type="button" disabled={busy} className={plainBtn} onClick={() => onQuick(u, "self")}>
             개인 운동
@@ -682,6 +697,11 @@ const TodoList = ({
             }
             sub={r.untracked ? "지점장님이 브로제이를 확인하고 차감을 직접 넣어요" : "차감하면 하루 이틀 안에 여기서 사라져요"}
             footer={onReport ? <PtReportLink onClick={() => onReport(reportFromRow(r))} /> : undefined}
+            note={
+              r.untracked
+                ? undefined
+                : askNote?.({ item: "wait", session_id: r.s.id, member_user_id: r.s.member_user_id, member_name: r.name, about_date: r.s.session_date })
+            }
           />
         ))}
       {rows
@@ -769,6 +789,10 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
   // 회원 확인(2026-11-16 2-4) — 「아니에요」에 답하고 닫기 · 대표님 켜기
   const cactions = useOpsPtCheckActions(branch, { demo });
   const [replyFor, setReplyFor] = useState<PtMemberCheck | null>(null);
+  // 코치에게 물어보기(2026-11-19) — 관리자가 묻고 코치가 「오늘 PT」 맨 위에서 답한다. 서버에 함수가 없으면 숨긴다
+  const aq = useOpsPtAsks(branch, { enabled: !!data?.on, demo, demoManage: manage });
+  const aactions = useOpsPtAskActions(branch, { demo, demoManage: manage });
+  const [askInit, setAskInit] = useState<PtAskInit | null>(null);
 
   // 알림을 누르고 왔을 때(/office?tab=work&pt=today) — 오늘 PT 로 내려온다
   const [params] = useSearchParams();
@@ -916,8 +940,17 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
       });
     }
   };
+  // ── 코치에게 물어보기 — 관리자 화면(그 코치의 근무자 카드)에서만 단추가 보인다
+  const asks = aq.data?.available ? aq.data.asks : [];
+  const askNote =
+    manage && coachId && aq.data?.available
+      ? (t: PtAskTarget) => (
+          <PtAskNote ask={ptAskFor(asks, t, coachId)} onAsk={() => setAskInit({ target: t, coachId })} />
+        )
+      : undefined;
   const reportSheets = (
     <>
+      {manage && aq.data?.available && <PtAskSheet init={askInit} onClose={() => setAskInit(null)} branch={branch} actions={aactions} />}
       {canReport && (
         <>
           <PtReportSheet init={reportInit} onClose={() => setReportInit(null)} branch={branch} data={data} actions={ractions} />
@@ -954,6 +987,7 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
         canClose={canClose}
         onCheckReply={setReplyFor}
         memberName={memberName}
+        askNote={askNote}
       />
     </>
   );
@@ -1142,6 +1176,11 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
           <Plus className="h-4 w-4" /> 안 온 회원 기록
         </button>
       </div>
+      {aq.data?.available && (
+        <div className="mt-3">
+          <PtAskInbox asks={ptOpenAsks(asks, coachId)} actions={aactions} focusId={params.get("ask")} />
+        </div>
+      )}
       {items.length === 0 ? (
         <p className="mt-3 rounded-xl bg-secondary/60 px-3 py-4 text-center text-label text-muted-foreground">
           오늘 들어온 PT 회원이 아직 없어요 — 회원이 입장하면 여기에 떠요
