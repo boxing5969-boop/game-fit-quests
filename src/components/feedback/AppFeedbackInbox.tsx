@@ -3,15 +3,19 @@
  *
  *   · 데이터: RPC get_app_feedback_inbox (보낸 회원 이름·지점·사진까지) · set_app_feedback_status (확인함 · 고쳤어요 · 다시 새 신고로).
  *   · 알림의 '바로 가기'는 /feedback?inbox=1&id=<신고> — 그 신고를 강조하고 화면 가운데로 데려온다.
+ *   · 댓글(2026-11-11 대표님 「오류신고에 댓글 남길수있게해줘」 · 2026-11-19 올림): 카드마다 '댓글' → FeedbackThread. 신고한 회원에게만 보이고 알림이 간다.
+ *     마지막 댓글이 회원 것이면 '회원 답글' 표시 · 거르기(counts.waiting).
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Loader2, MonitorSmartphone, RotateCcw, Wrench } from "lucide-react";
+import { Check, Loader2, MessageCircle, MonitorSmartphone, RotateCcw, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import FeedbackThread from "@/components/feedback/FeedbackThread";
+import { APP_FEEDBACK_INBOX_KEY, feedbackWhenText, waitingForStaff, type FeedbackStatus } from "@/lib/appFeedback";
 
-export type FeedbackStatus = "new" | "seen" | "fixed";
+export { APP_FEEDBACK_INBOX_KEY, type FeedbackStatus };
 
 export interface AppFeedbackItem {
   id: string;
@@ -28,14 +32,16 @@ export interface AppFeedbackItem {
   member_branch: string | null;
   member_avatar: string | null;
   handled_by_name: string | null;
+  /** 댓글 (2026-11-11) — 옛 서버 응답엔 없을 수 있다 */
+  comment_count?: number;
+  last_comment_at?: string | null;
+  last_comment_staff?: boolean | null;
 }
 
 export interface AppFeedbackInboxData {
-  counts: { new: number; seen: number; fixed: number; all: number };
+  counts: { new: number; seen: number; fixed: number; all: number; waiting: number };
   items: AppFeedbackItem[];
 }
-
-export const APP_FEEDBACK_INBOX_KEY = ["app-feedback-inbox"] as const;
 
 export function useAppFeedbackInbox(enabled: boolean) {
   return useQuery({
@@ -49,7 +55,7 @@ export function useAppFeedbackInbox(enabled: boolean) {
       if (error) throw error;
       const d = (data ?? {}) as Partial<AppFeedbackInboxData>;
       return {
-        counts: { new: 0, seen: 0, fixed: 0, all: 0, ...(d.counts ?? {}) },
+        counts: { new: 0, seen: 0, fixed: 0, all: 0, waiting: 0, ...(d.counts ?? {}) },
         items: Array.isArray(d.items) ? d.items : [],
       };
     },
@@ -68,9 +74,10 @@ const CATEGORY_CLS: Record<string, string> = {
   제안: "bg-sky-500/15 text-sky-600 dark:text-sky-400",
 };
 
-type Filter = "new" | "seen" | "fixed" | "all";
+type Filter = "new" | "seen" | "fixed" | "all" | "waiting";
 const FILTERS: { key: Filter; label: string }[] = [
   { key: "new", label: "새 신고" },
+  { key: "waiting", label: "회원 답글" },
   { key: "seen", label: "확인함" },
   { key: "fixed", label: "고쳤어요" },
   { key: "all", label: "전체" },
@@ -78,14 +85,7 @@ const FILTERS: { key: Filter; label: string }[] = [
 
 const shortBranch = (b: string | null) => (b ? b.replace(/^153복싱짐\s*/, "") : null);
 
-const whenText = (iso: string) =>
-  new Date(iso).toLocaleString("ko-KR", {
-    timeZone: "Asia/Seoul",
-    month: "long",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+const whenText = feedbackWhenText;
 
 /** 기기 정보(User-Agent)를 사람이 읽는 말로 — "Android 10 · 삼성 인터넷 30" */
 export function deviceLabel(ua: string | null): string | null {
@@ -135,9 +135,19 @@ const AppFeedbackInbox = ({ focusId }: { focusId?: string | null }) => {
   // 알림에서 특정 신고를 열었으면 '전체'로, 아니면 새 신고가 있을 때 '새 신고'부터
   const active: Filter = filter ?? (focusId ? "all" : counts && counts.new > 0 ? "new" : "all");
   const items = useMemo(
-    () => (inbox.data?.items ?? []).filter((it) => active === "all" || it.status === active),
+    () =>
+      (inbox.data?.items ?? []).filter((it) => (active === "all" ? true : active === "waiting" ? waitingForStaff(it) : it.status === active)),
     [inbox.data, active],
   );
+  // 댓글 펼친 신고 — 알림 바로 가기로 온 신고는 처음부터 펼친다
+  const [openThreads, setOpenThreads] = useState<Set<string>>(() => new Set(focusId ? [focusId] : []));
+  const toggleThread = (id: string) =>
+    setOpenThreads((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
 
   const setStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: FeedbackStatus }) => {
@@ -162,7 +172,10 @@ const AppFeedbackInbox = ({ focusId }: { focusId?: string | null }) => {
     if (lastFocus.current === focusId) return;
     lastFocus.current = focusId;
     scrolled.current = false;
-    if (focusId) setFilter(null);
+    if (focusId) {
+      setFilter(null);
+      setOpenThreads((s) => new Set(s).add(focusId));
+    }
   }, [focusId]);
   // 방금 들어온 신고라 불러 둔 목록(30초 캐시)에 없으면 — 그 신고마다 한 번만 다시 불러온다
   const { data: inboxData, isFetching: inboxFetching, refetch: refetchInbox } = inbox;
@@ -204,6 +217,7 @@ const AppFeedbackInbox = ({ focusId }: { focusId?: string | null }) => {
       <div className="flex gap-1.5 overflow-x-auto pb-0.5" role="tablist" aria-label="신고 상태">
         {FILTERS.map((f) => {
           const n = counts ? counts[f.key] : 0;
+          if (f.key === "waiting" && !n && active !== "waiting") return null;
           return (
             <button
               key={f.key}
@@ -225,7 +239,7 @@ const AppFeedbackInbox = ({ focusId }: { focusId?: string | null }) => {
       {items.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-card/60 px-5 py-10 text-center">
           <p className="text-label font-bold text-foreground">
-            {active === "new" ? "새로 들어온 신고가 없어요" : "여기에 해당하는 신고가 없어요"}
+            {active === "new" ? "새로 들어온 신고가 없어요" : active === "waiting" ? "답을 기다리는 회원 댓글이 없어요" : "여기에 해당하는 신고가 없어요"}
           </p>
           <p className="mt-1 text-label text-muted-foreground">회원님이 신고를 보내면 알림이 오고 여기에 쌓여요</p>
         </div>
@@ -236,6 +250,9 @@ const AppFeedbackInbox = ({ focusId }: { focusId?: string | null }) => {
             const st = STATUS_META[it.status] ?? STATUS_META.new;
             const device = deviceLabel(it.device_info);
             const busy = setStatus.isPending && setStatus.variables?.id === it.id;
+            const nComments = Number(it.comment_count) || 0;
+            const waiting = waitingForStaff(it);
+            const threadOpen = openThreads.has(it.id);
             return (
               <li
                 key={it.id}
@@ -250,6 +267,9 @@ const AppFeedbackInbox = ({ focusId }: { focusId?: string | null }) => {
                     {it.category}
                   </span>
                   <span className={cn("rounded-full px-2 py-0.5 text-micro font-bold", st.cls)}>{st.label}</span>
+                  {waiting && (
+                    <span className="rounded-full bg-sky-500/15 px-2 py-0.5 text-micro font-bold text-sky-600 dark:text-sky-400">회원 답글</span>
+                  )}
                   <span className="ml-auto shrink-0 text-label tabular-nums text-muted-foreground">{whenText(it.created_at)}</span>
                 </div>
 
@@ -283,6 +303,17 @@ const AppFeedbackInbox = ({ focusId }: { focusId?: string | null }) => {
                 )}
 
                 <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => toggleThread(it.id)}
+                    aria-expanded={threadOpen}
+                    className={cn(
+                      "inline-flex h-9 items-center gap-1 rounded-full px-3.5 text-label font-bold active:scale-95",
+                      waiting ? "bg-sky-500/15 text-sky-700 dark:text-sky-300" : "bg-secondary text-foreground",
+                    )}
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" /> {nComments > 0 ? `댓글 ${nComments}` : "댓글"}
+                  </button>
                   {it.status === "new" && (
                     <button
                       type="button"
@@ -314,13 +345,14 @@ const AppFeedbackInbox = ({ focusId }: { focusId?: string | null }) => {
                     </button>
                   )}
                 </div>
+                {threadOpen && <FeedbackThread feedbackId={it.id} viewer="staff" />}
               </li>
             );
           })}
         </ul>
       )}
       <p className="px-1 pt-1 text-center text-label leading-relaxed text-muted-foreground">
-        회원님이 보낸 신고는 운영진만 볼 수 있어요. 고친 뒤 '고쳤어요'를 눌러 두면 나중에 다시 찾기 쉬워요.
+        회원님이 보낸 신고는 운영진만 볼 수 있어요. 댓글은 신고한 회원님께만 보이고 알림이 가요. 고친 뒤 '고쳤어요'를 눌러 두면 나중에 다시 찾기 쉬워요.
       </p>
     </div>
   );
