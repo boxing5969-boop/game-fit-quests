@@ -24,6 +24,7 @@
  *    state 가 null 인 popstate 는 조각 이동이다 → 묻지 않는다.
  */
 import { backCloseClaims } from "@/lib/backClose";
+import { inboxReturnClaims } from "@/lib/inboxReturn";
 
 const MARKER = "__abx";
 
@@ -53,6 +54,7 @@ function onPop(e: PopStateEvent): void {
   if (s === null) return;          // 조각(#) 이동 — 로그인 복귀 때 주소 정리 등. 뒤로가기가 아니다
   if (s[MARKER]) return;           // 홈으로 돌아온 것 — 묻지 않는다
   if (backCloseClaims(e)) return;  // 열린 창(영상 · 시트)을 닫는 뒤로가기 — 묻지 않는다 (lib/backClose, 2026-11-17)
+  if (inboxReturnClaims(e.state)) return; // 알림함을 건너뛴 뒤로가기 — 알림함으로 다시 연다 (lib/inboxReturn, 2026-11-19)
   if (!atHome()) return;           // 하위 화면 이동 — 라우터가 처리
   if (!askFn) return;
   try { askFn(); } catch { /* 무시 */ }

@@ -6,15 +6,27 @@
  *   · 이 화면을 열면 서버에는 바로 모두 읽음 처리 — 화면에 있는 동안은 새로 온 것을 민트로 강조해 둔다.
  *   · 링크가 있는 알림은 눌러서 그 화면으로, 없는 알림은 눌러서 내용을 펼친다.
  *   · 맨 위 '휴대폰으로도 알림 받기' 카드 — 켜면 같은 알림이 휴대폰 알림으로도 온다 (components/notifications/PushOptInCard).
+ *   · 알림을 열고 뒤로가기 = 다시 알림함 · 보던 자리 · 아직 안 연 새 알림 표시 그대로 (2026-11-19 회원 제안 — lib/inboxReturn).
+ *     연(누른) 알림은 새 알림 표시를 끈다 — 여러 알림을 하나씩 볼 때 어디까지 봤는지 보이게.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { AppPage, PageHeader } from "@/components/ui/rankingup";
 import PushOptInCard from "@/components/notifications/PushOptInCard";
+import { useAuth } from "@/contexts/AuthContext";
 import { useMarkNotificationsRead, useMyNotifications, useUnreadNotificationCount } from "@/hooks/useNotifications";
 import { useAppUpdates } from "@/hooks/useAppUpdates";
 import { groupNotificationsByDay, notificationTime, type AppNotification } from "@/lib/notifications";
+import {
+  historyIdx,
+  inboxFresh,
+  markInboxOpened,
+  readInboxReturn,
+  readInboxSeen,
+  rememberInboxOpen,
+  writeInboxSeen,
+} from "@/lib/inboxReturn";
 import { cn } from "@/lib/utils";
 
 const LONG_BODY = 80;
@@ -74,6 +86,8 @@ const NotificationRow = ({
 
 const NotificationsPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const uid = user?.id ?? null;
   const { hasNew: updatesNew } = useAppUpdates();
   const list = useMyNotifications();
   const unread = useUnreadNotificationCount();
@@ -86,11 +100,28 @@ const NotificationsPage = () => {
 
   useEffect(() => {
     if (fresh !== null || !list.isSuccess) return;
-    const ids = new Set(items.filter((n) => !n.readAt).map((n) => n.id));
-    setFresh(ids);
+    const unreadNow = items.filter((n) => !n.readAt).map((n) => n.id);
+    // 알림을 열고 돌아온 길이면(30분 안) 처음 열었을 때의 새 알림 중 아직 안 연 것을 그대로 표시한다
+    const { fresh: show, seen } = inboxFresh(readInboxSeen(uid), unreadNow);
+    setFresh(show);
+    writeInboxSeen(uid, seen);
     // 첫 30개 밖에 안 읽은 게 남아 있을 수도 있어서, 안 읽은 수를 아직 모르면 그냥 부른다
-    if (ids.size > 0 || unread.data !== 0) markAllRead(null);
-  }, [fresh, list.isSuccess, items, unread.data, markAllRead]);
+    if (unreadNow.length > 0 || unread.data !== 0) markAllRead(null);
+  }, [fresh, list.isSuccess, items, unread.data, markAllRead, uid]);
+
+  // 알림을 열고 돌아왔으면 보던 자리로 — 크롬은 스스로 돌려놓지만, 알림함을 다시 연 길(InboxReturnBridge)은 맨 위에서 열린다
+  const restored = useRef(false);
+  useEffect(() => {
+    if (restored.current || !list.isSuccess || items.length === 0) return;
+    restored.current = true;
+    const r = readInboxReturn();
+    if (!r || r.scrollY <= 0 || historyIdx() !== r.inbox) return;
+    const y = r.scrollY;
+    const id = window.requestAnimationFrame(() => {
+      if (Math.abs(window.scrollY - y) > 4) window.scrollTo(0, y);
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [list.isSuccess, items.length]);
 
   const goBack = () => {
     const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
@@ -99,7 +130,16 @@ const NotificationsPage = () => {
   };
 
   const onTap = (n: AppNotification) => {
+    // 누른 알림은 '새 알림' 표시를 끈다 — 돌아와도 그대로 (여러 알림을 하나씩 볼 때 어디까지 봤는지)
+    writeInboxSeen(uid, markInboxOpened(readInboxSeen(uid), n.id));
+    setFresh((prev) => {
+      if (!prev?.has(n.id)) return prev;
+      const next = new Set(prev);
+      next.delete(n.id);
+      return next;
+    });
     if (n.link) {
+      rememberInboxOpen(); // 뒤로가기 = 다시 알림함 (InboxReturnBridge)
       navigate(n.link);
       return;
     }
