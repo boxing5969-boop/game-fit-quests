@@ -18,6 +18,28 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261119-feedback-replies",
+    date: "2026-11-19",
+    title: "오류 신고 — 내 신고 · 답글",
+    lines: [
+      "보낸 신고의 처리 상황을 오류 신고 「내 신고」에서 볼 수 있어요",
+      "운영진이 답글을 남기면 알림으로 알려 드려요",
+      "답글 아래에 댓글로 더 알려 주실 수 있어요",
+    ],
+    link: { to: "/feedback?mine=1", label: "내 신고 보기" },
+  },
+  {
+    id: "20261119-inbox-back",
+    date: "2026-11-19",
+    title: "알림을 보고 뒤로 가면 다시 알림함",
+    lines: [
+      "알림을 열어 보고 뒤로가기를 누르면 홈이 아니라 알림함으로 돌아와요",
+      "아직 안 연 알림 표시도 그대로라 여러 알림을 차례로 볼 수 있어요",
+    ],
+    link: { to: "/notifications", label: "알림함 열기" },
+    fromMember: true,
+  },
+  {
     id: "20261119-workout-fix",
     date: "2026-11-19",
     title: "운동 종료를 깜빡한 날 — 운동 시간 고치기",

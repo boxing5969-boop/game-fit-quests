@@ -1229,6 +1229,13 @@ TV2 왼쪽 2/3(런칭 이벤트가 끝난 뒤) = 맨 위 금색 한 줄 「런�
   - QR · 예전 응답의 보기 답은 글 없이 번호(answer_score)만 있다 → `member-voice-inbox` · `survey-auto-reply` 둘 다 보기 글로 채운다(받은 설문함에 '답 없음'으로 보이던 것, 2026-10-30).
   - 시험: body `{dry_run: true}` → 할 일만 돌려준다. 끄기 = `select cron.unschedule('survey-auto-reply')`. 마이그레이션 20261030114131 · 20261030114756.
 
+### 오류 신고 댓글 · 내 신고 (2026-11-11 대표님 「마이복서 153 오류신고에 댓글 남길수있게해줘」 → 2026-11-19 대표님 「올리지」로 다시 만들어 올림 · 작업판 `myboxer:feedback`)
+- 신고 하나 아래에서 **운영진(전체관리자 · 관리자 = `_is_hq_user`) ↔ 신고한 회원**이 댓글을 주고받는다. 다른 회원 · 코치는 못 본다. [20261119110848_app_feedback_comments.sql](supabase/migrations/20261119110848_app_feedback_comments.sql) — 새 표 `app_feedback_comments`(RLS · 표 권한 없음 · 함수로만 · **지우기는 줄을 남김** `removed_at` · `removed_by` · 글 비움 — 목록 · 숫자에서 빠짐) · 새 칸 `app_feedback.member_read_at` · 새 함수 `get_app_feedback_thread`(회원이 열면 읽음) · `add_app_feedback_comment` · `remove_app_feedback_comment`(쓴 사람 · 운영진) · `get_my_app_feedback` · 안쪽 `_app_feedback_notify` · 바꾼 함수 `get_app_feedback_inbox`(운영 지금 정의 위에 `comment_count` · `last_comment_at` · `last_comment_staff` · `counts.waiting` 만 더함). 11/11 판(`delete_app_feedback_comment` — 줄을 지움)은 푸시되지 않아 다시 만들었다.
+- 알림(밤 10시 ~ 아침 8시는 알림함에만 · `pushed_at`): 운영진이 쓰면 회원에게 '💬 오류 신고에 답글이 왔어요'(제안은 '💬 보낸 제안에 답글이 왔어요') → `/feedback?mine=1&id=<신고>` · 회원이 쓰면 전체관리자 + 그 신고를 처리했거나 댓글을 단 운영진에게 '💬 … 신고에 회원 답글' → `/feedback?inbox=1&id=<신고>`. 운영진이 '새 신고'에 답글을 남기면 그 신고는 '확인함'(회원 화면 '확인 중'). 하루 한도 회원 20 · 운영진 100(지운 댓글도 센다).
+- 화면: `FeedbackPage` 탭 — 운영진 받은 신고 · 신고 보내기 · **내 신고**, 회원 신고 보내기 · **내 신고**(예전엔 보내면 다시 볼 곳이 없었다). 받은 신고 카드 '댓글' · 마지막 댓글이 회원 것이면 '회원 답글' 표시 + 거르기 · 탭 숫자 = 새 신고 + 회원 답글. 내 신고 = 처리 상태(접수됨 · 확인 중 · 고쳤어요) · '새 답글 n'. 댓글 지우기는 두 번 눌러서. 공용 댓글 `components/feedback/FeedbackThread` · 내 신고 `MyFeedbackList` · 키 · 문구 `lib/appFeedback.ts`(시험 appFeedback.test.ts · feedbackComments.test.tsx). 오삼 FAQ `osami-app-error` 한 줄.
+- 시험: 로컬 Postgres 16(운영 정의를 본뜬 뼈대 + 이 파일 두 번) 68개 — 권한(anon · 회원 표 직접 · 안쪽 함수) · 로그인 안 함 · 다른 회원 · 코치 막힘 · 답글 → 확인함 · 알림 제목 · 링크 · 조용한 시간 · 새 답글 · 읽음 · 회원 답글 → 전체관리자 + 댓글 단 관리자(겹침 없이 · 본인 빼고) · 빈 글 · 1000자 · 제안 · 불편 제목 · 고친 신고는 그대로 · 자기 신고엔 알림 없음 · 받은 신고 숫자 · 지우기(줄 남김 · 목록 · 숫자 · 대기 다시 셈) · 하루 한도 20 / 100 · 표 규칙 · 함께 지워짐. 화면: 가짜 서버로 390px(회원 내 신고 · 운영진 받은 신고 · 두 번 눌러 지우기).
+- **적용 (2026-11-19 11:18 KST)**: MCP `apply_migration`(기록 `20261119021832_app_feedback_comments` — 파일 번호와 다르고 본문은 파일 그대로 · 줄을 지우는 문장이 없어 승인 창 없이) → 함수 6개 본문 md5 · 길이 = 로컬 기준본 · RLS 켜짐 · 정책 0 · 표 권한 없음 · 안쪽 함수 실행 막힘 · 화면 함수 = authenticated → 되돌림 시험(DO 블록 예외 · 체험 계정 · 역할 바꿔 보기) ROLLBACK_OK 25 → 남은 줄 0 · 알림 0 · pg_net 대기 0. 되돌림 시험 글은 실제 계정 id 가 있어 저장소 밖.
+
 ### 타이틀미션 「왜 미트를 잡아 줄까」 탭 · 레벨 10 3일 이야기 (2026-11-05 대표님 "레벨 10에 왜 미트를 대 주고 지도를 해 봐야 하는지 설득하는 탭 만들고, 레벨 10이 되면 이 글 3일간 발송되게 하자")
 
 | 파일 | 역할 |
@@ -1339,6 +1346,20 @@ TV2 왼쪽 2/3(런칭 이벤트가 끝난 뒤) = 맨 위 금색 한 줄 「런�
 - [src/components/NewScreenScrollTop.tsx](src/components/NewScreenScrollTop.tsx) — App 의 `<Routes>` **앞**(형제 효과 순서: 이것이 먼저 · 화면 쪽 스크롤(알림 링크로 그 칸까지 내려가기 · `?learn=1` 등)이 다음)에 하나. 새 화면 이동(PUSH · REPLACE)에서 **경로가 바뀔 때만** `window.scrollTo(0, 0)`(useLayoutEffect — 그리기 전에).
 - 그대로 두는 것: 뒤로 · 앞으로 가기(POP — 브라우저가 보던 자리로) · 주소 뒷부분만 바뀜(`?tab=` · 시트 · 알림 링크 정리) · `#조각` · `navigate(…, { state: KEEP_SCROLL_STATE })`([src/lib/newScreenScroll.ts](src/lib/newScreenScroll.ts) — 새로 만드는 화면이 앞 화면 자리를 지켜야 하면 이걸로) · 사이니지.
 - 시험 NewScreenScrollTop.test.tsx 7 · **DB 변경 없음**.
+
+### 알림을 보고 뒤로가기 = 다시 알림함 (2026-11-19 선릉역점 회원 제안 11/10 「알림확인하고, 뒤로가기 누르면 메인화면이뜨는데 여러알림을 확인할때 일일히 들어가야해서 조금 번거롭네요」 → 대표님 「올리지」 · 작업판 `myboxer:notifications`)
+
+앱 안 기록은 맞다 — 알림함에서 알림을 열면 기록 한 칸(push)이라, 실제 앱을 크로미움으로 띄워 보니 뒤로가기가 알림함으로 간다(링크 네 가지 모두). 회원님 폰(안드로이드 10 · 삼성 인터넷 31)에서는 뒤로가기가 알림함 칸을 건너뛰고 첫 화면으로 갔다 — 브라우저가 앱이 쌓은 칸을 건너뛰는 규칙(뒤로가기 가로채기 막기)으로 본다(**그 폰에서 직접 재현은 못 함**). 그래서 브라우저 규칙과 상관없이 앱이 직접 지킨다. **DB 변경 없음.**
+
+| 파일 | 역할 |
+|---|---|
+| [src/lib/inboxReturn.ts](src/lib/inboxReturn.ts) | 기록 한 곳(이 창 sessionStorage · 30분) — `rememberInboxOpen`(알림을 열 때 알림함 칸 번호 `state.idx` · 보던 자리) · `shouldReturnToInbox`(연 알림이나 그 위에서 뒤로 갔는데 알림함보다 더 아래 칸에 떨어짐) · `inboxReturnClaims`(안드로이드 종료 확인이 먼저 본다) · `openWithInboxBelow`(휴대폰 알림으로 연 화면은 아래에 알림함을 깔고) · 「본 것」(`inboxFresh` · `markInboxOpened` — 알림함을 열면 서버가 모두 읽음으로 바꿔서, 돌아와도 처음 연 때의 새 알림 중 안 연 것을 표시) — 시험 inboxReturn.test.ts |
+| [src/components/notifications/InboxReturnBridge.tsx](src/components/notifications/InboxReturnBridge.tsx) | App 의 Routes 앞 하나 — popstate 가 알림함을 건너뛰면 알림함을 다시 연다(push) · 크롬처럼 알림함에 바로 떨어지면 아무것도 안 함 · 화면이 바뀔 때마다 칸 번호를 적고 알림함보다 아래로 가면(알림함에서 뒤로) 기록을 지운다 — 시험 InboxReturnBridge.test.tsx |
+| [NotificationsPage](src/pages/NotificationsPage.tsx) · [PushBridge](src/components/notifications/PushBridge.tsx) · [androidBackExit](src/lib/androidBackExit.ts) | 알림을 누를 때 기록 · 돌아오면 보던 자리 · 연 알림은 새 알림 점을 끔 / 휴대폰 알림(서비스워커 · 아이폰 앱)으로 연 화면 / 건너뛴 뒤로가기는 '앱 종료할까요?'를 묻지 않음 |
+
+- **실제 브라우저는 popstate 를 듣는 함수 사이마다 React 가 화면을 그린다**(마이크로태스크 — jsdom 시험은 이 차이를 못 잡는다). 라우터가 먼저 들으면 떨어진 화면(홈 · `/` 이면 `RoleBasedRedirect` 의 replace 까지)이 먼저 그려지고 효과도 돈다 — 한 작업 안이라 화면에 칠해지지는 않는다. 그래서 '화면이 바뀔 때' 효과가 그 순간(POP 인데 건너뛴 것) 기록 · 칸 번호를 건드리지 않고 비켜 주고, 늦게 도는 popstate 함수가 옮긴다. capture 로 듣지만 **크롬 153 은 window 에서 등록 순서대로 불렀다**(capture 먼저가 아님) — 어느 순서든 결과는 알림함.
+- 시험: 실제 앱 묶음을 크로미움(390px · 삼성 인터넷 UA)으로 띄워 가짜 서버 — 보통 뒤로가기 = 알림함 · 앱이 쌓은 칸을 건너뛰는 뒤로가기(`history.go(-n)`) = 알림함으로 다시 · 두 번째 알림도 같음 · 알림함에서 뒤로 = 홈(기록 지움 · 종료 확인 없음) · 연 알림만 새 알림 점이 꺼짐.
+- 같은 일이 다시 들어오면: 그 회원 기기 · 브라우저(오류 신고의 기기 정보)부터 보고, 알림함 칸이 기록에 있는지(`history.state.idx`)와 이 안전망이 도는지(sessionStorage `153inbox:return`)를 본다.
 
 ### 아이폰(사파리 · 웹킷)에서만 어긋나는 그림 (2026-11-09 대표님 "아이폰은 ui가 싱크가 잘안맞아")
 
