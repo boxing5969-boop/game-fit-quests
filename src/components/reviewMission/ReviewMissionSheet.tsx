@@ -5,6 +5,7 @@
  * 한 곳마다 두 걸음: ① 「○○에 리뷰 쓰기」 → 그 플랫폼 리뷰 화면 ② 「인증 사진 올리기」(내 리뷰가 보이는 화면 캡처)
  * → 지점장님 확인 → 153 마일리지 + 카드 꾸미기 선물(알림으로 알려 드림). 세 곳을 모두 마치면 153 골드 서포터 세트.
  * 별점 · 내용과 상관없이 드린다 — 좋은 후기를 조건으로 걸지 않는다(공정위 추천 · 보증 지침 · 플랫폼 정책).
+ * 구글은 보상 없이 부탁만(2026-11-21 02:07 대표님 「구글은 보상없이 부탁만하자 리뷰가 큰힘이 된다고」) — 리뷰 쓰기 버튼 하나 · 인증 없음.
  * 대가를 받은 후기임을 알리는 한 줄을 넣어 달라고 안내한다(복사 단추).
  */
 import { useRef, useState } from "react";
@@ -52,6 +53,7 @@ const MissionRow = ({ m, onUploaded }: { m: ReviewMission; onUploaded: () => voi
   const canUpload = !done && !waiting;
 
   const go = () => {
+    // (구글 부탁 칸도 같은 길 — 열어 봤다는 기록만 남는다)
     // 팝업 막힘을 피하려고 누르는 순간 바로 연다 — 기록은 뒤에서
     window.open(m.url, "_blank", "noopener,noreferrer");
     setOpened(true);
@@ -72,6 +74,31 @@ const MissionRow = ({ m, onUploaded }: { m: ReviewMission; onUploaded: () => voi
       if (fileRef.current) fileRef.current.value = "";
     }
   };
+
+  // 🙏 구글 — 보상 없이 부탁만
+  if (m.askOnly) {
+    return (
+      <li className="rounded-2xl border border-border bg-card p-4">
+        <div className="flex items-center gap-3">
+          <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-body font-black ring-1 ${tone.bg} ${tone.fg} ${tone.ring}`}>
+            {label.charAt(0)}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-body font-black text-foreground">{label} 리뷰 · 부탁드려요</p>
+            <p className="text-label leading-snug text-muted-foreground">솔직한 리뷰 한 줄이 153복싱짐에 정말 큰 힘이 돼요</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={go}
+          className={`mt-3 flex h-11 w-full items-center justify-center gap-1.5 rounded-xl text-label font-black ring-1 transition-transform active:scale-[0.98] ${tone.bg} ${tone.fg} ${tone.ring}`}
+        >
+          {opened ? "한 번 더 열기" : `${label}에 리뷰 남기기`} <ExternalLink className="h-3.5 w-3.5" />
+        </button>
+        <p className="mt-2 text-micro text-muted-foreground">{PLATFORM_HOWTO[m.platform]} · 보상 없이 부탁만 드려요</p>
+      </li>
+    );
+  }
 
   return (
     <li className={`rounded-2xl border p-4 ${done ? "border-primary/40 bg-primary/5" : "border-border bg-card"}`}>
@@ -150,7 +177,8 @@ const ReviewMissionSheet = ({ open, onClose, onOpenDeco }: Props) => {
   };
 
   const missions = data?.missions ?? [];
-  const perMileage = missions.length ? Math.max(...missions.map((m) => m.mileage)) : 0;
+  const rewarded = missions.filter((m) => !m.askOnly);
+  const perMileage = rewarded.length ? Math.max(...rewarded.map((m) => m.mileage)) : 0;
 
   return (
     <AnimatePresence>
@@ -181,7 +209,7 @@ const ReviewMissionSheet = ({ open, onClose, onOpenDeco }: Props) => {
                 <div className="min-w-0">
                   <h2 className="text-body font-bold text-foreground">리뷰 미션</h2>
                   <p className="mt-0.5 text-label text-muted-foreground">
-                    {data?.on ? `${data.done}/${data.total} 완료 · 한 곳마다 마일리지 + 카드 선물` : "솔직한 후기 한 줄이면 충분해요"}
+                    {data?.on && data.total > 0 ? `${data.done}/${data.total} 완료 · 한 곳마다 마일리지 + 카드 선물` : "솔직한 후기 한 줄이면 충분해요"}
                   </p>
                 </div>
               </div>
@@ -206,7 +234,8 @@ const ReviewMissionSheet = ({ open, onClose, onOpenDeco }: Props) => {
                 </p>
               ) : (
                 <>
-                  {/* 세 곳 다 하면 */}
+                  {/* 보상 미션(네이버 · 당근)을 다 하면 — 2곳 이상 열렸을 때만 */}
+                  {data.allGifts.length > 0 && (
                   <div className="flex items-center gap-3 rounded-2xl border border-reward/40 bg-reward/10 px-4 py-3">
                     <Gift className="h-5 w-5 shrink-0 text-reward" />
                     <p className="min-w-0 text-label leading-snug text-foreground">
@@ -219,6 +248,7 @@ const ReviewMissionSheet = ({ open, onClose, onOpenDeco }: Props) => {
                       )}
                     </p>
                   </div>
+                  )}
 
                   <ul className="mt-3 space-y-2.5">
                     {missions.map((m) => (
@@ -226,12 +256,13 @@ const ReviewMissionSheet = ({ open, onClose, onOpenDeco }: Props) => {
                     ))}
                   </ul>
 
-                  {/* 지켜 주세요 */}
+                  {/* 지켜 주세요 — 보상이 있는 리뷰만 */}
+                  {rewarded.length > 0 && (
                   <div className="mt-4 rounded-2xl bg-secondary px-4 py-3">
                     <p className="text-label font-black text-foreground">꼭 읽어 주세요</p>
                     <ul className="mt-1.5 space-y-1 text-label leading-snug text-muted-foreground">
                       <li>· 별점 · 내용은 솔직하게 — 좋은 말만 쓰지 않아도 {perMileage > 0 ? `${fmt(perMileage)}점은` : "선물은"} 똑같이 드려요</li>
-                      <li>· 리뷰 끝에 아래 한 줄을 넣어 주세요 (대가를 받은 후기 표시 규정)</li>
+                      <li>· 마일리지를 받는 리뷰({rewarded.map((m) => PLATFORM_LABEL[m.platform]).join(" · ")})는 끝에 아래 한 줄을 넣어 주세요 (대가를 받은 후기 표시 규정)</li>
                       <li>· 인증 사진: 내가 쓴 리뷰가 보이게 화면을 캡처해 올려 주세요</li>
                     </ul>
                     <button
@@ -245,6 +276,7 @@ const ReviewMissionSheet = ({ open, onClose, onOpenDeco }: Props) => {
                       </span>
                     </button>
                   </div>
+                  )}
 
                   {onOpenDeco && (
                     <button

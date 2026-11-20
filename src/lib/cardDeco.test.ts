@@ -18,8 +18,12 @@ describe("카드 꾸미기 (2026-11-21)", () => {
   });
 
   it("리뷰 선물 = 서버 _review_gifts 와 같은 이름 · 모두 있는 꾸미기", () => {
-    const sql = readFileSync("supabase/migrations/20261121010851_review_missions_card_deco.sql", "utf8");
+    // 정본 = 마지막으로 _review_gifts 를 고친 파일(구글은 보상 없이 부탁만 — 선물 없음)
+    const sql = readFileSync("supabase/migrations/20261121020741_review_google_ask_only.sql", "utf8");
+    expect(REVIEW_GIFTS.google).toEqual([]);
+    expect(sql).not.toMatch(/when 'google'\s+then/);
     for (const [k, ids] of Object.entries(REVIEW_GIFTS)) {
+      if (k === "google") continue;
       const m = sql.match(new RegExp(`when '${k}'\\s+then array\\[([^\\]]+)\\]`));
       expect(m, k).not.toBeNull();
       const serverIds = m![1].split(",").map((x) => x.trim().replace(/'/g, ""));

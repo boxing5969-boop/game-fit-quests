@@ -5,6 +5,7 @@
  * 칸 네 개 — 테두리(frame) · 바탕(skin) · 스티커(sticker) · 칭호(title). 칸마다 하나씩 낀다(안 껴도 된다).
  * 이름이 free_ 로 시작하면 누구나, 아니면 받은 것만(서버 _card_deco_ok 가 같은 규칙으로 막는다).
  * 리뷰 미션 선물 = 서버 _review_gifts 와 같은 이름 — 여기 REVIEW_GIFTS 를 바꾸면 서버 함수도 같이.
+ * 구글은 보상 없이 부탁만(2026-11-21 02:07 대표님) — 예전 구글 선물(사파이어 · 별)은 기본 꾸미기로 옮겼다.
  *
  * 그림은 CSS 만(움직임 없음) — TV 에서 카드 수십 장이 같이 떠도 다시 그리지 않는다. 바탕은 모두 어두운 색(카드 글자가 흰색).
  * 153 브랜드: 민트 #3fe8c0 · 금색 #f5c453 · 보라와 파랑을 섞지 않는다 · 네온 게임 느낌 없이.
@@ -80,10 +81,10 @@ export const DECO_ITEMS: readonly DecoItem[] = [
     face: "radial-gradient(120% 90% at 0% 0%, rgba(63, 232, 192, 0.30), transparent 55%), repeating-linear-gradient(135deg, rgba(63,232,192,0.05) 0 1px, transparent 1px 9px), linear-gradient(135deg, #06291f 0%, #04140f 60%, #0a2a22 100%)",
   },
   {
-    id: "skin_sapphire",
+    id: "free_skin_sapphire",
     slot: "skin",
     name: "사파이어",
-    source: "review_google",
+    source: "free",
     face: "radial-gradient(120% 90% at 100% 0%, rgba(96, 165, 250, 0.32), transparent 55%), repeating-radial-gradient(circle at 0% 100%, rgba(255,255,255,0) 0 10px, rgba(147,197,253,0.06) 10px 11px), linear-gradient(135deg, #0b1d3f 0%, #060e20 60%, #0d2350 100%)",
   },
   {
@@ -98,7 +99,7 @@ export const DECO_ITEMS: readonly DecoItem[] = [
   { id: "free_sticker_fire", slot: "sticker", name: "불꽃", source: "free", icon: "fire" },
   { id: "free_sticker_muscle", slot: "sticker", name: "근육", source: "free", icon: "muscle" },
   { id: "sticker_bolt", slot: "sticker", name: "번개", source: "review_naver", icon: "bolt" },
-  { id: "sticker_star", slot: "sticker", name: "별", source: "review_google", icon: "star" },
+  { id: "free_sticker_star", slot: "sticker", name: "별", source: "free", icon: "star" },
   { id: "sticker_heart", slot: "sticker", name: "하트", source: "review_daangn", icon: "heart_red" },
   { id: "sticker_crown", slot: "sticker", name: "왕관", source: "review_all", icon: "crown" },
   // ── 칭호 ──
@@ -120,7 +121,7 @@ export const DECO_SLOTS: readonly { slot: DecoSlot; label: string }[] = [
 /** 리뷰 미션 선물 — 서버 public._review_gifts 와 같은 이름 */
 export const REVIEW_GIFTS: Record<"naver" | "google" | "daangn" | "all", readonly string[]> = {
   naver: ["skin_emerald", "sticker_bolt"],
-  google: ["skin_sapphire", "sticker_star"],
+  google: [],
   daangn: ["skin_sunset", "sticker_heart"],
   all: ["frame_supporter", "sticker_crown", "title_supporter"],
 };

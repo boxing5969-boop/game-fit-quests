@@ -152,7 +152,9 @@ const LinkEditor = ({ l, branch, canEdit, onSaved }: { l: ReviewLinkAdmin; branc
     <li className="rounded-2xl border border-border bg-card p-3">
       <div className="flex items-center gap-2">
         <span className={`rounded-md px-2 py-0.5 text-micro font-black ring-1 ${tone.bg} ${tone.fg} ${tone.ring}`}>{PLATFORM_LABEL[l.platform]}</span>
-        <span className="min-w-0 flex-1 truncate text-micro text-muted-foreground">선물: {giftLine(l.gifts)}</span>
+        <span className="min-w-0 flex-1 truncate text-micro text-muted-foreground">
+          {l.platform === "google" ? "보상 없이 부탁만 (구글 정책)" : `선물: ${giftLine(l.gifts)}`}
+        </span>
         <label className="flex shrink-0 items-center gap-1.5 text-label font-bold text-foreground">
           <input type="checkbox" checked={enabled} disabled={!canEdit} onChange={(e) => setEnabled(e.target.checked)} className="h-4 w-4 accent-primary" />
           켜기
@@ -167,6 +169,10 @@ const LinkEditor = ({ l, branch, canEdit, onSaved }: { l: ReviewLinkAdmin; branc
         className="mt-2 h-10 w-full rounded-xl border border-border bg-background px-3 text-label text-foreground disabled:opacity-60"
       />
       <div className="mt-2 flex items-center gap-2">
+        {l.platform === "google" ? (
+          <span className="text-label text-muted-foreground">마일리지 · 선물 없음</span>
+        ) : (
+          <>
         <input
           value={mileage}
           onChange={(e) => setMileage(e.target.value.replace(/[^0-9]/g, ""))}
@@ -175,6 +181,8 @@ const LinkEditor = ({ l, branch, canEdit, onSaved }: { l: ReviewLinkAdmin; branc
           className="h-10 w-28 rounded-xl border border-border bg-background px-3 text-right text-label font-bold tabular-nums text-foreground disabled:opacity-60"
         />
         <span className="text-label text-muted-foreground">점</span>
+          </>
+        )}
         {l.url && (
           <a href={l.url} target="_blank" rel="noreferrer" className="ml-auto flex items-center gap-1 text-micro font-bold text-primary">
             열어 보기 <ExternalLink className="h-3 w-3" />
@@ -305,7 +313,7 @@ export const ReviewMissionAdminSheet = ({ open, onClose }: { open: boolean; onCl
                     ))}
                   </ul>
                   <p className="mt-3 text-micro leading-relaxed text-muted-foreground">
-                    주소를 넣은 플랫폼만 회원에게 보여요. 세 곳을 모두 마친 회원은 {giftLine(data.allGifts)}도 받아요.
+                    주소를 넣은 플랫폼만 회원에게 보여요. 구글은 보상 없이 리뷰를 부탁만 하고(구글 정책), 네이버 · 당근을 모두 마친 회원은 {giftLine(data.allGifts)}도 받아요.
                     별점 · 내용과 상관없이 드리고, 회원에게는 「153 마일리지를 받고 쓴 솔직 후기예요」 한 줄을 넣어 달라고 안내해요.
                     {!data.canEdit && " 설정은 지점장님 · 관리자만 바꿀 수 있어요."}
                   </p>

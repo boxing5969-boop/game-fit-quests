@@ -40,6 +40,8 @@ export const PLATFORM_HOWTO: Record<ReviewPlatform, string> = {
 
 export interface ReviewMission {
   platform: ReviewPlatform;
+  /** 보상 없이 부탁만(구글 — 구글 지도 정책은 대가를 준 리뷰를 금지) · 인증 사진 없음 */
+  askOnly: boolean;
   url: string;
   mileage: number;
   gifts: string[];
@@ -73,6 +75,7 @@ export function parseMyReviewMissions(raw: unknown): MyReviewMissions {
     .filter((m): m is Record<string, unknown> => !!m && isPlatform(m.platform) && typeof m.url === "string")
     .map((m) => ({
       platform: m.platform as ReviewPlatform,
+      askOnly: m.ask_only === true || m.platform === "google",
       url: m.url as string,
       mileage: num(m.mileage),
       gifts: strs(m.gifts),
