@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { NEXT_LEVEL_DEMOS, nextLevelDemo, nextLevelDemoLink } from "./nextLevelGuideSample";
+import { NEXT_LEVEL_DEMOS, homeLevelDemo, nextLevelDemo, nextLevelDemoLink } from "./nextLevelGuideSample";
 import { titleFlowHero } from "./nextLevelGuide";
 import { attemptsLeft, memberPhase } from "./titleMatchChallenge";
 
@@ -54,5 +54,31 @@ describe("홈 「다음 레벨까지」 예시 (?lvdemo=)", () => {
     const opts = (s: typeof ready) => ({ attemptsLeft: attemptsLeft(s), retryAt: s?.retryAt ?? null, reviewer: "지점장님" });
     expect(titleFlowHero(memberPhase(ready), opts(ready)).canRequest).toBe(true);
     expect(titleFlowHero(memberPhase(wait), opts(wait)).hero).toBe("심사를 기다려요");
+  });
+});
+
+// 2026-11-20 대표님 「회원으로 보기해도 안보이는데..」 — '회원으로 보기'는 역할만 바꾸고 레벨은 그대로라
+// 레벨 40 을 마친 계정(마스터) · 지도진 계정은 회원으로 봐도 카드가 없었다 → 그때는 회원 예시로
+describe("홈에 그릴 예시 (homeLevelDemo)", () => {
+  it("주소의 ?lvdemo= 가 먼저", () => {
+    expect(homeLevelDemo("today", { viewAsMember: false, ownCard: true })?.key).toBe("today");
+    expect(homeLevelDemo("10", { viewAsMember: true, ownCard: false })?.key).toBe("10");
+    expect(homeLevelDemo("wait", { viewAsMember: true, ownCard: true })?.key).toBe("wait");
+  });
+
+  it("회원으로 보기 중 · 이 계정에 카드가 없으면 레벨 4 예시", () => {
+    const d = homeLevelDemo(null, { viewAsMember: true, ownCard: false });
+    expect(d?.key).toBe("4");
+    expect(d?.data).toMatchObject({ league: "white", level: 4 });
+  });
+
+  it("카드가 있는 계정은 회원으로 봐도 자기 진행 그대로 (예시 없음)", () => {
+    expect(homeLevelDemo(null, { viewAsMember: true, ownCard: true })).toBeNull();
+    expect(homeLevelDemo("", { viewAsMember: true, ownCard: true })).toBeNull();
+  });
+
+  it("회원으로 보기가 아니면 지도진 · 마스터 계정은 예전처럼 카드 없음", () => {
+    expect(homeLevelDemo(null, { viewAsMember: false, ownCard: false })).toBeNull();
+    expect(homeLevelDemo(undefined, { viewAsMember: false, ownCard: true })).toBeNull();
   });
 });

@@ -48,7 +48,7 @@ import HomeWorkoutCard from "@/components/home/HomeWorkoutCard";
 import HomePtCard from "@/components/pt/HomePtCard";
 import LevelUpRequestCard from "@/components/LevelUpRequestCard";
 import NextLevelDemoStrip from "@/components/home/NextLevelDemoStrip";
-import { nextLevelDemo } from "@/lib/nextLevelGuideSample";
+import { homeLevelDemo } from "@/lib/nextLevelGuideSample";
 import HomeWorkoutCalendar from "@/components/home/HomeWorkoutCalendar";
 import { useLevelCycleProgress, promotionHint } from "@/hooks/useLevelCycleProgress";
 import {
@@ -109,7 +109,7 @@ import {
  */
 const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
   const navigate = useNavigate();
-  const { user, profile, progress, role, refreshProgress, refreshProfile } = useAuth();
+  const { user, profile, progress, role, viewAsMember, refreshProgress, refreshProfile } = useAuth();
   const queryClient = useQueryClient();
   const { data: levels } = useLevels();
   // useMyBadges 호출 제거 — 배지 섹션 제거 후 결과 미사용인데 홈 진입마다
@@ -124,7 +124,7 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
   const { data: levelCycle } = useLevelCycleProgress();
   // 「다음 레벨까지」 예시 (?lvdemo=1 · 4 · 10 · wait) — 지도진 · 마스터 계정에는 이 카드가 없어서, 회원 화면 모습을 볼 수 있게 (운영진 미리 보기)
   const [homeParams] = useSearchParams();
-  const lvDemo = nextLevelDemo(homeParams.get("lvdemo"));
+  const lvDemoParam = homeParams.get("lvdemo");
   const { data: levelupRules } = useLevelupRules();
   // 오늘 출석 여부 — 서버(get_my_workout_today, KST·지점 무관)가 단일 출처. 예전엔 기기 자정·지점 필터로 따로 세어
   // WorkoutFinishCard 와 다른 답을 냈다 (검수 발견).
@@ -268,7 +268,12 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
   void currentLevel;
 
   // 첫 화면 「다음 레벨까지」(레벨 퀘스트) 카드가 보이는 회원 — 지도진 · 마스터(레벨 40 뒤)는 승급할 다음 레벨이 없어 카드가 없다
-  const showLevelQuest = !lvDemo && !staffCard && !isMaster40 && !onMasterTrack;
+  const ownLevelQuest = !staffCard && !isMaster40 && !onMasterTrack;
+  // 예시 — 주소의 ?lvdemo= 가 먼저, 없으면 '회원으로 보기' 중인데 이 계정에 카드가 없을 때 회원 예시(레벨 4).
+  //   '회원으로 보기'는 역할만 회원으로 바꾸고 레벨은 그대로라 레벨 40 을 마친 대표님 계정은 카드가 안 보였다 (2026-11-20 대표님 「회원으로 보기해도 안보이는데..」)
+  const lvDemoViewAs = viewAsMember && !ownLevelQuest;
+  const lvDemo = homeLevelDemo(lvDemoParam, { viewAsMember, ownCard: ownLevelQuest });
+  const showLevelQuest = !lvDemo && ownLevelQuest;
 
   const myRankRow = ranking?.find((r) => r.r_user_id === user?.id);
   const myPosition = myRankRow ? Number(myRankRow.rank_position) : null;
@@ -653,10 +658,11 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
               이번 목표 · 수업 도장 길 · 응원 · 레벨업 보상. 같은 숫자는 한 화면에 한 번이라 내 카드의 승급 막대는 첫 화면에서 끈다.
               v2(같은 날 「채우고 싶은 느낌 · 게임처럼 레벨업하고 싶은 욕구」) — 리그 막대 · 도장 게이지 · 레벨 달성 보상 상자(다음 기술 =
               levelTitle) · 오늘의 퀘스트.
-              지도진 · 마스터(레벨 40 뒤)는 승급할 다음 레벨이 없어 이 카드가 없다 — 그 계정은 ?lvdemo= 예시로 본다 */}
+              지도진 · 마스터(레벨 40 뒤)는 승급할 다음 레벨이 없어 이 카드가 없다 — 그 계정은 ?lvdemo= 예시로 보고,
+              '회원으로 보기'를 켜면 주소 없이도 회원 예시(레벨 4)가 보인다 (2026-11-20) */}
           {lvDemo ? (
             <>
-              <NextLevelDemoStrip current={lvDemo} />
+              <NextLevelDemoStrip current={lvDemo} viewAsMember={lvDemoViewAs} />
               <LevelUpRequestCard bar={false} missions demo={lvDemo.data} levelTitle={levelTitleOf} />
             </>
           ) : (

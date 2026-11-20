@@ -11,6 +11,7 @@
  *   /home?lvdemo=wait 화이트 레벨 10 · 신청한 뒤 → 「심사를 기다려요」
  * 진행 상황(출석 · 심사 단계)만 지어낸 값이고 서버를 부르지 않는다. 미션 영상 목록은 그 레벨의 실제 미션을 읽는다.
  * 주소에서 빼면 바로 원래 화면 (기기에 남기지 않는다). 시험 nextLevelGuideSample.test.ts
+ * '회원으로 보기' 중인데 이 계정에 카드가 없으면(지도진 · 마스터) 주소 없이도 레벨 4 예시 — homeLevelDemo (2026-11-20).
  */
 import type { TitleMatchState } from "@/lib/titleMatchChallenge";
 
@@ -170,4 +171,18 @@ export function nextLevelDemo(param: string | null | undefined): NextLevelDemo |
   const v = (param ?? "").trim().toLowerCase();
   if (!v || v === "0" || v === "off") return null;
   return DEMOS[v as NextLevelDemo["key"]] ?? DEMOS["4"];
+}
+
+/**
+ * 홈에 그릴 예시 — 주소의 ?lvdemo= 가 먼저. 없으면 '회원으로 보기' 중인데 이 계정에 카드가 없을 때(지도진 · 마스터) 레벨 4 예시.
+ * 왜: '회원으로 보기'는 역할만 회원으로 바꾸고 레벨은 그대로라, 레벨 40 을 마친 계정은 회원으로 봐도 카드가 없었다
+ * (2026-11-20 대표님 「회원으로 보기해도 안보이는데..」). 카드가 있는 계정은 회원으로 봐도 자기 진행 그대로.
+ */
+export function homeLevelDemo(
+  param: string | null | undefined,
+  opts: { viewAsMember: boolean; ownCard: boolean },
+): NextLevelDemo | null {
+  const fromUrl = nextLevelDemo(param);
+  if (fromUrl) return fromUrl;
+  return opts.viewAsMember && !opts.ownCard ? DEMOS["4"] : null;
 }
