@@ -38,6 +38,8 @@ export interface CornermanCandidateListProps {
   /** 앱에 없는 회원 초대 */
   onInvite?: (c: CornermanListItem) => void;
   invitingUserId?: string | null;
+  /** 내게 이미 짝꿍이 있으면 요청 단추 대신 이 글 (2026-11-21 — 눌러도 서버가 막아 오류만 떴다) */
+  requestBlockedText?: string;
 }
 
 const shortBranch = (b: string | null | undefined) => (b ?? "").replace(/^153복싱짐\s*/, "");
@@ -52,6 +54,7 @@ const CornermanCandidateList = ({
   emptyHint,
   onInvite,
   invitingUserId,
+  requestBlockedText,
 }: CornermanCandidateListProps) => {
   if (isLoading) {
     return (
@@ -137,6 +140,10 @@ const CornermanCandidateList = ({
             ) : state === "pending" ? (
               <span className="shrink-0 rounded-pill bg-amber-400/15 px-2.5 py-1 text-micro font-bold text-amber-700 dark:text-amber-300">
                 요청 대기 중
+              </span>
+            ) : requestBlockedText ? (
+              <span className="shrink-0 rounded-pill bg-muted px-2.5 py-1 text-micro font-bold text-muted-foreground">
+                {requestBlockedText}
               </span>
             ) : (
               <button

@@ -70,7 +70,9 @@ const ENGAGEMENT_ERROR_MAP: ReadonlyArray<{ match: string; ko: string }> = [
   { match: "hidden mission not eligible", ko: "아직 조건이 충족되지 않은 숨겨진 미션입니다." },
   { match: "hidden mission already claimed", ko: "이미 받은 숨겨진 미션입니다." },
   // v2 19단계 — 코너맨
-  { match: "cornerman pair already exists", ko: "이미 운동 짝꿍이 있어요." },
+  { match: "cornerman pair already exists", ko: "이미 운동 짝꿍이 있어요. 새 짝꿍은 지금 짝꿍을 그만한 뒤 신청할 수 있어요." },
+  // 2026-11-21 — 상대 회원에게 짝꿍이 있을 때 (예전엔 위와 같은 말이라 '내 짝꿍'으로 읽혔다)
+  { match: "cornerman receiver already paired", ko: "상대 회원은 이미 다른 운동 짝꿍이 있어요." },
   { match: "cornerman request already pending", ko: "이미 보낸 요청이 처리 대기 중입니다." },
   { match: "cornerman not your pair", ko: "내 짝꿍이 아니에요." },
   { match: "cornerman branch mismatch", ko: "같은 지점 회원만 짝꿍이 될 수 있어요." },

@@ -326,8 +326,10 @@ const CornermanSheet = ({ open, onClose }: Props) => {
     </label>
   );
 
-  const renderSearchResults = () => (
+  // paired = 내게 이미 짝꿍이 있음 → 요청 단추 대신 안내 (2026-11-21 봄→다윤 오류: 눌러도 서버가 막았다)
+  const renderSearchResults = (paired = false) => (
     <CornermanCandidateList
+      requestBlockedText={paired ? "짝꿍 그만한 뒤 신청" : undefined}
       candidates={search.data ?? []}
       isLoading={search.isLoading}
       pendingUserId={pendingRequestId}
@@ -363,7 +365,12 @@ const CornermanSheet = ({ open, onClose }: Props) => {
           {/* 짝꿍이 있어도 앱에 없는 동료는 초대할 수 있다 (2026-10-18) */}
           <div className="pt-1">
             {renderSearchBox()}
-            {searching ? renderSearchResults() : renderInvite()}
+            {searching && (
+              <p className="mb-2 text-label leading-relaxed text-muted-foreground">
+                짝꿍은 한 명만 맺을 수 있어요. 다른 회원과 맺으려면 위에서 지금 짝꿍을 먼저 그만해 주세요.
+              </p>
+            )}
+            {searching ? renderSearchResults(true) : renderInvite()}
           </div>
           <p className="text-label leading-relaxed text-muted-foreground">
             ※ {CORNERMAN_DISCLAIMER}
