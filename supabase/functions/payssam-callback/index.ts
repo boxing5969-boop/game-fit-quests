@@ -31,9 +31,20 @@
 //   (수강권 = membership_end · 운동복 = sportswear_end · 락카 = locker_end, 누적 결제액은 수강권 금액만).
 //   153OS(sync-paid · sync-refunded)에는 수강권 항목만 보낸다 — 운동복 · 락카가 수강권으로 잡히지 않게.
 //   항목이 없는 예전 주문은 아래 예전 그대로.
+//
+// 2026-11-20 시작일 고르기 (대표님: "회원님들이 수강권 결제할때 시작일을 지정할수있게하자"):
+//   · 장바구니 항목의 start_date(회원이 고른 날)를 apply_payment_order 가 반영한다(끝나는 날 = 시작일 + N개월 − 1일, 브로제이와 같은 식).
+//   · 153OS 이용권 · 출입권한도 같은 날로 — sync-paid 가 만든 이용권(오늘부터)을 153OS app_set_paid_membership_start 로 옮긴다
+//     (서버 키 OS_SERVICE_KEY — payssam-sync-cancels 와 같은 길). 미리 결제(이어서)도 같이 맞춰진다(예전엔 153OS 가 오늘부터로 겹쳐 잡았다).
+//     결과는 주문 raw._os_start — 못 옮겼으면 payssam-sync-cancels 가 30분마다 다시 해 본다.
+//   · 예전 주문(항목 없음)은 수강권 상품일 때만 153OS 에 보낸다 — 예전엔 운동복 · 1일권 같은 것도 '1개월 수강권'으로 들어갔다.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 type OrderItem = { kind: string; product_name: string; months: number; amount: number; duration_days: number };
+
+/** 한국 날짜 'YYYY-MM-DD' */
+const kstToday = (now: number = Date.now()): string => new Date(now + 9 * 3600 * 1000).toISOString().slice(0, 10);
+const addDays = (d: string, n: number): string => new Date(Date.parse(`${d}T00:00:00Z`) + n * 86400000).toISOString().slice(0, 10);
 
 // 결제선생 발신 서버 IP — 2026-08 서버 이전 공지 기준.
 // 목록이 바뀌면 코드 수정 없이 PAYSSAM_ALLOWED_IPS 환경변수로 덮어쓴다(쉼표 구분).
@@ -162,11 +173,26 @@ Deno.serve(async (req) => {
           .select("membership_end, payment_total, name, phone_number")
           .eq("user_id", order.user_id)
           .maybeSingle();
+        // 153OS 이용권을 옮길 시작일 (2026-11-20) — 장바구니는 apply_payment_order 가 정한 날, 예전 수강권 주문은 이어서(한국 날짜)
+        let osStart: string | null = null;
+        // 예전 주문(항목 없음)은 수강권 상품일 때만 153OS 에 보낸다
+        let legacyMembership = false;
         if (items.length > 0) {
           // 장바구니 주문 — 항목마다 반영(수강권 · 운동복 · 락카) + 가입 승인
-          const { error: aErr } = await admin.rpc("apply_payment_order", { p_order_id: order.id });
+          const { data: applied, error: aErr } = await admin.rpc("apply_payment_order", { p_order_id: order.id });
           if (aErr) console.error("[payssam-callback] ⚠️ 항목 반영 실패 — 손으로 반영 필요:", `order_id=${order.id}`, aErr.message);
+          const ms = (applied as { membership_start?: unknown } | null)?.membership_start;
+          if (typeof ms === "string" && /^\d{4}-\d{2}-\d{2}$/.test(ms)) osStart = ms;
         } else {
+          if (order.product_id) {
+            const { data: prod } = await admin.from("membership_products").select("category").eq("id", order.product_id).maybeSingle();
+            legacyMembership = prod?.category === "membership";
+          }
+          if (legacyMembership) {
+            const t = kstToday();
+            const curEnd = typeof prof?.membership_end === "string" ? prof.membership_end.slice(0, 10) : null;
+            osStart = curEnd && curEnd >= t ? addDays(curEnd, 1) : t;
+          }
           // 수강권 만료일 연장 + 누적 결제금액 가산
           const days = Number(order.duration_days || 0);
           const today = new Date();
@@ -190,7 +216,7 @@ Deno.serve(async (req) => {
         try {
           const OS_API_URL = Deno.env.get("OS_API_URL") || "https://153-boxing-os-api.boxing5969.workers.dev";
           const OS_PARTNER_KEY = Deno.env.get("OS_PARTNER_KEY") || "";
-          if (OS_PARTNER_KEY && (items.length === 0 || memItem)) {
+          if (OS_PARTNER_KEY && (items.length > 0 ? !!memItem : legacyMembership)) {
             const osDays = memItem ? Number(memItem.duration_days || 0) : Number(order.duration_days || 0);
             const months = memItem ? Math.max(1, Number(memItem.months || 0)) : Math.max(1, Math.round(osDays / 30));
             const ac = new AbortController();
@@ -214,6 +240,27 @@ Deno.serve(async (req) => {
             });
             clearTimeout(timer);
             if (!r.ok) console.error("153OS sync-paid failed:", r.status, await r.text().catch(() => ""));
+            // 153OS 이용권 · 출입권한을 앱과 같은 시작일로 (2026-11-20) — sync-paid 는 늘 '오늘부터'로 만든다
+            const OS_KEY = Deno.env.get("OS_SERVICE_KEY") || "";
+            if (r.ok && osStart && OS_KEY) {
+              const os = createClient(Deno.env.get("OS_SUPABASE_URL") || "https://tbxdrfowanyksgdicryl.supabase.co", OS_KEY, {
+                auth: { persistSession: false, autoRefreshToken: false },
+              });
+              const { data: mv, error: mvErr } = await os.rpc("app_set_paid_membership_start", {
+                _ext_order_id: String(order.id),
+                _start: osStart,
+              });
+              if (mvErr) {
+                console.error("[payssam-callback] 153OS 시작일 맞추기 실패 — payssam-sync-cancels 가 다시 해 본다:", `order_id=${order.id}`, mvErr.message);
+              } else {
+                const res = (mv ?? {}) as { ok?: boolean; already?: boolean; reason?: string };
+                const mark = res.already ? "already" : res.ok ? "moved" : res.reason || "none";
+                await admin
+                  .from("payment_orders")
+                  .update({ raw: { ...safeRaw, _os_start: mark, _os_start_date: osStart, _os_start_at: new Date().toISOString() } })
+                  .eq("id", order.id);
+              }
+            }
           }
         } catch (e) {
           console.error("153OS sync-paid error:", e);

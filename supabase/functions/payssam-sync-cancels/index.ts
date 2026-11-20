@@ -10,6 +10,8 @@
 //   ② 장바구니 주문은 revert_payment_order(항목마다 수강권 · 락카 · 운동복 · 누적 결제액) / 예전 주문은 수강권 일수 빼기
 //   ③ 153OS app_refund_paid_membership (수강권이 든 주문만 — 승인 때도 수강권만 보냈다)
 //   ④ 맞춰 보기: 앱에서는 이미 취소(콜백 C 등)인데 153OS 에 '결제'로 남은 주문도 같은 153OS 함수로 (raw._os_refund 로 한 번만)
+//   ⑤ 시작일 맞춰 보기 (2026-11-20 시작일 고르기): 결제 콜백이 153OS 이용권을 앱과 같은 시작일로 못 옮긴 주문
+//      (153OS app_set_paid_membership_start — 결과는 raw._os_start, 정해지면 다시 부르지 않는다)
 //
 // 흐름: pg_cron(payssam-sync-cancels) → 이 함수. 인증은 sync-rental-ends 와 같은 x-auto-key(internal_sync_config.auto_sync_key).
 //   verify_jwt=false 필수(config.toml). 이력: member_sync_runs(mode='payssam-cancel').
@@ -25,6 +27,10 @@ const cors = {
 const json = (b: unknown, s = 200) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 const DAY = 86400000;
+// ⑤ 시작일 맞춰 보기는 이때부터 결제한 주문만 — 그 전 주문(153OS 를 오늘부터로 만들던 때)은 데스크가 브로제이에 넣은 그대로 둔다
+const START_FIX_FROM = "2026-11-20T00:00:00+09:00";
+const kstToday = (now: number = Date.now()): string => new Date(now + 9 * 3600 * 1000).toISOString().slice(0, 10);
+const addDays = (d: string, n: number): string => new Date(Date.parse(`${d}T00:00:00Z`) + n * DAY).toISOString().slice(0, 10);
 
 type Order = {
   id: string;
@@ -239,18 +245,80 @@ Deno.serve(async (req) => {
       }
     }
 
+    // 5) 시작일 맞춰 보기 (2026-11-20) — 결제 콜백이 153OS 이용권을 앱과 같은 시작일로 못 옮긴 주문 (raw._os_start 없음).
+    //    앱 수강권 항목이 반영된(applied) 주문만 · 그 항목의 시작일로 app_set_paid_membership_start (두 번 불러도 한 번만 된다).
+    //    정해진 결과(moved · already · changed = 데스크가 이미 고침 · no_membership)는 raw._os_start 를 남긴다.
+    //    not_found(153OS 에 결제가 아직 안 들어감) · 오류는 남기지 않고 다음에 다시 — 결제한 지 하루가 지나면 그만 본다.
+    let startFixed = 0;
+    if (!dryRun && OS_KEY) {
+      const os = createClient(Deno.env.get("OS_SUPABASE_URL") || "https://tbxdrfowanyksgdicryl.supabase.co", OS_KEY, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const since = new Date(Math.max(Date.parse(START_FIX_FROM), Date.now() - Math.min(days, 14) * DAY)).toISOString();
+      let sq = app
+        .from("payment_orders")
+        .select("id, paid_at, raw")
+        .eq("status", "paid")
+        .not("paid_at", "is", null)
+        .is("raw->_os_start", null)
+        .limit(50);
+      sq = billIds.length > 0 ? sq.in("bill_id", billIds).gte("paid_at", START_FIX_FROM) : sq.gte("paid_at", since);
+      const { data: pend } = await sq;
+      const today = kstToday();
+      for (const o of (pend || []) as Array<{ id: string; paid_at: string; raw: Record<string, unknown> | null }>) {
+        const { data: its } = await app
+          .from("payment_order_items")
+          .select("kind, start_date, applied_at, reverted_at")
+          .eq("order_id", o.id);
+        const list = (its || []) as Array<{ kind: string; start_date: string | null; applied_at: string | null; reverted_at: string | null }>;
+        const mem = list.find((i) => i.kind === "membership") || null;
+        let mark: string | null = null;
+        if (!mem) {
+          mark = "no_membership"; // 운동복 · 락카만 · 예전 주문(항목 없음)은 콜백이 한 번만 해 본다
+        } else if (!mem.applied_at || mem.reverted_at || !mem.start_date) {
+          mark = null; // 아직 반영 전 — 다음에
+        } else if (mem.start_date < addDays(today, -14)) {
+          mark = "old";
+        } else {
+          const { data: r, error: e } = await os.rpc("app_set_paid_membership_start", {
+            _ext_order_id: String(o.id),
+            _start: mem.start_date,
+          });
+          if (e) {
+            console.error("[payssam-sync-cancels] 153OS 시작일 맞추기 실패:", `order_id=${o.id}`, e.message);
+          } else {
+            const res = (r ?? {}) as { ok?: boolean; already?: boolean; reason?: string };
+            if (res.ok) {
+              mark = res.already ? "already" : "moved";
+              if (!res.already) startFixed++;
+            } else if (res.reason && res.reason !== "not_found") {
+              mark = res.reason; // changed · not_paid 등 — 다시 불러도 같다
+            } else if (Date.now() - Date.parse(o.paid_at) > DAY) {
+              mark = "not_found";
+            }
+          }
+        }
+        if (mark) {
+          await app
+            .from("payment_orders")
+            .update({ raw: { ...(o.raw || {}), _os_start: mark, _os_start_date: mem?.start_date ?? null, _os_start_at: new Date().toISOString() } })
+            .eq("id", o.id);
+        }
+      }
+    }
+
     // 기록은 취소를 반영했거나 · 153OS 를 맞췄거나 · 조회가 실패했거나 · 하루 한 번(긴 기간) 돌 때만 (30분마다 빈 줄이 쌓이지 않게)
-    if (!dryRun && (canceled > 0 || reconciled > 0 || failed > 0 || days >= 30 || billIds.length > 0)) {
+    if (!dryRun && (canceled > 0 || reconciled > 0 || startFixed > 0 || failed > 0 || days >= 30 || billIds.length > 0)) {
       await app.from("member_sync_runs").insert({
         mode: "payssam-cancel",
         ok: failed === 0,
         scanned: (orders || []).length,
         updated: canceled,
         failed,
-        note: `결제 완료 ${(orders || []).length}건 조회 · 취소 반영 ${canceled}건 · 153OS 맞춤 ${reconciled}건${billIds.length ? " (청구서 지정)" : ` (${days}일)`}`,
+        note: `결제 완료 ${(orders || []).length}건 조회 · 취소 반영 ${canceled}건 · 153OS 맞춤 ${reconciled}건 · 시작일 맞춤 ${startFixed}건${billIds.length ? " (청구서 지정)" : ` (${days}일)`}`,
       });
     }
-    return json({ ok: true, dry_run: dryRun, scanned: (orders || []).length, canceled, reconciled, failed, results });
+    return json({ ok: true, dry_run: dryRun, scanned: (orders || []).length, canceled, reconciled, start_fixed: startFixed, failed, results });
   } catch (e) {
     console.error("payssam-sync-cancels error:", e);
     await app.from("member_sync_runs")

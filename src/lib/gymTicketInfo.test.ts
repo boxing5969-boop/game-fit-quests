@@ -8,6 +8,7 @@ import {
   ptTicketView,
   rentalUseRows,
   termStateOf,
+  upcomingPassView,
   ymdText,
 } from "./gymTicketInfo";
 
@@ -114,5 +115,29 @@ describe("락카 · 운동복 남은 기간 (2026-10-27)", () => {
     expect(rentalUseRows({ locker_label: "7", locker_end: "2026-01-01" }, T)[0]).toMatchObject({ state: "ended" });
     expect(rentalUseRows({ locker_end: "2026-01-01" }, T)).toEqual([]);
     expect(rentalUseRows(null, T)).toEqual([]);
+  });
+});
+
+describe("아직 시작 전인 수강권 (2026-11-20 시작일 고르기)", () => {
+  const today = "2026-11-20";
+  it("지금 다니는 수강권이 없으면 「시작까지」 — 그 결제 전 끝나는 날이 없거나 지났다", () => {
+    expect(upcomingPassView({ start_date: "2026-11-27", end_date: "2026-12-26", prev_end: null }, today)).toEqual({
+      start: "2026-11-27",
+      daysToStart: 7,
+      waiting: true,
+      gap: false,
+    });
+    expect(upcomingPassView({ start_date: "2026-11-21", end_date: "2026-12-20", prev_end: "2026-11-01" }, today)?.waiting).toBe(true);
+  });
+  it("지금 수강권 뒤로 바로 이어지면(미리 결제) 둘 다 아니다 · 사이가 비면 gap", () => {
+    expect(upcomingPassView({ start_date: "2026-12-11", end_date: "2027-01-10", prev_end: "2026-12-10" }, today)).toMatchObject({ waiting: false, gap: false });
+    expect(upcomingPassView({ start_date: "2026-11-21", end_date: "2026-12-20", prev_end: today }, today)).toMatchObject({ waiting: false, gap: false });
+    expect(upcomingPassView({ start_date: "2026-12-05", end_date: "2027-03-04", prev_end: "2026-11-25" }, today)).toMatchObject({ waiting: false, gap: true });
+  });
+  it("오늘 · 지난 시작은 없음 · 값이 없으면 없음", () => {
+    expect(upcomingPassView({ start_date: today, end_date: "2026-12-19", prev_end: null }, today)).toBeNull();
+    expect(upcomingPassView({ start_date: "2026-11-01", end_date: "2026-11-30", prev_end: null }, today)).toBeNull();
+    expect(upcomingPassView(null, today)).toBeNull();
+    expect(upcomingPassView({ start_date: null, end_date: null, prev_end: null }, today)).toBeNull();
   });
 });
