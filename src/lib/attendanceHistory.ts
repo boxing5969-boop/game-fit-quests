@@ -16,7 +16,7 @@ export interface AttendanceDay {
   /** 체크인 시각 ISO */
   at: string;
   end: string | null;
-  /** 운동 끝을 어떻게 쟀나 — 'checkout_scan'(두 번째 체크) · 'member_app'(운동 종료 버튼) · 'member_fix'(회원이 다음 날까지 고침, 2026-11-19) · null(기본 시간) */
+  /** 운동 끝을 어떻게 쟀나 — 'checkout_scan'(두 번째 체크) · 'member_app'(운동 종료 버튼) · 'member_fix'(회원이 출석한 날부터 7일 안에 고침, 2026-11-19 · 11-21 7일) · null(기본 시간) */
   endSource: string | null;
   /** 그날 운동 시간(분) — 서버 workout_minutes 그대로 (두 번째 체크 · 종료 버튼 · 없으면 기본 66분, 최대 180분) */
   minutes: number;

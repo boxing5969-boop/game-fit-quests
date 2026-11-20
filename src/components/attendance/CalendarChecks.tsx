@@ -17,6 +17,8 @@
  *     한 줄은 다이어리처럼 — 사진 3장 · 길면 '더 보기'. 켜고 끄기(view)를 따른다 (lib/memberEvents.ts).
  *   · (오늘의 1분 성장 2단계 · 2026-11-17 · 선릉역점부터) 저절로 체크에 '1분 성장' 한 칸 — 그날 글을 읽었으면 채워지고,
  *     오늘 아직이면 「1분 읽기」(onGrowth → 홈의 오늘의 1분 성장 서랍). 켠 지점 회원 · check_from 날부터만 (lib/growthStage2.ts).
+ *   · (운동 시간 고치기 · 2026-11-21 대표님 「7일까지」) 운동 종료를 깜빡해 기본 시간으로 쳐진 날은 들어온 시각 아래
+ *     「운동한 시간 고치기」(onFixWorkout — 출석한 날부터 7일 안 · 한 번만 · 창은 components/home/WorkoutFixSheet).
  */
 import { useLayoutEffect, useRef, useState } from "react";
 import {
@@ -33,6 +35,7 @@ import {
   Plus,
   Star,
   Sun,
+  Timer,
   UserRound,
   Users,
   type LucideIcon,
@@ -122,6 +125,8 @@ export interface DayChecksPanelProps {
   onOpenEvent?: (e: MyEvent, day: string) => void;
   /** (3-5) 오늘의 체크 한 줄(compact)의 내 일정 요약을 누르면 — 그날 카드를 펼친다 */
   onExpand?: () => void;
+  /** (운동 시간 고치기 · 2026-11-21 7일) 그날 운동 끝 기록이 없어 기본 시간으로 쳐졌으면 — 고치기 창 (WorkoutCalendar 가 calendarFix 로 정한다) */
+  onFixWorkout?: () => void;
 }
 
 /** (3-5) 오늘의 체크 한 줄 — 오늘 내 일정은 한 줄 요약만(홈 카드가 길어지지 않게) · 누르면 그날 카드 */
@@ -463,6 +468,7 @@ export const DayChecksPanel = ({
   onAddEvent,
   onOpenEvent,
   onExpand,
+  onFixWorkout,
 }: DayChecksPanelProps) => {
   const [moreStickers, setMoreStickers] = useState(false);
   const [fullLine, setFullLine] = useState(false);
@@ -584,6 +590,17 @@ export const DayChecksPanel = ({
           <span className="text-muted-foreground">{kstTime(attended.at)} 들어옴</span>
           <span className="font-bold text-foreground">{durationLabel(attended.minutes)}</span>
         </p>
+      )}
+      {/* 운동 종료를 깜빡해 기본 시간으로 쳐진 날 — 출석한 날부터 7일 안에 한 번 고칠 수 있다 */}
+      {!compact && attended && onFixWorkout && (
+        <button
+          type="button"
+          onClick={onFixWorkout}
+          className="mt-1.5 inline-flex h-9 items-center gap-1.5 rounded-lg bg-card px-3 text-label font-bold text-primary active:bg-secondary/60"
+        >
+          <Timer className="h-4 w-4" aria-hidden />
+          운동한 시간 고치기
+        </button>
       )}
       {/* (3-5 날씨) 오늘 아직 안 왔으면 예보 한 줄 — 오기 전의 기대 */}
       {!compact && isToday && !attended && <Forecast fc={weather?.fc} />}

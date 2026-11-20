@@ -18,6 +18,17 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261121-workout-fix-7days",
+    date: "2026-11-21",
+    title: "운동 시간 고치기, 이제 7일까지 돼요",
+    lines: [
+      "운동 종료를 깜빡한 날은 출석한 날부터 7일 안에 고칠 수 있어요",
+      "운동 달력에서 그날을 누르면 「운동한 시간 고치기」가 보여요",
+      "어제 기록은 홈 「내 운동」에서도 바로 고쳐요 · 한 번만",
+    ],
+    link: CAL,
+  },
+  {
     id: "20261121-pass-start",
     date: "2026-11-21",
     title: "수강권 결제 — 시작일 고르기",

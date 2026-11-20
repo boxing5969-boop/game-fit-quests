@@ -142,3 +142,25 @@ describe("운동 달력 그날 카드 — 1분 성장 칸 (오늘의 1분 성장
     expect(screen.queryByRole("button", { name: "1분 읽기" })).toBeNull();
   });
 });
+
+describe("운동 달력 그날 카드 — 운동 시간 고치기 (2026-11-21 7일)", () => {
+  const b = { ...base, onToggle: noop };
+
+  it("고칠 기록이 있는 날 = 들어온 시각 아래 「운동한 시간 고치기」 · 누르면 창", () => {
+    const onFix = vi.fn();
+    render(<DayChecksPanel {...b} day="2026-11-03" attended={att} onFixWorkout={onFix} />);
+    fireEvent.click(screen.getByRole("button", { name: "운동한 시간 고치기" }));
+    expect(onFix).toHaveBeenCalled();
+  });
+
+  it("고칠 기록이 없거나 · 안 온 날 · 오늘의 체크 한 줄 = 단추 없음", () => {
+    const { unmount } = render(<DayChecksPanel {...b} day="2026-11-03" attended={att} />);
+    expect(screen.queryByRole("button", { name: "운동한 시간 고치기" })).toBeNull();
+    unmount();
+    const r2 = render(<DayChecksPanel {...b} day="2026-11-04" attended={null} onFixWorkout={noop} />);
+    expect(screen.queryByRole("button", { name: "운동한 시간 고치기" })).toBeNull();
+    r2.unmount();
+    render(<DayChecksPanel {...b} day="2026-11-12" attended={{ ...att, day: "2026-11-12" }} compact onFixWorkout={noop} />);
+    expect(screen.queryByRole("button", { name: "운동한 시간 고치기" })).toBeNull();
+  });
+});

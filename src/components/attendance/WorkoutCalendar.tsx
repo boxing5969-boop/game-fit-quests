@@ -41,6 +41,9 @@
  *   · 날씨 도장 (2026-11-14 대표님 「기상청 api도 비용이 안드는거면 진행하자」 · get_my_calendar 의 weather): 출석한 날이
  *     비 · 눈 · 폭염 · 한파면 칸 위 가운데 흰 동그라미 도장(우산 · 눈송이 · 불꽃 · 온도계 — '표시' 캘린더를 끄면 숨김) · 그날 카드에 칭찬 한 줄 ·
  *     오늘 · 앞날은 예보 한 줄(CalendarChecks). 오지 않은 날의 날씨는 그리지 않는다. 글 · 판정은 lib/calendarWeather.ts.
+ *   · 운동 시간 고치기 (2026-11-21 대표님 「운동시간 고르기는 7일까지수정할수있게 해줘」 · withChecks — 내 기록에서만):
+ *     운동 종료를 깜빡해 기본 시간으로 쳐진 날(출석한 날부터 7일 안)은 그날 카드에 「운동한 시간 고치기」 → WorkoutFixSheet.
+ *     홈 안내 줄은 어제 기록만이라(날마다 뜨지 않게) 그 앞 날은 여기서 고친다. 고칠 날은 lib/workoutFix.ts calendarFix.
  *   날짜 계산은 lib/attendanceCalendar.ts (주는 월요일 시작).
  */
 import {
@@ -102,6 +105,9 @@ import { useMyPromise } from "@/services/promiseService";
 import { CAL2_KEY, useMyCalendar, useSetCheckDone, useSetDaySticker, useSetTodoDone } from "@/services/calendarCheckService";
 import { useCalendarFeed } from "@/services/calendarFeedService";
 import PromiseSheet from "@/components/attendance/PromiseSheet";
+import WorkoutFixSheet from "@/components/home/WorkoutFixSheet";
+import { useMyWorkoutFix } from "@/hooks/useWorkoutTime";
+import { calendarFix, type WorkoutFixItem } from "@/lib/workoutFix";
 import DayChecksPanel from "@/components/attendance/CalendarChecks";
 import { ActIcon, NoteIcon, WeatherIcon } from "@/components/attendance/CalendarMarkIcons";
 import { MonthTools, RenewalBlock, WeekRecapPanel } from "@/components/attendance/CalendarTogether";
@@ -612,6 +618,9 @@ const WorkoutCalendarCard = ({
   const doneM = useSetCheckDone();
   const stickerM = useSetDaySticker();
   const todoM = useSetTodoDone();
+  // 운동 시간 고치기 — 출석한 날부터 7일 안 · 운동 끝 기록이 없는 날 (홈 '내 운동'과 같은 캐시)
+  const fixQ = useMyWorkoutFix(withChecks);
+  const [fixOpen, setFixOpen] = useState<WorkoutFixItem | null>(null);
   const [sheet, setSheet] = useState<SheetKey | null>(null);
   const [sheetDay, setSheetDay] = useState<string | null>(null);
   const [sheetMonth, setSheetMonth] = useState<string>(() => monthOf(today));
@@ -680,6 +689,11 @@ const WorkoutCalendarCard = ({
     setMonth(clampMonth(monthOf(day)));
     setPicked(day === today ? null : day);
   };
+  const fixFor = (day: string, compact: boolean) => {
+    if (compact) return undefined;
+    const it = calendarFix(fixQ.data ?? [], day);
+    return it ? () => setFixOpen(it) : undefined;
+  };
   const panelFor = (day: string, compact: boolean) =>
     cal ? (
       <DayChecksPanel
@@ -702,6 +716,7 @@ const WorkoutCalendarCard = ({
         onAddEvent={day >= today ? newEvent : undefined}
         onOpenEvent={openEvent}
         onExpand={compact ? () => setPicked(day) : undefined}
+        onFixWorkout={fixFor(day, compact)}
         onTodo={(id, done) =>
           todoM.mutate(
             { id, done, today },
@@ -1098,6 +1113,7 @@ const WorkoutCalendarCard = ({
           <CalendarFeedSheet open={sheet === "feed"} onOpenChange={(v) => setSheet(v ? "feed" : null)} kind="member" />
         </Suspense>
       )}
+      {withChecks && <WorkoutFixSheet item={fixOpen} onClose={() => setFixOpen(null)} />}
       {withChecks && mounted.card && (
         <Suspense fallback={null}>
           <MonthCardSheet

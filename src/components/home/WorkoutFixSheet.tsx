@@ -2,9 +2,12 @@
  * ⏱ 운동 시간 고치기 창 (2026-11-19 선릉역점 회원 제안 → 대표님 「이거진행」)
  *   「깜박잊고 운동종료를 안눌렀는데 12시 지나니까 자동반영이되었어요 · 운동한시간을 수정할수있었으면좋겠어요」
  *
- *   여는 곳: 홈 '내 운동' — 어제 기록 안내 줄 [시간 고치기] · 오늘 입장 3시간이 지났는데 끝 기록이 없으면 머리의 [끝난 시각 고르기].
+ *   2026-11-21 대표님 「운동시간 고르기는 7일까지수정할수있게 해줘」 → 출석한 날부터 7일째 밤 12시까지.
+ *
+ *   여는 곳: 홈 '내 운동' — 어제 기록 안내 줄 [운동한 시간 고치기] · 오늘 입장 3시간이 지났는데 끝 기록이 없으면 머리의 [끝난 시각 고르기] ·
+ *           운동 달력 그날 카드의 [운동한 시간 고치기](그 앞 날 — WorkoutCalendar).
  *   입장 시각(얼굴 인식 · QR)은 그대로 두고 '운동한 시간'을 10분 단위로 고른다 — 칸마다 끝난 시각을 같이 보여 준다.
- *   규칙 · XP 는 서버(fix_my_workout_end) 그대로: 67 ~ 180분 · 지난 시각까지 · 한 번만 · 어제 것은 오늘 밤 12시까지.
+ *   규칙 · XP 는 서버(fix_my_workout_end) 그대로: 67 ~ 180분 · 지난 시각까지 · 한 번만 · 출석한 날부터 7일 안.
  *   뒤로가기 = 이 창만 닫힘(useBackClose).
  */
 import { useEffect, useRef, useState } from "react";
@@ -18,6 +21,7 @@ import { durationLabel } from "@/lib/attendanceHistory";
 import {
   fixChoices,
   fixDayLabel,
+  fixDaysAgo,
   fixDayWord,
   fixDoneText,
   fixEndLabel,
@@ -51,6 +55,7 @@ const WorkoutFixSheet = ({ item, onClose }: WorkoutFixSheetProps) => {
   useBackClose(open, onClose);
 
   const choices = view ? fixChoices(view) : [];
+  const ago = view ? fixDaysAgo(view.day) : 0;
   const save = () => {
     if (!item || pick == null || fix.isPending) return;
     fix.mutate(
@@ -78,8 +83,10 @@ const WorkoutFixSheet = ({ item, onClose }: WorkoutFixSheetProps) => {
             <DrawerHeader className="pb-1 text-left">
               <DrawerTitle className="text-heading">{fixDayWord(view)} 운동 시간 고치기</DrawerTitle>
               <DrawerDescription className="text-body text-muted-foreground">
-                {fixDayLabel(view.day)} {kstHm(view.startedAt)} 입장 ·{" "}
-                {view.today
+                {/* 그 앞 날은 제목에 날짜가 있으니 다시 쓰지 않는다 */}
+                {ago <= 1 ? `${fixDayLabel(view.day)} ` : ""}
+                {kstHm(view.startedAt)} 입장 ·{" "}
+                {ago <= 0
                   ? `운동 종료를 안 누르면 ${durationLabel(view.defaultMinutes)}이에요`
                   : `지금은 기본 ${durationLabel(view.defaultMinutes)}이에요`}
               </DrawerDescription>
@@ -138,7 +145,7 @@ const WorkoutFixSheet = ({ item, onClose }: WorkoutFixSheetProps) => {
   );
 };
 
-/** 홈 '내 운동' 안내 줄 — 어제 운동 끝 기록이 없어 기본 시간으로 쳐진 날 (고치면 사라진다) */
+/** 홈 '내 운동' 안내 줄 — 어제 운동 끝 기록이 없어 기본 시간으로 쳐진 날 (고치면 사라지고, 다음 날부터는 운동 달력 그날 카드에서) */
 export const WorkoutFixNotice = ({ item, onOpen, className }: { item: WorkoutFixItem; onOpen: () => void; className?: string }) => (
   <div className={cn("rounded-xl border border-primary/30 bg-primary/5 px-4 py-3.5", className)}>
     <div className="flex items-start gap-3">
