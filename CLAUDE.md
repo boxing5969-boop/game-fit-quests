@@ -101,6 +101,7 @@ talktalk 변경은 별도 commit 으로 처리하고 prefix 는 `chore(talktalk)
 | [supabase/functions/chat-assistant/index.ts](supabase/functions/chat-assistant/index.ts) | Deno Edge Function. 0순위 Claude Sonnet 5.5 (`ANTHROPIC_API_KEY`, `_shared/claude.ts`), 실패 시 Groq 예비 스트리밍. `action:"meal-vision"` 으로 식단 사진 칼로리 분기 |
 | [supabase/functions/_shared/systemPrompt153.ts](supabase/functions/_shared/systemPrompt153.ts) | 153 시스템 프롬프트 |
 | [supabase/functions/_shared/knowledge153.ts](supabase/functions/_shared/knowledge153.ts) | 153 공식 지식 문서 |
+| [supabase/functions/_shared/koStyle.ts](supabase/functions/_shared/koStyle.ts) | 한글 AI 티 지우기(im-not-ai 우리 판 · 2026-11-20 대표님 「이거적용하자 … 마이복서 153에도」) — `KO_STYLE` 지시문 덩어리(번역투 · AI 관용구 · 대구 · 연결어미 쉼표 · 줄표 · 같은 끝맺음 — 형식 규칙이 먼저)를 AI 가 글을 쓰는 지시문 모두에 붙였다(채팅 SYSTEM_PROMPT · 지시 다듬기 · 관찰 다듬기 · 코치 성향 카드 셋 · 먼저 말 걸기 COACH_SYSTEM · 회의 요약). `cleanKo()` = 보이지 않는 문자(제로폭 · BOM · 방향 제어 · 태그) 청소 — claude.ts 가 스트림 · `messageText` 에 쓴다(U+200D · U+FE0F 는 둠). **새 AI 경로 · 새 지시문을 만들면 `KO_STYLE` 을 붙인다.** 기준은 153 공용 스킬 im-not-ai(153OS `mkt_skills`)와 같다. 시험 src/lib/koStyle.test.ts |
 
 messages 조립 순서 (Groq 예비): boxing SYSTEM_PROMPT + 개인컨텍스트 → SYSTEM_PROMPT_153 → KNOWLEDGE_153 → dietContext(있으면) → 클라이언트 messages.
 Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에: SYSTEM_PROMPT[캐시] → [앱 기능 지도][캐시] → 지식 문서(다이어트·복싱, 마지막에 캐시) → 개인컨텍스트 → [앱 안내] → 범위 밖 안내 → dietContext → 클라이언트 messages. 5분 캐시, 적중은 `ai_usage_log.cache_read_tokens`.

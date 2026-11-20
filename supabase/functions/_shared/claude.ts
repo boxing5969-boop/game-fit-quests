@@ -11,6 +11,8 @@
 // · 토큰·비용은 ai_usage_log 테이블에 남긴다 (기록 실패해도 응답에는 영향 없음).
 // · 외부 import 가 없는 순수 모듈이다 — globalThis.Deno 만 흉내 내면 Bun 으로 그대로 테스트할 수 있다.
 
+import { cleanKo } from "./koStyle.ts";
+
 export const CLAUDE_API_URL = "https://api.anthropic.com/v1/messages";
 export const CLAUDE_API_VERSION = "2023-06-01";
 
@@ -220,7 +222,11 @@ export function claudeToOpenAiSse(
         return false;
       }
       case "content_block_delta":
-        if (ev.delta?.type === "text_delta" && typeof ev.delta.text === "string" && ev.delta.text) emit(ctrl, ev.delta.text);
+        // 보이지 않는 문자는 지우고 내보낸다(koStyle.cleanKo — 보이는 글자는 그대로 · 2026-11-20 im-not-ai)
+        if (ev.delta?.type === "text_delta" && typeof ev.delta.text === "string" && ev.delta.text) {
+          const t = cleanKo(ev.delta.text);
+          if (t) emit(ctrl, t);
+        }
         return false;
       case "message_delta":
         if (typeof ev.usage?.output_tokens === "number") usage.output_tokens = ev.usage.output_tokens;
@@ -284,13 +290,14 @@ export function claudeToOpenAiSse(
 // deno-lint-ignore no-explicit-any
 export type ClaudeMessage = { content?: any[]; usage?: Record<string, number>; stop_reason?: string | null; model?: string };
 
-/** 응답의 text 블록만 이어 붙인다 (thinking 블록은 버린다) */
+/** 응답의 text 블록만 이어 붙인다 (thinking 블록은 버린다 · 보이지 않는 문자는 지운다 — koStyle.cleanKo) */
 export function messageText(msg: ClaudeMessage | null | undefined): string {
-  return (msg?.content ?? [])
-    .filter((b) => b && b.type === "text" && typeof b.text === "string")
-    .map((b) => b.text as string)
-    .join("")
-    .trim();
+  return cleanKo(
+    (msg?.content ?? [])
+      .filter((b) => b && b.type === "text" && typeof b.text === "string")
+      .map((b) => b.text as string)
+      .join(""),
+  ).trim();
 }
 
 export function usageOf(msg: ClaudeMessage | null | undefined): ClaudeUsage {

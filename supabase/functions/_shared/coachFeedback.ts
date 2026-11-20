@@ -3,6 +3,8 @@
 //   대표님 · 지점장님이 수업을 보고 적은 짧은 메모 + 다섯 가지 점검표 → 잘한 것 2 · 바꿀 것 1.
 //   Deno 를 쓰지 않는 순수 TS — 앱 테스트(src/lib/coachFeedback.test.ts)가 그대로 불러 검사한다.
 
+import { KO_STYLE } from "./koStyle.ts";
+
 export type Mark = "y" | "s" | "n";
 
 export interface FeedbackStd {
@@ -80,6 +82,8 @@ ${list}
 ${ex.marks}
 메모: ${ex.memo}
 답: ${JSON.stringify(ex.output)}
+
+${KO_STYLE}
 
 [출력] 설명 없이 JSON 하나만: {"good1":"…","good2":"…","fix1":"…","fix_no":3,"error":""}`;
 }
