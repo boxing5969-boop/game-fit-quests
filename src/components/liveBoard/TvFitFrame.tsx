@@ -9,8 +9,13 @@
  *   · ?safe=3  → 가장자리 3% 를 비워서 줄인다 (TV 가 가장자리를 잘라 먹는 '오버스캔'일 때)
  *   · ?fit=0   → 맞춤 끄기 (예전 그대로)
  *   · iframe 안(embed=1 또는 미리보기 안)에서는 항상 그대로 그린다.
+ * 2026-11-21: 처음 TV 주소로 켜면 이 바깥 일은 main.tsx 의 TV 껍데기(src/lib/tvShell.ts — 앱 없이 iframe 하나)가 한다.
+ *   여기는 앱 안에서 TV 화면으로 넘어올 때(라이브보드 고르기 등)만 iframe 을 만든다.
+ *   TV 화면은 TvLiteScope 로 감싼다 — '가볍게'(src/lib/tvLite.ts)면 화면 움직임(framer-motion)을 줄인다.
  */
 import { useEffect, useState, type ReactNode } from "react";
+import { MotionConfig } from "framer-motion";
+import { applyTvLite, captureLiteFromUrl, clearTvLiteClass, useTvLite } from "@/lib/tvLite";
 
 const STAGE_W = 1920;
 const STAGE_H = 1080;
@@ -23,6 +28,17 @@ const inFrame = () => {
   } catch {
     return true;
   }
+};
+
+/** TV 화면 감싸기 — 가볍게를 정하고(주소 · 기기 기억 · 기기 힘), 가볍게면 움직임을 줄인다. 떠나면 앱 화면은 보통으로 */
+export const TvLiteScope = ({ children }: { children: ReactNode }) => {
+  useEffect(() => {
+    captureLiteFromUrl();
+    applyTvLite();
+    return () => clearTvLiteClass();
+  }, []);
+  const lite = useTvLite();
+  return <MotionConfig reducedMotion={lite ? "always" : "user"}>{children}</MotionConfig>;
 };
 
 const TvFitFrame = ({ children }: { children: ReactNode }) => {
@@ -44,7 +60,7 @@ const TvFitFrame = ({ children }: { children: ReactNode }) => {
   }, [embedded, disabled]);
 
   const native = vp.w === STAGE_W && vp.h === STAGE_H && safePct === 0;
-  if (embedded || disabled || native) return <>{children}</>;
+  if (embedded || disabled || native) return <TvLiteScope>{children}</TvLiteScope>;
 
   const availW = vp.w * (1 - (2 * safePct) / 100);
   const availH = vp.h * (1 - (2 * safePct) / 100);

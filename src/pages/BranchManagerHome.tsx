@@ -6,6 +6,7 @@ import GoodsOrdersPanel from "@/components/admin/GoodsOrdersPanel";
 import GoodsAdminEntryCard from "@/components/admin/GoodsAdminEntryCard";
 import MarketOrdersPanel from "@/components/admin/MarketOrdersPanel";
 import MarketAdminEntryCard from "@/components/admin/MarketAdminEntryCard";
+import ReviewMissionAdminCard from "@/components/reviewMission/ReviewMissionAdmin";
 import DailyReportCard from "@/components/DailyReportCard";
 import TodayListPanel from "@/components/manager/TodayListPanel";
 import Test153MeasurePanel from "@/components/test153/Test153MeasurePanel";
@@ -799,6 +800,8 @@ const BranchManagerHome = () => {
 
         {/* 🛍 153 마켓 주문함 — 결제 확인 · 발주 · 전달 (2026-11-17, 우리 지점 마켓이 켜져 있을 때만) */}
         <MarketAdminEntryCard onOpen={() => openTab("market")} />
+        {/* ⭐ 리뷰 미션 — 인증 확인 · 승인 · 주소 · 마일리지 (2026-11-21) */}
+        <ReviewMissionAdminCard />
 
         {/* 🧠 전략 회의 — 코치진 지시·전략 · 오늘 프로그램 · 수업 기록 · 영상 (2026-10-16 대표님 · 10-29 지점 회의실 '전략 회의' 탭으로 옮김) */}
         <button
@@ -972,6 +975,8 @@ const BranchManagerHome = () => {
 
           {/* 🛍 153 마켓 주문함 (2026-11-17, 우리 지점 마켓이 켜져 있을 때만) */}
           <MarketAdminEntryCard onOpen={() => openTab("market")} />
+          {/* ⭐ 리뷰 미션 — 인증 확인 · 승인 · 주소 · 마일리지 (2026-11-21) */}
+          <ReviewMissionAdminCard />
 
           {canBroadcast && (
             <button

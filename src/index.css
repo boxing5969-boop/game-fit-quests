@@ -897,6 +897,33 @@ html:not(.dark) .animate-pulse-glow { animation: none !important; box-shadow: va
   [style*="tv-marquee"] { animation: none !important; }
 }
 
+/* 📺 TV 가볍게 (html.tv-lite — src/lib/tvLite.ts · 2026-11-21 대표님 「칠금동 라이브보드 … 렉 없이」).
+   힘이 약한 TV 가 매 순간 다시 그리던 것을 끈다: 도는 빛 · 반짝임 · 깜빡이는 점(animation) · 전환(transition) ·
+   흐림(blur) 덩어리 · 유리 효과(backdrop-filter) · 이름 띠의 가장자리 가림(mask). 글 · 숫자 · 카드 모양은 그대로.
+   이름 띠(tv-marquee)만 계속 흐른다 — transform 하나라 화면을 다시 칠하지 않는다. */
+html.tv-lite *:not([style*="tv-marquee"]),
+html.tv-lite *::before,
+html.tv-lite *::after {
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+}
+html.tv-lite * {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html.tv-lite .blur-3xl,
+html.tv-lite .blur-2xl,
+html.tv-lite .blur-xl,
+html.tv-lite .blur-lg { display: none !important; }
+html.tv-lite .tv-mask {
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+html.tv-lite [style*="tv-marquee"] { will-change: transform; }
+
 /* 🏅 대회 메달 — TV 에서 빛이 지나가고 금메달이 반짝 (src/components/MedalMark.tsx, 2026-10-16) */
 @keyframes medal-shine {
   0%   { background-position: 160% 0; }

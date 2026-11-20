@@ -67,6 +67,8 @@ export interface TvSlotState {
   setBy: string | null;
   showing: TvScreen | null;
   seenAt: string | null;
+  /** 📺 가볍게 — true 켬 · false 끔 · null 자동(기기 힘을 보고 TV 가 정함) (2026-11-21) */
+  lite?: boolean | null;
 }
 
 export const normalizeTvModes = (data: unknown): TvSlotState[] => {
@@ -82,6 +84,7 @@ export const normalizeTvModes = (data: unknown): TvSlotState[] => {
       setBy: typeof r.set_by === "string" ? r.set_by : null,
       showing: isTvScreen(r.showing) ? r.showing : null,
       seenAt: typeof r.seen_at === "string" ? r.seen_at : null,
+      lite: r.lite === true ? true : r.lite === false ? false : null,
     };
   });
 };

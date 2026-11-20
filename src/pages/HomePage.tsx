@@ -44,6 +44,8 @@ import { useHomeLayout, type HomeWidgetId } from "@/lib/homeLayout";
 import TodayActionCard, { type TodayActionState } from "@/components/home/TodayActionCard";
 import WorkoutFinishCard from "@/components/home/WorkoutFinishCard";
 import MileageCard from "@/components/home/MileageCard";
+import HomeCardDecoRow from "@/components/cardDeco/HomeCardDecoRow";
+import { useMyCardDeco } from "@/services/cardDecoService";
 import HomeWorkoutCard from "@/components/home/HomeWorkoutCard";
 import HomePtCard from "@/components/pt/HomePtCard";
 import LevelUpRequestCard from "@/components/LevelUpRequestCard";
@@ -136,6 +138,8 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
   // 내 라이센스의 받은 하트 수 (MY복서 카드 아래 줄) — 지도진 카드는 하트·닉네임 바꾸기가 없다
   // 내 카드가 첫 화면(/home)에도 그려지므로 두 보기 모두에서 하트 수를 읽는다 (2026-10-10)
   const { data: myLicense } = useMemberLicense(!staffCard ? user?.id : null);
+  // 🎨 내가 꾸민 카드 (2026-11-21) — 지도진 카드는 지도진 모양이 먼저라 읽지 않는다
+  const { data: myCardDeco } = useMyCardDeco(!staffCard);
   // 🎂 오늘 내 생일이면 내 카드도 오로라·HAPPY BIRTHDAY + 받은 축하 수 (2026-10-16 — 아래 BirthdayCongratsCard 와 같은 캐시)
   const { data: todayBirthdays } = useTodayBirthdays(!!user);
   const myBirthday = staffCard ? null : todayBirthdays?.me ?? null;
@@ -500,6 +504,8 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
         onPromotionClick={staffCard ? undefined : () => navigate("/rank-up")}
         isMaster={isMaster40}
         masterTitle={masterDef?.title}
+        // 🎨 내가 꾸민 카드 (2026-11-21 — 체육관 TV 카드와 같은 모양)
+        deco={staffCard ? null : myCardDeco?.equipped ?? null}
         birthday={!!myBirthday}
         birthdayCongrats={myBirthday?.congrats ?? 0}
         birthdayLine={
@@ -646,6 +652,20 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
         //     (2026-09-29 "첫 화면 = 전체 메뉴만" 결정은 이 결정으로 대체)
         <div className="space-y-5">
           {renderHero(true, showLevelQuest)}
+          {/* 🎨 카드 꾸미기 · ⭐ 리뷰 미션 (2026-11-21 대표님 「구글 · 네이버 · 당근 리뷰를 미션으로 · 리뷰를 달면 마일리지와 선물 ·
+              선물은 프로필 카드를 꾸밀 수 있는 것 · 꾸민 카드는 사이니지에」). 회원 카드에만 */}
+          {!staffCard && profile && (
+            <HomeCardDecoRow
+              preview={{
+                name: profile.nickname || profile.name || "복서",
+                league: rank,
+                level: onMasterTrack ? progress.overall_level : progress.current_level,
+                userId: user?.id,
+                photoUrl: profile.avatar_url ?? null,
+                pt: isPtMember(profile),
+              }}
+            />
+          )}
           {/* 🥊 PT 수업 — PT 회원에게만: 다음 수업 · 「수업 받았어요」 · 남은 횟수 · 예약 · 취소 (2026-11-14 대표님
               「홈화면에 PT 회원님들을 위한 스케줄관리」). PT 예약을 켠 지점의 PT 회원이 아니면 아무것도 그리지 않는다 */}
           <HomePtCard />

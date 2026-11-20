@@ -35,6 +35,7 @@ import NameBadge from "@/components/badges/NameBadge";
 import { toGlobalLevel } from "@/lib/rankLabels";
 import birthdayCake from "@/assets/birthday/cake.webp";
 import fxAurora from "@/assets/effects/fx_aurora.png";
+import { resolveDeco, stickerSrc, type CardDecoStyle } from "@/lib/cardDeco";
 
 const RANK_LABELS: Record<string, string> = {
   white: "WHITE",
@@ -227,6 +228,9 @@ export interface BoxerLicenseCardProps {
   /** 153 레코드 '최초' 기록 이름 (라이브보드, 2026-10-19) — 금빛 테두리·광채, 머리줄 153 RECORD, (spotlight 이상) 아래 줄 기록 이름.
    *  생일이 먼저다(생일이면 생일 모양). 카드 높이는 그대로 */
   record?: string | null;
+  /** 🎨 회원이 꾸민 카드 — 테두리 · 바탕 · 스티커 · 칭호 (2026-11-21 · src/lib/cardDeco.ts). 생일 · 153 레코드 · 지도진 카드는 그 모양이 먼저.
+   *  PT 프리미엄 카드는 백금 면 · 테두리는 그대로 두고 스티커 · 칭호만. 모두 멈춘 그림 · 카드 높이 그대로 */
+  deco?: CardDecoStyle | null;
 }
 
 const BoxerLicenseCard = ({
@@ -262,6 +266,7 @@ const BoxerLicenseCard = ({
   birthdayCongrats = 0,
   birthdayLine,
   record: recordProp = null,
+  deco: decoProp = null,
 }: BoxerLicenseCardProps) => {
   // 지도진 카드에는 생일 연출을 하지 않는다 (회원 카드 전용)
   const birthday = birthdayProp && !staff;
@@ -274,6 +279,12 @@ const BoxerLicenseCard = ({
       : "오늘 생일이에요 · 앱에서 축하해 주세요!");
   // 💎 PT 프리미엄 — 회원 카드, 생일 · 153 레코드가 아닐 때
   const premium = pt && !staff && !birthday && !record;
+  // 🎨 꾸미기 — 회원 카드, 생일 · 153 레코드가 아닐 때. 프리미엄 카드는 면 · 테두리를 바꾸지 않는다
+  const deco = !staff && !birthday && !record ? resolveDeco(decoProp) : null;
+  const decoFrame = deco && !premium ? deco.frame : null;
+  const decoSkin = deco && !premium ? deco.skin : null;
+  const decoSticker = deco ? deco.sticker : null;
+  const decoTitle = deco ? deco.title : null;
   // 밝은 카드 위 글자색(프리미엄) / 검은 카드 위 글자색(그 밖)
   const tx = premium
     ? { strong: "text-[#14181d]", sub: "text-[#4b5560]", dim: "text-[#5a6370]", line: "border-black/10", track: "bg-black/10" }
@@ -398,20 +409,22 @@ const BoxerLicenseCard = ({
             ? "0 8px 24px hsla(160, 80%, 50%, 0.4), 0 0 0 2px hsla(160, 80%, 50%, 0.6)"
             : premium
               ? PREMIUM_GLOW
-              : CARD_GLOW[isMaster ? "black" : rankKey] ?? CARD_GLOW.white,
+              : decoFrame?.glow
+                ? decoFrame.glow
+                : CARD_GLOW[isMaster ? "black" : rankKey] ?? CARD_GLOW.white,
       }}
     >
       {/* ── 골드 트림 (얇은 외곽 그라디언트 라인) — 생일이면 흐르는 오로라 테두리 ── */}
       <div
-        className={`absolute inset-0 rounded-2xl ${birthday ? "bday-aurora-ring" : record ? "record-gold-ring" : premium ? "" : `bg-gradient-to-br ${borderGrad} opacity-50`} ${still ? "still" : ""}`}
-        style={{ padding: birthday || record || premium ? "2px" : "1.5px", ...(premium ? { background: PREMIUM_EDGE } : null), WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)", WebkitMaskComposite: "xor", maskComposite: "exclude" }}
+        className={`absolute inset-0 rounded-2xl ${birthday ? "bday-aurora-ring" : record ? "record-gold-ring" : premium || decoFrame ? "" : `bg-gradient-to-br ${borderGrad} opacity-50`} ${still ? "still" : ""}`}
+        style={{ padding: birthday || record || premium ? "2px" : decoFrame ? "2.5px" : "1.5px", ...(premium ? { background: PREMIUM_EDGE } : decoFrame?.edge ? { background: decoFrame.edge } : null), WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)", WebkitMaskComposite: "xor", maskComposite: "exclude" }}
         aria-hidden="true"
       />
 
       {/* ── 배경 그라디언트 — 생일이면 오로라 빛이 은은하게 ── */}
       <div
-        className={`absolute inset-[2px] rounded-2xl ${premium ? "" : `bg-gradient-to-br ${birthday ? "from-gray-900 via-emerald-950/50 to-violet-950/50" : bgGrad}`}`}
-        style={premium ? { background: `${PREMIUM_GUILLOCHE}, ${PREMIUM_FACE}` } : undefined}
+        className={`absolute inset-[2px] rounded-2xl ${premium || decoSkin ? "" : `bg-gradient-to-br ${birthday ? "from-gray-900 via-emerald-950/50 to-violet-950/50" : bgGrad}`}`}
+        style={premium ? { background: `${PREMIUM_GUILLOCHE}, ${PREMIUM_FACE}` } : decoSkin?.face ? { background: decoSkin.face } : undefined}
         aria-hidden="true"
       />
       {/* 💎 프리미엄 — 빛이 천천히 스친다(TV 는 멈춘 그림) */}
@@ -471,13 +484,23 @@ const BoxerLicenseCard = ({
                     <svg viewBox="0 0 10 10" width="0.7em" height="0.7em" aria-hidden="true" className="mt-[0.4em] shrink-0">
                       <path d="M5 0 10 5 5 10 0 5Z" fill="currentColor" />
                     </svg>
-                    153 PREMIUM
+                    {decoTitle?.text ?? "153 PREMIUM"}
                   </span>
                 </span>
               ) : (
+                decoTitle?.text && !staff ? (
+                  // 🎨 칭호 — 원래 머리줄 글을 안 보이게 깔아 자리(줄바꿈 · 높이)를 그대로 잡고 그 위에 얹는다(TV 칸 높이가 카드마다 같게)
+                  <span className={`relative inline-block font-black uppercase tracking-[0.2em] ${cfg.headerText}`}>
+                    <span className="invisible" aria-hidden="true">
+                      {isMaster ? "★ MASTER LICENSE" : "153 BOXER LICENSE"}
+                    </span>
+                    <span className={`absolute inset-0 truncate whitespace-nowrap ${decoTitle.textClass ?? accentText}`}>{decoTitle.text}</span>
+                  </span>
+                ) : (
                 <span className={`font-black uppercase tracking-[0.2em] ${cfg.headerText} ${accentText}`}>
                   {staff ? "153 COACHING STAFF" : isMaster ? "★ MASTER LICENSE" : "153 BOXER LICENSE"}
                 </span>
+                )
               ))}
           </div>
           {birthday ? (
@@ -674,6 +697,21 @@ const BoxerLicenseCard = ({
               >
                 🎁 {photoBadge}
               </span>
+            )}
+
+            {/* 🎨 꾸미기 스티커 — 사진 오른쪽 위 모서리 (153 입체 아이콘 · 멈춘 그림) */}
+            {decoSticker && stickerSrc(decoSticker) && (
+              <img
+                src={stickerSrc(decoSticker)!}
+                alt=""
+                aria-hidden="true"
+                draggable={false}
+                loading="lazy"
+                className={`pointer-events-none absolute z-30 select-none object-contain ${
+                  size === "hero" ? "-right-3 -top-3 h-10 w-10" : size === "spotlight" ? "-right-2.5 -top-2.5 h-8 w-8" : "-right-2 -top-2 h-6 w-6"
+                }`}
+                style={{ filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.55))" }}
+              />
             )}
 
             {/* 🎂 생일 케이크 — 사진 오른쪽 위 모서리에 살짝 흔들리며 */}

@@ -16,6 +16,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { readBoardKey } from "@/lib/boardKey";
 import { resolveBranchCode } from "@/lib/branchAlias";
+import { setServerTvLite } from "@/lib/tvLite";
 import {
   isTvScreen,
   tvDesired,
@@ -106,6 +107,8 @@ export function useTvRemote({ rawBranchCode, branchName, slot, showing, holdUnti
         p_showing: showingRef.current,
       });
       if (error || !data) return;
+      // TV 가볍게 — 관리자 앱 › 라이브보드에서 켬 · 끔 · 자동(null) (2026-11-21). 칸이 없는 옛 서버면 건드리지 않는다
+      if (Object.prototype.hasOwnProperty.call(data, "lite")) setServerTvLite((data as { lite?: unknown }).lite);
       const mode = (data as { mode?: unknown }).mode;
       if (mode !== "home" && !isTvScreen(mode)) return;
       const at = (data as { set_at?: unknown }).set_at;

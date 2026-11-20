@@ -1,14 +1,15 @@
 import { createRoot } from "react-dom/client";
-import App from "./App.tsx";
 import "./index.css";
 import { stripEmoji } from "@/lib/emoji3d/core";
 import { captureInviteCodeFromUrl } from "@/lib/appInvite";
 import { isIosApp, loadIosAppNative } from "@/lib/iosApp";
 import { applyTextScale, readTextScale } from "@/lib/textScale";
+import { mountTvShell, shouldUseTvShell } from "@/lib/tvShell";
+import { applyTvLite, captureLiteFromUrl } from "@/lib/tvLite";
 
 // 화면 파일을 다 받았다는 표시 — index.html 의 '뒤로가기 흰 화면 복구'는 이 표시가 없을 때(첫 화면 파일을
 // 못 받았을 때)만 새로 받는다. 그 뒤 화면별 파일 실패는 lazyWithRetry 가 맡는다 (2026-11-13).
-(window as unknown as { __mb153Booted?: boolean }).__mb153Booted = true;
+// (2026-11-21 앱 화면 파일을 따로 받게 되어 — 표시는 그 파일을 받은 뒤 아래에서 켠다)
 
 // 설치형 앱(Capacitor)으로 켜면 랭킹앱 홈이 아니라 얼굴 키오스크로 진입한다 (안드로이드 키오스크 APK).
 // React Router 가 경로를 읽기 전에 바꿔야 하므로 렌더보다 먼저 실행.
@@ -45,4 +46,31 @@ captureInviteCodeFromUrl();
 // 글씨 크기(내정보 · 작게/보통/크게) — 첫 화면을 그리기 전에 반영해 글씨가 바뀌며 깜빡이지 않게 (2026-10-28 리디자인)
 applyTextScale(readTextScale());
 
-createRoot(document.getElementById("root")!).render(<App />);
+// 📺 TV(/tv/<지점>…) — 창이 1920×1080 이 아니면 바깥은 iframe 하나만 그리고 앱을 받지 않는다(앱 두 벌 막기 · 2026-11-21).
+//    TV 화면이면 '가볍게'를 첫 화면 전에 정한다(주소 ?lite= · 이 기기 기억 · 기기 힘) — 서버 설정은 화면이 뜬 뒤 board_tv_mode 로.
+const rootEl = document.getElementById("root")!;
+if (shouldUseTvShell()) {
+  mountTvShell(rootEl);
+} else {
+  if (window.location.pathname.startsWith("/tv/")) {
+    captureLiteFromUrl();
+    applyTvLite();
+  }
+  import("./App.tsx")
+    .then(({ default: App }) => {
+      (window as unknown as { __mb153Booted?: boolean }).__mb153Booted = true;
+      createRoot(rootEl).render(<App />);
+    })
+    .catch(() => {
+      // 첫 화면 파일을 못 받음(그 사이 새로 배포 등) — index.html 과 같은 규칙으로 한 번만 새로 받는다(30초 안 두 번째면 멈춤)
+      try {
+        const KEY = "mb153:asset-reload";
+        const last = Number(sessionStorage.getItem(KEY)) || 0;
+        if (Date.now() - last < 30_000) return;
+        sessionStorage.setItem(KEY, String(Date.now()));
+        window.location.reload();
+      } catch {
+        /* 저장 공간을 못 쓰는 창 — 새로 받지 않는다 */
+      }
+    });
+}

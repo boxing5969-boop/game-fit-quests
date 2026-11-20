@@ -18,6 +18,8 @@ import { X } from "lucide-react";
 
 import CharacterSprite from "@/components/CharacterSprite";
 import BoxerLicenseCard, { type LicenseSize } from "@/components/license/BoxerLicenseCard";
+import { useTvLite } from "@/lib/tvLite";
+import type { CardDecoStyle } from "@/lib/cardDeco";
 
 export interface LiveActiveMember {
   id: string;
@@ -37,6 +39,8 @@ export interface LiveActiveMember {
   birthdayCongrats?: number;
   /** 153 레코드 '최초' 기록 이름들 — 금빛 카드 + 기록 이름 (2026-10-19) */
   records?: string[];
+  /** 🎨 회원이 꾸민 카드(테두리 · 바탕 · 스티커 · 칭호) — TV 는 board_card_deco 로 받는다 (2026-11-21) */
+  deco?: CardDecoStyle | null;
 }
 
 export type LiveCardSize = "spotlight" | "medium" | "compact";
@@ -132,16 +136,21 @@ const LiveActiveMemberCard = ({
 }: LiveActiveMemberCardProps) => {
   // medium → spotlight 로 매핑 (라이센스 카드의 size 와 일치)
   const licenseSize: LicenseSize = size === "compact" ? "compact" : "spotlight";
+  // 📺 가볍게면 움직이는 칸(layout 은 다시 그릴 때마다 모든 카드 자리를 잰다) 대신 그냥 칸 (2026-11-21)
+  const lite = useTvLite();
+  const Wrap = lite ? "div" : motion.div;
+  const motionProps = lite
+    ? {}
+    : {
+        layout: true,
+        initial: { opacity: 0, scale: 0.92, y: 16 },
+        animate: { opacity: 1, scale: 1, y: 0 },
+        exit: { opacity: 0, scale: 0.85, y: -8 },
+        transition: { type: "spring" as const, damping: 18, stiffness: 220 },
+      };
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, scale: 0.92, y: 16 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.85, y: -8 }}
-      transition={{ type: "spring", damping: 18, stiffness: 220 }}
-      className="relative group"
-    >
+    <Wrap {...motionProps} className="relative group">
       {/* Force exit 버튼 — 라이센스 카드 위 hover 시 노출 */}
       {showForceExit && onForceExit && (size !== "compact" || exitOnCompact) && (
         <button
@@ -168,8 +177,9 @@ const LiveActiveMemberCard = ({
         record={member.records?.length ? member.records.join(" · ") : null}
         isFresh={isFresh}
         elapsedMinutes={elapsedMinutes}
+        deco={member.deco ?? null}
       />
-    </motion.div>
+    </Wrap>
   );
 };
 

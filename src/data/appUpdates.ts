@@ -18,6 +18,17 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261121-card-deco-review",
+    date: "2026-11-21",
+    title: "내 카드 꾸미기 · 리뷰 미션",
+    lines: [
+      "홈 내 카드 아래 「카드 꾸미기」에서 테두리 · 바탕 · 스티커 · 칭호를 골라 꾸며요",
+      "꾸민 카드는 체육관 화면에 운동 중으로 뜰 때도 그대로 보여요",
+      "네이버 · 구글 · 당근에 솔직한 리뷰를 남기면 마일리지와 카드 꾸미기 선물을 드려요",
+    ],
+    link: { to: "/home?sheet=card-deco", label: "카드 꾸미기 열기" },
+  },
+  {
     id: "20261121-workout-fix-7days",
     date: "2026-11-21",
     title: "운동 시간 고치기, 이제 7일까지 돼요",

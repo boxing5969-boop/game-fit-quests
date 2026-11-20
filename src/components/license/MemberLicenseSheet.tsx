@@ -31,6 +31,7 @@ import { LICENSE_STAFF_LABEL, type LicenseLikeReason } from "@/services/king153S
 import { honorTitle } from "@/lib/staffDisplay";
 import { openCredentialChange } from "@/lib/appEvents";
 import BoxerLicenseCard from "@/components/license/BoxerLicenseCard";
+import { useCardDecoOf } from "@/services/cardDecoService";
 import CharacterSprite from "@/components/CharacterSprite";
 import SecondCheerSheet from "@/components/engagement/SecondCheerSheet";
 import { useMemberCheerSummary } from "@/hooks/useSecondCheer";
@@ -94,6 +95,8 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
 
   // 응원 보내기 · 받은 응원 (2026-10-16 응원 업그레이드) — 같은 지점 동료(본사는 켜 둔 지점)에게. 서버가 다시 확인한다
   const { data: cheerSummary } = useMemberCheerSummary(userId, open);
+  // 🎨 그 회원이 꾸민 카드 (2026-11-21)
+  const { data: cardDeco } = useCardDecoOf(open ? userId : null);
   const [cheerOpen, setCheerOpen] = useState(false);
   useEffect(() => {
     if (!open) setCheerOpen(false);
@@ -238,6 +241,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
               <>
                 <BoxerLicenseCard
                   size="hero"
+                  deco={data.staff_role ? null : cardDeco ?? null}
                   photo={photo}
                   name={data.display}
                   branch={shortBranch(data.branch)}

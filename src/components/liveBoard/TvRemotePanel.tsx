@@ -11,7 +11,7 @@ import { Tv } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { translateError } from "@/lib/errorMessages";
-import { fetchTvModes, setTvMode } from "@/services/tvBoardService";
+import { fetchTvModes, setTvLite, setTvMode } from "@/services/tvBoardService";
 import {
   TV_SCREENS,
   tvDesired,
@@ -62,6 +62,21 @@ const TvRemotePanel = ({ branchCode }: { branchCode: string }) => {
       setStates(await setTvMode(branchCode, slot, screen === slot ? "home" : screen));
       setNow(Date.now());
       toast.success(`TV ${slot} → ${tvScreenLabel(screen)} · 몇 초 안에 바뀌어요`);
+    } catch (e) {
+      toast.error(translateError(e, "바꾸지 못했어요. 다시 눌러 주세요"));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  // 📺 가볍게 (2026-11-21 대표님 「사이니지가 렉이 심하면 안 되니까 · 칠금동 라이브보드는 … 최소 사양으로 렉 없이」)
+  const chooseLite = async (slot: TvSlot, lite: boolean | null) => {
+    const key = `${slot}:lite`;
+    if (busy) return;
+    setBusy(key);
+    try {
+      setStates(await setTvLite(branchCode, slot, lite));
+      toast.success(`TV ${slot} 가볍게 · ${lite === true ? "켬" : lite === false ? "끔" : "자동"} · 1분 안에 바뀌어요`);
     } catch (e) {
       toast.error(translateError(e, "바꾸지 못했어요. 다시 눌러 주세요"));
     } finally {
@@ -133,6 +148,44 @@ const TvRemotePanel = ({ branchCode }: { branchCode: string }) => {
                     ? "고정 — 153 PB 측정 때도 이 화면 그대로"
                     : "고정 — 다시 바꿀 때까지 이 화면"}
                 {s.setBy && s.setAt && desired !== s.slot ? ` · ${s.setBy}` : ""}
+              </p>
+              {/* 📺 가볍게 — 도는 빛 · 반짝임 · 화면 전환 움직임을 끄고 시계를 1분마다 (글 · 카드 모양은 그대로) */}
+              <div className="mt-2 flex items-center gap-2">
+                <span className="shrink-0 text-[12px] font-bold text-foreground">가볍게</span>
+                <div className="grid flex-1 grid-cols-3 gap-1" role="radiogroup" aria-label={`TV ${s.slot} 가볍게`}>
+                  {(
+                    [
+                      [null, "자동"],
+                      [true, "켬"],
+                      [false, "끔"],
+                    ] as const
+                  ).map(([v, label]) => {
+                    const on = s.lite === v;
+                    return (
+                      <button
+                        key={label}
+                        type="button"
+                        role="radio"
+                        aria-checked={on}
+                        disabled={!!busy}
+                        onClick={() => !on && void chooseLite(s.slot, v)}
+                        className={cn(
+                          "h-8 rounded-lg text-[12px] font-bold disabled:opacity-60",
+                          on ? "bg-foreground text-background" : "bg-card text-foreground ring-1 ring-black/[0.06] dark:ring-white/[0.08]",
+                        )}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {s.lite === true
+                  ? "켬 — 움직임을 빼서 힘이 약한 TV도 끊기지 않아요"
+                  : s.lite === false
+                    ? "끔 — 빛 · 움직임을 모두 보여 줘요"
+                    : "자동 — TV 기기 힘이 약하면 저절로 가볍게"}
               </p>
             </div>
           );

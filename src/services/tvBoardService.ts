@@ -15,6 +15,13 @@ export const fetchTvModes = async (branch: string): Promise<TvSlotState[]> => {
   return normalizeTvModes(data);
 };
 
+/** 📺 TV 가볍게 — 켬(true) · 끔(false) · 자동(null) (2026-11-21 · set_tv_board_lite) */
+export const setTvLite = async (branch: string, slot: TvSlot, lite: boolean | null): Promise<TvSlotState[]> => {
+  const { data, error } = await sb.rpc("set_tv_board_lite", { p_branch: branch, p_slot: slot, p_lite: lite });
+  if (error) throw error;
+  return normalizeTvModes(data);
+};
+
 export const setTvMode = async (branch: string, slot: TvSlot, mode: TvModeSetting): Promise<TvSlotState[]> => {
   const { data, error } = await sb.rpc("set_tv_board_mode", { p_branch: branch, p_slot: slot, p_mode: mode });
   if (error) throw error;

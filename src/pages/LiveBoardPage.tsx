@@ -10,6 +10,8 @@ import { isBoardKeyError, readBoardKey } from "@/lib/boardKey";
 import { usePb153AutoSwitch } from "@/hooks/usePb153AutoSwitch";
 import { useTvRemote } from "@/hooks/useTvRemote";
 import { tvSlotFrom, type TvScreen } from "@/lib/tvRemote";
+import { useTvLite } from "@/lib/tvLite";
+import { normalizeDeco, type CardDecoStyle } from "@/lib/cardDeco";
 import { RANK_LABELS, toGlobalLevel } from "@/lib/rankLabels";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import MedalMark, { setPreviewMedal } from "@/components/MedalMark";
@@ -167,6 +169,8 @@ interface ActiveMember {
   birthdayCongrats?: number;
   /** 153 레코드 '최초' 기록 이름들 — 금빛 카드 (recordMap 에서 채운다, 2026-10-19) */
   records?: string[];
+  /** 🎨 회원이 꾸민 카드 (decoMap 에서 채운다 — board_card_deco, 2026-11-21) */
+  deco?: CardDecoStyle | null;
 }
 
 /**
@@ -502,6 +506,32 @@ const LiveBoardPage = () => {
     return () => { cancelled = true; };
   }, [branchName, presentKey, visitKey, ptRefreshSlot, birthdaySlot]);
 
+  // 🎨 꾸민 카드 (2026-11-21 대표님 「꾸민 프로필 카드는 사이니지에 뜨게」) — 지금 운동 중인 사람이 바뀔 때 · 5분마다 한 번 읽는다.
+  //   board_card_deco = board_people 과 같은 기준(TV 열쇠 · 오늘 이 지점에 왔거나 운동 중인 사람만). 못 읽으면 알던 값 그대로
+  const [decoMap, setDecoMap] = useState<Record<string, CardDecoStyle>>({});
+  const decoIdsKey = useMemo(
+    () => [...new Set([...activeMembers, ...checkinMembers].map((m) => m.user_id))].sort().join(","),
+    [activeMembers, checkinMembers],
+  );
+  const decoSlot = Math.floor(currentTime.getTime() / 300_000);
+  useEffect(() => {
+    if (!decoIdsKey) return;
+    let alive = true;
+    void (async () => {
+      const rows = await boardRpc<{ user_id: string } & CardDecoStyle>("board_card_deco", { p_user_ids: decoIdsKey.split(",") });
+      if (!alive || rows === null) return;
+      const next: Record<string, CardDecoStyle> = {};
+      for (const r of rows) {
+        const d = normalizeDeco(r);
+        if (d) next[r.user_id] = d;
+      }
+      setDecoMap((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next));
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [decoIdsKey, decoSlot, boardRpc]);
+
   /** 앱 운동세션 + 얼굴 출석 + mock 을 합쳐 시각효과에 전달 */
   //   회원이 앱에서 고른 '카드에 보일 것'을 따른다 — 사진만이면 캐릭터를 빼고, 캐릭터만이면(캐릭터가 있을 때) 사진을 뺀다
   const combinedMembers = useMemo<ActiveMember[]>(
@@ -521,9 +551,10 @@ const LiveBoardPage = () => {
         if (pref === "character" && next.partsJson && next.avatar_url) next = { ...next, avatar_url: null };
         if (birthdayIds.has(m.user_id)) next = { ...next, birthday: true, birthdayCongrats: birthdayCongrats[m.user_id] ?? 0 };
         if (recordMap[m.user_id]?.length) next = { ...next, records: recordMap[m.user_id] };
+        if (decoMap[m.user_id]) next = { ...next, deco: decoMap[m.user_id] };
         return ptIds.has(m.user_id) ? { ...next, pt: true } : next;
       }),
-    [activeMembers, checkinMembers, mockMembers, liveLevels, staffUserIds, ptIds, displayPrefMap, birthdayIds, birthdayCongrats, recordMap],
+    [activeMembers, checkinMembers, mockMembers, liveLevels, staffUserIds, ptIds, displayPrefMap, birthdayIds, birthdayCongrats, recordMap, decoMap],
   );
   const [popupAvatarUrl, setPopupAvatarUrl] = useState<string | null>(null);
   const [popupPartsJson, setPopupPartsJson] = useState<{ style?: string; customization?: Record<string, unknown> } | null>(null);
@@ -560,10 +591,12 @@ const LiveBoardPage = () => {
   }, [fetchPeople]);
 
   // Clock — update every 15s so elapsed times refresh
+  //   📺 가볍게(2026-11-21)면 1분마다 — 시계가 바뀔 때마다 화면 전체(카드 수십 장)를 다시 그려서, 힘이 약한 TV 는 그 순간 끊겼다
+  const tvLite = useTvLite();
   useEffect(() => {
-    const t = setInterval(() => setCurrentTime(new Date()), 15000);
+    const t = setInterval(() => setCurrentTime(new Date()), tvLite ? 60_000 : 15_000);
     return () => clearInterval(t);
-  }, []);
+  }, [tvLite]);
 
   // 사이니지(TV)에서 화면이 저절로 꺼지지 않게 잡아둔다.
   // 브라우저가 지원할 때만 동작하고, 탭이 뒤로 갔다 돌아오면 다시 잡는다.
@@ -1632,7 +1665,7 @@ const LiveBoardPage = () => {
                 </h2>
                 {/* 양 끝을 페이드 처리 — 안 하면 이름이 가장자리에서 뚝 잘려 보인다 */}
                 <div
-                  className="relative min-w-0 flex-1 overflow-hidden"
+                  className="relative min-w-0 flex-1 overflow-hidden tv-mask"
                   style={{
                     maskImage:
                       "linear-gradient(to right, transparent 0, #000 56px, #000 calc(100% - 56px), transparent 100%)",
@@ -1724,7 +1757,7 @@ const LiveBoardPage = () => {
                 </div>
                 <div
                   ref={recordBoxRef}
-                  className="relative min-w-0 flex-1 overflow-hidden"
+                  className="relative min-w-0 flex-1 overflow-hidden tv-mask"
                   style={
                     recordOverflow
                       ? {
