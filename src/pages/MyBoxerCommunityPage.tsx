@@ -90,7 +90,7 @@ const MyBoxerCommunityPage = () => {
 
   const shortcuts: { key: Exclude<SheetKey, null | "journal">; label: string; Icon: typeof Users; badge?: number }[] = [
     { key: "cheer", label: "응원 보내기", Icon: Megaphone },
-    { key: "buddy", label: "운동 짝꿍", Icon: Handshake, badge: buddyRequests },
+    { key: "buddy", label: "복싱파트너", Icon: Handshake, badge: buddyRequests },
     { key: "together", label: "오늘 같이 해요", Icon: Users, badge: togetherCount },
     { key: "gear", label: "장비 나눔", Icon: Shirt },
     { key: "goal", label: "우리 지점 목표", Icon: Target },

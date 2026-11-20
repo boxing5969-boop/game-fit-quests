@@ -45,7 +45,7 @@ export const VISIBILITY_LABEL: Record<JournalVisibility, string> = {
 /** 누가 보는지 — 고를 때 한 줄로 */
 export const VISIBILITY_HINT: Record<JournalVisibility, string> = {
   branch: "우리 지점 회원 모두 볼 수 있어요",
-  partners: "운동 짝꿍과 최근 서로 응원한 동료만 볼 수 있어요",
+  partners: "복싱파트너와 최근 서로 응원한 동료만 볼 수 있어요",
   private: "나만 볼 수 있어요",
 };
 /** 운영진 안내 — 본사 · 권한 받은 지점장·코치는 공개 범위와 상관없이 본다 */

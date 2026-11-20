@@ -117,7 +117,7 @@ export async function renderMonthCard(m: MonthCardModel): Promise<Blob> {
   const ym = `${m.month.slice(0, 4)}.${m.month.slice(5, 7)}`;
   const [logo] = await Promise.all([
     loadImage(logoUrl),
-    loadFonts([m.title, m.minutesText, "운동했어요", m.gain ?? "", m.note?.body ?? "", m.note?.who ?? "", m.sign, m.branchShort ?? "", ym, "운동 카드 코치님 한마디 기념일 짝꿍과 같이", ...WEEK, "0123456789"]),
+    loadFonts([m.title, m.minutesText, "운동했어요", m.gain ?? "", m.note?.body ?? "", m.note?.who ?? "", m.sign, m.branchShort ?? "", ym, "운동 카드 코치님 한마디 기념일 파트너와 같이", ...WEEK, "0123456789"]),
   ]);
 
   // 바탕
@@ -186,7 +186,7 @@ export async function renderMonthCard(m: MonthCardModel): Promise<Blob> {
   const cells = m.weeks.flat();
   const legend = [
     ...(cells.some((c) => c.gold) ? [{ color: C.gold, label: "기념일" }] : []),
-    ...(cells.some((c) => c.together) ? [{ color: C.sky, label: "짝꿍과 같이" }] : []),
+    ...(cells.some((c) => c.together) ? [{ color: C.sky, label: "파트너와 같이" }] : []),
   ];
   const legendH = legend.length ? 50 : 0;
   const inner = CARD_W - PAD * 2 - 80;

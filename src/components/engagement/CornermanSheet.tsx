@@ -1,11 +1,13 @@
 /**
- * 153 QUEST v2 19단계 — 코너맨 매칭 메인 시트.
+ * 153 QUEST v2 19단계 — 복싱파트너(예전 코너맨 · 운동 짝꿍) 메인 시트.
  *
- * 상태 분기:
- *   · pending received: 수락/거절 버튼
- *   · pending sent: 대기 중 표시
- *   · active: 상태 패널 + 보너스 + 종료
- *   · 없음: 후보 리스트 + 요청 보내기
+ * 2026-11-21 대표님 「짝꿍은 한명만 하는것이 아니라 여러명 할수있게 하자 … 복싱파트너로 이름 변경하자」:
+ *   파트너는 10명까지(서버 _boxing_partner_limit) — 파트너가 있어도 요청 · 받은 요청 · 후보가 늘 보인다.
+ *
+ * 한 화면:
+ *   · 파트너가 있으면: 파트너 목록 + 오늘 운동 + 보너스 + 사람마다 그만하기
+ *   · 받은 요청: 수락/거절 · 보낸 요청: 대기 중
+ *   · 후보 리스트 + 이름 찾기 + 요청 보내기 (10명이 차면 요청 대신 안내)
  *
  * 보호 원칙:
  *   · 공식 missions / member_progress 미수정
@@ -42,7 +44,8 @@ import {
 } from "@/data/cornermanMessages";
 
 import CornermanCandidateList, { type CornermanListItem } from "./CornermanCandidateList";
-import CornermanStatusPanel from "./CornermanStatusPanel";
+import CornermanStatusPanel, { partnersOf } from "./CornermanStatusPanel";
+import type { CornermanPartner } from "@/services/boxingEngagementService";
 import { toGlobalLevel } from "@/lib/rankLabels";
 
 interface Props {
@@ -58,7 +61,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
   const isHq = role === "super_admin" || role === "admin";
 
   const { data: status, isLoading: statusLoading } = useMyCornermanStatus();
-  // 짝꿍 후보(앱 쓰는 회원) + 앱에 아직 없는 우리 지점 회원 (2026-10-18 대표님: "가입안한회원도 뜨게 · 초대하면 챔피언머니 1000원")
+  // 파트너 후보(앱 쓰는 회원) + 앱에 아직 없는 우리 지점 회원 (2026-10-18 대표님: "가입안한회원도 뜨게 · 초대하면 챔피언머니 1000원")
   const { data: people, isLoading: candLoading } = useCornermanPeople(30, open);
   const candidates = (people ?? []).filter((p) => p.joined);
   const notJoined = (people ?? []).filter((p) => !p.joined);
@@ -88,7 +91,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
     });
   };
 
-  // 같은 지점 회원 이름으로 찾기 (2026-10-18 대표님: "운동짝꿍에 같은 지점 회원 검색하는 기능") — 0.25초 멈추면 찾는다
+  // 같은 지점 회원 이름으로 찾기 (2026-10-18 대표님: "운동짝꿍에 같은 지점 회원 검색하는 기능" — 지금 이름은 복싱파트너) — 0.25초 멈추면 찾는다
   const [query, setQuery] = useState("");
   const [q, setQ] = useState("");
   useEffect(() => {
@@ -111,6 +114,11 @@ const CornermanSheet = ({ open, onClose }: Props) => {
 
   const [pendingRequestId, setPendingRequestId] = useState<string | null>(null);
   const [pendingRespondId, setPendingRespondId] = useState<string | null>(null);
+  const [endingPairId, setEndingPairId] = useState<string | null>(null);
+
+  const partners = partnersOf(status);
+  const partnerLimit = status?.partner_limit ?? 10;
+  const partnersFull = partners.length >= partnerLimit;
 
   const handleRequest = async (userId: string) => {
     setPendingRequestId(userId);
@@ -118,7 +126,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
       const result = await requestMut.mutateAsync(userId);
       toast.success(result.message);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "짝꿍 요청 실패");
+      toast.error(err instanceof Error ? err.message : "복싱파트너 요청을 보내지 못했어요");
     } finally {
       setPendingRequestId(null);
     }
@@ -139,14 +147,16 @@ const CornermanSheet = ({ open, onClose }: Props) => {
     }
   };
 
-  const handleEnd = async () => {
-    if (!status?.pair_id) return;
-    if (!confirm("정말 운동 짝꿍을 그만할까요?")) return;
+  const handleEnd = async (p: CornermanPartner) => {
+    if (!confirm(`${p.partner_name}님과 복싱파트너를 그만할까요?`)) return;
+    setEndingPairId(p.pair_id);
     try {
-      await endMut.mutateAsync(status.pair_id);
-      toast.success("운동 짝꿍을 그만했어요.");
+      await endMut.mutateAsync(p.pair_id);
+      toast.success(`${p.partner_name}님과 복싱파트너를 그만했어요.`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "종료 처리 실패");
+      toast.error(err instanceof Error ? err.message : "그만하지 못했어요");
+    } finally {
+      setEndingPairId(null);
     }
   };
 
@@ -167,7 +177,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
         </div>
         <div className="min-w-0">
           <p className="text-label font-bold text-primary">
-            운동 짝꿍
+            복싱파트너
           </p>
           <h2 className="mt-0.5 text-body font-bold text-foreground">
             {CORNERMAN_COPY.cardHeadline}
@@ -326,10 +336,10 @@ const CornermanSheet = ({ open, onClose }: Props) => {
     </label>
   );
 
-  // paired = 내게 이미 짝꿍이 있음 → 요청 단추 대신 안내 (2026-11-21 봄→다윤 오류: 눌러도 서버가 막았다)
-  const renderSearchResults = (paired = false) => (
+  // 내 파트너가 10명 가득이면 요청 단추 대신 안내
+  const renderSearchResults = () => (
     <CornermanCandidateList
-      requestBlockedText={paired ? "짝꿍 그만한 뒤 신청" : undefined}
+      requestBlockedText={partnersFull ? "파트너 10명 가득" : undefined}
       candidates={search.data ?? []}
       isLoading={search.isLoading}
       pendingUserId={pendingRequestId}
@@ -346,53 +356,37 @@ const CornermanSheet = ({ open, onClose }: Props) => {
     if (statusLoading) {
       return (
         <p className="text-label text-muted-foreground">
-          짝꿍 정보를 불러오는 중…
+          복싱파트너 정보를 불러오는 중…
         </p>
       );
     }
 
-    if (status?.has_active) {
-      // active pair 상태 패널
-      return (
-        <div className="space-y-3">
+    const hasPartners = partners.length > 0;
+    return (
+      <div className="space-y-4">
+        {status && hasPartners && (
           <CornermanStatusPanel
             status={status}
             onClaimBonus={handleClaim}
             onEnd={handleEnd}
             claimPending={claimMut.isPending}
-            endPending={endMut.isPending}
+            endingPairId={endingPairId}
           />
-          {/* 짝꿍이 있어도 앱에 없는 동료는 초대할 수 있다 (2026-10-18) */}
-          <div className="pt-1">
-            {renderSearchBox()}
-            {searching && (
-              <p className="mb-2 text-label leading-relaxed text-muted-foreground">
-                짝꿍은 한 명만 맺을 수 있어요. 다른 회원과 맺으려면 위에서 지금 짝꿍을 먼저 그만해 주세요.
-              </p>
-            )}
-            {searching ? renderSearchResults(true) : renderInvite()}
-          </div>
-          <p className="text-label leading-relaxed text-muted-foreground">
-            ※ {CORNERMAN_DISCLAIMER}
-          </p>
-        </div>
-      );
-    }
+        )}
 
-    // active 가 없으면 pending 처리 + 후보 리스트
-    return (
-      <div className="space-y-4">
         {renderPendingReceived()}
         {renderPendingSent()}
 
         <div>
           <p className="mb-1.5 text-micro font-bold text-foreground">
-            {isHq ? "전 지점 회원" : "같은 지점 회원 후보"}
+            {hasPartners ? "파트너 더 찾기" : isHq ? "전 지점 회원" : "같은 지점 회원 후보"}
           </p>
           <p className="mb-2 text-label leading-relaxed text-muted-foreground">
-            {isHq
-              ? "최근 출석한 회원부터 보여요. 짝꿍은 같은 지점 회원끼리 맺어요."
-              : CORNERMAN_COPY.emptyHint}
+            {partnersFull
+              ? `복싱파트너는 ${partnerLimit}명까지예요. 새로 맺으려면 위에서 한 명을 그만해 주세요.`
+              : isHq
+                ? "최근 출석한 회원부터 보여요. 복싱파트너는 같은 지점 회원끼리 맺어요."
+                : CORNERMAN_COPY.emptyHint}
           </p>
           {/* 이름으로 찾기 — 앱에 없는 회원도 나온다 */}
           {renderSearchBox()}
@@ -404,6 +398,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
               isLoading={candLoading}
               pendingUserId={pendingRequestId}
               onRequest={handleRequest}
+              requestBlockedText={partnersFull ? "파트너 10명 가득" : undefined}
               showBranch={isHq}
             />
           )}
@@ -436,7 +431,7 @@ const CornermanSheet = ({ open, onClose }: Props) => {
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            aria-label="운동 짝꿍"
+            aria-label="복싱파트너"
             className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-border bg-card shadow-2xl sm:rounded-3xl"
           >
             {renderHeader()}

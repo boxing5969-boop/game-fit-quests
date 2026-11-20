@@ -600,7 +600,7 @@ export const DayChecksPanel = ({
           {stampText}
         </p>
       )}
-      {/* (2-4) 쌍도장 — 운동 짝꿍과 둘 다 온 날 */}
+      {/* (2-4) 쌍도장 — 복싱파트너와 같이 온 날 */}
       {!compact && attended && cal.partner && isTogetherDay(cal.partner, day) && (
         <p className="mt-1 flex items-center gap-1 text-label font-bold text-sky-700 dark:text-sky-300">
           <Users className="h-4 w-4 shrink-0" aria-hidden />

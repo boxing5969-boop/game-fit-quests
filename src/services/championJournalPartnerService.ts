@@ -36,7 +36,7 @@ const COMMENT_ERROR_MAP: ReadonlyArray<{ match: string; ko: string }> = [
   },
   {
     match: "코너맨 또는 세컨드 응원 파트너만",
-    ko: "코너맨 또는 세컨드 응원 파트너만 댓글을 남길 수 있습니다.",
+    ko: "복싱파트너 또는 서로 응원한 동료만 댓글을 남길 수 있어요.",
   },
   { match: "댓글 내용을 입력", ko: "댓글 내용을 입력해주세요." },
   { match: "댓글은 500자", ko: "댓글은 500자 이하로 작성해주세요." },

@@ -69,22 +69,24 @@ const ENGAGEMENT_ERROR_MAP: ReadonlyArray<{ match: string; ko: string }> = [
   // v1.5 16단계 — 숨겨진 미션
   { match: "hidden mission not eligible", ko: "아직 조건이 충족되지 않은 숨겨진 미션입니다." },
   { match: "hidden mission already claimed", ko: "이미 받은 숨겨진 미션입니다." },
-  // v2 19단계 — 코너맨
-  { match: "cornerman pair already exists", ko: "이미 운동 짝꿍이 있어요. 새 짝꿍은 지금 짝꿍을 그만한 뒤 신청할 수 있어요." },
-  // 2026-11-21 — 상대 회원에게 짝꿍이 있을 때 (예전엔 위와 같은 말이라 '내 짝꿍'으로 읽혔다)
-  { match: "cornerman receiver already paired", ko: "상대 회원은 이미 다른 운동 짝꿍이 있어요." },
-  { match: "cornerman request already pending", ko: "이미 보낸 요청이 처리 대기 중입니다." },
-  { match: "cornerman not your pair", ko: "내 짝꿍이 아니에요." },
-  { match: "cornerman branch mismatch", ko: "같은 지점 회원만 짝꿍이 될 수 있어요." },
-  { match: "cornerman branch unknown", ko: "지점 정보를 확인할 수 없습니다." },
-  { match: "cornerman bonus not eligible", ko: "오늘 코너 보너스 조건이 아닙니다." },
-  { match: "cornerman bonus already claimed", ko: "오늘 코너 보너스는 이미 받았습니다." },
-  { match: "cornerman pair not found", ko: "짝꿍 정보를 찾을 수 없어요." },
-  { match: "cornerman not pending", ko: "이미 처리된 요청입니다." },
-  { match: "cornerman already ended", ko: "이미 끝난 짝꿍이에요." },
+  // v2 19단계 — 복싱파트너(예전 코너맨 · 운동 짝꿍) · 2026-11-21 여러 명 맺기
+  { match: "cornerman already partners", ko: "이미 복싱파트너예요." },
+  { match: "cornerman receiver partner limit", ko: "상대 회원은 복싱파트너가 가득 찼어요(10명)." },
+  { match: "cornerman partner limit", ko: "복싱파트너는 10명까지 맺을 수 있어요." },
+  { match: "cornerman pair already exists", ko: "이미 복싱파트너가 있어요." },
+  { match: "cornerman receiver already paired", ko: "상대 회원은 복싱파트너가 가득 찼어요." },
+  { match: "cornerman request already pending", ko: "이미 보낸 요청이 처리 대기 중이에요." },
+  { match: "cornerman not your pair", ko: "내 복싱파트너가 아니에요." },
+  { match: "cornerman branch mismatch", ko: "같은 지점 회원만 복싱파트너가 될 수 있어요." },
+  { match: "cornerman branch unknown", ko: "지점 정보를 확인할 수 없어요." },
+  { match: "cornerman bonus not eligible", ko: "오늘 파트너 보너스 조건이 아니에요." },
+  { match: "cornerman bonus already claimed", ko: "오늘 파트너 보너스는 이미 받았어요." },
+  { match: "cornerman pair not found", ko: "복싱파트너 정보를 찾을 수 없어요." },
+  { match: "cornerman not pending", ko: "이미 처리된 요청이에요." },
+  { match: "cornerman already ended", ko: "이미 그만한 복싱파트너예요." },
   { match: "pair_id required", ko: "잘못된 요청입니다." },
   { match: "receiver required", ko: "상대 회원을 선택해주세요." },
-  { match: "cannot request self", ko: "나에게는 짝꿍 요청을 보낼 수 없어요." },
+  { match: "cannot request self", ko: "나에게는 복싱파트너 요청을 보낼 수 없어요." },
   { match: "invalid action", ko: "올바르지 않은 응답입니다." },
   // v2 20단계 — 그림자 복서
   { match: "shadow boxer not ready", ko: "아직 비교할 데이터가 부족합니다." },
@@ -778,9 +780,24 @@ export interface CornermanTodayStatus {
   bonus_claimed: boolean;
 }
 
+/** 살아 있는 복싱파트너 한 명 (2026-11-21 여러 명 맺기) */
+export interface CornermanPartner {
+  pair_id: string;
+  partner_user_id: string;
+  partner_name: string;
+  partner_rank: string;
+  partner_level: number;
+  accepted_at: string | null;
+  today_completed: boolean;
+}
+
 export interface CornermanStatus {
   success: true;
   has_active: boolean;
+  /** 모든 파트너 (가장 최근에 맺은 순) — 아래 한 명 칸은 가장 최근 파트너 */
+  partners?: CornermanPartner[];
+  partner_count?: number;
+  partner_limit?: number;
   pair_id?: string;
   partner_user_id?: string;
   partner_name?: string;
@@ -812,6 +829,9 @@ export interface ClaimCornermanBonusResult {
 export const EMPTY_CORNERMAN_STATUS: CornermanStatus = {
   success: true,
   has_active: false,
+  partners: [],
+  partner_count: 0,
+  partner_limit: 10,
   pending_received: [],
   pending_sent: [],
 };
@@ -827,9 +847,10 @@ export async function getCornermanCandidates(
   return data ?? [];
 }
 
-/** 이름으로 찾은 같은 지점 회원 — 이미 짝꿍이 있거나 요청이 오가는 중이면 state 로 알린다 (2026-10-18) */
+/** 이름으로 찾은 같은 지점 회원 — 이미 내 파트너이거나 요청이 오가는 중이면 state 로 알린다 (2026-10-18) */
 export interface CornermanSearchResult extends CornermanCandidate {
-  state: "available" | "paired" | "pending";
+  /** paired = 이미 내 파트너 · full = 상대 파트너가 가득(10명) */
+  state: "available" | "paired" | "pending" | "full";
 }
 
 export async function searchCornermanCandidates(
@@ -926,7 +947,7 @@ export async function requestCornermanPair(
   );
   if (error) throwKo(error);
   if (!data || data.success !== true) {
-    throw new Error("코너맨 요청을 보내지 못했습니다.");
+    throw new Error("복싱파트너 요청을 보내지 못했어요.");
   }
   return data;
 }
@@ -941,7 +962,7 @@ export async function respondCornermanPair(
   );
   if (error) throwKo(error);
   if (!data || data.success !== true) {
-    throw new Error("코너맨 응답을 처리하지 못했습니다.");
+    throw new Error("복싱파트너 응답을 처리하지 못했어요.");
   }
   return data;
 }
@@ -955,7 +976,7 @@ export async function endCornermanPair(
   );
   if (error) throwKo(error);
   if (!data || data.success !== true) {
-    throw new Error("코너맨 종료를 처리하지 못했습니다.");
+    throw new Error("복싱파트너를 그만하지 못했어요.");
   }
   return data;
 }
@@ -966,7 +987,7 @@ export async function claimCornermanDailyBonus(): Promise<ClaimCornermanBonusRes
   );
   if (error) throwKo(error);
   if (!data || data.success !== true) {
-    throw new Error("코너맨 보너스를 받지 못했습니다.");
+    throw new Error("파트너 보너스를 받지 못했어요.");
   }
   return data;
 }

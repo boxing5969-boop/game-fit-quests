@@ -1,7 +1,8 @@
 /**
- * 153 QUEST v2 19단계 — 코너맨 active pair 상태 패널.
+ * 153 QUEST v2 19단계 — 복싱파트너(예전 코너맨 · 운동 짝꿍) 상태 패널.
  *
- * 본인/파트너 오늘 활동 상태 + 보너스 claim 버튼 + 종료 버튼.
+ * 2026-11-21 대표님 「짝꿍은 한명만 하는것이 아니라 여러명 할수있게 하자 … 복싱파트너로 이름 변경하자」:
+ *   파트너 여러 명(10명까지) — 사람마다 오늘 운동 · 그만하기. 보너스는 사람마다 하루 한 번(서버).
  *
  * 보호 원칙:
  *   · 보상은 RPC 반환값만 표시 — 클라이언트 amount 계산 0
@@ -11,15 +12,35 @@
 import { CheckCircle2, Circle, LogOut } from "lucide-react";
 
 import { CORNERMAN_COPY, RANK_KOREAN_LABEL } from "@/data/cornermanMessages";
-import type { CornermanStatus } from "@/services/boxingEngagementService";
+import type { CornermanPartner, CornermanStatus } from "@/services/boxingEngagementService";
 import { toGlobalLevel } from "@/lib/rankLabels";
+import { openMemberCard } from "@/lib/appEvents";
 
 export interface CornermanStatusPanelProps {
   status: CornermanStatus;
   onClaimBonus: () => void;
-  onEnd: () => void;
+  onEnd: (partner: CornermanPartner) => void;
   claimPending: boolean;
-  endPending: boolean;
+  /** 그만하는 중인 파트너 pair_id */
+  endingPairId: string | null;
+}
+
+/** 서버가 partners 를 안 보낸 옛 응답이면 한 명 칸으로 만든다 */
+export function partnersOf(status: CornermanStatus | undefined | null): CornermanPartner[] {
+  if (!status?.has_active) return [];
+  if (status.partners && status.partners.length > 0) return status.partners;
+  if (!status.pair_id || !status.partner_user_id) return [];
+  return [
+    {
+      pair_id: status.pair_id,
+      partner_user_id: status.partner_user_id,
+      partner_name: status.partner_name ?? "회원",
+      partner_rank: status.partner_rank ?? "white",
+      partner_level: status.partner_level ?? 1,
+      accepted_at: status.accepted_at ?? null,
+      today_completed: !!status.today?.partner_completed,
+    },
+  ];
 }
 
 const CornermanStatusPanel = ({
@@ -27,22 +48,24 @@ const CornermanStatusPanel = ({
   onClaimBonus,
   onEnd,
   claimPending,
-  endPending,
+  endingPairId,
 }: CornermanStatusPanelProps) => {
-  if (!status.has_active || !status.today) return null;
+  const partners = partnersOf(status);
+  if (partners.length === 0 || !status.today) return null;
 
   const me = status.today.my_completed;
-  const partner = status.today.partner_completed;
+  const anyPartner = status.today.partner_completed;
   const both = status.today.both_completed;
   const claimed = status.today.bonus_claimed;
   const canClaim = both && !claimed;
+  const limit = status.partner_limit ?? 10;
 
   let statusHint: string;
   if (claimed) {
     statusHint = CORNERMAN_COPY.bonusClaimedHint;
   } else if (both) {
     statusHint = CORNERMAN_COPY.bothCompletedHint;
-  } else if (me || partner) {
+  } else if (me || anyPartner) {
     statusHint = CORNERMAN_COPY.oneCompletedHint;
   } else {
     statusHint = CORNERMAN_COPY.noneCompletedHint;
@@ -51,56 +74,69 @@ const CornermanStatusPanel = ({
   return (
     <div className="space-y-3">
       <div className="rounded-card border border-primary/20 bg-primary/5 p-3.5">
-        <p className="text-label font-bold text-primary">
-          {CORNERMAN_COPY.activeHeadline}
-        </p>
-        <p className="mt-1 text-label font-bold text-foreground">
-          🥊 {status.partner_name}
-        </p>
-        <p className="mt-0.5 text-label leading-relaxed text-muted-foreground">
-          {RANK_KOREAN_LABEL[status.partner_rank ?? "white"]} 리그 · Lv.
-          {toGlobalLevel(status.partner_rank ?? "white", status.partner_level ?? 1)}
-        </p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-label font-bold text-primary">
+            {CORNERMAN_COPY.activeHeadline}
+          </p>
+          <span className="shrink-0 text-label font-bold text-muted-foreground">
+            {partners.length}/{limit}명
+          </span>
+        </div>
+        <div className="mt-2 flex items-center gap-2 text-label">
+          {me ? (
+            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+          ) : (
+            <Circle className="h-4 w-4 text-muted-foreground" />
+          )}
+          <span className={me ? "font-bold text-foreground" : "text-muted-foreground"}>
+            나 — {me ? "오늘 운동 완료" : "아직"}
+          </span>
+        </div>
       </div>
 
-      <div className="rounded-card border border-border bg-card p-3.5">
-        <p className="text-label font-bold text-muted-foreground">
-          오늘 운동
-        </p>
-        <ul className="mt-2 space-y-1.5">
-          <li className="flex items-center gap-2 text-label">
-            {me ? (
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-            ) : (
-              <Circle className="h-4 w-4 text-muted-foreground" />
-            )}
-            <span
-              className={
-                me ? "font-bold text-foreground" : "text-muted-foreground"
-              }
+      <ul className="space-y-2">
+        {partners.map((p) => {
+          const ending = endingPairId === p.pair_id;
+          return (
+            <li
+              key={p.pair_id}
+              className="flex items-center gap-3 rounded-card border border-border bg-card px-3.5 py-3"
             >
-              나 — {me ? "오늘 운동 완료" : "아직"}
-            </span>
-          </li>
-          <li className="flex items-center gap-2 text-label">
-            {partner ? (
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-            ) : (
-              <Circle className="h-4 w-4 text-muted-foreground" />
-            )}
-            <span
-              className={
-                partner ? "font-bold text-foreground" : "text-muted-foreground"
-              }
-            >
-              {status.partner_name} — {partner ? "오늘 운동 완료" : "아직"}
-            </span>
-          </li>
-        </ul>
-        <p className="mt-2 text-label leading-relaxed text-muted-foreground">
-          {statusHint}
-        </p>
-      </div>
+              {p.today_completed ? (
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" aria-label="오늘 운동 완료" />
+              ) : (
+                <Circle className="h-4 w-4 shrink-0 text-muted-foreground" aria-label="아직" />
+              )}
+              <button
+                type="button"
+                onClick={() => openMemberCard(p.partner_user_id)}
+                className="min-w-0 flex-1 text-left active:opacity-70"
+              >
+                <span className="block truncate text-label font-bold text-foreground">
+                  {p.partner_name}
+                </span>
+                <span className="block text-label text-muted-foreground">
+                  {RANK_KOREAN_LABEL[p.partner_rank] ?? p.partner_rank} 리그 · Lv.
+                  {toGlobalLevel(p.partner_rank, p.partner_level)}
+                  {p.today_completed ? " · 오늘 운동 완료" : ""}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onEnd(p)}
+                disabled={ending}
+                aria-label={`${p.partner_name}님과 복싱파트너 그만하기`}
+                className="flex shrink-0 items-center gap-1 rounded-card border border-border px-2.5 py-1.5 text-micro font-bold text-muted-foreground transition-all active:scale-[0.98] hover:border-destructive/40 hover:text-destructive disabled:opacity-60"
+              >
+                <LogOut className="h-3 w-3" />
+                {ending ? "…" : "그만하기"}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+
+      <p className="text-label leading-relaxed text-muted-foreground">{statusHint}</p>
 
       <button
         type="button"
@@ -117,18 +153,8 @@ const CornermanStatusPanel = ({
           : claimed
             ? "오늘 보너스 받음"
             : both
-              ? "짝꿍 보너스 받기 (챔피언 머니 +100)"
-              : "둘 다 오늘 운동하면 열려요"}
-      </button>
-
-      <button
-        type="button"
-        onClick={onEnd}
-        disabled={endPending}
-        className="flex w-full items-center justify-center gap-1.5 rounded-card border border-border bg-card py-2.5 text-label font-medium text-muted-foreground transition-all active:scale-[0.99] hover:border-destructive/40 hover:text-destructive disabled:opacity-60"
-      >
-        <LogOut className="h-3.5 w-3.5" />
-        {endPending ? "종료 중…" : "짝꿍 그만하기"}
+              ? "파트너 보너스 받기 (챔피언 머니 +100)"
+              : "나와 파트너가 오늘 운동하면 열려요"}
       </button>
     </div>
   );

@@ -135,7 +135,7 @@ const PromiseSheet = ({
           <DrawerDescription className="text-label">약속한 날이 달력에 보이고, 고른 시각에 알려 드려요</DrawerDescription>
         </DrawerHeader>
         <div className="space-y-5 overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom,0px)+16px)]">
-          {/* (2-4) 운동 짝꿍 — 같은 요일로 약속하면 서로 보인다 */}
+          {/* (2-4) 복싱파트너 — 같은 요일로 약속하면 서로 보인다 */}
           {hint && (
             <div className="flex items-center gap-3 rounded-xl bg-sky-50 px-4 py-3 dark:bg-sky-500/10">
               <Users className="h-5 w-5 shrink-0 text-sky-600 dark:text-sky-300" aria-hidden />

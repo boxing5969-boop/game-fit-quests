@@ -266,7 +266,7 @@ const ChampionJournalSheet = ({ open, onClose, defaultVisibility = "branch", rem
                 ? visibility === "branch"
                   ? "올렸어요! 지점 동료들이 153으로 응원할 거예요."
                   : visibility === "partners"
-                    ? "올렸어요! 친구(운동 짝꿍 · 서로 응원한 동료)만 볼 수 있어요."
+                    ? "올렸어요! 친구(복싱파트너 · 서로 응원한 동료)만 볼 수 있어요."
                     : "올렸어요! 나만 볼 수 있어요."
                 : "올렸어요! 오늘 보상은 이미 받았어요."}
             </p>

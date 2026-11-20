@@ -4,7 +4,8 @@
  *   감정 설계(CLAUDE.md 「회원 감정 설계 기준」 — 한 달 · 재등록 = 확신 · 안 오는 날 = 그리움(죄책감 금지)):
  *   · 일요일 주간 돌아보기 — 이번 주(월~일) 운동 시간 · 지킨 약속 · 금색 별 + 다음 주 약속 한 줄. 잘한 것만, 안 온 주엔 없다.
  *     제목 · 글은 서버 _cal_week_recap(일요일 저녁 알림)과 같은 말 — 화면에는 짝꿍과 같이 온 날 칩 하나를 더한다.
- *   · 운동 짝꿍과 같이 약속 — 지금 이어진 운동 짝꿍(한 명)의 약속 요일이 내 약속과 겹치면 서로 보인다 · 둘 다 온 날 = 쌍도장.
+ *   · 복싱파트너(예전 운동 짝꿍)와 같이 약속 — 가장 최근 파트너의 약속 요일이 내 약속과 겹치면 서로 보인다 ·
+ *     파트너 누구와든 둘 다 온 날 = 쌍도장 (2026-11-21 여러 명 맺기 — 서버 _cal_partner_json together · count).
  *   · 이번 달 운동 카드 — 도장 달력 + 그 달 운동 시간 + 코치 한마디 + 153 로고 · 지점 이름 → 이미지(그리기는 lib/monthCardImage.ts).
  *   · 나의 153 앨범 — 그 달 '오늘 운동 한 줄'에 올린 사진.
  *   · 재등록 즈음 '153과 함께한 시간' — 수강권 끝나기 14일 전 ~ 끝나고 14일, 권유 문구 없이 첫 도장 날짜 · 지금까지 운동 시간.
@@ -30,9 +31,11 @@ const addDays = (day: string, delta: number): string => {
 };
 
 // ───────────────────────── 서버 값 ─────────────────────────
-/** 운동 짝꿍 — 이름 · 짝꿍의 지금 약속(요일 0=일 · 시간대) · 보이는 날짜 중 둘 다 온 날 */
+/** 복싱파트너 — 가장 최근 파트너 이름 · 그 파트너의 지금 약속(요일 0=일 · 시간대) · 보이는 날짜 중 파트너 누구와든 둘 다 온 날 · 파트너 수 */
 export interface CalPartner {
   name: string;
+  /** 파트너 수 (옛 서버 = 1) */
+  count?: number;
   days: number[];
   slot: TimeSlot | null;
   together: string[];
@@ -58,7 +61,8 @@ export function normalizePartner(raw: unknown): CalPartner | null {
   const together = Array.isArray(r.together)
     ? [...new Set(r.together.map((d) => str(d)?.slice(0, 10) ?? "").filter((d) => YMD.test(d)))].sort()
     : [];
-  return { name, days, slot: slot && SLOTS.has(slot) ? (slot as TimeSlot) : null, together };
+  const count = Math.max(1, Math.floor(Number(r.count) || 1));
+  return { name, count, days, slot: slot && SLOTS.has(slot) ? (slot as TimeSlot) : null, together };
 }
 
 export function normalizeRecapPref(raw: unknown): CalRecapPref {
@@ -68,32 +72,33 @@ export function normalizeRecapPref(raw: unknown): CalRecapPref {
   return { on: r.on !== false, at: at && HM.test(at) ? at : "19:30", sends: r.sends === true };
 }
 
-// ───────────────────────── 운동 짝꿍과 같이 약속 ─────────────────────────
-/** 내 약속과 짝꿍 약속이 겹치는 요일 (월요일부터) */
+// ───────────────────────── 복싱파트너와 같이 약속 ─────────────────────────
+/** 내 약속과 파트너 약속이 겹치는 요일 (월요일부터) */
 export function sharedDays(mine: Pick<Promise153, "weekdays"> | null | undefined, partner: CalPartner | null | undefined): number[] {
   if (!mine || !partner || partner.days.length === 0) return [];
   const theirs = new Set(partner.days);
   return PROMISE_WEEK.map((w) => w.day).filter((d) => mine.weekdays.includes(d) && theirs.has(d));
 }
 
-/** 약속 한 줄 아래 — '짝꿍 비비님과 수 · 금 같이 약속했어요' (겹칠 때만) */
+/** 약속 한 줄 아래 — '파트너 비비님과 수 · 금 같이 약속했어요' (겹칠 때만) */
 export function partnerPromiseLine(mine: Pick<Promise153, "weekdays"> | null | undefined, partner: CalPartner | null | undefined): string | null {
   const shared = sharedDays(mine, partner);
-  return partner && shared.length > 0 ? `짝꿍 ${partner.name}님과 ${weekdaysLabel(shared)} 같이 약속했어요` : null;
+  return partner && shared.length > 0 ? `파트너 ${partner.name}님과 ${weekdaysLabel(shared)} 같이 약속했어요` : null;
 }
 
-/** 약속 시트 — '짝꿍 비비님은 수 · 금 아침에 약속했어요' · 짝꿍이 아직 약속하지 않았으면 같이 하자는 한 줄 */
+/** 약속 시트 — '파트너 비비님은 수 · 금 아침에 약속했어요' · 파트너가 아직 약속하지 않았으면 같이 하자는 한 줄 */
 export function partnerHint(partner: CalPartner | null | undefined): string | null {
   if (!partner) return null;
-  if (partner.days.length === 0) return `짝꿍 ${partner.name}님도 약속을 걸면 같은 요일이 서로 보여요`;
+  if (partner.days.length === 0) return `파트너 ${partner.name}님도 약속을 걸면 같은 요일이 서로 보여요`;
   const slot = slotLabel(partner.slot);
-  return `짝꿍 ${partner.name}님은 ${weekdaysLabel(partner.days)}${slot ? ` ${slot}` : ""}에 약속했어요`;
+  return `파트너 ${partner.name}님은 ${weekdaysLabel(partner.days)}${slot ? ` ${slot}` : ""}에 약속했어요`;
 }
 
-/** 쌍도장 — 둘 다 출석한 날 */
+/** 쌍도장 — 나와 파트너(누구든)가 같이 출석한 날 */
 export const isTogetherDay = (partner: CalPartner | null | undefined, day: string): boolean => !!partner && partner.together.includes(day);
 
-export const togetherText = (partner: Pick<CalPartner, "name">): string => `짝꿍 ${partner.name}님과 같이 운동한 날이에요`;
+export const togetherText = (partner: Pick<CalPartner, "name" | "count">): string =>
+  (partner.count ?? 1) > 1 ? "복싱파트너와 같이 운동한 날이에요" : `파트너 ${partner.name}님과 같이 운동한 날이에요`;
 
 // ───────────────────────── 일요일 주간 돌아보기 ─────────────────────────
 export interface WeekRecap {
@@ -156,7 +161,7 @@ export function weekRecap(input: {
   const facts = [
     kept > 0 ? `약속 ${kept}번 지켰어요` : null,
     stars > 0 ? `금색 별 ${stars}개` : null,
-    partner && together > 0 ? `짝꿍과 같이 ${together}번` : null,
+    partner && together > 0 ? `파트너와 같이 ${together}번` : null,
   ].filter((x): x is string => !!x);
   return {
     from: days[0],

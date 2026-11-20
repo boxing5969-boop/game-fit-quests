@@ -41,7 +41,7 @@ const MIN_LEN = 1;
 const MAX_LEN = 500;
 
 function relationLabel(rel: PartnerJournalFeedRow["relation"]): string {
-  return rel === "cornerman" ? "🤝 운동 짝꿍" : rel === "second" ? "📣 응원 동료" : "";
+  return rel === "cornerman" ? "🤝 복싱파트너" : rel === "second" ? "📣 응원 동료" : "";
 }
 
 function formatTime(iso: string): string {

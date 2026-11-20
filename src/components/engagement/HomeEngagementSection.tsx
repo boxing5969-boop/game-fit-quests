@@ -158,7 +158,7 @@ const HomeEngagementSection = ({
         </span>
       </button>
 
-      {/* ─── v2 19단계: 코너맨 매칭 ─── */}
+      {/* ─── v2 19단계: 복싱파트너(예전 코너맨) ─── */}
       <CornermanCard onOpen={() => setShowCornerman(true)} />
 
       {/* ─── v2 21단계: 짐 레이드 (지점 누적 목표) ─── */}

@@ -79,7 +79,7 @@ const QuestCoachSummaryPanel = () => {
     },
     {
       icon: <Heart className="h-3.5 w-3.5" />,
-      label: "운동 짝꿍",
+      label: "복싱파트너",
       value: `${summary?.cornerman_active_pairs ?? 0}쌍`,
     },
     {

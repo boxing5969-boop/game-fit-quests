@@ -1,13 +1,13 @@
 /**
- * 153 QUEST v2 19단계 — 코너맨 후보 리스트.
+ * 153 QUEST v2 19단계 — 복싱파트너(예전 코너맨 · 운동 짝꿍) 후보 리스트.
  *
- * 같은 지점 회원 + active pair 없는 회원만 후보로 보임.
+ * 같은 지점 회원 중 아직 내 파트너가 아니고 파트너가 10명 아래인 회원 (2026-11-21 여러 명 맺기).
  * 민감정보 미노출 — display_name + rank + level 만.
  *
  * 2026-09-30: 전체관리자 계정은 전 지점 회원이 보인다(showBranch — 이름 옆에 지점).
  * 2026-10-18: 전체관리자도 회원처럼 요청 버튼이 보인다(대표님: "본사 계정도 모든 기능을 해볼 수 있게") —
  *   요청은 서버(request_cornerman_pair)가 같은 지점끼리만 받는다.
- *   이름을 누르면 회원 카드(openMemberCard) · 이름 찾기 결과는 state 로 '짝꿍 있음/대기 중'을 보인다.
+ *   이름을 누르면 회원 카드(openMemberCard) · 이름 찾기 결과는 state 로 '내 파트너 · 대기 중 · 파트너 가득'을 보인다.
  *   앱에 아직 안 들어온 회원(joined=false)은 요청 대신 '초대하기' — 앱 공유 링크 (초대한 회원이 들어오면 챔피언 머니 1,000).
  */
 
@@ -19,7 +19,7 @@ import { toGlobalLevel } from "@/lib/rankLabels";
 import { openMemberCard } from "@/lib/appEvents";
 
 export type CornermanListItem = CornermanCandidate & {
-  state?: "available" | "paired" | "pending";
+  state?: "available" | "paired" | "pending" | "full";
   /** false = 앱에 아직 안 들어온 회원 (요청 대신 초대) */
   joined?: boolean;
   invited_by_me?: boolean;
@@ -38,7 +38,7 @@ export interface CornermanCandidateListProps {
   /** 앱에 없는 회원 초대 */
   onInvite?: (c: CornermanListItem) => void;
   invitingUserId?: string | null;
-  /** 내게 이미 짝꿍이 있으면 요청 단추 대신 이 글 (2026-11-21 — 눌러도 서버가 막아 오류만 떴다) */
+  /** 내 파트너가 가득(10명)이면 요청 단추 대신 이 글 */
   requestBlockedText?: string;
 }
 
@@ -66,10 +66,10 @@ const CornermanCandidateList = ({
     return (
       <div className="rounded-card border border-border bg-background/40 p-3.5">
         <p className="text-label leading-relaxed text-foreground">
-          {emptyText ?? "지금 매칭 가능한 같은 지점 회원이 없습니다."}
+          {emptyText ?? "지금 요청할 수 있는 같은 지점 회원이 없어요."}
         </p>
         <p className="mt-1 text-label leading-relaxed text-muted-foreground">
-          {emptyHint ?? "신규 회원이 가입하거나 다른 회원의 짝꿍 관계가 끝나면 후보로 표시됩니다."}
+          {emptyHint ?? "새 회원이 앱에 들어오면 후보로 보여요."}
         </p>
       </div>
     );
@@ -86,7 +86,7 @@ const CornermanCandidateList = ({
             key={c.user_id}
             className="flex items-center gap-3 rounded-card border border-border bg-card px-3.5 py-3"
           >
-            {/* 이름(과 아이콘)을 누르면 회원 카드 — 좋아요 · 메시지 · 응원 · 짝꿍 신청 */}
+            {/* 이름(과 아이콘)을 누르면 회원 카드 — 좋아요 · 메시지 · 응원 · 복싱파트너 신청 */}
             <button
               type="button"
               onClick={() => openMemberCard(c.user_id)}
@@ -135,7 +135,11 @@ const CornermanCandidateList = ({
               </button>
             ) : state === "paired" ? (
               <span className="shrink-0 rounded-pill bg-muted px-2.5 py-1 text-micro font-bold text-muted-foreground">
-                짝꿍 있음
+                내 파트너
+              </span>
+            ) : state === "full" ? (
+              <span className="shrink-0 rounded-pill bg-muted px-2.5 py-1 text-micro font-bold text-muted-foreground">
+                파트너 가득
               </span>
             ) : state === "pending" ? (
               <span className="shrink-0 rounded-pill bg-amber-400/15 px-2.5 py-1 text-micro font-bold text-amber-700 dark:text-amber-300">

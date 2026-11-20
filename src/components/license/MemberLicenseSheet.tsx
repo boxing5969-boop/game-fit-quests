@@ -8,13 +8,14 @@
  * 전화번호·생년월일은 오지 않는다.
  * 회원은 같은 지점만, 전체관리자·관리자(대표님 153본사 계정)는 전 지점을 본다.
  * 2026-09-30: 하트 옆 '메시지' 버튼 — 메시지를 보낼 수 있는 사람일 때만 보인다(서버 dm_peer 가 판단).
- * 2026-10-18: 어디서든 이름·카드를 누르면 열린다(GlobalMemberCard · openMemberCard) + '짝꿍 신청'(같은 지점 회원,
- *   서로 짝꿍이 없을 때 · 받은 요청이면 바로 수락). 요청 규칙은 서버(request_cornerman_pair)가 다시 확인한다.
+ * 2026-10-18: 어디서든 이름·카드를 누르면 열린다(GlobalMemberCard · openMemberCard) + '복싱파트너 신청'(같은 지점 회원,
+ *   받은 요청이면 바로 수락 · 2026-11-21 부터 파트너 여러 명(10명까지) — 예전 이름 운동 짝꿍). 요청 규칙은 서버(request_cornerman_pair)가 다시 확인한다.
  * 2026-10-18: 코치·지점장·운영진 카드도 열린다(대표님: "강건형은 라이센스를 볼 수 없는 계정인가?") — 이름 옆 표시,
- *   하트·짝꿍은 없고(like_reason 'target_staff') 메시지·응원은 그대로.
+ *   하트·복싱파트너는 없고(like_reason 'target_staff') 메시지·응원은 그대로.
  * 2026-10-27 대표님 "코치님들도 하트 줄수있게": 코치·지점장도 같은 지점 회원에게 하트를 보낸다(본사 하트처럼 센다) —
  *   서버(_is_heart_coach · toggle_nickname_like · get_member_license)가 판단하므로 화면은 can_like 그대로 쓴다.
  */
+import { partnersOf } from "@/components/engagement/CornermanStatusPanel";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
@@ -88,7 +89,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
   };
 
   const canPress = !!data && !busy && (data.can_like || data.liked_by_me);
-  /** 코치·지점장·운영진 카드 — 하트·짝꿍 없이 메시지·응원만 */
+  /** 코치·지점장·운영진 카드 — 하트·복싱파트너 없이 메시지·응원만 */
   const staffCard = !!data && !data.is_me && data.like_reason === "target_staff";
 
   // 응원 보내기 · 받은 응원 (2026-10-16 응원 업그레이드) — 같은 지점 동료(본사는 켜 둔 지점)에게. 서버가 다시 확인한다
@@ -105,16 +106,18 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
     [data?.user_id, data?.display, data?.avatar_url],
   );
 
-  // 짝꿍 신청 (2026-10-18) — 같은 지점 회원끼리. 내 짝꿍 · 보낸 요청 · 받은 요청이면 그 상태로 보인다
+  // 복싱파트너 신청 (2026-10-18 · 2026-11-21 여러 명) — 같은 지점 회원끼리. 내 파트너 · 보낸 요청 · 받은 요청이면 그 상태로 보인다
   const { data: cm } = useMyCornermanStatus();
   const requestPair = useRequestCornermanPair();
   const respondPair = useRespondCornermanPair();
   const sameBranch = !!data && !!profile?.branch_name && data.branch === profile.branch_name;
-  const isMyPartner = !!data && !!cm?.has_active && cm.partner_user_id === data.user_id;
+  const myPartners = partnersOf(cm);
+  const isMyPartner = !!data && myPartners.some((p) => p.partner_user_id === data.user_id);
+  const partnersFull = myPartners.length >= (cm?.partner_limit ?? 10);
   const sentPending = !!data && !!cm?.pending_sent?.some((p) => p.receiver_user_id === data.user_id);
   const receivedPending = data ? cm?.pending_received?.find((p) => p.requester_user_id === data.user_id) : undefined;
   const showPair =
-    !!data && !data.is_me && data.like_reason !== "target_not_member" && data.like_reason !== "target_staff" && (isMyPartner || ((sameBranch || !!receivedPending) && !cm?.has_active));
+    !!data && !data.is_me && data.like_reason !== "target_not_member" && data.like_reason !== "target_staff" && (isMyPartner || !!receivedPending || (sameBranch && !partnersFull));
   const onPair = async () => {
     if (!data) return;
     try {
@@ -123,7 +126,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
         : await requestPair.mutateAsync(data.user_id);
       toast.success(res.message);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "짝꿍 요청을 보내지 못했어요");
+      toast.error(e instanceof Error ? e.message : "복싱파트너 요청을 보내지 못했어요");
     }
   };
   const pairBusy = requestPair.isPending || respondPair.isPending;
@@ -299,7 +302,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
                 {showPair &&
                   (isMyPartner ? (
                     <p className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary/10 text-body font-bold text-primary">
-                      <Handshake className="h-5 w-5" /> 내 운동 짝꿍이에요
+                      <Handshake className="h-5 w-5" /> 내 복싱파트너예요
                     </p>
                   ) : (
                     <button
@@ -309,7 +312,7 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
                       className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-primary/40 bg-card text-body font-bold text-primary transition-transform active:scale-[0.98] disabled:opacity-60"
                     >
                       <Handshake className={`h-5 w-5 ${pairBusy ? "animate-pulse" : ""}`} />
-                      {sentPending ? "짝꿍 요청 보냄 · 대기 중" : receivedPending ? "짝꿍 요청 왔어요 — 수락하기" : "운동 짝꿍 신청"}
+                      {sentPending ? "복싱파트너 요청 보냄 · 대기 중" : receivedPending ? "복싱파트너 요청 왔어요 — 수락하기" : "복싱파트너 신청"}
                     </button>
                   ))}
 

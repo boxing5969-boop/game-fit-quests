@@ -30,7 +30,7 @@ const QuestCommunityPanel = ({ community }: Props) => {
         <div className="rounded-card border border-border bg-background/40 px-3 py-2">
           <p className="flex items-center gap-1 text-label font-bold text-muted-foreground">
             <Users className="h-3 w-3" />
-            운동 짝꿍
+            복싱파트너
           </p>
           <p className="number-font mt-0.5 text-label font-black text-foreground">
             {community.active_cornerman_pairs ?? 0}쌍

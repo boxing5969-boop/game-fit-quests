@@ -1024,7 +1024,7 @@ const MemberDetailPage = () => {
                 앱·커뮤니티 활동 <span className="text-muted-foreground">· 전체관리자만</span>
               </h3>
               <p className="px-1 text-[11px] leading-relaxed text-muted-foreground">
-                글·댓글·153·응원·짝꿍·같이 운동·하트·퀴즈·컨디션·게임·챌린지·153 PB·레벨·설문 참여·마일리지. 메시지(DM) 내용과 설문 답변(익명)은 보이지 않아요.
+                글·댓글·153·응원·복싱파트너·같이 운동·하트·퀴즈·컨디션·게임·챌린지·153 PB·레벨·설문 참여·마일리지. 메시지(DM) 내용과 설문 답변(익명)은 보이지 않아요.
               </p>
               {appActivityLoading ? (
                 <p className="px-1 py-3 text-xs text-muted-foreground">불러오는 중…</p>
@@ -1185,7 +1185,7 @@ const APP_ACTIVITY_LABEL: Record<string, string> = {
   cheer_got: "응원",
   birthday_sent: "생일",
   birthday_got: "생일",
-  cornerman: "짝꿍",
+  cornerman: "복싱파트너",
   partner_call: "같이 운동",
   partner_join: "같이 운동",
   heart: "하트",

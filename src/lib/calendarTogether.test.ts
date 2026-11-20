@@ -45,11 +45,12 @@ const partner = (over: Partial<CalPartner> = {}): CalPartner => ({ name: "비비
 const A_LIST = [day("2026-11-15", 70), day("2026-11-11", 66), day("2026-11-09", 90), day("2026-11-08", 66)];
 
 describe("서버 값 읽기", () => {
-  it("짝꿍 — 이름이 없으면 없음 · 요일 정리 · 시간대 · 같이 온 날", () => {
+  it("복싱파트너 — 이름이 없으면 없음 · 요일 정리 · 시간대 · 같이 온 날", () => {
     expect(normalizePartner(null)).toBeNull();
     expect(normalizePartner({ days: [1] })).toBeNull();
     expect(normalizePartner({ name: " 비비 ", days: [5, 3, 3, 9, "1"], slot: "lunch", together: ["2026-11-15", "x", "2026-11-11T00:00:00"] })).toEqual({
       name: "비비",
+      count: 1,
       days: [1, 3, 5],
       slot: null,
       together: ["2026-11-11", "2026-11-15"],
@@ -62,18 +63,18 @@ describe("서버 값 읽기", () => {
   });
 });
 
-describe("운동 짝꿍과 같이 약속", () => {
+describe("복싱파트너와 같이 약속", () => {
   it("겹치는 요일만 서로 보인다 (월요일부터)", () => {
     expect(sharedDays(promise([0, 1, 3]), partner({ days: [3, 0] }))).toEqual([3, 0]);
-    expect(partnerPromiseLine(promise([0, 1, 3]), partner({ days: [3, 0] }))).toBe("짝꿍 비비님과 수 · 일 같이 약속했어요");
+    expect(partnerPromiseLine(promise([0, 1, 3]), partner({ days: [3, 0] }))).toBe("파트너 비비님과 수 · 일 같이 약속했어요");
     expect(partnerPromiseLine(promise([1]), partner({ days: [3] }))).toBeNull();
     expect(partnerPromiseLine(null, partner())).toBeNull();
     expect(partnerPromiseLine(promise([1]), null)).toBeNull();
   });
   it("약속 시트 한 줄 — 짝꿍 약속 · 아직 없으면 같이 하자는 말", () => {
-    expect(partnerHint(partner())).toBe("짝꿍 비비님은 수 · 금 아침에 약속했어요");
-    expect(partnerHint(partner({ days: [1, 2, 3, 4, 5], slot: null }))).toBe("짝꿍 비비님은 평일에 약속했어요");
-    expect(partnerHint(partner({ days: [] }))).toBe("짝꿍 비비님도 약속을 걸면 같은 요일이 서로 보여요");
+    expect(partnerHint(partner())).toBe("파트너 비비님은 수 · 금 아침에 약속했어요");
+    expect(partnerHint(partner({ days: [1, 2, 3, 4, 5], slot: null }))).toBe("파트너 비비님은 평일에 약속했어요");
+    expect(partnerHint(partner({ days: [] }))).toBe("파트너 비비님도 약속을 걸면 같은 요일이 서로 보여요");
     expect(partnerHint(null)).toBeNull();
   });
   it("쌍도장 · 그날 한 줄", () => {
@@ -81,7 +82,10 @@ describe("운동 짝꿍과 같이 약속", () => {
     expect(isTogetherDay(p, "2026-11-11")).toBe(true);
     expect(isTogetherDay(p, "2026-11-12")).toBe(false);
     expect(isTogetherDay(null, "2026-11-11")).toBe(false);
-    expect(togetherText(p)).toBe("짝꿍 비비님과 같이 운동한 날이에요");
+    expect(togetherText(p)).toBe("파트너 비비님과 같이 운동한 날이에요");
+    // 2026-11-21 여러 명 맺기 — 파트너가 둘 이상이면 이름 없이 (쌍도장은 파트너 누구와든)
+    expect(togetherText({ ...p, count: 3 })).toBe("복싱파트너와 같이 운동한 날이에요");
+    expect(normalizePartner({ name: "비비", count: 3 })?.count).toBe(3);
   });
 });
 
@@ -115,8 +119,8 @@ describe("일요일 주간 돌아보기", () => {
   it("짝꿍과 같이 온 날은 화면 칩에만 (알림 글에는 없음)", () => {
     const r = weekRecap({ today: "2026-11-15", list: A_LIST, partner: partner({ together: ["2026-11-11", "2026-11-15", "2026-11-08"] }) });
     expect(r?.together).toBe(2);
-    expect(r?.facts).toContain("짝꿍과 같이 2번");
-    expect(recapBody(r!)).not.toContain("짝꿍");
+    expect(r?.facts).toContain("파트너와 같이 2번");
+    expect(recapBody(r!)).not.toContain("파트너");
   });
   it("잘한 것만 — 못한 것 · 0번은 말하지 않는다", () => {
     const r = weekRecap({ today: "2026-11-15", list: [day("2026-11-15")], promise: promise([1, 3]), starDay: () => false });

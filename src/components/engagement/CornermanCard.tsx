@@ -1,11 +1,12 @@
 /**
- * 153 QUEST v2 19단계 — 코너맨 진입 카드 (Home/MyPage).
+ * 153 QUEST v2 19단계 — 복싱파트너(예전 코너맨 · 운동 짝꿍) 진입 카드 (Home/MyPage).
  *
  * 상태별 표시:
  *   · active: 파트너 이름 + 오늘 활동 상태
  *   · pending received: "수락 대기 중인 요청 N개"
  *   · pending sent: "보낸 요청 응답 대기 중"
- *   · 없음: "코너맨 찾기"
+ *   · 없음: "복싱파트너 찾기"
+ *   · 2026-11-21 파트너 여러 명 — 제목 "가장 최근 파트너 외 n명"
  *
  * 보호 원칙:
  *   · 공식 missions / member_progress 미수정
@@ -16,6 +17,7 @@ import { Users } from "lucide-react";
 
 import { useMyCornermanStatus } from "@/hooks/useCornerman";
 import { CORNERMAN_COPY } from "@/data/cornermanMessages";
+import { partnersOf } from "./CornermanStatusPanel";
 
 interface Props {
   onOpen: () => void;
@@ -41,10 +43,11 @@ const CornermanCard = ({ onOpen }: Props) => {
   let title: string;
   let subtitle: string;
   if (isLoading) {
-    title = "운동 짝꿍";
+    title = "복싱파트너";
     subtitle = "정보를 불러오는 중…";
   } else if (hasActive) {
-    title = `🥊 ${status?.partner_name ?? "운동 짝꿍"}`;
+    const n = partnersOf(status).length;
+    title = `🥊 ${status?.partner_name ?? "복싱파트너"}${n > 1 ? ` 외 ${n - 1}명` : ""}`;
     if (status?.today?.bonus_claimed) {
       subtitle = "오늘 보너스 받음";
     } else if (status?.today?.both_completed) {
@@ -55,7 +58,7 @@ const CornermanCard = ({ onOpen }: Props) => {
       subtitle = CORNERMAN_COPY.noneCompletedHint;
     }
   } else if (pendingReceivedCount > 0) {
-    title = "짝꿍 요청 도착";
+    title = "복싱파트너 요청 도착";
     subtitle = CORNERMAN_COPY.pendingReceivedHint;
   } else if (pendingSentCount > 0) {
     title = "수락 대기 중";
@@ -71,14 +74,14 @@ const CornermanCard = ({ onOpen }: Props) => {
       onClick={onOpen}
       data-tour="cornerman-card"
       className="flex w-full items-center gap-3 rounded-card border border-border bg-card px-3.5 py-3 text-left transition-all active:scale-[0.99] hover:border-primary/40"
-      aria-label="운동 짝꿍 열기"
+      aria-label="복싱파트너 열기"
     >
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
         <Users className="h-5 w-5" />
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-label font-bold text-primary">
-          운동 짝꿍 · 같이 하면 보너스
+          복싱파트너 · 같이 하면 보너스
         </p>
         <p className="mt-0.5 truncate text-label font-bold text-foreground">
           {title}

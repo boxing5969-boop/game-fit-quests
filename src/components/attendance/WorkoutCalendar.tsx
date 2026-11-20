@@ -285,7 +285,7 @@ const DayCell = ({
   const lp = useLongPress(day, faint ? undefined : onLongPress);
   const base = "flex h-10 w-10 items-center justify-center rounded-full text-label tabular-nums";
   const gold = on && !!moment?.gold;
-  const label = `${dayLabel(day)}${on ? " 출석" : ""}${on && together ? " · 짝꿍과 같이" : ""}${on && moment ? ` · ${moment.text}` : ""}${!on && promised ? " · 약속한 날" : ""}${star ? " · 금색 별" : ""}${act ? ` · ${actShort(act)}` : ""}${note ? " · 코치 한마디" : ""}${dday ? " · D-day" : ""}${dot === "closed" ? " · 휴관" : dot === "event" ? " · 153 일정" : ""}${call ? " · 같이 운동" : ""}${mine.length ? ` · 내 일정 ${mine.length}` : ""}${birthday ? " · 내 생일" : ""}${holiday ? ` · ${holiday}` : ""}${weather ? ` · ${WEATHER_META[weather].label}` : ""}${isToday ? " · 오늘" : ""}`;
+  const label = `${dayLabel(day)}${on ? " 출석" : ""}${on && together ? " · 파트너와 같이" : ""}${on && moment ? ` · ${moment.text}` : ""}${!on && promised ? " · 약속한 날" : ""}${star ? " · 금색 별" : ""}${act ? ` · ${actShort(act)}` : ""}${note ? " · 코치 한마디" : ""}${dday ? " · D-day" : ""}${dot === "closed" ? " · 휴관" : dot === "event" ? " · 153 일정" : ""}${call ? " · 같이 운동" : ""}${mine.length ? ` · 내 일정 ${mine.length}` : ""}${birthday ? " · 내 생일" : ""}${holiday ? ` · ${holiday}` : ""}${weather ? ` · ${WEATHER_META[weather].label}` : ""}${isToday ? " · 오늘" : ""}`;
   const pickedRing = picked && "ring-2 ring-foreground ring-offset-2 ring-offset-card";
   // 길게 누를 때 아이폰 글자 고르기 · 메뉴가 뜨지 않게
   const pressCls = onLongPress ? "select-none [-webkit-touch-callout:none]" : "";
@@ -378,7 +378,7 @@ const DayCell = ({
   }
   return (
     <span className="relative inline-flex">
-      {/* (2-4) 쌍도장 — 짝꿍 도장이 살짝 뒤에 겹친다 */}
+      {/* (2-4) 쌍도장 — 복싱파트너 도장이 살짝 뒤에 겹친다 */}
       {together && <span className="pointer-events-none absolute left-[5px] top-[4px] h-10 w-10 rounded-full bg-sky-300 dark:bg-sky-500/70" aria-hidden />}
       <button
         type="button"
@@ -466,7 +466,7 @@ const PromiseLine = ({
       <Handshake className={cn("h-5 w-5 shrink-0", status?.tone === "next" ? "text-muted-foreground" : "text-primary")} aria-hidden />
       <span className="min-w-0 flex-1">
         <span className="block text-body font-bold leading-snug text-foreground">{status?.text ?? promiseSentence(promise, shortBranchName(branch))}</span>
-        {/* 회색 줄은 하나만 — 짝꿍과 같은 요일이면 그 한 줄이 약속 문장 대신 */}
+        {/* 회색 줄은 하나만 — 파트너와 같은 요일이면 그 한 줄이 약속 문장 대신 */}
         {together ? (
           <span className="block text-label font-bold leading-snug text-sky-700 dark:text-sky-300">{together}</span>
         ) : (
@@ -601,7 +601,7 @@ const WorkoutCalendarCard = ({
       ...(show153 && dots.has("closed") ? [{ cls: DOT_CLOSED, label: "휴관" }] : []),
       ...(show153 && calls ? [{ cls: DOT_CALL, label: "같이 운동" }] : []),
       ...(dday ? [{ cls: DOT_DDAY, label: "D-day" }] : []),
-      ...(together ? [{ cls: "bg-sky-300 dark:bg-sky-500/70", label: "짝꿍과 같이" }] : []),
+      ...(together ? [{ cls: "bg-sky-300 dark:bg-sky-500/70", label: "파트너와 같이" }] : []),
     ];
     return out.length ? out : null;
   }, [cal, visibleDays, today, byDay]);

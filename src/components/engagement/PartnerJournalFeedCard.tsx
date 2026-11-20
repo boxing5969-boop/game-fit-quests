@@ -17,7 +17,7 @@ import PartnerJournalCommentSheet from "./PartnerJournalCommentSheet";
 import UserLeagueBadge from "@/components/badges/UserLeagueBadge";
 
 function relationLabel(rel: PartnerJournalFeedRow["relation"]): string {
-  return rel === "cornerman" ? "코너맨" : "세컨드";
+  return rel === "cornerman" ? "복싱파트너" : "응원 동료";
 }
 
 function relationStyle(rel: PartnerJournalFeedRow["relation"]): string {
@@ -68,7 +68,7 @@ const PartnerJournalFeedCard = () => {
                 파트너 일기
               </p>
               <h3 className="mt-0.5 text-heading">
-                코너맨 · 세컨드의 한 줄
+                복싱파트너 · 응원 동료의 한 줄
               </h3>
             </div>
           </div>
@@ -85,7 +85,7 @@ const PartnerJournalFeedCard = () => {
               아직 볼 수 있는 파트너의 일기가 없습니다
             </p>
             <p className="mt-1 text-label leading-relaxed text-muted-foreground">
-              코너맨을 맺거나 세컨드 응원을 주고받으면
+              복싱파트너를 맺거나 응원을 주고받으면
               <br />
               서로의 챔피언 일기를 열람하고 댓글로 응원할 수 있어요.
             </p>
@@ -134,7 +134,7 @@ const PartnerJournalFeedCard = () => {
         )}
 
         <p className="mt-3 text-label leading-relaxed text-muted-foreground">
-          ※ 파트너 = 코너맨 active 페어 또는 최근 30일 양방향 세컨드 응원.
+          ※ 복싱파트너 또는 최근 30일 서로 응원한 동료.
           공식 1~40 레벨업과 무관합니다.
         </p>
       </section>

@@ -18,6 +18,17 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261121-boxing-partner",
+    date: "2026-11-21",
+    title: "운동 짝꿍 → 복싱파트너, 여러 명 맺기",
+    lines: [
+      "운동 짝꿍 이름이 「복싱파트너」로 바뀌었어요",
+      "이제 한 명이 아니라 10명까지 파트너를 맺을 수 있어요",
+      "파트너마다 오늘 운동을 보고 한 명씩 그만할 수도 있어요",
+    ],
+    link: { to: "/myboxer/community", label: "복싱파트너 열기" },
+  },
+  {
     id: "20261119-pt-ask",
     date: "2026-11-19",
     title: "근무 — PT 확인 필요, 코치에게 물어보기",

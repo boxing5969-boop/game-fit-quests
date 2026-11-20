@@ -469,7 +469,7 @@ const AppRoutes = () => {
       {user && splashDone && !signage && <PostActionReflectionSheet />}
       {/* 최초 로그인 아이디·비번 변경 권장(스킵 가능) — 일괄등록 회원 must_change_credentials */}
       {user && splashDone && !signage && <CredentialChangePrompt />}
-      {/* 회원 이름·카드를 누르면 어디서든 회원 카드 (좋아요·메시지·짝꿍 신청·응원) — openMemberCard(userId) */}
+      {/* 회원 이름·카드를 누르면 어디서든 회원 카드 (좋아요·메시지·복싱파트너 신청·응원) — openMemberCard(userId) */}
       {user && !signage && <GlobalMemberCard />}
       {/* 초대받아 처음 들어온 회원이면 초대한 사람에게 챔피언 머니 1,000 (2026-10-18) */}
       {user && !signage && <InviteRewardBridge />}

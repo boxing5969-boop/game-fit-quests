@@ -279,7 +279,7 @@ const WorkingOutNowFullscreen = ({
             <p className="mb-3 text-label font-semibold leading-relaxed text-muted-foreground">
               체육관 TV와 같은 기준이에요 · 앱에서 운동 시작 또는 출석 후 2시간 · 1분마다 새로고침
               <br />
-              이름을 누르면 회원 카드가 열려요 — 하트 · 메시지 · 응원 · 짝꿍 신청
+              이름을 누르면 회원 카드가 열려요 — 하트 · 메시지 · 응원 · 복싱파트너 신청
             </p>
             {members.length > 0 ? (
               <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4">

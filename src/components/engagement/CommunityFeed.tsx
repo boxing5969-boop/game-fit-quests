@@ -10,7 +10,7 @@
  *   전체 공개 · 친구만 · 나만 보기 — 내 글에는 늘 표시하고 ⋯ 에서 바꾼다. 남의 글은 전체 공개가 아닐 때만 표시.
  *   전 지점 보기에서 지점장·코치 권한을 켜고 끈다(CommunityViewGrants). 받은 사람은 맨 위에 안내.
  * 2026-10-18 대표님 더:
- *   · "이름을 클릭하면 회원 상세 … 좋아요 · 메시지 · 짝꿍 신청 · 응원" → 이름·사진을 누르면 누구나 회원 카드(openMemberCard)
+ *   · "이름을 클릭하면 회원 상세 … 좋아요 · 메시지 · 복싱파트너 신청 · 응원" → 이름·사진을 누르면 누구나 회원 카드(openMemberCard)
  *   · "회원님들에게는 어떻게 보이나?" → 전 지점 보기에 '회원 화면으로 보기' (그 지점 일반 회원이 보는 그대로)
  *   · "새식구가 가입하면 환영하는 문화" → 새 식구 카드에 환영 인사 (NewbieWelcome)
  *   · 화면 글에 '본사'를 쓰지 않는다 · 전체관리자도 이번 주 목표를 올려 본다(내 지점으로)
@@ -533,7 +533,7 @@ const CommunityFeed = ({ openEntryId = null, onEntryHandled }: CommunityFeedProp
 
   const nameLine = (i: FeedItem) => (
     <div className="flex min-w-0 items-center gap-1">
-      {/* 이름을 누르면 누구나 회원 카드 — 좋아요 · 메시지 · 짝꿍 신청 · 응원 (관리자는 카드에서 회원 상세로) */}
+      {/* 이름을 누르면 누구나 회원 카드 — 좋아요 · 메시지 · 복싱파트너 신청 · 응원 (관리자는 카드에서 회원 상세로) */}
       <button
         type="button"
         onClick={() => openMemberCard(i.userId)}
