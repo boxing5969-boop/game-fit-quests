@@ -18,6 +18,18 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261121-pass-start",
+    date: "2026-11-21",
+    title: "수강권 결제 — 시작일 고르기",
+    lines: [
+      "결제할 때 언제부터 다닐지 30일 안에서 고를 수 있어요",
+      "미리 결제하면 지금 수강권이 끝난 다음 날부터 이어져요",
+      "다음 주부터 다니고 싶으면 그날을 고르면 돼요",
+    ],
+    link: { to: "/membership", label: "수강권 보기" },
+    branches: SEOLLEUNG,
+  },
+  {
     id: "20261121-boxing-partner",
     date: "2026-11-21",
     title: "운동 짝꿍 → 복싱파트너, 여러 명 맺기",
