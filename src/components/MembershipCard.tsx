@@ -7,25 +7,31 @@
 // 락카 · 운동복 남은 기간 (2026-10-27 대표님: "회원님이 수강권탭에서 몇일 남았는지 락카와 운동복 사용은 얼마나 남았는지 모두 체크할수있게") —
 //   락카(번호 · 끝나는 날) · 운동복(끝나는 날)을 한 줄씩, 'N일 남음' — 7일 이하 주황, 끝나면 '끝남 · 연장하기'(→ 렌탈 탭).
 //   수강권은 아래 D-day 그대로 (같은 남은 날 계산: 끝나는 날 − 오늘, KST).
+// 시작일 고르기 (2026-11-20) — 결제했지만 아직 시작 전이면 큰 글자를 「시작까지 D-n」으로 · 지금 수강권과 사이가 비면 「다음 시작」 한 줄
+//   (services/upcomingPassService → lib/gymTicketInfo upcomingPassView).
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { isManagerRole } from "@/lib/rankLabels";
 import { isStaffProfile } from "@/lib/staffDisplay";
-import { asOfLabel, daysUntil, leftText, ptTicketView, rentalUseRows, termStateOf, ymdText } from "@/lib/gymTicketInfo";
-import { endText } from "@/lib/cartPricing";
+import { asOfLabel, daysUntil, leftText, ptTicketView, rentalUseRows, termStateOf, upcomingPassView, ymdText } from "@/lib/gymTicketInfo";
+import { dayText, endText } from "@/lib/cartPricing";
 import { kstToday } from "@/lib/levelPractice";
+import { useUpcomingPass } from "@/services/upcomingPassService";
 
 const fmt = (d: string) => new Date(d).toLocaleDateString("ko-KR");
 
 const MembershipCard = () => {
   const { profile, role } = useAuth();
+  const today = kstToday();
+  const isStaff = isManagerRole(role) || (!!profile && isStaffProfile(profile));
+  const memEnd = (profile as { membership_end?: string } | null)?.membership_end ?? null;
+  // 아직 시작 전인 수강권 — 끝나는 날이 앞으로 있을 때만 묻는다
+  const upcomingQ = useUpcomingPass(today, !isStaff && !!memEnd && memEnd > today);
   if (!profile) return null;
 
-  const today = kstToday();
-  const memEnd = (profile as { membership_end?: string }).membership_end ?? null;
   const regDate = (profile as { gym_reg_date?: string }).gym_reg_date ?? null;
   const payment = (profile as { payment_total?: number }).payment_total ?? null;
-  const isStaff = isManagerRole(role) || isStaffProfile(profile);
+  const upcoming = isStaff ? null : upcomingPassView(upcomingQ.data, today);
   const pt = isStaff ? null : ptTicketView(profile);
   const rentals = rentalUseRows(profile, today);
   // PT 수업권만 있는 회원도 카드를 본다 (남은 횟수·락카·운동복)
@@ -124,6 +130,11 @@ const MembershipCard = () => {
         <div className="relative mt-6 flex items-end justify-between">
           <div className="space-y-0.5 text-label leading-relaxed text-white/55">
             <p>등록 {regDate ? fmt(regDate) : fmt(profile.created_at)}</p>
+            {upcoming && (upcoming.waiting || upcoming.gap) && (
+              <p className="font-semibold text-white/80">
+                {upcoming.waiting ? "시작" : "다음 시작"} {dayText(upcoming.start, today)}
+              </p>
+            )}
             <p>만료 {isStaff ? "무제한" : fmt(memEnd!)}</p>
             {!isStaff && payment != null && payment > 0 && (
               <p>누적 결제 <span className="font-semibold text-white/75">{payment.toLocaleString("ko-KR")}원</span></p>
@@ -131,10 +142,20 @@ const MembershipCard = () => {
           </div>
           <div className="text-right">
             <p className="text-label font-medium text-white/40">
-              {isStaff ? "PERIOD" : expired ? "EXPIRED" : "남은 기간"}
+              {isStaff ? "PERIOD" : upcoming?.waiting ? "시작까지" : expired ? "EXPIRED" : "남은 기간"}
             </p>
-            <p className={`text-title font-black leading-none ${isStaff ? "text-reward" : expired ? "text-destructive" : soon ? "text-status-pending" : "text-primary"}`}>
-              {isStaff ? "무제한" : ddays == null ? "–" : expired ? `D+${-ddays}` : ddays === 0 ? "D-DAY" : `D-${ddays}`}
+            <p className={`text-title font-black leading-none ${isStaff ? "text-reward" : upcoming?.waiting ? "text-primary" : expired ? "text-destructive" : soon ? "text-status-pending" : "text-primary"}`}>
+              {isStaff
+                ? "무제한"
+                : upcoming?.waiting
+                  ? `D-${upcoming.daysToStart}`
+                  : ddays == null
+                    ? "–"
+                    : expired
+                      ? `D+${-ddays}`
+                      : ddays === 0
+                        ? "D-DAY"
+                        : `D-${ddays}`}
             </p>
             {!isStaff && (expired || soon) && (
               <Link to="/membership?buy=1" className="mt-1.5 inline-block rounded-full bg-white/10 px-2.5 py-1 text-micro font-bold text-white active:scale-95">

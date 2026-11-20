@@ -5,10 +5,11 @@
  *   · 줄마다 '안 써요 / 쓸게요' — 쓰면 수강권과 같은 개월로 담기고(max), −/+ 로 줄일 수 있다 (1개월까지).
  *   · 지금 쓰고 있으면 "지금 11월 25일까지 → 결제하면 2월 23일까지"를 보여 준다 (남은 기간 뒤로 이어 붙음).
  *   · 락카 번호는 결제 후 데스크(지점장님)가 정해 준다.
+ *   · 수강권 시작일을 고르면(2026-11-20) 같이 산 운동복 · 락카도 그날부터 — 지금 쓰고 있으면 그 뒤로.
  *   계산은 lib/cartPricing — 서버(payssam-create-bill · DB apply_payment_order)와 같은 식.
  */
 import { Minus, Plus } from "lucide-react";
-import { RENTAL_LABEL, endText, extendedEnd, rentalDays, type RentalKind } from "@/lib/cartPricing";
+import { RENTAL_LABEL, endText, itemPeriod, rentalDays, type RentalKind } from "@/lib/cartPricing";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -23,6 +24,8 @@ interface Props {
   currentEnd: Partial<Record<RentalKind, string | null>>;
   /** 같이 사는 수강권 (끝나는 날 계산용) — 렌탈만이면 없음 */
   membership?: { months: number; days: number } | null;
+  /** 수강권과 같이 살 때 고른 시작일 — 있으면 그날부터 (지금 쓰고 있으면 그 뒤로). 기본 시작일이면 null */
+  start?: string | null;
   today: string;
   /** 수강권 결제 창에서는 '같이 쓰실래요?' 질문 · 렌탈 탭에서는 '연장할 개월' */
   mode: "addon" | "standalone";
@@ -31,7 +34,7 @@ interface Props {
 
 const won = (n: number) => n.toLocaleString("ko-KR") + "원";
 
-const RentalAddOns = ({ maxMonths, value, onChange, unitPrice, currentEnd, membership = null, today, mode, className }: Props) => {
+const RentalAddOns = ({ maxMonths, value, onChange, unitPrice, currentEnd, membership = null, start = null, today, mode, className }: Props) => {
   const kinds = (["sportswear", "locker"] as const).filter((k) => (unitPrice[k] ?? 0) > 0);
   if (kinds.length === 0) return null;
   // 1개월 수강권이면 고를 개월이 없다 — 회색 −/+ 대신 '1개월'만 (꺼진 것처럼 보이지 않게, 2026-10-27)
@@ -60,7 +63,7 @@ const RentalAddOns = ({ maxMonths, value, onChange, unitPrice, currentEnd, membe
           const unit = unitPrice[k] ?? 0;
           const cur = currentEnd[k] ?? null;
           const curActive = !!cur && cur >= today;
-          const nextEnd = on ? extendedEnd(cur, rentalDays(months, membership), today) : null;
+          const next = on ? itemPeriod({ currentEnd: cur, today, months, days: rentalDays(months, membership), start }) : null;
           return (
             <div key={k} className={cn("rounded-xl px-3 py-2.5 ring-1 ring-inset", on ? "bg-primary/5 ring-primary/40" : "bg-muted/40 ring-border")}>
               <div className="flex items-center justify-between gap-2">
@@ -124,9 +127,13 @@ const RentalAddOns = ({ maxMonths, value, onChange, unitPrice, currentEnd, membe
                   <span className="text-label font-black tabular-nums text-foreground">{won(unit * months)}</span>
                 </div>
               )}
-              {on && nextEnd && (
+              {on && next && (
                 <p className="mt-1.5 text-micro text-muted-foreground">
-                  결제하면 <b className="text-foreground">{endText(nextEnd, today)}까지</b>
+                  결제하면{" "}
+                  <b className="text-foreground">
+                    {!curActive && next.start > today ? `${endText(next.start, today)}부터 ` : ""}
+                    {endText(next.end, today)}까지
+                  </b>
                   {curActive ? " (남은 기간 뒤로 이어 붙여요)" : ""}
                   {k === "locker" && !curActive ? " · 락카 번호는 결제 후 데스크에서 정해 드려요" : ""}
                 </p>

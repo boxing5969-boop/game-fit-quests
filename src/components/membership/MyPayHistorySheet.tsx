@@ -70,11 +70,14 @@ const OrderCard = ({ o }: { o: PayOrder }) => {
             <li key={`${it.kind}-${i}`} className="flex items-start justify-between gap-2 text-label">
               <span className="min-w-0">
                 <span className="block font-bold text-foreground">{itemLabel(it)}</span>
-                {it.startDate && it.endDate && (
+                {it.startDate && it.endDate ? (
                   <span className={cn("block text-label tabular-nums text-muted-foreground", (canceled || it.reverted) && "line-through")}>
                     {shortYmd(it.startDate)} ~ {shortYmd(it.endDate)}
                   </span>
-                )}
+                ) : it.startDate && o.status === "sent" ? (
+                  // 결제 전 — 고른 시작일 (2026-11-20 시작일 고르기 · 끝나는 날은 결제가 끝날 때 정해진다)
+                  <span className="block text-label tabular-nums text-muted-foreground">{shortYmd(it.startDate)}부터 시작</span>
+                ) : null}
               </span>
               <span className="shrink-0 font-bold tabular-nums text-foreground">{won(it.amount + it.mileageUsed)}</span>
             </li>

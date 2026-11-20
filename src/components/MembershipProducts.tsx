@@ -9,6 +9,10 @@
 // 2026-10-27 장바구니 (대표님 보고서 「앱 결제 장바구니」 · "나머진 니추천대로"): 수강권 결제 확인 창에서 운동복 · 락카도 같이 쓸지 묻고
 //   (수강권과 같은 개월, 줄일 수 있게) 결제선생 링크 1개로 결제한다(body.cart). 렌탈 탭은 운동복 · 락카만 연장하는 장바구니.
 //   운동복 · 락카를 안 담은 수강권 · PT · 용품 · 1일권은 예전처럼 상품 하나(body.product_id). 계산은 lib/cartPricing.
+// 2026-11-20 시작일 고르기 (대표님: "회원님들이 수강권 결제할때 시작일을 지정할수있게하자. 미리등록하려는분들도있고
+//   신규인데 다음주부터 하고싶은 사람도 있으니까") — 수강권 결제 확인 창 맨 위 「언제부터 다닐까요?」(PassStartPicker).
+//   기본은 이어서(남아 있으면 끝난 다음 날 · 없으면 오늘) · 30일 안에서 고른다. 수강권은 늘 장바구니(body.cart)로 보내고
+//   고른 날은 cart.start_date — 서버(payssam-create-bill)가 다시 검사하고 결제가 끝나면 DB apply_payment_order 가 그날부터 반영한다.
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { CreditCard, Plus, Pencil, Trash2, X, Settings, ChevronDown } from "lucide-react";
@@ -25,21 +29,25 @@ import { isOfflinePayBranch } from "@/lib/branchPayment";
 import OfflinePayCard from "@/components/membership/OfflinePayCard";
 import MileagePayBox from "@/components/membership/MileagePayBox";
 import RentalAddOns from "@/components/membership/RentalAddOns";
+import PassStartPicker from "@/components/membership/PassStartPicker";
 import { clampMileageUse, maxMileageUse } from "@/lib/mileagePay";
 import {
   MAX_RENTAL_MONTHS,
   cartLines,
   cartTotal,
   endText,
-  extendedEnd,
+  itemPeriod,
   membershipMonths,
   mileageBase,
   recallRental,
   rememberRental,
   rentalKindOf,
+  requestedStart,
+  startBounds,
   type RentalKind,
 } from "@/lib/cartPricing";
 import { kstToday } from "@/lib/levelPractice";
+import { payBillError } from "@/lib/payBillError";
 
 interface Product {
   id: string;
@@ -63,8 +71,9 @@ const formatPhone = (v: string) => {
 };
 const blankForm = { name: "", price: "", duration_days: "30" };
 
-/** 결제 확인 창에 올린 것 — 상품 하나(PT · 용품 · 1일권), 수강권(+ 운동복 · 락카), 또는 운동복 · 락카만(product = null) */
-type Checkout = { product: Product | null; rentals: Record<RentalKind, number> };
+/** 결제 확인 창에 올린 것 — 상품 하나(PT · 용품 · 1일권), 수강권(+ 운동복 · 락카), 또는 운동복 · 락카만(product = null)
+ *  start = 수강권 시작일로 고른 날 (기본 시작일이면 null — 결제할 때 서버가 다시 센다) */
+type Checkout = { product: Product | null; rentals: Record<RentalKind, number>; start: string | null };
 const NO_RENTALS: Record<RentalKind, number> = { sportswear: 0, locker: 0 };
 
 // 고른 운동복 · 락카를 이 창(탭)에서 기억 — 결제창에서 취소하고 돌아와 다시 열어도 그대로 (2026-10-27 대표님:
@@ -160,6 +169,9 @@ const MembershipProducts = () => {
   const mileageBalance = mileage.data?.balance ?? 0;
   const today = kstToday();
   const rentalEnds = profile as { locker_end?: string | null; sportswear_end?: string | null } | null;
+  const membershipEnd = (profile as { membership_end?: string | null } | null)?.membership_end ?? null;
+  // 수강권 시작일로 고를 수 있는 날 (기본 = 이어서, 30일 안) — 서버도 같은 식으로 다시 검사한다
+  const memBounds = startBounds(membershipEnd, today);
 
   const load = useCallback(async () => {
     const { data } = await (supabase as any)
@@ -198,8 +210,8 @@ const MembershipProducts = () => {
     }
     return u;
   }, [products]);
-  const isCartCheckout = (c: Checkout) =>
-    !c.product || (c.product.category === "membership" && c.rentals.sportswear + c.rentals.locker > 0);
+  // 수강권은 늘 장바구니로 보낸다 (2026-11-20 — 시작일을 같이 보내려고) · PT · 용품 · 1일권은 상품 하나
+  const isCartCheckout = (c: Checkout) => !c.product || c.product.category === "membership";
   const linesFor = (c: Checkout) =>
     cartLines({
       membership: c.product?.category === "membership" ? { name: c.product.name, price: c.product.price, days: c.product.duration_days } : null,
@@ -232,7 +244,7 @@ const MembershipProducts = () => {
       const mem = rentalMemory.current.addon;
       r = { sportswear: recallRental(mem.sportswear, m), locker: recallRental(mem.locker, m) };
     }
-    setCheckout({ product: p, rentals: r });
+    setCheckout({ product: p, rentals: r, start: null });
   };
 
   // 결제창에서 '뒤로'로 돌아오면 브라우저가 떠나기 전 화면을 그대로 되살린다 — '이동 중...'으로 멈춘 버튼을 푼다 (2026-10-27)
@@ -254,20 +266,35 @@ const MembershipProducts = () => {
     setPaying(c.product?.id ?? "rental-cart");
     try {
       const use_mileage = pend.mileage;
+      const isMem = c.product?.category === "membership";
+      // 고른 시작일 — 기본 시작일이면 보내지 않는다(결제가 끝날 때 서버가 이어서 센다)
+      const start_date = isMem ? requestedStart(c.start, memBounds) : null;
       const body = isCartCheckout(c)
         ? {
             cart: {
-              membership_product_id: c.product?.category === "membership" ? c.product.id : null,
+              membership_product_id: isMem ? c.product!.id : null,
               sportswear_months: c.rentals.sportswear,
               locker_months: c.rentals.locker,
+              ...(start_date ? { start_date } : {}),
             },
             use_mileage,
           }
         : { product_id: c.product!.id, use_mileage };
       const { data, error } = await supabase.functions.invoke("payssam-create-bill", { body });
-      if (error) throw error;
+      if (error) {
+        // 서버가 말해 준 까닭을 그대로 (예전엔 늘 영어 'non-2xx'가 보였다) · 시작일이 어긋났으면 남은 기간을 다시 읽는다
+        const why = await payBillError(error);
+        if (why.code === "START_DATE") void refreshProfile?.();
+        toast.error(why.message);
+        return;
+      }
       if (data?.error) {
         toast.error(data.error);
+        return;
+      }
+      // 시작일을 골랐는데 서버가 그날을 받지 않았으면(시작일을 모르는 예전 서버) 결제창으로 가지 않는다 — 오늘부터로 잘못 결제되지 않게
+      if (start_date && data?.start_date !== start_date) {
+        toast.error("지금은 시작일을 고를 수 없어요. 잠시 뒤 다시 시도해 주세요.");
         return;
       }
       if (data?.shortUrl) {
@@ -429,7 +456,7 @@ const MembershipProducts = () => {
       const k = isRentalTab ? rentalKindOf(p.name) : null;
       return !k || !rentalCartKinds.includes(k);
     });
-    const rentalPickTotal = isRentalTab ? checkoutTotal({ product: null, rentals: rentalPick }) : 0;
+    const rentalPickTotal = isRentalTab ? checkoutTotal({ product: null, rentals: rentalPick, start: null }) : 0;
 
     return (
       <div ref={rootRef} className="scroll-mt-4 rounded-2xl border border-border bg-card p-4">
@@ -558,7 +585,7 @@ const MembershipProducts = () => {
         </div>
 
         <p className="mt-3 text-label leading-relaxed text-muted-foreground">
-          결제가 끝나면 기간이 바로 늘어나요
+          {isMembership ? "결제할 때 시작일을 골라요 · 다음 주부터도 돼요" : "결제가 끝나면 기간이 바로 늘어나요"}
         </p>
         {phoneModalJsx}
         {checkout && (() => {
@@ -583,10 +610,15 @@ const MembershipProducts = () => {
           const usePts = clampMileageUse(mileagePts, maxUse);
           const payWon = won(total - usePts);
           const curEnd: Record<"membership" | RentalKind, string | null> = {
-            membership: (profile as { membership_end?: string | null } | null)?.membership_end ?? null,
+            membership: membershipEnd,
             sportswear: rentalEnds?.sportswear_end ?? null,
             locker: rentalEnds?.locker_end ?? null,
           };
+          // 시작일 — 고른 날(범위 밖이면 기본 시작일) · 결제하면 이 기간 (서버 apply_payment_order 와 같은 식)
+          const reqStart = isMem ? requestedStart(c.start, memBounds) : null;
+          const memPeriod = isMem && p
+            ? itemPeriod({ currentEnd: curEnd.membership, today, months: memMonths, days: p.duration_days, start: reqStart })
+            : null;
           return (
             <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 sm:items-center" onClick={close}>
               <div
@@ -608,6 +640,18 @@ const MembershipProducts = () => {
                   <p className="text-body text-muted-foreground">운동복 · 락카 연장 · 결제 링크 하나로 한 번에</p>
                 )}
 
+                {/* 언제부터 다닐까요? — 기본 = 이어서 · 30일 안에서 고르기 (2026-11-20) */}
+                {isMem && p && memPeriod && (
+                  <PassStartPicker
+                    className="mt-3"
+                    bounds={memBounds}
+                    value={memPeriod.start}
+                    onChange={(d) => setCheckout({ ...c, start: d > memBounds.min ? d : null })}
+                    period={memPeriod}
+                    today={today}
+                  />
+                )}
+
                 {/* 수강권과 같이 — 운동복 · 락카 담기 (수강권 개월만큼, 줄일 수 있게) */}
                 {isMem && p && (
                   <RentalAddOns
@@ -622,6 +666,7 @@ const MembershipProducts = () => {
                     unitPrice={rentalUnit}
                     currentEnd={curEnd}
                     membership={{ months: memMonths, days: p.duration_days }}
+                    start={reqStart}
                     today={today}
                   />
                 )}
@@ -630,15 +675,21 @@ const MembershipProducts = () => {
                 {(hasRentals || !p) && lines.length > 0 && (
                   <div className="mt-3 rounded-xl border border-border bg-muted/30 p-3" aria-label="결제할 것">
                     <p className="text-body font-black text-foreground">결제할 것</p>
-                    {lines.map((l) => (
+                    {lines.map((l) => {
+                      const per = itemPeriod({ currentEnd: curEnd[l.kind], today, months: l.months, days: l.days, start: reqStart });
+                      return (
                       <div key={l.kind} className="mt-2 flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="text-label font-bold text-foreground">{l.label}</p>
-                          <p className="text-micro text-muted-foreground">{endText(extendedEnd(curEnd[l.kind], l.days, today), today)}까지</p>
+                          <p className="text-micro text-muted-foreground">
+                            {per.start > today ? `${endText(per.start, today)} ~ ` : ""}
+                            {endText(per.end, today)}까지
+                          </p>
                         </div>
                         <span className="shrink-0 text-label font-black tabular-nums text-foreground">{won(l.amount)}</span>
                       </div>
-                    ))}
+                      );
+                    })}
                     <div className="mt-2.5 flex items-center justify-between border-t border-border pt-2.5">
                       <span className="text-label font-bold text-foreground">합계</span>
                       <span className="text-body font-black tabular-nums text-foreground">{won(total)}</span>

@@ -277,7 +277,7 @@ const MembershipPage = () => {
           <div className="rounded-2xl border border-dashed border-border p-6 text-center">
             <span className="text-title">🎫</span>
             <p className="mt-2 text-body font-medium text-foreground">아직 등록된 수강권이 없습니다</p>
-            <p className="mt-1 text-label leading-relaxed text-muted-foreground">아래에서 수강권을 결제하면 바로 이용이 시작됩니다.</p>
+            <p className="mt-1 text-label leading-relaxed text-muted-foreground">아래에서 수강권을 골라 결제해 주세요</p>
           </div>
         )}
 

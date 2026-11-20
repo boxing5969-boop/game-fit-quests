@@ -18,7 +18,13 @@
 //    · 같은 회원 · 같은 장바구니(또는 같은 상품)를 24시간 안에 다시 누르면 새 링크(50원)를 만들지 않고 아까 링크를 다시 준다.
 //    · 칠금점(데스크 결제 지점)은 화면뿐 아니라 여기서도 막는다.
 //    · body.product_id 하나만 오면 예전과 똑같이 처리한다(PT · 용품 · 1일권 등).
+// 2026-11-20 시작일 고르기 (대표님: "회원님들이 수강권 결제할때 시작일을 지정할수있게하자"):
+//    · body.cart.start_date = 회원이 고른 수강권 시작일 — 기본(이어서) ~ 30일 안인지 다시 검사(./start.ts — 화면 · DB 와 같은 식).
+//      범위 밖이면 400 {error, code: "START_DATE"} (그사이 남은 기간이 바뀐 것 — 화면이 다시 읽는다).
+//    · 고른 날은 항목마다 payment_order_items.start_date 에 둔다(기본 시작일이면 비움) — 결제가 끝나면 apply_payment_order 가 그날부터.
+//    · 같은 장바구니라도 시작일이 다르면 새 링크 · 답에 start_date 를 돌려준다(화면이 서버가 그날을 받았는지 확인한다).
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { checkStart, kstToday } from "./start.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -50,6 +56,8 @@ type CartItem = {
   mileage_used: number;
   amount: number;
   duration_days: number;
+  /** 고른 시작일 (기본 시작일이면 null) — 결제가 끝날 때 apply_payment_order 가 이 날과 그때의 이어서 중 늦은 날로 */
+  start_date: string | null;
 };
 
 /** 렌탈 개월 → 일수. 수강권 개월과 같으면 수강권 일수(1년 = 365)를 그대로 써서 끝나는 날을 맞춘다 */
@@ -96,7 +104,7 @@ Deno.serve(async (req) => {
 
     const { data: profile } = await admin
       .from("profiles")
-      .select("name, nickname, phone_number, branch_name")
+      .select("name, nickname, phone_number, branch_name, membership_end")
       .eq("user_id", user.id)
       .maybeSingle();
     const phone = onlyDigits(profile?.phone_number);
@@ -125,6 +133,7 @@ Deno.serve(async (req) => {
     let mileageBase = 0;
     let items: CartItem[] = [];
     let cartKey = "";
+    let startDate: string | null = null;
 
     if (cartIn) {
       const memId = cartIn.membership_product_id ? String(cartIn.membership_product_id) : "";
@@ -141,9 +150,15 @@ Deno.serve(async (req) => {
         items.push({
           kind: "membership", product_id: mp.id, product_name: String(mp.name), months: membership.months,
           unit_price: Number(mp.price), list_amount: Number(mp.price), mileage_used: 0, amount: Number(mp.price), duration_days: days,
+          start_date: null,
         });
         mileageBase = Number(mp.price);
       }
+
+      // 수강권 시작일 (2026-11-20) — 고른 날이 기본(이어서) ~ 30일 안인지
+      const sc = checkStart(cartIn.start_date, profile?.membership_end ?? null, kstToday(), !!membership);
+      if (!sc.ok) return json({ error: sc.error, code: "START_DATE" }, 400);
+      startDate = sc.start;
 
       const maxRental = membership ? membership.months : 12;
       // 렌탈 상품 가격(한 달) — 상품표 '렌탈'의 운동복 · 개인 락카 (1개월)
@@ -165,10 +180,12 @@ Deno.serve(async (req) => {
         items.push({
           kind, product_id: String(rp.id), product_name: `${kind === "locker" ? "락카" : "운동복"} ${months}개월`, months,
           unit_price: unit, list_amount: unit * months, mileage_used: 0, amount: unit * months,
-          duration_days: rentalDays(months, membership),
+          duration_days: rentalDays(months, membership), start_date: null,
         });
       }
       if (items.length === 0) return json({ error: "담긴 상품이 없어요." }, 400);
+      // 같이 산 운동복 · 락카도 고른 날부터 (자기 남은 기간이 더 길면 그 뒤로 — apply_payment_order)
+      if (startDate) for (const it of items) it.start_date = startDate;
 
       listTotal = items.reduce((s, it) => s + it.list_amount, 0);
       if (!membership) mileageBase = listTotal; // 락카 · 운동복만이면 합계 기준
@@ -177,7 +194,7 @@ Deno.serve(async (req) => {
       const labels = items.map(productLabel);
       orderName = labels.join(" + ");
       if (orderName.length > MAX_NAME) orderName = `${labels[0]} 외 ${labels.length - 1}건`;
-      cartKey = `cart:${memId || "-"}:s${swMonths}:l${lkMonths}:m${useMileage}`;
+      cartKey = `cart:${memId || "-"}:s${swMonths}:l${lkMonths}:m${useMileage}${startDate ? `:d${startDate}` : ""}`;
     } else {
       const { data: product } = await admin
         .from("membership_products")
@@ -225,7 +242,7 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
     if (recent?.short_url && Number(recent.amount) === payAmount) {
-      return json({ ok: true, shortUrl: recent.short_url, billId: recent.bill_id, reused: true });
+      return json({ ok: true, shortUrl: recent.short_url, billId: recent.bill_id, reused: true, start_date: startDate });
     }
 
     const price = String(payAmount);
@@ -313,7 +330,7 @@ Deno.serve(async (req) => {
       return json({ error: "결제 요청 실패: " + (out?.msg || out?.message || res.status) }, 502);
     }
     await admin.from("payment_orders").update({ status: "sent", short_url: shortUrl, raw: safeOut }).eq("id", order.id);
-    return json({ ok: true, shortUrl, billId });
+    return json({ ok: true, shortUrl, billId, start_date: startDate });
   } catch (e) {
     console.error("payssam-create-bill error:", e);
     return json({ error: "처리 중 오류가 발생했습니다." }, 500);

@@ -175,3 +175,33 @@ export function rentalUseRows(p: unknown, today: string = kstToday()): RentalUse
   }
   return rows;
 }
+
+/**
+ * 결제했지만 아직 시작 전인 수강권 (2026-11-20 시작일 고르기) — 수강권 카드에 「시작까지 D-n」.
+ *   item = 내 결제 항목 중 반영된(applied) · 되돌리지 않은 수강권 줄 가운데 시작일이 오늘보다 뒤인 가장 이른 것.
+ *   · waiting — 지금 다니는 수강권이 없다(그 결제 전 끝나는 날이 없거나 이미 지남) → 큰 글자는 남은 기간 대신 시작까지
+ *   · gap — 지금 수강권은 있는데 끝난 다음 날보다 뒤에 시작한다(사이가 빈다) → 「다음 시작」 한 줄
+ *   지금 수강권 뒤로 바로 이어지는 결제(미리 결제)는 둘 다 아니다 — 예전처럼 남은 기간만.
+ */
+export interface UpcomingPassItem {
+  start_date: string | null;
+  end_date: string | null;
+  prev_end: string | null;
+}
+export interface UpcomingPassView {
+  start: string;
+  /** 시작까지 남은 날 (내일이면 1) */
+  daysToStart: number;
+  waiting: boolean;
+  gap: boolean;
+}
+export function upcomingPassView(item: UpcomingPassItem | null | undefined, today: string = kstToday()): UpcomingPassView | null {
+  const start = dateOnly(item?.start_date);
+  const toStart = daysUntil(start, today);
+  if (!start || toStart == null || toStart <= 0) return null;
+  const prev = dateOnly(item?.prev_end);
+  const running = !!prev && prev >= today;
+  if (!running) return { start, daysToStart: toStart, waiting: true, gap: false };
+  const afterPrev = daysUntil(start, prev) ?? 1; // 지금 수강권 끝난 날부터 며칠 뒤에 시작하나
+  return { start, daysToStart: toStart, waiting: false, gap: afterPrev > 1 };
+}
