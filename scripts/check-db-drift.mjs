@@ -9,7 +9,8 @@
 //   node scripts/check-db-drift.mjs --db <파일.json>  DB 지문을 파일에서 읽기(시험용)
 //
 // DB 지문: public.repo_drift_fingerprints() — 이름·인자·본문 md5 만(로그인 없이 읽힘, 회원 데이터 없음).
-// 주소·키: SUPABASE_URL · SUPABASE_ANON_KEY 환경 변수, 없으면 운영 사이트(myboxer153.com)에 공개된 앱 키를 찾아 쓴다.
+// 주소·키: SUPABASE_URL · SUPABASE_ANON_KEY 환경 변수, 없으면 운영 사이트(myboxer153.com)에 공개된 앱 키를 찾아 쓴다
+//   (첫 묶음부터 그 묶음이 부르는 조각을 따라가며 — 2026-11-21 부터 첫 묶음은 TV 껍데기라 키가 없다).
 // 본문 정규화(DB 와 같은 규칙): \r 제거 → -- · /* */ 주석 제거 → 공백 묶음을 한 칸으로 → 앞뒤 공백 제거 → md5.
 //
 // 분류
@@ -178,20 +179,42 @@ export function readRepo() {
   return byName;
 }
 
-async function findAnonKey() {
+// 운영 사이트에 공개된 앱 키 찾기.
+// 2026-11-21(TV 가볍게 62a7bf2)부터 첫 묶음(index-*.js)은 TV 껍데기(약 20KB)이고 앱은 따로 받는 조각이라
+// 키가 첫 묶음에 없다 → index.html 이 부르는 파일부터 그 파일이 부르는 조각("./App-….js" · "assets/client-….js")을
+// 차례로 따라가며 찾는다(11/21 에는 세 번째 파일 client-*.js). 없는 조각 주소는 SPA 규칙으로 index.html 이
+// 200 으로 오므로 JavaScript 로 온 것만 읽는다.
+async function findAnonKey(limit = 60) {
   const html = await (await fetch(SITE + "/")).text();
-  const js = /\/assets\/index-[A-Za-z0-9_-]+\.js/.exec(html)?.[0];
-  if (!js) throw new Error("운영 사이트에서 앱 파일을 못 찾음");
-  const code = await (await fetch(SITE + js)).text();
-  for (const tok of code.match(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g) ?? []) {
-    try {
-      const p = JSON.parse(Buffer.from(tok.split(".")[1], "base64url").toString("utf8"));
-      if (p.ref === PROJECT_REF && p.role === "anon") return tok;
-    } catch { /* 다음 후보 */ }
+  const queue = [...new Set(html.match(/\/assets\/[A-Za-z0-9_.-]+\.js/g) ?? [])];
+  if (!queue.length) throw new Error("운영 사이트에서 앱 파일을 못 찾음");
+  const seen = new Set(queue);
+  let pub = null;
+  let read = 0;
+  for (let i = 0; i < queue.length && i < limit; i++) {
+    const res = await fetch(SITE + queue[i]).catch(() => null);
+    if (!res?.ok || !/javascript/i.test(res.headers.get("content-type") ?? "")) continue;
+    const code = await res.text();
+    read++;
+    for (const tok of code.match(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g) ?? []) {
+      try {
+        const p = JSON.parse(Buffer.from(tok.split(".")[1], "base64url").toString("utf8"));
+        if (p.ref === PROJECT_REF && p.role === "anon") return tok;
+      } catch { /* 다음 후보 */ }
+    }
+    // 새 형식 키(sb_publishable_)에는 프로젝트가 안 적혀 있어, 이 프로젝트 주소가 같은 파일에 있을 때만 후보로
+    // (153OS 처럼 다른 프로젝트 키를 잘못 집지 않게)
+    if (!pub && code.includes(PROJECT_REF)) pub = /sb_publishable_[A-Za-z0-9_-]+/.exec(code)?.[0] ?? null;
+    for (const m of code.matchAll(/(?:\.\/|\/?assets\/)([A-Za-z0-9_.-]+\.js)/g)) {
+      const next = "/assets/" + m[1];
+      if (!seen.has(next)) {
+        seen.add(next);
+        queue.push(next);
+      }
+    }
   }
-  const pub = /sb_publishable_[A-Za-z0-9_-]+/.exec(code)?.[0];
   if (pub) return pub;
-  throw new Error("운영 사이트에서 공개 앱 키를 못 찾음");
+  throw new Error(`운영 사이트에서 공개 앱 키를 못 찾음 (앱 파일 ${read}개 확인)`);
 }
 
 async function fetchDb() {
