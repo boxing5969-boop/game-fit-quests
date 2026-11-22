@@ -79,3 +79,64 @@ export function lookupStatusOf(v: unknown): LookupStatus {
     ? s
     : "error";
 }
+
+// ── 기록 확인 대기 (2026-11-22) ──
+// 명단에서 못 찾은 회원이 데스크에 확인을 부탁하면(member-lookup-request create) 받은 열쇠를 이 기기에 둔다.
+// 다시 앱을 열면 첫 화면이 「확인 대기」 카드부터 보여 주고, 열쇠로 상태를 묻는다. 30일 지나면 잊는다.
+const REQ_KEY = "153entry:lookupReq";
+const REQ_TTL_MS = 30 * 86_400_000;
+
+export interface LookupRequest {
+  key: string;
+  name: string;
+  branch: string;
+  at: number;
+}
+
+export function saveLookupRequest(r: Omit<LookupRequest, "at">, now = Date.now()): void {
+  try {
+    store()?.setItem(REQ_KEY, JSON.stringify({ ...r, at: now }));
+  } catch {
+    /* 저장이 막힌 기기 — 이번 화면에서만 기다린다 */
+  }
+}
+
+export function peekLookupRequest(now = Date.now()): LookupRequest | null {
+  const s = store();
+  if (!s) return null;
+  try {
+    const raw = s.getItem(REQ_KEY);
+    if (!raw) return null;
+    const v = JSON.parse(raw) as Partial<LookupRequest>;
+    if (typeof v.key === "string" && typeof v.at === "number" && now - v.at < REQ_TTL_MS) {
+      return { key: v.key, name: String(v.name ?? ""), branch: String(v.branch ?? ""), at: v.at };
+    }
+    s.removeItem(REQ_KEY);
+    return null;
+  } catch {
+    try {
+      s.removeItem(REQ_KEY);
+    } catch {
+      /* 무시 */
+    }
+    return null;
+  }
+}
+
+export function clearLookupRequest(): void {
+  try {
+    store()?.removeItem(REQ_KEY);
+  } catch {
+    /* 무시 */
+  }
+}
+
+/** member-lookup-request status 의 status — 모르는 값은 error */
+export type RequestStatus = "pending" | "found" | "not_member" | "closed" | "expired" | "done" | "gone" | "error";
+
+export function requestStatusOf(v: unknown): RequestStatus {
+  const s = (v as { status?: unknown } | null)?.status;
+  return s === "pending" || s === "found" || s === "not_member" || s === "closed" || s === "expired" || s === "done" || s === "gone"
+    ? s
+    : "error";
+}

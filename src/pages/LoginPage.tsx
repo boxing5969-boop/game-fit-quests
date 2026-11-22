@@ -14,7 +14,7 @@ import { peekPostLoginPath } from "@/lib/postLoginRedirect";
 import MyBoxerWordmark from "@/components/brand/MyBoxerWordmark";
 import InstallAppButton from "@/components/install/InstallAppButton";
 import { isIosApp, loadIosAppNative } from "@/lib/iosApp";
-import { hasLoggedInBefore } from "@/lib/memberEntry";
+import { hasLoggedInBefore, peekLookupRequest } from "@/lib/memberEntry";
 import MemberLookup from "@/components/onboarding/MemberLookup";
 import {
   Select,
@@ -170,6 +170,8 @@ const LoginPage = () => {
   //   이 기기에서 로그인한 적이 있거나 ?login=1 이면 로그인 화면부터(markLoggedIn · src/lib/memberEntry.ts).
   const [entry, setEntry] = useState<"ask" | "member" | "login">(() => {
     if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("login") === "1") return "login";
+    // 데스크에 기록 확인을 부탁해 둔 기기는 「확인 대기」 화면부터(MemberLookup 이 그 열쇠로 상태를 묻는다)
+    if (peekLookupRequest()) return "member";
     return hasLoggedInBefore() ? "login" : "ask";
   });
   const [username, setUsername] = useState("");

@@ -6,7 +6,7 @@ const invoke = vi.fn();
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { functions: { invoke: (...a: unknown[]) => invoke(...a) } } }));
 
 import MemberLookup from "./MemberLookup";
-import { peekLinkTicket } from "@/lib/memberEntry";
+import { peekLinkTicket, peekLookupRequest, saveLookupRequest } from "@/lib/memberEntry";
 
 const SignupProbe = () => {
   const loc = useLocation();
@@ -71,9 +71,85 @@ describe("기록 찾기 (첫 화면 「다니고 있어요」)", () => {
     expect(onLogin).toHaveBeenCalled();
   });
 
-  it("정보가 다르면 서버 안내를 그대로 보여 준다", async () => {
+  it("정보가 다르면 확인 방법과 데스크 부탁을 보여 준다", async () => {
     invoke.mockResolvedValue({ data: { ok: false, status: "mismatch", error: "체육관에 등록된 회원 정보와 달라요." } });
     setup();
-    await waitFor(() => expect(screen.getByRole("alert").textContent).toContain("등록된 회원 정보와 달라요"));
+    await screen.findByText("등록된 정보와 달라요");
+    expect(screen.getByRole("button", { name: "데스크에 확인 부탁하기" })).toBeTruthy();
+  });
+
+  it("잠금처럼 다른 결과는 서버 안내를 그대로 보여 준다", async () => {
+    invoke.mockResolvedValue({ data: { ok: false, status: "locked", error: "확인 시도가 너무 많아요." } });
+    setup();
+    await waitFor(() => expect(screen.getByRole("alert").textContent).toContain("너무 많아요"));
+  });
+});
+
+describe("데스크 확인 대기", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    invoke.mockReset();
+  });
+
+  it("부탁하면 열쇠를 이 기기에 두고 확인 대기 화면을 보여 준다", async () => {
+    invoke.mockImplementation(async (fn: string, opts: { body: Record<string, unknown> }) => {
+      if (fn === "claim-member-account") return { data: { ok: true, status: "new" } };
+      if (opts.body.op === "create") return { data: { ok: true, key: "k".repeat(43) } };
+      return { data: { ok: true, status: "pending", branch: "153복싱짐 선릉역점", created_at: new Date().toISOString() } };
+    });
+    setup();
+    fireEvent.click(await screen.findByRole("button", { name: "데스크에 확인 부탁하기" }));
+    fireEvent.click(screen.getByRole("button", { name: "선릉역점" }));
+    fireEvent.change(screen.getByLabelText("남길 말 (선택)"), { target: { value: "예전 번호로 등록" } });
+    fireEvent.click(screen.getByRole("button", { name: "확인 부탁하기" }));
+    await screen.findByText("확인 대기 중");
+    expect(invoke).toHaveBeenCalledWith("member-lookup-request", {
+      body: { op: "create", name: "홍길동", phone: "01012345678", birthDate: "19990315", branch: "153복싱짐 선릉역점", memo: "예전 번호로 등록" },
+    });
+    expect(peekLookupRequest()?.key).toBe("k".repeat(43));
+    expect(screen.getByText("선릉역점에서 확인하고 있어요")).toBeTruthy();
+  });
+
+  it("지점이 연결하면 앱을 다시 열었을 때 표를 받아 카카오로 이어받게 한다", async () => {
+    saveLookupRequest({ key: "k".repeat(43), name: "홍길동", branch: "153복싱짐 선릉역점" });
+    invoke.mockResolvedValue({ data: { ok: true, status: "found", ticket: "t.sig", branch: "153복싱짐 선릉역점" } });
+    const onKakao = vi.fn(async () => {});
+    render(
+      <MemoryRouter>
+        <MemberLookup onBack={() => {}} onLogin={() => {}} onKakao={onKakao} kakaoBusy={false} />
+      </MemoryRouter>,
+    );
+    await screen.findByText("기록을 찾았어요");
+    expect(peekLinkTicket()).toBe("t.sig");
+    expect(screen.queryByRole("button", { name: "아이디 · 비밀번호 만들기" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /카카오로 이어받기/ }));
+    expect(onKakao).toHaveBeenCalled();
+  });
+
+  it("명단에 없다고 답하면 지점의 답과 신규 가입을 보여 준다", async () => {
+    saveLookupRequest({ key: "k".repeat(43), name: "홍길동", branch: "153복싱짐 칠금점" });
+    invoke.mockResolvedValue({ data: { ok: true, status: "not_member", reply: "신규 가입으로 해 주세요", branch: "153복싱짐 칠금점" } });
+    render(
+      <MemoryRouter>
+        <MemberLookup onBack={() => {}} onLogin={() => {}} onKakao={async () => {}} kakaoBusy={false} />
+      </MemoryRouter>,
+    );
+    await screen.findByText("명단에 없다고 해요");
+    expect(screen.getByText("신규 가입으로 해 주세요")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "다른 정보로 다시 찾기" }));
+    expect(peekLookupRequest()).toBeNull();
+    expect(screen.getByText("기록 찾기")).toBeTruthy();
+  });
+
+  it("없어진 요청이면 잊고 기록 찾기로 돌아간다", async () => {
+    saveLookupRequest({ key: "k".repeat(43), name: "홍길동", branch: "153복싱짐 선릉역점" });
+    invoke.mockResolvedValue({ data: { ok: false, status: "gone" } });
+    render(
+      <MemoryRouter>
+        <MemberLookup onBack={() => {}} onLogin={() => {}} onKakao={async () => {}} kakaoBusy={false} />
+      </MemoryRouter>,
+    );
+    await screen.findByText("기록 찾기");
+    expect(peekLookupRequest()).toBeNull();
   });
 });

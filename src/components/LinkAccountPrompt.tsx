@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { runInviteClaim } from "@/components/InviteRewardBridge";
 import { toast } from "sonner";
 import { Link2 } from "lucide-react";
-import { clearLinkTicket, markLoggedIn, peekLinkTicket } from "@/lib/memberEntry";
+import { clearLinkTicket, clearLookupRequest, markLoggedIn, peekLinkTicket } from "@/lib/memberEntry";
 
 const formatPhone = (val: string) => {
   const d = val.replace(/\D/g, "").slice(0, 11);
@@ -75,6 +75,7 @@ const LinkAccountPrompt = () => {
         setError(data.message || "해당 전화번호로 등록된 계정이 없습니다.");
         return;
       }
+      clearLookupRequest(); // 데스크 확인 대기로 온 회원이면 끝났다(2026-11-22)
       await refreshProfile();
       // 기존 계정의 레벨·XP·젬·출석 기록이 이 계정으로 합쳐졌다 — 화면에 남은 예전 값(Lv.1 등)을 모두 새로 읽는다.
       await refreshProgress();

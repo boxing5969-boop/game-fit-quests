@@ -6,6 +6,7 @@ import { Check, X, Pencil, ChevronDown, CheckSquare, Square, Clock } from "lucid
 import { formatRank, RANK_ICONS, TEMPLATE_COMMENTS } from "@/lib/rankLabels";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import MemberLookupRequests from "@/components/admin/MemberLookupRequests";
 
 interface PendingItem {
   id: string;
@@ -352,16 +353,21 @@ const ApprovalInbox = () => {
 
   if (!sorted.length) {
     return (
+      <div>
+      {/* 기록 확인 요청 — 명단에서 못 찾은 회원 (2026-11-22) */}
+      <MemberLookupRequests showBranch={isSuperAdmin} />
       <div className="rounded-2xl border border-dashed border-border p-12 text-center">
         <span className="text-4xl">✅</span>
         <p className="mt-3 text-sm font-bold text-foreground">모든 승인을 처리했습니다!</p>
         <p className="mt-1 text-xs text-muted-foreground">대기 중인 제출이 없습니다</p>
+      </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
+      <MemberLookupRequests showBranch={isSuperAdmin} />
       {/* Summary bar */}
       <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-3 shadow-elev-1">
         <div className="flex items-center gap-3">
