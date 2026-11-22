@@ -26,6 +26,7 @@ import LevelVideoMaster from "@/components/LevelVideoMaster";
 import CoachTodayCard from "@/components/CoachTodayCard";
 import LessonTodayCard from "@/components/lesson/LessonTodayCard";
 import LessonClassActions from "@/components/lesson/LessonClassActions";
+import BoxingTimerEntry from "@/components/training/BoxingTimerEntry";
 import TrainingShelf, { type ShelfWarmup } from "@/components/training/TrainingShelf";
 import LessonDayList from "@/components/lesson/LessonDayList";
 import LessonDaySheet from "@/components/lesson/LessonDaySheet";
@@ -156,6 +157,8 @@ const WhiteLeagueTab = ({ onOpenMissionVideos, warmups, onOpenWarmup }: WhiteLea
           <>
             <LessonTodayCard />
             <LessonClassActions />
+            {/* 🥊 복싱 타이머 — 자율 운동용 라운드 타이머 (2026-11-22 · ?timer=1 로도 열린다) */}
+            <BoxingTimerEntry />
           </>
         }
         // ② 내 레벨 — 레벨업까지 카드 · 레벨 n 훈련 자세히 보기 (코치 카드 안) → 아래 레벨 미션 영상 전체 · 전체 레벨 지도

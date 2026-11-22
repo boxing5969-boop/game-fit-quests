@@ -18,6 +18,17 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261122-boxing-timer",
+    date: "2026-11-22",
+    title: "복싱 타이머가 생겼어요",
+    lines: [
+      "자율 운동할 때 라운드와 쉬는 시간을 큰 공 소리로 알려 줘요",
+      "3분 · 6라운드처럼 자주 쓰는 틀을 고르거나 시간 · 라운드 수를 직접 정해요",
+      "라운드 10초 전 「딱딱」 · 쉬는 시간 마지막 3초 「삐」로 미리 알려 줘요",
+    ],
+    link: { to: "/missions?timer=1", label: "복싱 타이머 열기" },
+  },
+  {
     id: "20261121-card-deco-review",
     date: "2026-11-21",
     title: "내 카드 꾸미기 · 리뷰 미션",
