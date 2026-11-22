@@ -14,6 +14,8 @@ import { peekPostLoginPath } from "@/lib/postLoginRedirect";
 import MyBoxerWordmark from "@/components/brand/MyBoxerWordmark";
 import InstallAppButton from "@/components/install/InstallAppButton";
 import { isIosApp, loadIosAppNative } from "@/lib/iosApp";
+import { hasLoggedInBefore } from "@/lib/memberEntry";
+import MemberLookup from "@/components/onboarding/MemberLookup";
 import {
   Select,
   SelectContent,
@@ -164,6 +166,12 @@ const PrivacyConsentModal = ({ onAccept, onClose }: { onAccept: (sig: string) =>
 // ─── Main LoginPage ────
 const LoginPage = () => {
   const [tab, setTab] = useState<Tab>("login");
+  // 첫 사용 순서 (2026-11-22): 처음 오는 기기는 「153복싱짐에 다니고 계세요?」부터.
+  //   이 기기에서 로그인한 적이 있거나 ?login=1 이면 로그인 화면부터(markLoggedIn · src/lib/memberEntry.ts).
+  const [entry, setEntry] = useState<"ask" | "member" | "login">(() => {
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("login") === "1") return "login";
+    return hasLoggedInBefore() ? "login" : "ask";
+  });
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -212,6 +220,33 @@ const LoginPage = () => {
   }, []);
 
   const isSignUp = tab === "member" || tab === "coach";
+
+  // 카카오로 시작 — 로그인 화면 버튼 · 「기록을 찾았어요」의 「카카오로 이어받기」가 같이 쓴다.
+  const startKakao = async () => {
+    setIsLoading(true);
+    try {
+      // 아이폰 앱: 앱 속 화면 대신 안전한 로그인 창으로 (src/lib/iosAppNative.ts)
+      if (isIosApp()) {
+        const err = await (await loadIosAppNative()).signInWithOAuthInApp("kakao", "profile_nickname");
+        if (err) { setError("카카오 로그인에 실패했습니다. " + err); toast.error("카카오 로그인에 실패했어요"); }
+        return;
+      }
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "kakao",
+        // 비즈 앱 아님 → account_email 요청 시 KOE205. 닉네임만 요청.
+        options: { redirectTo: window.location.origin, scopes: "profile_nickname" },
+      });
+      if (error) {
+        setError("카카오 로그인에 실패했습니다. " + (error.message ?? ""));
+        toast.error("카카오 로그인에 실패했어요");
+      }
+    } catch {
+      setError("카카오 로그인에 실패했습니다.");
+      toast.error("카카오 로그인에 실패했어요");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const toFakeEmail = (id: string) => `${id.toLowerCase().trim()}@153rankup.app`;
 
@@ -372,6 +407,58 @@ const LoginPage = () => {
 
   const inputClass = "w-full rounded-xl border border-border bg-card px-4 py-3.5 text-body text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all";
 
+  // 첫 질문 · 기록 찾기 (2026-11-22 대표님 「기존 가입된 회원인지 먼저 묻고 정보를 먼저 받을 수 있는 순서로」)
+  if (entry !== "login") {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center px-6 py-8">
+        <div className="mb-6 animate-bounce-in text-center">
+          <MyBoxerWordmark size="md" align="center" tone="light" className="mx-auto" />
+        </div>
+        {entry === "member" ? (
+          <MemberLookup
+            onBack={() => setEntry("ask")}
+            onLogin={() => setEntry("login")}
+            onKakao={startKakao}
+            kakaoBusy={isLoading}
+          />
+        ) : (
+          <div className="w-full max-w-sm animate-slide-up">
+            <h1 className="text-center text-title font-bold text-foreground">153복싱짐에<br />다니고 계세요?</h1>
+            <p className="mt-2 text-center text-body text-muted-foreground">다니고 계시면 레벨 · 출석 기록을 그대로 이어받아요</p>
+            <button
+              type="button"
+              onClick={() => setEntry("member")}
+              className="mt-7 w-full rounded-2xl bg-primary py-5 text-heading font-bold text-primary-foreground shadow-glow-soft transition-all active:scale-[0.98]"
+            >
+              네, 다니고 있어요
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/signup")}
+              className="mt-3 w-full rounded-2xl border border-border bg-card py-5 text-heading font-bold text-foreground transition-all active:scale-[0.98]"
+            >
+              아니요, 처음이에요
+            </button>
+            <button
+              type="button"
+              onClick={() => { setTab("login"); setEntry("login"); }}
+              className="mt-6 w-full py-2 text-center text-body font-semibold text-primary"
+            >
+              이미 앱을 쓰고 있어요 · 로그인
+            </button>
+            <button
+              type="button"
+              onClick={() => { setTab("coach"); setEntry("login"); }}
+              className="mt-1 w-full py-2 text-center text-label text-muted-foreground"
+            >
+              코치 · 관장님이세요?
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6 py-8">
       {/* Logo — CSS 워드마크 (PNG 의존 0). 밝은 바탕이라 빛 번짐 없는 light (2026-10-20 대표님: QR 찍었을 때 또렷하지 않다) */}
@@ -480,29 +567,7 @@ const LoginPage = () => {
             <button
               type="button"
               disabled={isLoading}
-              onClick={async () => {
-                setIsLoading(true);
-                try {
-                  // 아이폰 앱: 앱 속 화면 대신 안전한 로그인 창으로 (src/lib/iosAppNative.ts)
-                  if (isIosApp()) {
-                    const err = await (await loadIosAppNative()).signInWithOAuthInApp("kakao", "profile_nickname");
-                    if (err) setError("카카오 로그인에 실패했습니다. " + err);
-                    return;
-                  }
-                  const { error } = await supabase.auth.signInWithOAuth({
-                    provider: "kakao",
-                    // 비즈 앱 아님 → account_email 요청 시 KOE205. 닉네임만 요청.
-                    options: { redirectTo: window.location.origin, scopes: "profile_nickname" },
-                  });
-                  if (error) {
-                    setError("카카오 로그인에 실패했습니다. " + (error.message ?? ""));
-                  }
-                } catch (e) {
-                  setError("카카오 로그인에 실패했습니다.");
-                } finally {
-                  setIsLoading(false);
-                }
-              }}
+              onClick={() => void startKakao()}
               className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-[#FEE500] py-4 text-body font-bold text-black shadow-elev-1 transition-all hover:brightness-95 active:scale-[0.98] disabled:opacity-50"
             >
               <svg className="h-6 w-6" viewBox="0 0 24 24" fill="#000000">
@@ -589,10 +654,14 @@ const LoginPage = () => {
             >
               🥊 처음 오셨나요? 신규 회원 가입 신청
             </button>
-            {/* 한 줄 — '카카오로 시작하기가 가장 쉬워요'는 위 카드가 이미 말한다 (2026-10-28 리디자인) */}
-            <p className="text-center text-label text-muted-foreground">
-              카카오가 없으면 등록된 전화번호로 가입 · 결제 없이 끝나요
-            </p>
+            {/* 2026-11-22: 다니는 회원이 앱을 처음 쓰면 정보부터 넣어 기록을 찾는다 (첫 질문 화면과 같은 길) */}
+            <button
+              type="button"
+              onClick={() => { setError(""); setEntry("member"); }}
+              className="w-full py-1.5 text-center text-body font-semibold text-primary"
+            >
+              체육관에 다니고 계세요? 내 기록 찾기
+            </button>
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-border" />

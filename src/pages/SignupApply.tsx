@@ -11,7 +11,7 @@
 //   1단계 맨 위에서 지점을 고른다(선릉역점 · 칠금점). 선릉역점은 지금과 똑같이 수강권 선택 → 결제선생.
 //   칠금점은 결제 단계 대신 '계좌이체 · 현장 결제' 안내 → 가입 신청만 하고 승인 대기 (데스크가 결제 확인 후 승인).
 import { useState, useEffect, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ChevronDown, Check } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -60,6 +60,18 @@ const STEPS_EXISTING = ["계정 정보", "추가 정보", "규정 동의"];
 
 const SignupApply = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  // 첫 화면 「다니고 있어요 → 기록을 찾았어요 → 아이디 · 비밀번호 만들기」(2026-11-22)에서 넣은 정보 — 다시 묻지 않게 채워 둔다.
+  //   판정은 그대로 '다음'에서 서버가 다시 한다(이 값을 믿지 않는다).
+  const prefill = (() => {
+    const m = (location.state as { member?: { name?: unknown; phone?: unknown; birth?: unknown } } | null)?.member;
+    if (!m) return null;
+    return {
+      name: typeof m.name === "string" ? m.name.slice(0, 40) : "",
+      phone: typeof m.phone === "string" ? m.phone.replace(/[^0-9]/g, "").slice(0, 11) : "",
+      birth: typeof m.birth === "string" ? m.birth.replace(/[^0-9]/g, "").slice(0, 8) : "",
+    };
+  })();
   const queryClient = useQueryClient();
   const { user, profile, refreshProfile, refreshProgress } = useAuth();
   const loggedIn = !!user; // 소셜(구글/카카오) 로그인 후 가입 신청 → 계정 생성 단계 건너뜀
@@ -67,7 +79,7 @@ const SignupApply = () => {
   const [err, setErr] = useState("");
   const [submitting, setSubmitting] = useState(false);
   // 기존 회원 확인 — 1단계 '다음'에서 서버가 판정한다. existing 이면 결제 단계가 없다.
-  const [memberMode, setMemberMode] = useState<MemberMode>("new");
+  const [memberMode, setMemberMode] = useState<MemberMode>(() => (prefill ? "existing" : "new"));
   const [checking, setChecking] = useState(false);
   const [registeredPhone, setRegisteredPhone] = useState(false); // 이미 앱 계정이 있는 번호 → 로그인 안내 버튼
   // 다닐 지점 — 소셜 로그인 회원은 이미 고른 지점이 목록에 있으면 그대로, 아니면 직접 고른다
@@ -83,10 +95,10 @@ const SignupApply = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [name, setName] = useState("");
+  const [name, setName] = useState(() => prefill?.name ?? "");
   const [nickname, setNickname] = useState("");
-  const [phone, setPhone] = useState("");
-  const [birth, setBirth] = useState("");
+  const [phone, setPhone] = useState(() => (prefill?.phone ? formatPhone(prefill.phone) : ""));
+  const [birth, setBirth] = useState(() => prefill?.birth ?? "");
   const [gender, setGender] = useState("");
   // 추가
   const [goal, setGoal] = useState("");

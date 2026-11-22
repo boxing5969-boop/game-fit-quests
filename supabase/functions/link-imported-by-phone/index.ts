@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { verifyLinkTicket } from "../_shared/linkTicket.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -34,7 +35,17 @@ Deno.serve(async (req) => {
     const { data: { user }, error: uErr } = await caller.auth.getUser();
     if (uErr || !user) return json({ error: "로그인이 필요합니다." }, 401);
 
-    const phone = onlyDigits((await req.json())?.phone);
+    // 2026-11-22: 첫 화면 「다니고 있어요」에서 찾은 회원은 이어받기 표(ticket)로 온다 — 번호를 다시 묻지 않는다.
+    //   표가 맞지 않으면(10분 지남 · 위조) 200 으로 ticket_invalid 를 돌려 앱이 번호 입력 창을 띄우게 한다.
+    const reqBody = await req.json().catch(() => null);
+    let expectedFrom: string | null = null;
+    let phone = onlyDigits(reqBody?.phone);
+    if (reqBody?.ticket !== undefined) {
+      const t = await verifyLinkTicket(serviceKey, reqBody.ticket);
+      if (!t) return json({ ticket_invalid: true, error: "이어받기 시간이 지났어요. 체육관에 등록된 전화번호를 넣어 주세요." });
+      phone = t.p;
+      expectedFrom = t.u;
+    }
     if (phone.length < 10) return json({ error: "올바른 전화번호를 입력해주세요." }, 400);
 
     const admin = createClient(supabaseUrl, serviceKey, {
@@ -50,6 +61,9 @@ Deno.serve(async (req) => {
 
     if (!a) {
       return json({ matched: false, message: "해당 전화번호로 등록된 기존 계정이 없습니다. 관장님께 문의하거나 그대로 이용해주세요." });
+    }
+    if (expectedFrom && a.user_id !== expectedFrom && a.user_id !== user.id) {
+      return json({ ticket_invalid: true, error: "기록 정보가 바뀌었어요. 체육관에 등록된 전화번호를 다시 넣어 주세요." });
     }
     if (a.user_id === user.id) {
       return json({ matched: true, ok: true, message: "이미 연동되어 있습니다." });

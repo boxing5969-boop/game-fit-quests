@@ -10,6 +10,7 @@
 //   check — 판정만 한다. 회원 정보(이름·생년월일·수강권 등)는 일절 돌려주지 않는다.
 //           status: new(등록 안 된 번호 → 일반 가입) | existing(기존 회원 확인) | registered(이미 넘겨받은 계정)
 //                   | mismatch(정보 불일치) | desk(지도진 등 셀프 가입 불가) | locked(시도 초과)
+//           ticket:true 를 함께 보내면 existing 일 때 카카오 · 구글 이어받기 표(_shared/linkTicket.ts)를 준다(2026-11-22).
 //   claim — 판정을 처음부터 다시 한다(앞 단계 결과를 믿지 않는다). existing 일 때만 아이디·비밀번호·가입 정보를 적용.
 //           로그인된(소셜) 사용자는 이 경로를 쓰지 않는다 — 앱이 기존 연동(link-imported-by-phone)을 부른다.
 //
@@ -23,6 +24,7 @@
 //   · 두 요청이 동시에 같은 계정을 넘겨받지 못하게 must_change_credentials 를 조건부로 먼저 내린다(선점).
 //   · 업무 결과(불일치·잠금 등)도 200 으로 돌려준다 — 앱이 안내 문구를 그대로 보여 줄 수 있게. 예상 못 한 오류만 500.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { signLinkTicket } from "../_shared/linkTicket.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -281,6 +283,12 @@ Deno.serve(async (req) => {
 
     if (action === "check") {
       await record(ev.status);
+      // 첫 화면 「다니고 있어요」(2026-11-22): 기존 회원이면 카카오 · 구글로 이어받을 10분짜리 표를 같이 준다
+      //   (_shared/linkTicket.ts — 번호와 계정 번호만, 회원 정보 없음). 로그인된 사용자에게는 주지 않는다.
+      if (ev.status === "existing" && body.ticket === true && !callerId && ev.target) {
+        const ticket = await signLinkTicket(serviceKey, phone, ev.target.user_id);
+        return json({ ok: true, status: ev.status, ticket });
+      }
       if (ev.status === "new" || ev.status === "existing") return json({ ok: true, status: ev.status });
       return json({ ok: false, status: ev.status, error: MESSAGES[ev.status] });
     }
