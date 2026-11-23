@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
     // Verify name and phone from profiles
     const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
-      .select("user_id, name, phone_number, birth_date")
+      .select("user_id, name, phone_number, birth_date, must_change_credentials")
       .eq("user_id", authUser.id)
       .maybeSingle();
 
@@ -96,6 +96,15 @@ Deno.serve(async (req) => {
     if (pPhone !== cleanPhone) {
       return new Response(
         JSON.stringify({ error: "전화번호가 일치하지 않습니다" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 2026-11-23 보안 점검 ②: 아직 넘겨받지 않은 체육관 회원 계정(must_change_credentials)은 여기서 비밀번호를 정하지 않는다.
+    //   이 경로는 시도 횟수 제한이 없어 생년월일을 돌려 맞출 수 있다 — 넘겨받기는 잠금이 있는 「기록 찾기」(claim-member-account)로만.
+    if (profile.must_change_credentials === true) {
+      return new Response(
+        JSON.stringify({ error: "아직 앱을 시작하지 않은 체육관 회원 계정이에요. 첫 화면 「153복싱짐에 다니고 계세요? → 내 기록 찾기」로 이어받아 주세요." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

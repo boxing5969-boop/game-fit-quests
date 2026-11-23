@@ -277,7 +277,14 @@ const LoginPage = () => {
           const errorType = classifyLoginError(error.message);
           setLoginErrorType(errorType);
           // 회원에게 노출되는 메시지는 한국어로 변환
-          setError(translateAuthError(error));
+          // 2026-11-23 보안 점검 ②: 체육관 회원 계정은 이제 「아이디·비밀번호 = 전화번호」로 들어갈 수 없다 →
+          //   번호로 로그인하다 막힌 회원에게 「내 기록 찾기」를 알려 준다.
+          const phoneLikeId = /^0\d{9,10}$/.test(username.trim().replace(/-/g, ""));
+          setError(
+            phoneLikeId
+              ? `${translateAuthError(error)} 체육관에 다니는데 앱이 처음이시면 아래 「체육관에 다니고 계세요? 내 기록 찾기」로 이어받아 주세요.`
+              : translateAuthError(error),
+          );
           return;
         }
         navigate(peekPostLoginPath() ?? "/home");
@@ -289,6 +296,7 @@ const LoginPage = () => {
     if (!username.trim()) { setError("아이디를 입력해주세요"); return; }
     if (/[^a-zA-Z0-9_]/.test(username.trim())) { setError("아이디는 영문, 숫자, 밑줄(_)만 사용 가능합니다"); return; }
     if (username.trim().length < 4) { setError("아이디는 4자 이상이어야 합니다"); return; }
+    if (/^0\d{9,10}$/.test(username.trim())) { setError("전화번호는 아이디로 쓸 수 없어요. 다른 아이디를 정해 주세요."); return; }
     if (password !== confirmPassword) { setError("비밀번호가 일치하지 않습니다"); return; }
     if (password.length < 6) { setError("비밀번호는 6자 이상이어야 합니다"); return; }
     const rawPhone = phone.replace(/-/g, "");
