@@ -31,6 +31,7 @@ import PushOptInCard from "@/components/notifications/PushOptInCard";
 import TextScaleToggle from "@/components/profile/TextScaleToggle";
 import AccountDeleteDialog from "@/components/account/AccountDeleteDialog";
 import AppShareCard from "@/components/share/AppShareCard";
+import GuardianLinkCard from "@/components/guardian/GuardianLinkCard";
 
 // ── Home widget toggle helpers ──
 const HOME_PREFS_KEY = "home-widget-prefs";
@@ -411,6 +412,9 @@ const SettingsPage = () => {
 
         {/* 마이복서153 공유하기 — 공유 창(카톡 · 문자) · 링크 복사 · QR (2026-11-12 대표님 「마이복서 153앱 공유기능 만들어줘 설정에」) */}
         <AppShareCard />
+
+        {/* 엄마 · 아빠 연결 — 보호자에게 링크 보내기 · 연결 보기 · 데스크 요청 수락 (2026-11-23). 회원에게만, 기능이 켜졌을 때만 */}
+        <GuardianLinkCard />
 
         {/* 65-O: 화면 모드 (다크/라이트) — next-themes 기반 */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1">

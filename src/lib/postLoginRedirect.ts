@@ -6,11 +6,12 @@
  * 출석이 안 됐다("QR 인식이 안 된다"로 보였다). 로그인 전 주소를 이 탭(sessionStorage)에 잠깐 적어 두고,
  * 로그인이 끝나면 그 주소로 보낸다.
  *
- * 안전: 허용 목록(/qr-checkin)만, 10분 안에만. 다른 주소는 적지도 읽지도 않는다(열린 리다이렉트 방지).
+ * 안전: 허용 목록(/qr-checkin · /guardian/join)만, 10분 안에만. 다른 주소는 적지도 읽지도 않는다(열린 리다이렉트 방지).
  */
 const KEY = "153_post_login_redirect";
 const TTL_MS = 10 * 60_000;
-const ALLOWED = [/^\/qr-checkin(\?[^#]*)?$/];
+// 보호자 연결 링크(2026-11-23) — 어머님 · 아버님이 링크를 열고 카카오로 로그인하면 연결 화면으로 돌아온다
+const ALLOWED = [/^\/qr-checkin(\?[^#]*)?$/, /^\/guardian\/join\?t=[a-f0-9]{32}$/];
 
 const allowed = (path: string) => ALLOWED.some((re) => re.test(path));
 

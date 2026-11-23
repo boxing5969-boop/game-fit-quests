@@ -58,6 +58,8 @@ const ApprovalInbox = () => {
             .eq("is_approved", false)
             // 쓰지 않는 예전 계정(merged_into = 회원이 실제로 쓰는 계정)은 가입 요청이 아니다 (2026-10-26 — 칠금 예전 자동 계정 4개가 '가입 요청'으로 떴다)
             .is("merged_into", null)
+            // 보호자만 쓰는 계정(엄마 · 아빠, 2026-11-23)은 가입 요청이 아니다
+            .is("account_kind", null)
             .order("created_at", { ascending: false });
 
           if (!isSuperAdmin) {

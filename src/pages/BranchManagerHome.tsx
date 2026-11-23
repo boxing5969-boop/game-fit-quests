@@ -110,9 +110,9 @@ const BranchManagerHome = () => {
         const [profilesRes, unapprovedRes, pendingMissionsRes, pendingQuestsRes, xpRes, submissionsRes] = await Promise.all([
           // 지도진(is_staff)은 회원이 아니다 — "전체 회원" 에서 빼고, 목록도 지도진 필터로 분리한다.
           // 쓰지 않는 예전 계정(merged_into)은 회원 수 · 승인 대기에서 뺀다 (2026-10-26)
-          supabase.from("profiles").select("user_id", { count: "exact", head: true }).not("is_staff", "is", true).is("merged_into", null),
+          supabase.from("profiles").select("user_id", { count: "exact", head: true }).not("is_staff", "is", true).is("merged_into", null).is("account_kind", null),
           // 가입 승인 대기는 지도진도 센다 — 새로 가입한 코치님도 승인해야 앱을 쓴다(승인함 목록과 같은 기준).
-          supabase.from("profiles").select("user_id", { count: "exact", head: true }).eq("is_approved", false).is("merged_into", null),
+          supabase.from("profiles").select("user_id", { count: "exact", head: true }).eq("is_approved", false).is("merged_into", null).is("account_kind", null),
           supabase.from("mission_submissions").select("id", { count: "exact", head: true }).eq("status", "pending"),
           supabase.from("quest_submissions").select("id", { count: "exact", head: true }).eq("status", "pending"),
           // 이번 주(KST 월요일 0시부터) 레벨업 — 지점 통계(get_branch_stats)와 같은 기준

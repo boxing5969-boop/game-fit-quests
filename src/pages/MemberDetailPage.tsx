@@ -19,6 +19,7 @@ import { useMemberHandWrapPractice } from "@/hooks/useHandWrap";
 import AttendanceHistoryPanel, { AttendanceSummaryCard } from "@/components/attendance/AttendanceHistoryPanel";
 import MemberMyInfoView from "@/components/admin/MemberMyInfoView";
 import MemberPassPanel from "@/components/admin/MemberPassPanel";
+import GuardianStaffSection from "@/components/guardian/GuardianStaffSection";
 import { useAttendanceHistory } from "@/hooks/useAttendanceHistory";
 import { minutesToHours } from "@/lib/achievement153";
 import {
@@ -605,6 +606,8 @@ const MemberDetailPage = () => {
               </>
             )}
           </div>
+          {/* 보호자(엄마 · 아빠) — 연결 보기 · 데스크 QR · 끊기 (2026-11-23). 권한 · 함수가 없으면 칸이 안 그려진다 */}
+          {memberId && <GuardianStaffSection memberId={memberId} memberName={p.nickname || p.name || "회원"} />}
           <InfoCard label="현재 랭크" value={formatRank(prog.current_rank, prog.current_level)} />
           <InfoCard label="보스전 클리어" value={`${prog.bosses_cleared}회`} />
           {handWrap.data && handWrap.data.goal > 0 && (

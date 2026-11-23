@@ -18,6 +18,17 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261123-guardian",
+    date: "2026-11-23",
+    title: "엄마 · 아빠도 운동 알림을 받아요",
+    lines: [
+      "설정 › 엄마 · 아빠 연결에서 링크를 보내면 연결돼요",
+      "체육관에 오면 도착 알림, 「운동 끝」을 누르면 끝 알림이 가요",
+      "보호자에게는 출석 · 운동 시간 · 레벨 · 코치 한마디만 보여요",
+    ],
+    link: { to: "/settings?guardian=1", label: "엄마 · 아빠 연결" },
+  },
+  {
     id: "20261123-learn-guide",
     date: "2026-11-23",
     title: "영상으로 배우기에 동작마다 왜 · 언제 · 얼마나",

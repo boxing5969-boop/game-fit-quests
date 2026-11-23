@@ -69,6 +69,8 @@ import NotificationBellButton from "@/components/notifications/NotificationBellB
 import PushOptInCard from "@/components/notifications/PushOptInCard";
 import SurveyNudgeCard from "@/components/survey/SurveyNudgeCard";
 import GoodsNudgeCard from "@/components/goods/GoodsNudgeCard";
+import GuardianHomeCard from "@/components/guardian/GuardianHomeCard";
+import WorkoutFinishPrompt from "@/components/guardian/WorkoutFinishPrompt";
 import GoodsPopup from "@/components/goods/GoodsPopup";
 import BirthdayCongratsCard from "@/components/home/BirthdayCongratsCard";
 import GrowthLessonCard from "@/components/home/GrowthLessonCard";
@@ -696,6 +698,8 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
             )
           )}
           {/* 👊 오늘 우리 체육관 — 커뮤니티 입구 한 줄 (2026-10-27 대표님 "니가 추천해주는대로 진행", 커뮤니티 보고서 1단계) */}
+          {/* 👪 우리 아이 — 회원이면서 자녀의 보호자인 분께만 (2026-11-23) */}
+          <GuardianHomeCard />
           <CommunityTodayStrip />
           {/* 🎂 오늘 생일인 동료가 운동하러 왔거나 오늘 내 생일일 때만 보인다 (2026-10-16 대표님) */}
           <BirthdayCongratsCard />
@@ -954,6 +958,9 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
 
       {/* 🧥 153 플리스 집업 안내 팝업 — 신청을 받는 동안 · 아직 신청 전인 분께 · 「오늘 하루 보지 않기」 (2026-11-18 대표님) */}
       <GoodsPopup />
+
+      {/* ⏱ 「운동을 끝낼까요?」 — 보호자가 연결된 회원 · 미성년 회원, 출석 50분 뒤부터 (2026-11-23 대표님) */}
+      <WorkoutFinishPrompt />
 
       {/* 튜토리얼 오버레이는 App.tsx 의 글로벌 InductionCeremonyOverlay 로 이관. */}
     </AppPage>

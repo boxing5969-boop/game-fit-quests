@@ -18,6 +18,8 @@ import NotFound from "@/pages/NotFound";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { isManagerRole } from "@/lib/rankLabels";
 import { isSignageRoute } from "@/lib/displayMode";
+import { GUARDIAN_JOIN_PATH, isGuardianOnlyProfile, readGuardianToken } from "@/lib/guardian";
+import { guardianDemo } from "@/services/guardianService";
 import TutorialFloatingMascot from "@/components/tutorial/TutorialFloatingMascot";
 import TutorialActionSpotlight from "@/components/tutorial/TutorialActionSpotlight";
 import OsamiWelcomeModal from "@/components/tutorial/OsamiWelcomeModal";
@@ -150,6 +152,9 @@ const OfficePage = lazyWithRetry(() => import("@/pages/OfficePage"));
 // 회의실 화면 — 그림 + 채팅 한 화면, 말풍선 (2026-10-27 대표님)
 const OfficeRoomPage = lazyWithRetry(() => import("@/pages/OfficeRoomPage"));
 const MyAttendancePage = lazyWithRetry(() => import("@/pages/MyAttendancePage"));
+// 보호자(어머님 · 아버님) — 「우리 아이」 · 연결 링크 화면 (2026-11-23 대표님 「추천대로」)
+const GuardianPage = lazyWithRetry(() => import("@/pages/GuardianPage"));
+const GuardianJoinPage = lazyWithRetry(() => import("@/pages/GuardianJoinPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -179,6 +184,13 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     // 라이브보드 QR 을 폰 카메라로 찍고 들어온 경우 — 로그인 뒤 그 QR 출석으로 돌아오게 적어 둔다
     rememberPostLoginPath(window.location.pathname + window.location.search);
     return <Navigate to="/" replace />;
+  }
+
+  // 보호자만 쓰는 계정 → 「우리 아이」 하나 · 승인 전인데 보호자 연결 링크를 열고 로그인했으면 → 연결 화면 (2026-11-23)
+  if (isGuardianOnlyProfile(profile)) return <Navigate to="/guardian" replace />;
+  if (profile && !profile.is_approved) {
+    const gt = readGuardianToken();
+    if (gt) return <Navigate to={`${GUARDIAN_JOIN_PATH}?t=${gt}`} replace />;
   }
   
   // Allow select-branch and waiting-approval pages without checks
@@ -241,6 +253,15 @@ const AdminOnlyRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// 보호자 화면 — 로그인만 본다(지점 · 회원 승인 없음). 화면이 연결된 아이가 없으면 안내를 보인다 (2026-11-23)
+const GuardianRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  if (loading) return <RouteLoader />;
+  // 예시 화면(?demo=1)은 서버를 안 부르니 로그인 없이도 — 옛 DB 를 보는 미리보기 주소에서 대표님 확인용
+  if (!user && !guardianDemo("demo")) return <Navigate to="/" replace />;
+  return <>{children}</>;
+};
+
 const RoleBasedRedirect = () => {
   const { role, profile, loading } = useAuth();
   // 소셜 로그인은 "/" 로 돌아온다 — 로그인 전에 적어 둔 QR 출석 주소가 있으면 그리로 보낸다(도착 화면이 지운다)
@@ -248,6 +269,11 @@ const RoleBasedRedirect = () => {
   if (!loading && nextRef.current === undefined) nextRef.current = peekPostLoginPath();
   if (loading) return <RouteLoader />;
   if (nextRef.current) return <Navigate to={nextRef.current} replace />;
+  // 보호자 연결 링크를 열고 로그인하러 다녀왔으면 연결 화면 · 보호자만 쓰는 계정은 「우리 아이」 (2026-11-23)
+  // (승인된 회원은 탭에 적어 둔 주소로만 — 하루 기억은 새 계정만 따른다)
+  const guardianToken = !profile?.is_approved ? readGuardianToken() : null;
+  if (guardianToken) return <Navigate to={`${GUARDIAN_JOIN_PATH}?t=${guardianToken}`} replace />;
+  if (isGuardianOnlyProfile(profile)) return <Navigate to="/guardian" replace />;
   
   // Social login users without branch need to select one
   if (profile && !profile.branch_name) {
@@ -265,11 +291,14 @@ const RoleBasedRedirect = () => {
 };
 
 const AppRoutes = () => {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   const { pathname, search } = useLocation();
 
   // 사이니지(TV)·키오스크에서는 앱 UI를 통째로 끈다. 아래 전역 크롬 전부가 이 한 줄에 걸린다.
   const signage = isSignageRoute(pathname);
+  // 보호자 화면 · 보호자만 쓰는 계정 — 하단 탭 · 코치봇 · 회원 안내 창(튜토리얼 · 환영 · 편지 · 연동 권유)을 끈다 (2026-11-23)
+  const guardianScreen = pathname.startsWith("/guardian") || isGuardianOnlyProfile(profile);
+  const memberChrome = !signage && !guardianScreen;
 
   // 65-A: 앱 부팅 시 1회 — 관리자가 publish 한 글로벌 튜토리얼 오버라이드 로드.
   // 실패해도 조용히 — base + 본인 local 만으로 동작.
@@ -355,6 +384,9 @@ const AppRoutes = () => {
         <Route path="/mypage" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
         {/* 내 출석 기록 전체 (2026-10-21) */}
         <Route path="/mypage/attendance" element={<ProtectedRoute><MyAttendancePage /></ProtectedRoute>} />
+        {/* 보호자 — 연결 링크(로그인 전에도 열림) · 「우리 아이」 (2026-11-23) */}
+        <Route path="/guardian/join" element={<GuardianJoinPage />} />
+        <Route path="/guardian" element={<GuardianRoute><GuardianPage /></GuardianRoute>} />
         <Route path="/membership" element={<ProtectedRoute><MembershipPage /></ProtectedRoute>} />
         <Route path="/signup" element={<SignupApply />} />
         <Route path="/membership-plans" element={<ProtectedRoute><MembershipSelectPage /></ProtectedRoute>} />
@@ -443,40 +475,40 @@ const AppRoutes = () => {
       {!signage && <Sonner />}
       {/* 📲 휴대폰 알림 — 구독 동기화 · 알림 눌러 이동 · 로그아웃 시 이 기기 구독 정리 */}
       {!signage && <PushBridge />}
-      {!signage && <BottomNav />}
+      {memberChrome && <BottomNav />}
       {/* 👀 회원으로 보기 중 — 아래 띠 (대표님 계정 · 누르면 관리자 화면으로, 2026-10-21) */}
-      {user && !signage && <ViewAsMemberBar />}
-      {!signage && (
+      {user && memberChrome && <ViewAsMemberBar />}
+      {memberChrome && (
         <Suspense fallback={null}>
           <ChatAssistant />
         </Suspense>
       )}
       {/* 마이복서153 — 오삼 마스코트 튜토리얼 (행동기반 미션 5개). */}
-      {user && splashDone && !signage && <TutorialFloatingMascotWithDetect />}
+      {user && splashDone && memberChrome && <TutorialFloatingMascotWithDetect />}
       {/* 5개 미션 spotlight 가이드 — navTarget 페이지에서 어떤 element 누를지 안내 */}
-      {user && splashDone && !signage && <TutorialActionSpotlight />}
+      {user && splashDone && memberChrome && <TutorialActionSpotlight />}
       {/* 첫 로그인 환영 모달 — 신규 회원 1회 노출, 오삼이 코치 인사 + 앱 핵심 안내 */}
-      {user && splashDone && !signage && <OsamiWelcomeModal />}
+      {user && splashDone && memberChrome && <OsamiWelcomeModal />}
       {/* 감동편지 — 웰컴 1통 + 리그 승급(블루/레드/블랙) 3통, localStorage 1회 노출 */}
-      {user && splashDone && !signage && <WelcomeLetter />}
+      {user && splashDone && memberChrome && <WelcomeLetter />}
       {/* 7일 스타터 캠프 overlay — localStorage 기반, isActive 시에만 렌더 */}
-      {user && splashDone && !signage && <TutorialCampProvider />}
+      {user && splashDone && memberChrome && <TutorialCampProvider />}
       {/* 개발자 preview 패널 — localhost / ?tutorialDev=1 / dev 토글 ON 일 때만 노출 */}
-      {user && splashDone && !signage && <TutorialDevPanel />}
+      {user && splashDone && memberChrome && <TutorialDevPanel />}
       {/* 64-V: 관리자 floating 커스텀 도구 — 화면 위 element picker + 토글 */}
-      {user && splashDone && !signage && <TutorialCustomizer />}
+      {user && splashDone && memberChrome && <TutorialCustomizer />}
       {/* 활동 후 30초 마무리 sheet — 글로벌 trigger 이벤트 listen, 하루 1회 큰 sheet */}
-      {user && splashDone && !signage && <PostActionReflectionSheet />}
+      {user && splashDone && memberChrome && <PostActionReflectionSheet />}
       {/* 최초 로그인 아이디·비번 변경 권장(스킵 가능) — 일괄등록 회원 must_change_credentials */}
-      {user && splashDone && !signage && <CredentialChangePrompt />}
+      {user && splashDone && memberChrome && <CredentialChangePrompt />}
       {/* 회원 이름·카드를 누르면 어디서든 회원 카드 (좋아요·메시지·복싱파트너 신청·응원) — openMemberCard(userId) */}
-      {user && !signage && <GlobalMemberCard />}
+      {user && memberChrome && <GlobalMemberCard />}
       {/* 초대받아 처음 들어온 회원이면 초대한 사람에게 챔피언 머니 1,000 (2026-10-18) */}
-      {user && !signage && <InviteRewardBridge />}
+      {user && memberChrome && <InviteRewardBridge />}
       {/* 지점 회의실 접속 신호 — 지도진이 앱을 열면 사무실 자기 자리에 앉고, 닫으면 30초 뒤 일어난다 (2026-10-27) */}
-      {user && !signage && <OfficePresenceBridge />}
+      {user && memberChrome && <OfficePresenceBridge />}
       {/* 소셜 첫 로그인 전화번호 연동(권장·스킵) — phone 없는 소셜 회원 */}
-      {user && splashDone && !signage && <LinkAccountPrompt />}
+      {user && splashDone && memberChrome && <LinkAccountPrompt />}
       {/* 쿨드 스타트 스플래시 (z-[80] · 포털). 세션 1회. */}
       {showSplash && !signage && <AppLaunchSplash onFinished={markFinished} />}
       {/* 안드로이드 뒤로가기로 앱이 그냥 꺼지지 않게 — 홈에서 한 번 물어본다 */}
