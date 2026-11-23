@@ -342,8 +342,10 @@ export const ReviewMissionAdminSheet = ({ open, onClose }: { open: boolean; onCl
   );
 };
 
-/** 지점장 · 코치 홈 입구 카드 */
-const ReviewMissionAdminCard = () => {
+/** 지점장 · 코치 홈 입구 카드.
+ *  관리자 홈은 휴대폰 판(lg:hidden)과 PC 판(hidden lg:flex)을 함께 그려 이 카드가 두 개 붙는다.
+ *  알림 주소 ?review=1 은 지금 화면에 보이는 판(layout)만 받는다 — 둘 다 열면 숨은 창이 스크롤 잠금 · 뒤로가기를 쥐고 남는다(2026-11-23 점검). */
+const ReviewMissionAdminCard = ({ layout }: { layout?: "mobile" | "desktop" }) => {
   const { data } = useReviewAdminBoard(null);
   const [open, setOpen] = useState(false);
   const { search, pathname } = useLocation();
@@ -351,11 +353,15 @@ const ReviewMissionAdminCard = () => {
   useEffect(() => {
     const q = new URLSearchParams(search);
     if (q.get("review") !== "1") return;
+    if (layout && typeof window !== "undefined" && typeof window.matchMedia === "function") {
+      const wide = window.matchMedia("(min-width: 1024px)").matches; // tailwind lg
+      if (wide !== (layout === "desktop")) return;
+    }
     setOpen(true);
     q.delete("review");
     const rest = q.toString();
     navigate(`${pathname}${rest ? `?${rest}` : ""}`, { replace: true });
-  }, [search, pathname, navigate]);
+  }, [search, pathname, navigate, layout]);
   if (!data?.available) return null;
   return (
     <>
