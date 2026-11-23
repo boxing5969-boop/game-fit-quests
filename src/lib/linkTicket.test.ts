@@ -24,6 +24,14 @@ describe("기존 회원 이어받기 표", () => {
     expect(await verifyLinkTicket(SECRET, 123, 1)).toBeNull();
     expect(await verifyLinkTicket(SECRET, "a.b.c", 1)).toBeNull();
   });
+  it("로그인한 사람에게 준 표는 그 계정(c)을 담고, 모양이 틀린 c 는 거른다", async () => {
+    const CALLER = "1530c4d0-0002-4a00-8000-000000003344";
+    const t = await signLinkTicket(SECRET, "01012345678", UID, 1_000, CALLER);
+    expect(await verifyLinkTicket(SECRET, t, 2_000)).toEqual({ p: "01012345678", u: UID, e: 1_000 + LINK_TICKET_TTL_MS, c: CALLER });
+    const plain = await signLinkTicket(SECRET, "01012345678", UID, 1_000, null);
+    expect(await verifyLinkTicket(SECRET, plain, 2_000)).toEqual({ p: "01012345678", u: UID, e: 1_000 + LINK_TICKET_TTL_MS });
+    expect(await verifyLinkTicket(SECRET, await signLinkTicket(SECRET, "01012345678", UID, 0, "not-a-uuid"), 1)).toBeNull();
+  });
   it("번호 · 계정 모양이 틀리면 서명이 맞아도 거른다", async () => {
     expect(await verifyLinkTicket(SECRET, await signLinkTicket(SECRET, "12345", UID, 0), 1)).toBeNull();
     expect(await verifyLinkTicket(SECRET, await signLinkTicket(SECRET, "01012345678", "x", 0), 1)).toBeNull();

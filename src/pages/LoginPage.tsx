@@ -14,7 +14,7 @@ import { peekPostLoginPath } from "@/lib/postLoginRedirect";
 import MyBoxerWordmark from "@/components/brand/MyBoxerWordmark";
 import InstallAppButton from "@/components/install/InstallAppButton";
 import { isIosApp, loadIosAppNative } from "@/lib/iosApp";
-import { hasLoggedInBefore } from "@/lib/memberEntry";
+import { clearLinkTicket, hasLoggedInBefore } from "@/lib/memberEntry";
 import MemberLookup from "@/components/onboarding/MemberLookup";
 import {
   Select,
@@ -416,8 +416,8 @@ const LoginPage = () => {
         </div>
         {entry === "member" ? (
           <MemberLookup
-            onBack={() => setEntry("ask")}
-            onLogin={() => setEntry("login")}
+            onBack={() => { clearLinkTicket(); setEntry("ask"); }}
+            onLogin={() => { clearLinkTicket(); setEntry("login"); }}
             onKakao={startKakao}
             kakaoBusy={isLoading}
           />
@@ -538,7 +538,8 @@ const LoginPage = () => {
         {!isSignUp && tab === "login" && (
           <>
             {/* 2026-10-14 대표님: "기존 회원님들이 처음 가입할 때 몰라서 나에게 물어본다 — 복싱짐 회원님은 카카오로 로그인하기 안내"
-                카카오 첫 로그인 → '회원 등록 확인' 창에서 체육관에 등록된 전화번호를 넣으면 기존 계정(레벨·출석)이 합쳐진다
+                카카오 첫 로그인 → '회원 등록 확인' 창에서 이름 · 전화번호 · 생년월일로 기록을 찾으면 기존 계정(레벨·출석)이 합쳐진다
+                (2026-11-23 보안 점검: 번호만으로는 합치지 않는다)
                 (LinkAccountPrompt · link-imported-by-phone). 이미 아이디로 쓰는 회원은 연동이 막히므로 아이디 로그인 그대로. */}
             <section
               aria-labelledby="gym-member-kakao-guide"
@@ -551,7 +552,7 @@ const LoginPage = () => {
                 따로 가입하지 마시고 <b className="text-foreground">카카오로 시작하기</b>만 누르세요
               </p>
               <ol className="mt-3 space-y-1.5">
-                {["아래 노란 '카카오로 시작하기' 누르기", "체육관에 등록된 전화번호 입력", "끝! 레벨·출석 기록이 그대로 이어져요"].map((step, i) => (
+                {["아래 노란 '카카오로 시작하기' 누르기", "체육관에 등록한 이름 · 전화번호 · 생년월일로 내 기록 찾기", "끝! 레벨·출석 기록이 그대로 이어져요"].map((step, i) => (
                   <li key={step} className="flex items-center gap-2.5 text-label font-semibold text-foreground">
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-micro font-black text-primary-foreground">
                       {i + 1}

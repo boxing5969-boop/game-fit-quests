@@ -35,16 +35,29 @@ describe("기록 찾기 (첫 화면 「다니고 있어요」)", () => {
     invoke.mockReset();
   });
 
-  it("찾으면 이어받기 표를 두고 로그인 방법을 고르게 한다", async () => {
+  it("찾으면 로그인 방법을 고르게 하고, 표는 「카카오로 이어받기」를 누를 때만 기기에 둔다", async () => {
     invoke.mockResolvedValue({ data: { ok: true, status: "existing", ticket: "abc.def" } });
     const { onKakao } = setup();
     await screen.findByText("기록을 찾았어요");
     expect(invoke).toHaveBeenCalledWith("claim-member-account", {
       body: { action: "check", phone: "01012345678", name: "홍길동", birthDate: "19990315", ticket: true },
     });
-    expect(peekLinkTicket()).toBe("abc.def");
+    // 찾기만 하고 떠나면 공용 기기에 표가 남지 않아야 한다(2026-11-23 점검)
+    expect(peekLinkTicket()).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: /카카오로 이어받기/ }));
+    expect(peekLinkTicket()).toBe("abc.def");
     expect(onKakao).toHaveBeenCalled();
+  });
+
+  it("찾은 화면에서 뒤로 가면 표를 지운다", async () => {
+    invoke.mockResolvedValue({ data: { ok: true, status: "existing", ticket: "abc.def" } });
+    setup();
+    await screen.findByText("기록을 찾았어요");
+    fireEvent.click(screen.getByRole("button", { name: /카카오로 이어받기/ }));
+    expect(peekLinkTicket()).toBe("abc.def");
+    fireEvent.click(screen.getByRole("button", { name: "뒤로" }));
+    await screen.findByText("기록 찾기");
+    expect(peekLinkTicket()).toBeNull();
   });
 
   it("아이디로 만들면 넣은 정보를 가입 화면에 넘기고 표는 지운다", async () => {

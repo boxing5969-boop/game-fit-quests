@@ -35,6 +35,8 @@ const MemberLookup = ({ onBack, onLogin, onKakao, kakaoBusy }: Props) => {
   const [birth, setBirth] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  // 이어받기 표 — 「카카오로 이어받기」를 누를 때만 기기에 둔다(찾기만 하고 떠나면 남지 않게, 2026-11-23 점검).
+  const [ticket, setTicket] = useState<string | null>(null);
 
   const find = async () => {
     setErr("");
@@ -47,12 +49,13 @@ const MemberLookup = ({ onBack, onLogin, onKakao, kakaoBusy }: Props) => {
         body: { action: "check", phone: digits(phone), name: name.trim(), birthDate: birth, ticket: true },
       });
       const st: LookupStatus = lookupStatusOf(data);
-      const ticket = (data as { ticket?: unknown } | null)?.ticket;
+      const got = (data as { ticket?: unknown } | null)?.ticket;
       if (st === "existing") {
-        if (typeof ticket === "string") saveLinkTicket(ticket);
+        setTicket(typeof got === "string" ? got : null);
         setView("found");
         return;
       }
+      setTicket(null);
       clearLinkTicket();
       if (st === "new") return setView("notfound");
       if (st === "registered") return setView("registered");
@@ -82,7 +85,11 @@ const MemberLookup = ({ onBack, onLogin, onKakao, kakaoBusy }: Props) => {
   if (view === "found") {
     return (
       <div className="w-full max-w-sm animate-slide-up">
-        {header("기록을 찾았어요", () => setView("form"))}
+        {header("기록을 찾았어요", () => {
+          setTicket(null);
+          clearLinkTicket();
+          setView("form");
+        })}
         <div className="rounded-2xl border border-primary/30 bg-card p-5 text-center shadow-elev-1">
           <CheckCircle2 className="mx-auto h-10 w-10 text-primary" />
           <p className="mt-3 text-heading font-bold text-foreground">{name.trim()}님, 반가워요</p>
@@ -92,7 +99,10 @@ const MemberLookup = ({ onBack, onLogin, onKakao, kakaoBusy }: Props) => {
         <button
           type="button"
           disabled={kakaoBusy}
-          onClick={() => void onKakao()}
+          onClick={() => {
+            if (ticket) saveLinkTicket(ticket);
+            void onKakao();
+          }}
           className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-[#FEE500] py-4 text-body font-bold text-black shadow-elev-1 transition-all hover:brightness-95 active:scale-[0.98] disabled:opacity-50"
         >
           <svg className="h-6 w-6" viewBox="0 0 24 24" fill="#000000" aria-hidden="true">

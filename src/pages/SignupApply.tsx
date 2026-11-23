@@ -6,7 +6,8 @@
 //   1단계 '다음'에서 전화번호·이름(·생년월일)을 서버(claim-member-account)에 확인해 기존 회원이면
 //   수강권 선택·결제 없이 [계정 정보 → 추가 정보 → 규정 동의 → 가입 완료]로 끝난다.
 //   · 방문자: 그 계정을 내가 정한 아이디·비밀번호로 넘겨받는다(레벨·출석·수강권 기록 그대로) → 바로 로그인.
-//   · 소셜 로그인 회원: 기존 연동(link-imported-by-phone)으로 기존 계정의 기록을 이 계정에 합친다.
+//   · 소셜 로그인 회원: 기존 연동(link-imported-by-phone)으로 기존 계정의 기록을 이 계정에 합친다
+//     (2026-11-23 — 합치기 직전에 check 로 받은 이 계정에 묶인 표로만).
 // 지점 고르기(2026-10-21 대표님: "칠금점 수강권은 따로 결제선생을 통해서 구축해야 돼. 일단 계좌이체와 오프라인 결제만"):
 //   1단계 맨 위에서 지점을 고른다(선릉역점 · 칠금점). 선릉역점은 지금과 똑같이 수강권 선택 → 결제선생.
 //   칠금점은 결제 단계 대신 '계좌이체 · 현장 결제' 안내 → 가입 신청만 하고 승인 대기 (데스크가 결제 확인 후 승인).
@@ -335,9 +336,22 @@ const SignupApply = () => {
     const agreements = { ...agree, version: AGREEMENT_VERSION };
     try {
       if (loggedIn && user) {
-        // 소셜 로그인 회원 — 전화번호로 기존 계정의 레벨·출석·수강권 기록을 이 계정에 합친다(기존 연동 경로).
+        // 소셜 로그인 회원 — 기존 계정의 레벨·출석·수강권 기록을 이 계정에 합친다(기존 연동 경로).
+        // 2026-11-23 보안 점검: 번호만으로는 합치지 않는다 — 합치기 직전에 이름 · 번호 · 생년월일을 서버가 다시 확인하고
+        //   이 계정에 묶인 이어받기 표(10분)를 받아 그 표로 합친다.
+        const { data: chk, error: chkErr } = await supabase.functions.invoke("claim-member-account", {
+          body: { action: "check", phone: rawDigits(phone), name: name.trim(), birthDate: birth, ticket: true },
+        });
+        const c = (chk ?? null) as (ClaimResponse & { ticket?: unknown }) | null;
+        if (chkErr || !c?.status) {
+          setErr("회원 확인 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.");
+          return;
+        }
+        if (c.status !== "existing" || typeof c.ticket !== "string") {
+          return setErr(c.error || "체육관에 등록된 회원 정보와 달라요. 지점 데스크에 문의해 주세요.");
+        }
         const { data, error } = await supabase.functions.invoke("link-imported-by-phone", {
-          body: { phone: rawDigits(phone) },
+          body: { ticket: c.ticket },
         });
         const r = (data ?? null) as { ok?: boolean; matched?: boolean; error?: string; message?: string } | null;
         if (error || !r) {
