@@ -257,6 +257,11 @@ export const hasCardVideo = (card: Pick<TrainingCard, "video_path" | "coach_vide
 export const hasMemberVideo = (card: Pick<TrainingCard, "video_path" | "video_url">): boolean =>
   !!(card.video_path || (card.video_url ?? "").trim());
 
+/** 「영상 작업중」 — 회원용 영상이 아직 없는 카드 (그림만 있는 카드 · 2026-11-23 대표님).
+ *  준비 칸(붕대 감기)은 메뉴 「붕대 감기」에 영상이 따로 있어 뺀다 */
+export const videoWip = (card: Pick<TrainingCard, "video_path" | "video_url" | "category">): boolean =>
+  !hasMemberVideo(card) && (card.category ?? "").trim() !== "준비";
+
 const norm = (s: string | null | undefined) => (s ?? "").toLowerCase().replace(/[\s·\-_/()]+/g, "");
 
 /** 서랍 · 영상 칸 검색 — 이름 · 한 줄 · 분류 · 칸 이름 · 준비물 (띄어쓰기 · 가운뎃점 무시) */

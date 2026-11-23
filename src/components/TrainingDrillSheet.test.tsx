@@ -223,3 +223,34 @@ describe("카드 시트 — 영상 → 동작 그림 → 글 순서", () => {
     expect(video().getAttribute("poster")).toBe("https://x/member/f.webp");
   });
 });
+
+describe("카드 시트 — 효과 · 가치 · 언제 · 얼마나 · 영상 작업중 (2026-11-23)", () => {
+  const ILLUST = "https://img/jab-2cut.png";
+
+  it("안내가 있는 카드 — 「이 동작, 왜 · 언제 · 얼마나」 네 줄이 「이렇게 해요」 위에", () => {
+    render(<TrainingDrillSheet exercise={card({ image_url: ILLUST })} onClose={vi.fn()} />);
+    const box = screen.getByRole("region", { name: "이 동작, 왜 · 언제 · 얼마나" });
+    for (const label of ["효과", "가치", "언제", "얼마나"]) expect(box).toHaveTextContent(label);
+    const how = screen.getByText("👣 이렇게 해요");
+    expect(!!(box.compareDocumentPosition(how) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
+  });
+
+  it("안내가 없는 카드 — 칸을 그리지 않는다", () => {
+    render(<TrainingDrillSheet exercise={card({ id: "00000000-0000-4000-8000-000000000001" })} onClose={vi.fn()} />);
+    expect(screen.queryByRole("region", { name: "이 동작, 왜 · 언제 · 얼마나" })).toBeNull();
+  });
+
+  it("그림만 있는 카드 — 맨 위 그림에 「영상 작업중」 · 영상 카드는 없음", () => {
+    const { unmount } = render(<TrainingDrillSheet exercise={card({ image_url: ILLUST })} onClose={vi.fn()} />);
+    expect(screen.getByText("영상 작업중")).toBeInTheDocument();
+    unmount();
+    videoUrl.current = "https://x/member/g.mp4";
+    render(<TrainingDrillSheet exercise={card({ video_path: "member/g.mp4", image_url: ILLUST })} onClose={vi.fn()} />);
+    expect(screen.queryByText("영상 작업중")).toBeNull();
+  });
+
+  it("준비 칸(붕대 감기)은 영상 작업중이 아니다", () => {
+    render(<TrainingDrillSheet exercise={card({ category: "준비", name: "복싱 붕대 감기" })} onClose={vi.fn()} />);
+    expect(screen.queryByText("영상 작업중")).toBeNull();
+  });
+});

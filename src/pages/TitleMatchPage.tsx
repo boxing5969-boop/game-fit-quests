@@ -19,6 +19,7 @@ import { Check, CheckCircle2, ChevronLeft, ChevronRight, Clapperboard, Play, Rot
 import { AppPage, PageHeader } from "@/components/ui/rankingup";
 import VideoPlayer from "@/components/VideoPlayer";
 import { learnIllustOf } from "@/data/learnIllust";
+import { learnGuideOf } from "@/data/learnGuide";
 import { useAuth } from "@/contexts/AuthContext";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { parseVideoTitle, useWatchedVideos, youtubeId, youtubeThumb } from "@/hooks/useLevelVideos";
@@ -433,6 +434,7 @@ const TitleMatchPage = () => {
             title={parseVideoTitle(playing.title).name || playing.title}
             keyPoints={playing.keyPoints}
             illustration={learnIllustOf([playing.id])}
+            guide={learnGuideOf([playing.id])}
             onClose={closePlayer}
             onStartChallenge={() => {
               markWatched(playing.id);

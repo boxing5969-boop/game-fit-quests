@@ -21,12 +21,27 @@ const ThumbCaption = ({ text }: { text: string }) => {
   );
 };
 
+/** 「영상 작업중」 표 — 회원용 영상이 아직 없고 그림만 있는 카드 (2026-11-23 대표님 「영상이 아직없는 그림만 있는 컨텐츠는 영상 작업중이라고 표시해줘」)
+ *  타일 왼쪽 위(「영상」 표와 같은 자리) · 카드 시트 맨 위 그림 왼쪽 위 */
+export const WipBadge = ({ className, small }: { className?: string; small?: boolean }) => (
+  <span
+    className={cn(
+      "inline-flex items-center gap-1 rounded-full bg-white/95 font-bold text-foreground shadow-elev-1 ring-1 ring-black/5",
+      small ? "px-2 py-1 text-micro" : "px-3 py-1.5 text-label",
+      className,
+    )}
+  >
+    <span aria-hidden>🎬</span> 영상 작업중
+  </span>
+);
+
 /** 타일 그림 — 첫 장면 · 그림, 없으면 칸 색 바탕에 칸 이름 · caption 이 있으면 장면 위에 제목(릴스 썸네일) */
 export const Thumb = ({
   src,
   color,
   label,
   video,
+  wip,
   caption,
   pinned,
   count,
@@ -38,6 +53,8 @@ export const Thumb = ({
   color: string;
   label: string;
   video?: boolean;
+  /** 「영상 작업중」 — 회원용 영상이 아직 없는 카드 (video 와 함께 쓰지 않는다) */
+  wip?: boolean;
   /** 썸네일 제목 — 인스타 릴스(첫 장면 그림이 없다)는 153 동작 장면 + 이 글로 썸네일 (2026-11-17 대표님 「릴스라고 표기하지말고 … 글로 썸네일」) */
   caption?: string;
   /** 대표님 편집 중 — 왼쪽 위 − 표시 자리를 비운다 */
@@ -71,6 +88,7 @@ export const Thumb = ({
         <Play className="h-3 w-3 fill-white" /> 영상
       </span>
     )}
+    {wip && !video && <WipBadge small className={cn("absolute top-2", editing ? "left-8" : "left-2")} />}
     {pinned && <span className="absolute right-2 top-2 rounded-full bg-primary px-2 py-1 text-micro font-bold text-primary-foreground">추천</span>}
     {count != null && count > 0 ? (
       <span className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-micro font-bold text-foreground shadow-elev-1">

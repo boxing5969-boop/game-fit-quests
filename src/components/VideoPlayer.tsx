@@ -3,6 +3,8 @@ import { X, Play, Pause, Maximize, RotateCcw, FlipHorizontal2 } from "lucide-rea
 import VideoVariantTabs from "@/components/common/VideoVariantTabs";
 import { instagramEmbedUrl, isInstagramUrl } from "@/lib/learnExtras";
 import { useBackClose } from "@/hooks/useBackClose";
+import LearnGuideBox from "@/components/training/LearnGuideBox";
+import type { LearnGuide } from "@/data/learnGuide";
 
 /** 같은 동작의 다른 버전 (실사 · 애니메이션 — 2026-10-01) */
 export interface PlayerVariant {
@@ -38,6 +40,8 @@ interface VideoPlayerProps {
   aspect?: number;
   /** 2컷 동작 그림 — 영상 바로 아래 · 설명 바로 위 (2026-11-18 영상으로 배우기 · data/learnIllust) · 못 불러오면 자리째 감춤 */
   illustration?: string | null;
+  /** 효과 · 가치 · 언제 · 얼마나 — 그림 아래 · 설명 위 (2026-11-23 영상으로 배우기 · data/learnGuide) */
+  guide?: LearnGuide | null;
 }
 
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -59,6 +63,7 @@ const VideoPlayer = ({
   description,
   aspect,
   illustration,
+  guide,
 }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   // 보일 때만 그려지는 창 — 휴대폰 뒤로가기가 영상을 닫는다(화면을 떠나지 않게, 2026-11-17)
@@ -257,6 +262,7 @@ const VideoPlayer = ({
             className="mb-4 w-full rounded-2xl border border-border bg-card"
           />
         )}
+        {guide && <LearnGuideBox guide={guide} className="mb-4" />}
         {description && <p className="mb-4 whitespace-pre-line text-body leading-relaxed text-foreground">{description}</p>}
         {keyPoints.filter(Boolean).length > 0 && (
           <div className="mb-4">

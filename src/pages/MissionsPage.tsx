@@ -39,6 +39,7 @@ import WhiteLeagueTab from "@/components/WhiteLeagueTab";
 import { learnVideos, type LearnMissionSource } from "@/lib/learnMissions";
 import { isInstagramUrl, learnPbVideos, learnPrograms, type LearnExtra } from "@/lib/learnExtras";
 import { learnIllustOf } from "@/data/learnIllust";
+import { learnGuideOf } from "@/data/learnGuide";
 import { TEST153_STATIONS } from "@/lib/test153";
 import { useLearnPrograms } from "@/services/learnExtrasService";
 import {
@@ -202,6 +203,7 @@ const MissionsPage = () => {
     aspect?: number;
     /** 2컷 동작 그림 — 영상 아래 · 설명 위 (2026-11-18 · data/learnIllust) */
     illustration?: string | null;
+    guide?: ReturnType<typeof learnGuideOf>;
   } | null>(null);
 
   // League expand/collapse — default: current rank expanded.
@@ -361,6 +363,7 @@ const MissionsPage = () => {
       canSubmit: status === "active",
       variants: playerVariantsOf(mission.mission_videos),
       illustration: learnIllustOf([mission.id]),
+      guide: learnGuideOf([mission.id]),
     });
   };
 
@@ -386,6 +389,7 @@ const MissionsPage = () => {
       reference: true,
       variants: variantsOverride ?? playerVariantsOf(mission.mission_videos),
       illustration: learnIllustOf(illustIds ?? [mission.id]),
+      guide: learnGuideOf(illustIds ?? [mission.id]),
     });
   };
 
@@ -406,6 +410,7 @@ const MissionsPage = () => {
         reference: true,
         aspect: extra.kind === "pb" ? 1 : undefined,
         illustration: learnIllustOf([extra.id]),
+        guide: learnGuideOf([extra.id]),
       });
       return;
     }
@@ -819,6 +824,7 @@ const MissionsPage = () => {
           description={videoModal.description}
           aspect={videoModal.aspect}
           illustration={videoModal.illustration}
+          guide={videoModal.guide}
           onClose={() => setVideoModal(null)}
           onStartChallenge={
             !videoModal.reference && (videoModal.canSubmit || isAdmin)
