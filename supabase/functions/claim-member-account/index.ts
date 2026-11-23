@@ -11,8 +11,9 @@
 //           status: new(등록 안 된 번호 → 일반 가입) | existing(기존 회원 확인) | registered(이미 넘겨받은 계정)
 //                   | mismatch(정보 불일치) | desk(지도진 등 셀프 가입 불가) | locked(시도 초과)
 //           ticket:true 를 함께 보내면 existing 일 때 카카오 · 구글 이어받기 표(_shared/linkTicket.ts)를 준다(2026-11-22).
+//           로그인한 사람에게는 그 계정에 묶인 표(c)를 준다(2026-11-23 — 번호만으로 합치던 구멍을 막음).
 //   claim — 판정을 처음부터 다시 한다(앞 단계 결과를 믿지 않는다). existing 일 때만 아이디·비밀번호·가입 정보를 적용.
-//           로그인된(소셜) 사용자는 이 경로를 쓰지 않는다 — 앱이 기존 연동(link-imported-by-phone)을 부른다.
+//           로그인된(소셜) 사용자는 이 경로를 쓰지 않는다 — check 로 받은 표로 기존 연동(link-imported-by-phone)을 부른다.
 //
 // 보안
 //   · 30분 안에 같은 번호 불일치 5회, 같은 접속지 불일치 15회, 또는 같은 접속지에서 회원 번호(이미 가입·지도진·불일치)
@@ -284,9 +285,11 @@ Deno.serve(async (req) => {
     if (action === "check") {
       await record(ev.status);
       // 첫 화면 「다니고 있어요」(2026-11-22): 기존 회원이면 카카오 · 구글로 이어받을 10분짜리 표를 같이 준다
-      //   (_shared/linkTicket.ts — 번호와 계정 번호만, 회원 정보 없음). 로그인된 사용자에게는 주지 않는다.
-      if (ev.status === "existing" && body.ticket === true && !callerId && ev.target) {
-        const ticket = await signLinkTicket(serviceKey, phone, ev.target.user_id);
+      //   (_shared/linkTicket.ts — 번호와 계정 번호만, 회원 정보 없음).
+      // 2026-11-23 보안 점검: 이미 로그인한 사람(소셜 가입 · 회원 등록 확인 창)도 같은 확인(이름 · 번호 · 생년월일 · 잠금)을
+      //   거쳐 표를 받는다 — 그 표에는 그 사람 계정(c)을 넣어 다른 계정은 못 쓴다. link-imported-by-phone 은 이제 표만 받는다.
+      if (ev.status === "existing" && body.ticket === true && ev.target) {
+        const ticket = await signLinkTicket(serviceKey, phone, ev.target.user_id, Date.now(), callerId);
         return json({ ok: true, status: ev.status, ticket });
       }
       if (ev.status === "new" || ev.status === "existing") return json({ ok: true, status: ev.status });

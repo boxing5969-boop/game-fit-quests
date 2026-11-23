@@ -49,6 +49,7 @@ import {
   cardShelf,
   hasCardVideo,
   hasMemberVideo,
+  videoWip,
   isMemberVisible,
   levelTag,
   normalizeShelf,
@@ -829,6 +830,7 @@ const TrainingShelf = ({ audience = "member", warmups = [], onOpenWarmup, sheetF
           color={info.color}
           label={info.label}
           video={staff || editing ? hasCardVideo(t.card) : hasMemberVideo(t.card)}
+          wip={!(staff || editing) && videoWip(t.card)}
           pinned={t.pinned}
           count={count}
           editing={editing}

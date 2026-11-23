@@ -18,6 +18,28 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261123-learn-guide",
+    date: "2026-11-23",
+    title: "영상으로 배우기에 동작마다 왜 · 언제 · 얼마나",
+    lines: [
+      "동작 카드 · 레벨 미션 영상에 효과 · 가치 · 언제 · 얼마나가 보여요",
+      "몇 라운드 하면 좋은지 보고 혼자 운동할 때도 그대로 따라 해요",
+      "그림만 있는 동작은 「영상 작업중」 · 영상이 나오면 바로 바뀌어요",
+    ],
+    link: { to: "/missions?learn=1", label: "영상으로 배우기" },
+  },
+  {
+    id: "20261123-market-mileage",
+    date: "2026-11-23",
+    title: "153 마켓도 마일리지로 할인돼요",
+    lines: [
+      "마켓 용품을 데스크에서 결제할 때 마일리지를 주문 금액의 5%까지 쓸 수 있어요",
+      "체육관 도매가로 드리는 용품이라 수강료 · 운동복 · 락카(10%)보다 낮아요",
+    ],
+    link: { to: "/market", label: "153 마켓 열기" },
+    branches: SEOLLEUNG,
+  },
+  {
     id: "20261122-boxing-timer",
     date: "2026-11-22",
     title: "복싱 타이머가 생겼어요",

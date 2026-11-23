@@ -1,5 +1,8 @@
-// 소셜(구글/카카오) 첫 로그인 시 전화번호로 기존 일괄등록 계정 연동 (권장·스킵 가능).
+// 소셜(구글/카카오) 첫 로그인 시 기존 일괄등록 계정 연동 (권장·스킵 가능).
 // 대상: role=member 이고 프로필에 전화번호가 없는 회원(소셜 가입자). 일괄등록 회원은 전화번호가 있어 제외.
+// 2026-11-23 보안 점검(CRITICAL): 번호만 넣으면 남의 계정을 합칠 수 있었다 → 이름 · 번호 · 생년월일로 「기록 찾기」
+//   (claim-member-account check — 틀리면 잠금)를 거쳐 받은 표로만 합친다. 첫 화면에서 찾은 표는 합치기 전에 한 번 묻는다
+//   (공용 기기에서 다음 사람 계정에 앞사람 기록이 합쳐지지 않게).
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -8,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { runInviteClaim } from "@/components/InviteRewardBridge";
 import { toast } from "sonner";
 import { Link2 } from "lucide-react";
-import { clearLinkTicket, clearLookupRequest, markLoggedIn, peekLinkTicket } from "@/lib/memberEntry";
+import { clearLinkTicket, clearLookupRequest, lookupStatusOf, markLoggedIn, peekLinkTicket } from "@/lib/memberEntry";
 
 const formatPhone = (val: string) => {
   const d = val.replace(/\D/g, "").slice(0, 11);
@@ -24,6 +27,8 @@ const LinkAccountPrompt = () => {
   const location = useLocation();
   const [dismissed, setDismissed] = useState(false);
   const [phone, setPhone] = useState("");
+  const [name, setName] = useState("");
+  const [birth, setBirth] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -32,9 +37,14 @@ const LinkAccountPrompt = () => {
   useEffect(() => {
     if (user) markLoggedIn();
   }, [user]);
-  // 「기록을 찾았어요 → 카카오로 이어받기」로 돌아왔으면 이어받기 표로 바로 합친다(번호를 다시 묻지 않음).
+  useEffect(() => {
+    if (profile?.name) setName((v) => v || String(profile.name));
+  }, [profile?.name]);
+  // 「기록을 찾았어요 → 카카오로 이어받기」로 돌아왔으면 그 표로 합칠지 한 번 묻는다(번호를 다시 묻지는 않음).
+  //   묻지 않고 합치면, 공용 기기에서 앞사람이 찾기만 하고 떠난 표가 다음 로그인 계정에 합쳐질 수 있었다(2026-11-23 점검).
   const autoTried = useRef(false);
   const [autoLinking, setAutoLinking] = useState(false);
+  const [pendingTicket, setPendingTicket] = useState<string | null>(null);
   useEffect(() => {
     if (!user || !profile || autoTried.current) return;
     const ticket = peekLinkTicket();
@@ -44,25 +54,59 @@ const LinkAccountPrompt = () => {
       return;
     }
     autoTried.current = true;
-    setAutoLinking(true);
-    void link({ ticket }).finally(() => {
-      clearLinkTicket();
-      setAutoLinking(false);
-    });
+    setPendingTicket(ticket);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, profile, needsLink]);
-  if (!needsLink || dismissed || location.pathname === "/signup" || location.pathname === "/login") return null;
 
-  const submit = async () => {
-    setError("");
-    if (phone.replace(/\D/g, "").length < 10) {
-      setError("전화번호를 정확히 입력해주세요.");
-      return;
-    }
-    await link({ phone: phone.replace(/\D/g, "") });
+  const acceptPending = () => {
+    const ticket = pendingTicket;
+    setPendingTicket(null);
+    clearLinkTicket();
+    if (!ticket) return;
+    setAutoLinking(true);
+    void link({ ticket }).finally(() => setAutoLinking(false));
+  };
+  const rejectPending = () => {
+    setPendingTicket(null);
+    clearLinkTicket();
   };
 
-  async function link(body: { phone: string } | { ticket: string }) {
+  if (!needsLink || dismissed) return null;
+  if (!pendingTicket && !autoLinking && (location.pathname === "/signup" || location.pathname === "/login")) return null;
+
+  // 이름 · 번호 · 생년월일로 기록 찾기 → 이 계정에 묶인 표(10분) → 합치기
+  const submit = async () => {
+    setError("");
+    const p = phone.replace(/\D/g, "");
+    if (!name.trim()) return setError("체육관에 등록한 이름(실명)을 넣어 주세요.");
+    if (!/^0\d{9,10}$/.test(p)) return setError("체육관에 등록한 전화번호를 정확히 넣어 주세요.");
+    if (birth.length !== 8) return setError("생년월일 8자리를 넣어 주세요. (예: 19990315)");
+    setLoading(true);
+    try {
+      const { data, error: fnErr } = await supabase.functions.invoke("claim-member-account", {
+        body: { action: "check", phone: p, name: name.trim(), birthDate: birth, ticket: true },
+      });
+      if (fnErr) throw fnErr;
+      const st = lookupStatusOf(data);
+      const ticket = (data as { ticket?: unknown } | null)?.ticket;
+      if (st === "existing" && typeof ticket === "string") {
+        await link({ ticket });
+        return;
+      }
+      if (st === "new") {
+        setError("체육관에 등록된 회원 번호가 아니에요. 체육관에 처음 오셨다면 아래 가입 신청을 진행해 주세요.");
+        return;
+      }
+      const msg = (data as { error?: unknown } | null)?.error;
+      setError(typeof msg === "string" && msg ? msg : "확인 중 문제가 생겼어요. 잠시 뒤 다시 해 주세요.");
+    } catch {
+      setError("확인 중 오류가 발생했습니다. 다시 시도해주세요.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  async function link(body: { ticket: string }) {
     setLoading(true);
     try {
       const { data, error: fnErr } = await supabase.functions.invoke("link-imported-by-phone", { body });
@@ -91,6 +135,39 @@ const LinkAccountPrompt = () => {
     }
   }
 
+  if (pendingTicket) {
+    return (
+      <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 px-4">
+        <div role="dialog" aria-modal="true" aria-labelledby="link-confirm-title" className="w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-elev-3">
+          <div className="mb-3 flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Link2 className="h-4 w-4" />
+            </span>
+            <h2 id="link-confirm-title" className="text-body font-bold text-foreground">찾은 기록을 이 계정으로 옮길까요?</h2>
+          </div>
+          <p className="text-label leading-relaxed text-muted-foreground">
+            방금 「기록 찾기」에서 찾은 <b className="text-foreground">레벨 · 출석 · 수강권 기록</b>을 지금 로그인한 계정으로 옮겨요.
+            <b className="text-foreground"> 내가 찾은 기록이 아니면</b> 「아니에요」를 눌러 주세요.
+          </p>
+          <button
+            type="button"
+            onClick={acceptPending}
+            className="mt-4 w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground shadow-glow-soft active:scale-[0.98]"
+          >
+            네, 내 기록이에요 · 옮기기
+          </button>
+          <button
+            type="button"
+            onClick={rejectPending}
+            className="mt-3 w-full rounded-xl border border-border bg-card py-3 text-body font-bold text-foreground active:scale-[0.98]"
+          >
+            아니에요
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (autoLinking) {
     return (
       <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 px-4">
@@ -113,15 +190,35 @@ const LinkAccountPrompt = () => {
           <h2 className="text-body font-bold text-foreground">회원 등록 확인</h2>
         </div>
         <p className="mb-3 text-label leading-relaxed text-muted-foreground">
-          <b className="text-foreground">153복싱짐 회원</b>이시면 <b className="text-foreground">체육관에 등록된 전화번호</b>를 넣어 주세요 — 레벨·출석 기록이 그대로 이어져요. 체육관에 처음 오셨다면 아래에서 <b className="text-foreground">가입 신청</b>을 진행해주세요.
+          <b className="text-foreground">153복싱짐 회원</b>이시면 <b className="text-foreground">체육관에 등록한 이름 · 전화번호 · 생년월일</b>을 넣어 주세요 — 레벨·출석 기록이 그대로 이어져요. 체육관에 처음 오셨다면 아래에서 <b className="text-foreground">가입 신청</b>을 진행해주세요.
         </p>
-        <input
-          type="tel"
-          value={phone}
-          onChange={(e) => setPhone(formatPhone(e.target.value))}
-          placeholder="010-0000-0000"
-          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-body text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
-        />
+        <div className="space-y-2">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="이름(실명)"
+            autoComplete="name"
+            aria-label="이름(실명)"
+            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-body text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+          />
+          <input
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(formatPhone(e.target.value))}
+            placeholder="010-0000-0000"
+            aria-label="체육관에 등록한 전화번호"
+            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-body text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+          />
+          <input
+            value={birth}
+            onChange={(e) => setBirth(e.target.value.replace(/[^0-9]/g, "").slice(0, 8))}
+            placeholder="생년월일 8자리 (예: 19990315)"
+            inputMode="numeric"
+            maxLength={8}
+            aria-label="생년월일"
+            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-body text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+          />
+        </div>
         {error && <p className="mt-2 text-label text-destructive">{error}</p>}
         <button
           type="button"

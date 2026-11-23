@@ -12,6 +12,9 @@
 //   · 코치진이 보면 「코치용 영상(목소리)」 단추가 하나 더 (코치용 영상이 붙은 카드만)
 //   · 같은 시트를 훈련 탭 「영상으로 배우기」 · 레벨 자세히 › 필수 훈련 · 전략 회의 영상 칸 · 훈련 라이브러리가 같이 쓴다
 //   · 회원 글에는 몸에 좋다는 효과 말(benefits)을 보여 주지 않는다 — 동작과 포인트만 (회원용 글 규칙)
+//   · 2026-11-23 대표님 「각각 어떤 효과가 있고 어떤 가치가 있고 언제 얼마나 해야 좋은지 설명해줘 · 영상이 아직 없는 그림만 있는 컨텐츠는 영상 작업중」:
+//     글 바로 위에 「이 동작, 왜 · 언제 · 얼마나」(data/learnGuide — 복싱 실력 · 체력 말로, 과장 없이 · benefits 칸은 그대로 안 씀) ·
+//     회원용 영상이 없는 카드는 맨 위 그림 왼쪽 위에 「영상 작업중」 (준비 칸 붕대 감기는 따로 영상이 있어 뺀다)
 //   · 2026-11-15 영상으로 배우기 3단계: 제목 옆 ♥(숫자는 5명 넘을 때만) · 맨 아래 반응 칸(쉬워요/딱 좋아요/어려워요 ·
 //     코치님께 의견 · 영상 없는 카드는 「영상 찍어 주세요」) — 코치진은 같은 자리에 회원 반응 숫자 · 의견에 답 (training/react)
 // body 로 portal 한다 (2026-09-28): 상세 화면 루트의 animate-slide-up 이 끝난 뒤에도 transform 을 남겨
@@ -54,6 +57,10 @@ import { cardVoiceUrl } from "@/lib/cardVoice";
 import VideoOverlay from "@/components/common/VideoOverlay";
 import { useVideoFixes } from "@/services/videoFixService";
 import VideoFixPanel from "@/components/training/videoFix/VideoFixPanel";
+import LearnGuideBox from "@/components/training/LearnGuideBox";
+import { WipBadge } from "@/components/training/ShelfTiles";
+import { learnGuideOf } from "@/data/learnGuide";
+import { videoWip } from "@/lib/trainingCards";
 
 interface TrainingDrillSheetProps {
   exercise: TrainingExercise | TrainingCard | null;
@@ -215,6 +222,9 @@ const TrainingDrillSheet = ({
   // 영상 카드는 주소를 받는 동안에도 맨 위 = 첫 장면, 그림 = 그 아래 (받고 나서 그림이 아래로 뛰지 않게)
   const videoCard = isStorageVideo || !!yt || !!url || !!card?.video_path;
   const topPicture = videoCard ? framePoster : illust ?? framePoster;
+  // 「영상 작업중」 — 회원용 영상이 없고 그림만 있는 카드 (2026-11-23)
+  const wip = !!card && !videoCard && videoWip(card);
+  const guide = card ? learnGuideOf([card.id]) : null;
 
   // 🔊 설명 듣기 — 목소리 파일(드라이브 영상과 같은 목소리)이 있으면 그것, 없거나 못 틀면 휴대폰 목소리로 문장마다
   const cardRef = useRef(card);
@@ -459,15 +469,22 @@ const TrainingDrillSheet = ({
         ) : url ? (
           <video src={url} controls playsInline onPlaying={onVideoPlaying} onEnded={onLoopDone} className="aspect-video w-full rounded-t-3xl bg-black" />
         ) : topPicture ? (
-          <img
-            src={topPicture}
-            alt={`${card.name} 동작 그림`}
-            loading="lazy"
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-            }}
-            className="w-full rounded-t-3xl border-b border-border bg-card"
-          />
+          <div className="relative">
+            <img
+              src={topPicture}
+              alt={`${card.name} 동작 그림`}
+              loading="lazy"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+              className="w-full rounded-t-3xl border-b border-border bg-card"
+            />
+            {wip && <WipBadge className="absolute bottom-3 left-3" />}
+          </div>
+        ) : wip ? (
+          <div className="flex h-16 items-end px-5">
+            <WipBadge />
+          </div>
         ) : (
           <div className="h-12" />
         )}
@@ -598,6 +615,9 @@ const TrainingDrillSheet = ({
           )}
 
           {card.description && <p className="mt-4 text-body leading-relaxed text-muted-foreground">{card.description}</p>}
+
+          {/* 이 동작, 왜 · 언제 · 얼마나 — 효과 · 가치 · 언제 · 얼마나 (2026-11-23) */}
+          {guide && <LearnGuideBox guide={guide} className="mt-4" />}
 
           {/* 이렇게 해요 — 번호 포인트 */}
           {card.cues.length > 0 && (

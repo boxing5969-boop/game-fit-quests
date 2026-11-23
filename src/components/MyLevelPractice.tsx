@@ -21,6 +21,7 @@ import { getLevelById } from "@/data/allLevelsData";
 import { RANK_LABELS, RANK_ORDER, formatRank, toGlobalLevel } from "@/lib/rankLabels";
 import VideoPlayer from "@/components/VideoPlayer";
 import { learnIllustOf } from "@/data/learnIllust";
+import { learnGuideOf } from "@/data/learnGuide";
 import {
   useLevelVideos, useWarmupVideos, useWatchedVideos, parseVideoTitle, youtubeId, youtubeThumb,
   type LevelVideo,
@@ -456,6 +457,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
           title={parseVideoTitle(playing.title).name}
           keyPoints={playing.keyPoints}
           illustration={learnIllustOf([playing.id])}
+          guide={learnGuideOf([playing.id])}
           onClose={() => setPlaying(null)}
           onStartChallenge={() => {
             markWatched(playing.id);
@@ -475,6 +477,7 @@ const MyLevelPractice = ({ league, levelNumber, onBack }: Props) => {
           title={parseVideoTitle(warmupPlaying.title).name}
           keyPoints={warmupPlaying.keyPoints}
           illustration={learnIllustOf([warmupPlaying.id])}
+          guide={learnGuideOf([warmupPlaying.id])}
           onClose={() => setWarmupPlaying(null)}
         />,
         document.body,

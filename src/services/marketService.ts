@@ -192,6 +192,8 @@ export interface OrderSetInput {
   status?: MarketOrderStatus | null;
   memo?: string | null;
   reason?: string | null;
+  /** 결제 확인 때 함께 쓸 153 마일리지(1,000점 단위 · 주문 금액의 5%까지) */
+  mileage?: number | null;
 }
 
 export const useMarketAdminActions = (branch: string | null) => {
@@ -213,7 +215,13 @@ export const useMarketAdminActions = (branch: string | null) => {
       }
       const r = await act(
         "market_admin_order_set",
-        { p_id: input.id, p_status: input.status ?? null, p_memo: input.memo ?? null, p_reason: input.reason ?? null },
+        {
+          p_id: input.id,
+          p_status: input.status ?? null,
+          p_memo: input.memo ?? null,
+          p_reason: input.reason ?? null,
+          ...(input.mileage && input.mileage > 0 ? { p_mileage: input.mileage } : {}),
+        },
         "바꾸지 못했어요",
       );
       return normalizeOrder(r.order);

@@ -18,6 +18,8 @@ import { shortBranch } from "@/lib/dmPeople";
 import {
   boardGroups,
   boardTodoCount,
+  MARKET_MILEAGE_PCT,
+  marketMileageMax,
   mdOfTime,
   orderTitle,
   priceFlags,
@@ -51,14 +53,21 @@ const OrderRow = ({
   busy: boolean;
   onSet: (input: OrderSetInput, done: string) => Promise<boolean>;
 }) => {
-  const [mode, setMode] = useState<null | "cancel" | "memo">(null);
+  const [mode, setMode] = useState<null | "cancel" | "memo" | "pay">(null);
   const [reason, setReason] = useState("");
+  const [mileage, setMileage] = useState("");
   const [memo, setMemo] = useState(order.staffMemo ?? "");
   const actions = staffActions(order.status);
   const primary = actions.find((a) => a.kind === "primary");
   const back = actions.find((a) => a.kind === "back");
   const cancelA = actions.find((a) => a.kind === "cancel");
   const who = order.memberName ?? "회원";
+  // 결제 확인 때 마일리지 할인 — 주문 금액의 5%까지(1,000점 단위). 보유 점수는 서버가 다시 본다.
+  const mileMax = marketMileageMax(order.amount);
+  const mileUse = Number(mileage.replace(/\D/g, "")) || 0;
+  const mileErr =
+    mileUse === 0 ? null : mileUse % 1000 !== 0 ? "1,000점 단위로 넣어 주세요" : mileUse > mileMax ? `최대 ${mileMax.toLocaleString("ko-KR")}점까지예요` : null;
+  const isPayStep = order.status === "applied" && primary?.to === "paid";
 
   return (
     <li className="rounded-2xl border border-border bg-card p-4">
@@ -73,6 +82,11 @@ const OrderRow = ({
       <p className="mt-0.5 text-label tabular-nums text-muted-foreground">
         {won(order.amount)} · {mdOfTime(order.createdAt)} 주문{order.orderNo ? ` · ${order.orderNo}` : ""}
       </p>
+      {(order.mileageUsed ?? 0) > 0 && (
+        <p className="mt-0.5 text-label font-bold tabular-nums text-amber-700 dark:text-reward">
+          마일리지 {(order.mileageUsed ?? 0).toLocaleString("ko-KR")}점 할인 · 받은 돈 {won(order.amount - (order.mileageUsed ?? 0))}
+        </p>
+      )}
       {order.note && <p className="mt-2 rounded-xl bg-secondary/70 px-3 py-2 text-label leading-snug text-foreground">회원 한마디 · {order.note}</p>}
       {order.staffMemo && mode !== "memo" && <p className="mt-2 text-label leading-snug text-muted-foreground">메모 · {order.staffMemo}</p>}
       {order.status === "canceled" && order.cancelReason && (
@@ -106,6 +120,60 @@ const OrderRow = ({
               className="h-11 flex-[1.4] rounded-xl bg-destructive text-label font-black text-destructive-foreground disabled:opacity-50"
             >
               {cancelA.label} 확정
+            </button>
+          </div>
+        </div>
+      )}
+
+      {mode === "pay" && primary && (
+        <div className="mt-3 space-y-2 rounded-xl border border-border bg-secondary/40 p-3">
+          <label htmlFor={`mk-mile-${order.id}`} className="text-label font-bold text-foreground">
+            153 마일리지 할인 (선택 · 주문 금액의 {MARKET_MILEAGE_PCT}%까지)
+          </label>
+          <div className="flex gap-2">
+            <input
+              id={`mk-mile-${order.id}`}
+              inputMode="numeric"
+              value={mileage}
+              onChange={(e) => setMileage(e.target.value)}
+              placeholder={mileMax > 0 ? `쓸 점수 (최대 ${mileMax.toLocaleString("ko-KR")})` : "이 주문은 마일리지를 못 써요"}
+              disabled={mileMax <= 0}
+              className={cn(inputCls, "min-w-0 flex-1")}
+            />
+            <button
+              type="button"
+              disabled={mileMax <= 0}
+              onClick={() => setMileage(String(mileMax))}
+              className="h-11 shrink-0 rounded-xl bg-card px-3 text-label font-bold text-foreground ring-1 ring-border disabled:opacity-40"
+            >
+              최대
+            </button>
+          </div>
+          {mileErr ? (
+            <p className="text-label font-bold text-destructive">{mileErr}</p>
+          ) : (
+            <p className="text-label tabular-nums text-muted-foreground">
+              데스크에서 받을 돈 <b className="text-foreground">{won(order.amount - mileUse)}</b>
+              {mileUse > 0 ? ` · 마일리지 ${mileUse.toLocaleString("ko-KR")}점` : ""}
+            </p>
+          )}
+          <div className="flex gap-2">
+            <button type="button" onClick={() => setMode(null)} className="h-11 flex-1 rounded-xl bg-secondary text-label font-bold text-secondary-foreground">
+              그만두기
+            </button>
+            <button
+              type="button"
+              disabled={busy || !!mileErr}
+              onClick={async () => {
+                const ok = await onSet(
+                  { id: order.id, status: primary.to, mileage: mileUse > 0 ? mileUse : null },
+                  mileUse > 0 ? `${who} · ${primary.label} · 마일리지 ${mileUse.toLocaleString("ko-KR")}점` : `${who} · ${primary.label}`,
+                );
+                if (ok) setMode(null);
+              }}
+              className="h-11 flex-[1.4] rounded-xl bg-foreground text-label font-black text-background disabled:opacity-50"
+            >
+              {primary.label} · {won(order.amount - mileUse)}
             </button>
           </div>
         </div>
@@ -149,7 +217,14 @@ const OrderRow = ({
             <button
               type="button"
               disabled={busy}
-              onClick={() => void onSet({ id: order.id, status: primary.to }, `${who} · ${primary.label}`)}
+              onClick={() => {
+                if (isPayStep) {
+                  setMileage("");
+                  setMode("pay");
+                  return;
+                }
+                void onSet({ id: order.id, status: primary.to }, `${who} · ${primary.label}`);
+              }}
               className="flex h-12 w-full items-center justify-center rounded-xl bg-foreground text-body font-black text-background active:scale-[0.99] disabled:opacity-50"
             >
               {primary.label}

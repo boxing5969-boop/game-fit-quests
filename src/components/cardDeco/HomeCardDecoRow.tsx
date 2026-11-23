@@ -5,12 +5,14 @@
  */
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChevronRight, Palette, Star } from "lucide-react";
 
 import CardDecoSheet, { type CardDecoPreview } from "@/components/cardDeco/CardDecoSheet";
 import ReviewMissionSheet from "@/components/reviewMission/ReviewMissionSheet";
-import { remainingMileage, useMyReviewMissions } from "@/services/reviewMissionService";
-import { useMyCardDeco } from "@/services/cardDecoService";
+import { REVIEW_KEY, remainingMileage, useMyReviewMissions } from "@/services/reviewMissionService";
+import { DECO_KEY, useMyCardDeco } from "@/services/cardDecoService";
+import { MILEAGE_KEY } from "@/hooks/useMileage";
 
 const HomeCardDecoRow = ({ preview }: { preview: CardDecoPreview }) => {
   const [decoOpen, setDecoOpen] = useState(false);
@@ -19,18 +21,23 @@ const HomeCardDecoRow = ({ preview }: { preview: CardDecoPreview }) => {
   const { data: deco } = useMyCardDeco();
   const { search, pathname } = useLocation();
   const navigate = useNavigate();
+  const qc = useQueryClient();
 
   // 알림 → ?sheet=review | card-deco
+  //   승인 알림을 누르고 오면 방금 받은 선물 · 마일리지가 캐시(꾸미기 5분 · 리뷰 1분)에 막혀 자물쇠로 보였다 — 열 때 새로 받는다(2026-11-23 점검).
   useEffect(() => {
     const q = new URLSearchParams(search);
     const sheet = q.get("sheet");
     if (sheet !== "review" && sheet !== "card-deco") return;
+    void qc.invalidateQueries({ queryKey: [DECO_KEY, "me"] });
+    void qc.invalidateQueries({ queryKey: [REVIEW_KEY, "me"] });
+    void qc.invalidateQueries({ queryKey: MILEAGE_KEY });
     if (sheet === "review") setReviewOpen(true);
     else setDecoOpen(true);
     q.delete("sheet");
     const rest = q.toString();
     navigate(`${pathname}${rest ? `?${rest}` : ""}`, { replace: true });
-  }, [search, pathname, navigate]);
+  }, [search, pathname, navigate, qc]);
 
   const left = remainingMileage(review);
   const showReview = !!review?.on && !review.allDone;
