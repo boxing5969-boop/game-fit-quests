@@ -26,7 +26,7 @@ import {
   trainingVideoPath,
   type TrainingCard,
 } from "./trainingCards";
-import { NEW_CARDS_1112, NEW_CARDS_1114, NEW_CARDS_1116, NEW_CARDS_1116_MATCH, SAMPLE_TRAINING_CARDS, WEAVING_POLISHED } from "./trainingCardsSample";
+import { NEW_CARDS_1112, NEW_CARDS_1114, NEW_CARDS_1116, NEW_CARDS_1116_MATCH, NEW_CARDS_1123, SAMPLE_TRAINING_CARDS, WEAVING_POLISHED } from "./trainingCardsSample";
 import { readFileSync } from "node:fs";
 
 // strategyService 의 BlockKind 와 같게 (서비스를 불러오면 Supabase 연결이 필요해서 여기 적어 둔다)
@@ -310,6 +310,36 @@ describe("예시 · 새 카드 글 (마이그레이션과 같은 글)", () => {
     for (const id of ["b9e75f6c-33d0-43f2-b7d8-f071034d40cd", "2350d855-4280-4b02-a4b5-76c7120e603f", "3b4eb590-9ed6-410b-9098-0f73ee72c47c"])
       expect(sql).not.toContain(id);
     expect(SAMPLE_TRAINING_CARDS.filter((c) => NEW_CARDS_1116_MATCH.some((n) => n.id === c.id))).toHaveLength(5);
+  });
+
+  it("블루 타이틀 콤보 세 덩어리 (11/23 「타이틀미션 20 영상 하나로 편집해서」) — 타이틀 미션 안내와 같은 동작 · 마이그레이션과 같은 글", () => {
+    expect(NEW_CARDS_1123.map((c) => c.name)).toEqual([
+      "블루 타이틀 콤보 ① 때리고 피하기",
+      "블루 타이틀 콤보 ② 크로스부터 카운터",
+      "블루 타이틀 콤보 ③ 어퍼로 마무리",
+    ]);
+    const sql = readFileSync("supabase/migrations/20261123145148_learn_blue_title_combo_cards.sql", "utf8");
+    const guide = readFileSync("src/lib/titleMissionGuide.ts", "utf8");
+    for (const c of NEW_CARDS_1123) {
+      expect(categoryToShelf(c.category)).toBe("skill");
+      expect(c.level_min).toBeGreaterThanOrEqual(18);
+      expect(c.level_min).toBeLessThanOrEqual(20);
+      expect(c.difficulty).toBe("중급");
+      expect(c.benefits).toBe("");
+      expect(c.cues).toHaveLength(3);
+      for (const m of c.mistakes) expect(m).toContain("→");
+      const all = [c.summary, c.description, ...c.cues, ...c.mistakes].join(" ");
+      expect(all).not.toMatch(/살이 빠|다이어트|부상을 막|예방|국가대표|칼로리|건강해|—/);
+      for (const s of [c.id, c.name, c.summary, c.description, c.target, ...c.cues, ...c.mistakes]) expect(sql).toContain(s);
+      // 카드 글의 동작 순서 = 타이틀 미션 안내 묶음 제목 그대로
+      expect(guide).toContain(`title: "${c.name.replace("블루 타이틀 콤보 ", "")}"`);
+      // 영상 · 첫 장면은 그 카드 id 로 시작하는 저장소 경로
+      expect(sql).toContain(`'member/${c.id}-r`);
+      expect(sql).toContain(`'member/poster-${c.id}-r`);
+    }
+    expect(sql.match(/or t\.name = /g)).toHaveLength(3);
+    expect(sql).not.toMatch(/^\s*(delete|drop|truncate)\b/im);
+    expect(SAMPLE_TRAINING_CARDS.filter((c) => NEW_CARDS_1123.some((n) => n.id === c.id))).toHaveLength(3);
   });
 
   it("예시 카드 id 는 겹치지 않고 모두 uuid 모양", () => {

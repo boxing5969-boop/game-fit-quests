@@ -210,6 +210,8 @@ const speakable = (s: string): string =>
       .replace(/\s*→\s*/g, ", 그다음 ")
       .replace(/\s*[·•]\s*/g, ", ")
       .replace(/[()[\]「」『』]/g, " ")
+      // 동그라미 숫자(블루 타이틀 콤보 ① ② ③ — 11/23)는 목소리가 건너뛰거나 '동그라미'로 읽어서 「1번,」으로
+      .replace(/\s*([①-⑳])\s*/g, (_m, c: string) => ` ${c.charCodeAt(0) - 0x245f}번, `)
       .replace(/\s+/g, " ")
       .trim(),
   );

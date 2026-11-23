@@ -18,6 +18,16 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261123-blue-title-combo",
+    date: "2026-11-23",
+    title: "블루 타이틀 콤보를 세 덩어리 영상으로",
+    lines: [
+      "레벨 20 타이틀 미션 18동작을 세 덩어리로 나눠 영상을 만들었어요",
+      "옆에서 · 천천히 · 정면 순서로 한 덩어리씩 따라 해 보세요",
+    ],
+    link: { to: "/missions?learn=1&shelf=skill", label: "영상으로 배우기" },
+  },
+  {
     id: "20261123-learn-guide",
     date: "2026-11-23",
     title: "영상으로 배우기에 동작마다 왜 · 언제 · 얼마나",
