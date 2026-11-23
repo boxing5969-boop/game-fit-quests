@@ -75,6 +75,8 @@ export interface MarketOrder {
   qty: number;
   unitPrice: number;
   amount: number;
+  /** 결제 확인 때 쓴 153 마일리지(점 · 1점 = 1원) — 데스크에서 받을 돈 = amount − mileageUsed */
+  mileageUsed?: number;
   status: MarketOrderStatus;
   note: string | null;
   createdAt: string;
@@ -160,6 +162,14 @@ export const mdOfTime = (iso: string | null | undefined): string => {
 
 export const won = (n: number): string => `${Math.round(n).toLocaleString("ko-KR")}원`;
 
+/**
+ * 153마켓 용품 마일리지 할인 — 주문 금액의 5%까지 · 1,000점 단위 (2026-11-23 대표님 「153마켓 용품은 5%까지만 · 체육관 도매가에 드리고 있어서」)
+ *   수강료 · 운동복 · 락카는 그대로 10%. 서버 market_admin_order_set · admin_use_mileage(p_kind 'market') 가 다시 검사한다(보유 점수도).
+ */
+export const MARKET_MILEAGE_PCT = 5;
+export const marketMileageMax = (amount: number): number =>
+  Math.max(0, Math.floor(Math.max(0, Math.round(amount)) / (1000 * (100 / MARKET_MILEAGE_PCT))) * 1000);
+
 // ── 서버 값 읽기 (믿지 않고 다듬는다) ────────────────────────
 
 type Raw = Record<string, unknown>;
@@ -230,6 +240,7 @@ export function normalizeOrder(raw: unknown): MarketOrder | null {
     qty,
     unitPrice,
     amount: num(raw.amount) ?? unitPrice * qty,
+    mileageUsed: Math.max(0, num(raw.mileage_used) ?? 0),
     status,
     note: str(raw.note),
     createdAt: str(raw.created_at) ?? "",
@@ -586,7 +597,7 @@ export const marketGuide = (staleDays: number): { title: string; body: string }[
     title: "어디서 사 오나요?",
     body: "153이 복싱 · 격투기 용품 쇼핑몰 골든챔스에서 체육관 도매가로 사 와요. 그래서 싸게 드릴 수 있어요. 골든챔스에서 파는 것과 같은 새 상품이에요.",
   },
-  { title: "결제", body: "체육관 데스크에서 카드나 계좌이체로 결제해요. 결제가 확인된 것만 골든챔스에 주문해요." },
+  { title: "결제", body: "체육관 데스크에서 카드나 계좌이체로 결제해요. 153 마일리지는 주문 금액의 5%까지 할인으로 쓸 수 있어요. 결제가 확인된 것만 골든챔스에 주문해요." },
   { title: "받기", body: "도착하면 앱 알림으로 알려 드려요. 체육관 데스크에서 받아 가세요. 택배로 보내 드리지는 않아요." },
   { title: "취소", body: "결제 전에는 「내 주문」에서 바로 취소할 수 있어요. 결제한 뒤에는 데스크에 말씀해 주세요." },
   { title: "교환 · 환불", body: "받은 날부터 7일 안에 데스크에 말씀해 주세요. 쓰거나 훼손된 상품은 교환 · 환불이 어려울 수 있어요." },

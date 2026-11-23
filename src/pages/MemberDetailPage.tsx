@@ -174,6 +174,9 @@ const MemberDetailPage = () => {
   const [mlPay, setMlPay] = useState("");
   const [mlUse, setMlUse] = useState("");
   const [mlMemo, setMlMemo] = useState("");
+  // 무엇을 결제하나 — 수강료 · 운동복 · 락카 = 10% / 153마켓 용품 = 5% (2026-11-23 대표님 · 서버 admin_use_mileage p_kind 가 다시 검사)
+  const [mlKind, setMlKind] = useState<"membership" | "market">("membership");
+  const mlRate = mlKind === "market" ? 5 : 10;
   // 받은·쓴 기록 전부 펼치기 (2026-10-16 대표님: "회원님 마일리지 어떻게 받은건지 기록을 볼수있도록 해줘~")
   const [mlShowAll, setMlShowAll] = useState(false);
   const { data: mileage, refetch: refetchMileage } = useQuery({
@@ -199,6 +202,7 @@ const MemberDetailPage = () => {
         p_amount: Number(mlUse.replace(/\D/g, "")),
         p_payment_amount: Number(mlPay.replace(/\D/g, "")),
         p_memo: mlMemo.trim() || null,
+        p_kind: mlKind,
       });
       if (error) throw error;
       return data as { balance: number };
@@ -215,7 +219,7 @@ const MemberDetailPage = () => {
   const mlMax = (() => {
     const pay = Number(mlPay.replace(/\D/g, "")) || 0;
     const bal = mileage?.balance ?? 0;
-    return Math.max(0, Math.min(Math.floor(Math.max(bal, 0) / 1000) * 1000, Math.floor((pay * 0.1) / 1000) * 1000));
+    return Math.max(0, Math.min(Math.floor(Math.max(bal, 0) / 1000) * 1000, Math.floor(pay / (1000 * (100 / mlRate))) * 1000));
   })();
 
   // 마일리지 지급 — 전체관리자(대표님)만 · 챔피언 머니처럼 (2026-11-09 대표님 「챔피언 머니처럼 회원님들 마일리지 드리는거 내 계정으로 할수있게 만들자」)
@@ -648,7 +652,7 @@ const MemberDetailPage = () => {
               <h3 className="text-sm font-bold text-foreground">🪙 153 마일리지 · 데스크 결제 할인</h3>
               <div className="rounded-xl bg-amber-500/10 p-3 text-center">
                 <span className="text-2xl font-bold text-foreground">{mileage.balance.toLocaleString("ko-KR")}점</span>
-                <p className="mt-1 text-xs text-muted-foreground">1점 = 1원 · 결제 금액의 10%까지 · 1,000점 단위</p>
+                <p className="mt-1 text-xs text-muted-foreground">1점 = 1원 · 수강료 · 운동복 · 락카 10% · 153마켓 용품 5%까지 · 1,000점 단위</p>
               </div>
               {(mileage.summary ?? []).length > 0 && (
                 <div className="flex flex-wrap gap-1.5" aria-label="마일리지 받은 곳 합계">
@@ -715,6 +719,23 @@ const MemberDetailPage = () => {
                   </button>
                 </div>
               )}
+              <div className="grid grid-cols-2 gap-2" role="group" aria-label="무엇을 결제하나요">
+                {([
+                  ["membership", "수강료 · 운동복 · 락카", "10%까지"],
+                  ["market", "153마켓 용품", "5%까지"],
+                ] as const).map(([k, label, sub]) => (
+                  <button
+                    key={k}
+                    type="button"
+                    aria-pressed={mlKind === k}
+                    onClick={() => setMlKind(k)}
+                    className={`rounded-xl border px-2 py-2 text-xs font-bold leading-tight ${mlKind === k ? "border-primary bg-primary/10 text-foreground" : "border-border bg-card text-muted-foreground"}`}
+                  >
+                    {label}
+                    <span className="block font-medium">{sub}</span>
+                  </button>
+                ))}
+              </div>
               <div className="flex gap-2">
                 <input
                   inputMode="numeric"
