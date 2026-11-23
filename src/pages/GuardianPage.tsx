@@ -235,7 +235,11 @@ const GuardianPage = () => {
         </div>
       </header>
 
-      <PushOptInCard variant="inbox" className="mb-4" />
+      {demo ? (
+        <p className="mb-4 rounded-xl bg-muted px-3 py-2 text-center text-label font-bold text-muted-foreground">예시 화면이에요 · 이름과 기록은 가상이에요</p>
+      ) : (
+        <PushOptInCard variant="inbox" className="mb-4" />
+      )}
 
       {!demo && isLoading ? (
         <RouteLoader />

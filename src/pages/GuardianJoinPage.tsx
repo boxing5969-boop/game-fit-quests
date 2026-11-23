@@ -139,6 +139,7 @@ const GuardianJoinPage = () => {
         <div className="mb-6 flex justify-center">
           <MyBoxerWordmark size="md" align="center" />
         </div>
+        {demo && <p className="mb-3 text-center text-label font-bold text-muted-foreground">예시 화면이에요 · 이름은 가상이에요</p>}
         <div className="rounded-3xl border border-border bg-card p-6 shadow-elev-1">{body}</div>
         <p className="mt-6 text-center text-label text-muted-foreground">153 건강과 행복. 153복싱짐</p>
       </div>
