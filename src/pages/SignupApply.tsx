@@ -11,7 +11,7 @@
 // 지점 고르기(2026-10-21 대표님: "칠금점 수강권은 따로 결제선생을 통해서 구축해야 돼. 일단 계좌이체와 오프라인 결제만"):
 //   1단계 맨 위에서 지점을 고른다(선릉역점 · 칠금점). 선릉역점은 지금과 똑같이 수강권 선택 → 결제선생.
 //   칠금점은 결제 단계 대신 '계좌이체 · 현장 결제' 안내 → 가입 신청만 하고 승인 대기 (데스크가 결제 확인 후 승인).
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ChevronDown, Check } from "lucide-react";
@@ -22,6 +22,7 @@ import { kstToday } from "@/lib/levelPractice";
 import { toast } from "sonner";
 import { SIGNUP_BRANCHES, branchShortName, isOfflinePayBranch } from "@/lib/branchPayment";
 import OfflinePayCard from "@/components/membership/OfflinePayCard";
+import ClaimSmsStep from "@/components/onboarding/ClaimSmsStep";
 
 const AGREEMENT_VERSION = "2026-06";
 const toFakeEmail = (id: string) => `${id.toLowerCase().trim()}@153rankup.app`;
@@ -48,6 +49,7 @@ interface ClaimResponse {
   status?: string;
   error?: string;
   membershipActive?: boolean;
+  phoneMasked?: string;
 }
 
 type MemberMode = "new" | "existing";
@@ -65,12 +67,13 @@ const SignupApply = () => {
   // 첫 화면 「다니고 있어요 → 기록을 찾았어요 → 아이디 · 비밀번호 만들기」(2026-11-22)에서 넣은 정보 — 다시 묻지 않게 채워 둔다.
   //   판정은 그대로 '다음'에서 서버가 다시 한다(이 값을 믿지 않는다).
   const prefill = (() => {
-    const m = (location.state as { member?: { name?: unknown; phone?: unknown; birth?: unknown } } | null)?.member;
+    const m = (location.state as { member?: { name?: unknown; phone?: unknown; birth?: unknown; smsProof?: unknown } } | null)?.member;
     if (!m) return null;
     return {
       name: typeof m.name === "string" ? m.name.slice(0, 40) : "",
       phone: typeof m.phone === "string" ? m.phone.replace(/[^0-9]/g, "").slice(0, 11) : "",
       birth: typeof m.birth === "string" ? m.birth.replace(/[^0-9]/g, "").slice(0, 8) : "",
+      smsProof: typeof m.smsProof === "string" && m.smsProof.length < 600 ? m.smsProof : null,
     };
   })();
   const queryClient = useQueryClient();
@@ -83,6 +86,10 @@ const SignupApply = () => {
   const [memberMode, setMemberMode] = useState<MemberMode>(() => (prefill ? "existing" : "new"));
   const [checking, setChecking] = useState(false);
   const [registeredPhone, setRegisteredPhone] = useState(false); // 이미 앱 계정이 있는 번호 → 로그인 안내 버튼
+  // 생년월일이 없는 회원 — 휴대폰 인증 통과 표(15분, 서버가 확인)와 인증 창. 인증 뒤 하던 단계(다음 · 가입 완료)를 이어 간다.
+  const smsProofRef = useRef<string | null>(prefill?.smsProof ?? null);
+  const [smsAsk, setSmsAsk] = useState<{ masked: string | null; resume: "next" | "existing" } | null>(null);
+  const withProof = () => (smsProofRef.current ? { smsProof: smsProofRef.current } : {});
   // 다닐 지점 — 소셜 로그인 회원은 이미 고른 지점이 목록에 있으면 그대로, 아니면 직접 고른다
   const [branch, setBranch] = useState<string>(() => {
     const mine = (profile as { branch_name?: string | null } | null)?.branch_name ?? "";
@@ -166,11 +173,15 @@ const SignupApply = () => {
     setChecking(true);
     try {
       const { data, error } = await supabase.functions.invoke("claim-member-account", {
-        body: { action: "check", phone: rawDigits(phone), name: name.trim(), birthDate: birth },
+        body: { action: "check", phone: rawDigits(phone), name: name.trim(), birthDate: birth, ...withProof() },
       });
       const r = (data ?? null) as ClaimResponse | null;
       if (error || !r?.status) {
         setErr("회원 확인 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.");
+        return false;
+      }
+      if (r.status === "need_sms") {
+        setSmsAsk({ masked: r.phoneMasked ?? null, resume: "next" });
         return false;
       }
       if (r.status === "new" || r.status === "existing") {
@@ -340,11 +351,15 @@ const SignupApply = () => {
         // 2026-11-23 보안 점검: 번호만으로는 합치지 않는다 — 합치기 직전에 이름 · 번호 · 생년월일을 서버가 다시 확인하고
         //   이 계정에 묶인 이어받기 표(10분)를 받아 그 표로 합친다.
         const { data: chk, error: chkErr } = await supabase.functions.invoke("claim-member-account", {
-          body: { action: "check", phone: rawDigits(phone), name: name.trim(), birthDate: birth, ticket: true },
+          body: { action: "check", phone: rawDigits(phone), name: name.trim(), birthDate: birth, ticket: true, ...withProof() },
         });
         const c = (chk ?? null) as (ClaimResponse & { ticket?: unknown }) | null;
         if (chkErr || !c?.status) {
           setErr("회원 확인 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.");
+          return;
+        }
+        if (c.status === "need_sms") {
+          setSmsAsk({ masked: c.phoneMasked ?? null, resume: "existing" });
           return;
         }
         if (c.status !== "existing" || typeof c.ticket !== "string") {
@@ -404,11 +419,17 @@ const SignupApply = () => {
           fitnessGoal: goal.trim(),
           healthNotes: health.trim(),
           agreements,
+          ...withProof(),
         },
       });
       const r = (data ?? null) as ClaimResponse | null;
       if (error || !r?.status) {
         setErr("가입 처리 중 오류가 발생했어요. 잠시 후 다시 시도해 주세요.");
+        return;
+      }
+      if (r.status === "need_sms") {
+        // 인증 표가 없거나 15분이 지났다 — 다시 인증하고 가입 완료를 이어 간다.
+        setSmsAsk({ masked: r.phoneMasked ?? null, resume: "existing" });
         return;
       }
       if (!r.ok) {
@@ -614,6 +635,22 @@ const SignupApply = () => {
           </button>
         )}
       </div>
+      {smsAsk && (
+        <ClaimSmsStep
+          name={name}
+          phone={rawDigits(phone)}
+          birth={birth}
+          phoneMasked={smsAsk.masked}
+          onClose={() => setSmsAsk(null)}
+          onVerified={(p) => {
+            const resume = smsAsk.resume;
+            smsProofRef.current = p;
+            setSmsAsk(null);
+            if (resume === "next") void next();
+            else void submitExisting();
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -89,4 +89,42 @@ describe("기록 찾기 (첫 화면 「다니고 있어요」)", () => {
     setup();
     await waitFor(() => expect(screen.getByRole("alert").textContent).toContain("등록된 회원 정보와 달라요"));
   });
+  // 2026-11-24 보안 점검 ③: 생년월일이 없는 회원(선릉역점)은 휴대폰 인증번호를 거쳐야 찾은 화면으로 간다
+  it("need_sms 면 휴대폰 인증 창 → 인증번호 맞히면 받은 표를 붙여 다시 찾고, 아이디 가입에도 그 표를 넘긴다", async () => {
+    invoke.mockImplementation(async (_fn: string, { body }: { body: Record<string, unknown> }) => {
+      if (body.action === "sms_send") return { data: { ok: true, status: "sms_sent", phoneMasked: "010-****-5678" } };
+      if (body.action === "sms_verify") return { data: { ok: true, status: "sms_ok", smsProof: "proof.sig" } };
+      if (body.smsProof === "proof.sig") return { data: { ok: true, status: "existing", ticket: "abc.def" } };
+      return { data: { ok: false, status: "need_sms", error: "휴대폰 인증이 필요해요", phoneMasked: "010-****-5678" } };
+    });
+    setup();
+    await screen.findByText("휴대폰 인증");
+    expect(screen.queryByText("기록을 찾았어요")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "인증번호 받기" }));
+    fireEvent.change(await screen.findByLabelText("인증번호 6자리"), { target: { value: "12-34-56" } });
+    fireEvent.click(screen.getByRole("button", { name: "확인" }));
+    await screen.findByText("기록을 찾았어요");
+    expect(invoke).toHaveBeenCalledWith("claim-member-account", {
+      body: { action: "sms_verify", phone: "01012345678", name: "홍길동", birthDate: "19990315", code: "123456" },
+    });
+    expect(invoke).toHaveBeenLastCalledWith("claim-member-account", {
+      body: { action: "check", phone: "01012345678", name: "홍길동", birthDate: "19990315", ticket: true, smsProof: "proof.sig" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "아이디 · 비밀번호 만들기" }));
+    await screen.findByText(/"smsProof":"proof.sig"/);
+  });
+
+  it("인증번호가 틀리면 서버 문구를 보여 주고 찾은 화면으로 가지 않는다", async () => {
+    invoke.mockImplementation(async (_fn: string, { body }: { body: Record<string, unknown> }) => {
+      if (body.action === "sms_send") return { data: { ok: true, status: "sms_sent" } };
+      if (body.action === "sms_verify") return { data: { ok: false, status: "sms_mismatch", error: "인증번호가 맞지 않아요." } };
+      return { data: { ok: false, status: "need_sms" } };
+    });
+    setup();
+    fireEvent.click(await screen.findByRole("button", { name: "인증번호 받기" }));
+    fireEvent.change(await screen.findByLabelText("인증번호 6자리"), { target: { value: "000000" } });
+    fireEvent.click(screen.getByRole("button", { name: "확인" }));
+    await screen.findByText("인증번호가 맞지 않아요.");
+    expect(screen.queryByText("기록을 찾았어요")).toBeNull();
+  });
 });

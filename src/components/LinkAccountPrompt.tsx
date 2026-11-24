@@ -12,6 +12,7 @@ import { runInviteClaim } from "@/components/InviteRewardBridge";
 import { toast } from "sonner";
 import { Link2 } from "lucide-react";
 import { clearLinkTicket, lookupStatusOf, markLoggedIn, peekLinkTicket } from "@/lib/memberEntry";
+import ClaimSmsStep from "@/components/onboarding/ClaimSmsStep";
 
 const formatPhone = (val: string) => {
   const d = val.replace(/\D/g, "").slice(0, 11);
@@ -31,6 +32,8 @@ const LinkAccountPrompt = () => {
   const [birth, setBirth] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  // 생년월일이 없는 회원 — 휴대폰 인증 창(need_sms, 2026-11-24)
+  const [smsAsk, setSmsAsk] = useState<{ masked: string | null } | null>(null);
 
   const needsLink = !!user && !!profile && role === "member" && !profile.phone_number;
   // 2026-11-22 첫 사용 순서: 이 기기에서 로그인한 적이 있으면 다음부터 첫 질문 없이 로그인 화면부터.
@@ -75,7 +78,7 @@ const LinkAccountPrompt = () => {
   if (!pendingTicket && !autoLinking && (location.pathname === "/signup" || location.pathname === "/login")) return null;
 
   // 이름 · 번호 · 생년월일로 기록 찾기 → 이 계정에 묶인 표(10분) → 합치기
-  const submit = async () => {
+  const submit = async (smsProof: string | null = null) => {
     setError("");
     const p = phone.replace(/\D/g, "");
     if (!name.trim()) return setError("체육관에 등록한 이름(실명)을 넣어 주세요.");
@@ -84,10 +87,15 @@ const LinkAccountPrompt = () => {
     setLoading(true);
     try {
       const { data, error: fnErr } = await supabase.functions.invoke("claim-member-account", {
-        body: { action: "check", phone: p, name: name.trim(), birthDate: birth, ticket: true },
+        body: { action: "check", phone: p, name: name.trim(), birthDate: birth, ticket: true, ...(smsProof ? { smsProof } : {}) },
       });
       if (fnErr) throw fnErr;
       const st = lookupStatusOf(data);
+      if (st === "need_sms") {
+        const m = (data as { phoneMasked?: unknown } | null)?.phoneMasked;
+        setSmsAsk({ masked: typeof m === "string" ? m : null });
+        return;
+      }
       const ticket = (data as { ticket?: unknown } | null)?.ticket;
       if (st === "existing" && typeof ticket === "string") {
         await link({ ticket });
@@ -221,7 +229,7 @@ const LinkAccountPrompt = () => {
         {error && <p className="mt-2 text-label text-destructive">{error}</p>}
         <button
           type="button"
-          onClick={submit}
+          onClick={() => void submit()}
           disabled={loading}
           className="mt-4 w-full rounded-xl bg-primary py-3 text-body font-bold text-primary-foreground shadow-glow-soft transition-all hover:shadow-glow-primary active:scale-[0.98] disabled:opacity-50"
         >
@@ -248,6 +256,19 @@ const LinkAccountPrompt = () => {
           나중에 할게요 · 수강권 결제 시 번호를 입력하면 자동 등록돼요
         </button>
       </div>
+      {smsAsk && (
+        <ClaimSmsStep
+          name={name}
+          phone={phone.replace(/\D/g, "")}
+          birth={birth}
+          phoneMasked={smsAsk.masked}
+          onClose={() => setSmsAsk(null)}
+          onVerified={(p) => {
+            setSmsAsk(null);
+            void submit(p);
+          }}
+        />
+      )}
     </div>
   );
 };

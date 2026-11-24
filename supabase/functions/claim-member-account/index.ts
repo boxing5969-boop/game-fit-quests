@@ -14,6 +14,9 @@
 //           로그인한 사람에게는 그 계정에 묶인 표(c)를 준다(2026-11-23 — 번호만으로 합치던 구멍을 막음).
 //   claim — 판정을 처음부터 다시 한다(앞 단계 결과를 믿지 않는다). existing 일 때만 아이디·비밀번호·가입 정보를 적용.
 //           로그인된(소셜) 사용자는 이 경로를 쓰지 않는다 — check 로 받은 표로 기존 연동(link-imported-by-phone)을 부른다.
+//   sms_send · sms_verify (2026-11-24 보안 점검 ③) — 생년월일이 비어 있는 계정(문자 지점 · 지금은 선릉역점)은 check · claim 이
+//           need_sms 를 낸다. 앱이 sms_send 로 그 번호에 6자리 인증번호를 보내고(153OS 문자), sms_verify 로 맞으면
+//           15분짜리 smsProof(_shared/smsProof.ts)를 받아 check · claim 에 함께 보낸다(sms.ts — 지점 · 횟수 · 문구).
 //
 // 보안
 //   · 30분 안에 같은 번호 불일치 5회, 같은 접속지 불일치 15회, 또는 같은 접속지에서 회원 번호(이미 가입·지도진·불일치)
@@ -26,6 +29,16 @@
 //   · 업무 결과(불일치·잠금 등)도 200 으로 돌려준다 — 앱이 안내 문구를 그대로 보여 줄 수 있게. 예상 못 한 오류만 500.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { signLinkTicket } from "../_shared/linkTicket.ts";
+import { signSmsProof, verifySmsProof } from "../_shared/smsProof.ts";
+import {
+  makeCode,
+  maskPhone,
+  needsSms,
+  SMS_CODE_MAX_TRIES,
+  SMS_CODE_TTL_MS,
+  SMS_MESSAGES,
+  smsLimitReason,
+} from "./sms.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -51,10 +64,11 @@ const PHONE_FAIL_LIMIT = 5;
 const IP_FAIL_LIMIT = 15;
 // 한 접속지에서 30분 안에 회원 번호 10개 이상의 상태(이미 가입·지도진·불일치)를 알아내면 번호 목록을 훑는 것으로 본다.
 const IP_PROBE_PHONES_LIMIT = 10;
-const FAIL_RESULTS = ["mismatch"];
-const PROBE_RESULTS = ["mismatch", "registered", "desk"];
+// sms_mismatch — 인증번호를 틀린 것도 번호 · 접속지 잠금에 센다(2026-11-24).
+const FAIL_RESULTS = ["mismatch", "sms_mismatch"];
+const PROBE_RESULTS = ["mismatch", "registered", "desk", "sms_mismatch"];
 
-type Status = "new" | "existing" | "registered" | "mismatch" | "desk" | "locked";
+type Status = "new" | "existing" | "registered" | "mismatch" | "desk" | "locked" | "need_sms";
 
 const MESSAGES: Record<Exclude<Status, "existing">, string> = {
   new: "체육관에 등록된 회원 번호가 아니에요. 신규 가입으로 진행해 주세요.",
@@ -64,12 +78,14 @@ const MESSAGES: Record<Exclude<Status, "existing">, string> = {
     "체육관에 등록된 회원 정보와 달라요. 이름(과 생년월일)을 체육관에 등록할 때와 똑같이 입력해 주세요. 계속 안 되면 지점 데스크에 문의해 주세요.",
   desk: "이 번호는 앱에서 바로 가입할 수 없어요. 지점 데스크에 문의해 주세요.",
   locked: `확인 시도가 너무 많아요. ${LOCK_WINDOW_MIN}분 뒤에 다시 시도하거나 지점 데스크에 문의해 주세요.`,
+  need_sms: SMS_MESSAGES.need_sms,
 };
 
 interface Target {
   user_id: string;
   name: string | null;
   birth_date: string | null;
+  branch_name: string | null;
   must_change_credentials: boolean | null;
   is_staff: boolean | null;
   membership_end: string | null;
@@ -170,10 +186,11 @@ async function evaluate(
   name: string,
   birth: string,
   callerId: string | null,
+  smsUid: string | null, // 휴대폰 인증을 통과한 계정(smsProof) — 없으면 null
 ): Promise<{ status: Status; target?: Target }> {
   const { data: rows, error } = await admin
     .from("profiles")
-    .select("user_id, name, birth_date, must_change_credentials, is_staff, membership_end")
+    .select("user_id, name, birth_date, branch_name, must_change_credentials, is_staff, membership_end")
     .eq("phone_number", phone)
     .limit(2);
   if (error) throw error;
@@ -199,6 +216,8 @@ async function evaluate(
   const dbBirth = onlyDigits(t.birth_date);
   const birthOk = dbBirth === "" || dbBirth === birth;
   if (!nameOk || !birthOk) return { status: "mismatch" };
+  // 생년월일이 없는 계정(문자 지점) — 이름 · 번호만으로는 본인인지 모른다 → 그 번호로 받은 인증번호를 통과해야 한다.
+  if (needsSms(t) && smsUid !== t.user_id) return { status: "need_sms", target: t };
   return { status: "existing", target: t };
 }
 
@@ -216,6 +235,30 @@ function sanitizeAgreements(v: unknown): Record<string, unknown> | null {
   return out;
 }
 
+// 153OS 워커가 그 지점 문자(NCP SENS)로 보낸다 — 문구는 153OS 가 정한다(여기서는 번호 · 인증번호만 넘김).
+async function sendOtpSms(branchName: string, phone: string, smsCode: string): Promise<boolean> {
+  const base = (Deno.env.get("OS_API_URL") || "https://153-boxing-os-api.boxing5969.workers.dev").replace(/\/+$/, "");
+  const key = Deno.env.get("OS_PARTNER_KEY") || "";
+  if (!key) {
+    console.error("otp sms: OS_PARTNER_KEY 없음");
+    return false;
+  }
+  try {
+    const res = await fetch(`${base}/api/external/otp-sms`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Partner-Key": key },
+      body: JSON.stringify({ branch_name: branchName, phone, code: smsCode }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    const j = await res.json().catch(() => null) as { success?: boolean; error?: { code?: string } } | null;
+    if (!res.ok || j?.success !== true) console.error("otp sms failed:", res.status, j?.error?.code ?? "");
+    return res.ok && j?.success === true;
+  } catch (e) {
+    console.error("otp sms error:", e instanceof Error ? e.message : e);
+    return false;
+  }
+}
+
 const kstToday = () => new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
 
 Deno.serve(async (req) => {
@@ -229,7 +272,8 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => null);
     const invalid = (error: string) => json({ ok: false, status: "invalid", error });
     if (!body || typeof body !== "object") return invalid("요청 형식이 올바르지 않습니다.");
-    const action = body.action === "claim" ? "claim" : body.action === "check" ? "check" : null;
+    const ACTIONS = ["check", "claim", "sms_send", "sms_verify"] as const;
+    const action = ACTIONS.find((a) => a === body.action) ?? null;
     if (!action) return invalid("요청 형식이 올바르지 않습니다.");
 
     const phone = onlyDigits(body.phone);
@@ -238,6 +282,8 @@ Deno.serve(async (req) => {
     if (!/^0\d{9,10}$/.test(phone)) return invalid("전화번호를 정확히 입력해 주세요.");
     if (!normName(name) || name.length > 40) return invalid("이름(실명)을 입력해 주세요.");
     if (birth.length !== 8) return invalid("생년월일 8자리를 입력해 주세요. (예: 19990315)");
+    const code = onlyDigits(body.code);
+    if (action === "sms_verify" && code.length !== 6) return invalid("문자로 받은 인증번호 6자리를 넣어 주세요.");
 
     // claim 입력 검사 — 판정(시도 횟수)에 들어가기 전에 형식부터 거른다.
     let username = "";
@@ -280,7 +326,101 @@ Deno.serve(async (req) => {
       return json({ ok: false, status: "locked", error: MESSAGES.locked });
     }
 
-    const ev = await evaluate(admin, phone, name, birth, callerId);
+    // 휴대폰 인증 통과 표 — 서명 · 만료 · 번호가 맞을 때만 그 계정(u)을 인증된 것으로 본다.
+    const proof = await verifySmsProof(serviceKey, body.smsProof);
+    const smsUid = proof && proof.p === phone ? proof.u : null;
+
+    const ev = await evaluate(admin, phone, name, birth, callerId, action.startsWith("sms_") ? null : smsUid);
+
+    // ── 휴대폰 인증번호 (생년월일이 없는 계정) ──
+    if (action === "sms_send" || action === "sms_verify") {
+      if (ev.status !== "need_sms" || !ev.target) {
+        await record(ev.status);
+        if (ev.status === "new" || ev.status === "existing") return json({ ok: true, status: ev.status });
+        return json({ ok: false, status: ev.status, error: MESSAGES[ev.status as Exclude<Status, "existing">] });
+      }
+      const t = ev.target;
+      const fail = (status: string, error: string) => json({ ok: false, status, error });
+
+      if (action === "sms_send") {
+        const now = Date.now();
+        const dayAgo = new Date(now - 24 * 3600_000).toISOString();
+        const countSince = async (col: string | null, val: string | null) => {
+          let q = admin.from("claim_sms_codes").select("id", { count: "exact", head: true }).gte("created_at", dayAgo);
+          if (col) q = q.eq(col, val);
+          const { count, error } = await q;
+          if (error) throw error;
+          return count ?? 0;
+        };
+        const { data: last, error: lErr } = await admin
+          .from("claim_sms_codes").select("created_at").eq("phone_hash", phoneHash)
+          .order("created_at", { ascending: false }).limit(1);
+        if (lErr) throw lErr;
+        const lastAt = (last ?? [])[0]?.created_at as string | undefined;
+        const reason = smsLimitReason({
+          secSinceLastToPhone: lastAt ? (now - Date.parse(lastAt)) / 1000 : null,
+          phoneDay: await countSince("phone_hash", phoneHash),
+          ipDay: ipHash ? await countSince("ip_hash", ipHash) : 0,
+          allDay: await countSince(null, null),
+        });
+        if (reason) {
+          await record(`sms_${reason}`);
+          return fail(`sms_${reason}`, SMS_MESSAGES[reason]);
+        }
+        // 지난 인증번호는 사흘 뒤 지운다(보내기 횟수는 24시간만 센다).
+        await admin.from("claim_sms_codes").delete().lt("created_at", new Date(now - 3 * 24 * 3600_000).toISOString());
+        const smsCode = makeCode();
+        const { data: row, error: iErr } = await admin
+          .from("claim_sms_codes")
+          .insert({
+            phone_hash: phoneHash,
+            user_id: t.user_id,
+            code_hash: await hashOf("smscode", `${phone}:${smsCode}`),
+            ip_hash: ipHash,
+            expires_at: new Date(now + SMS_CODE_TTL_MS).toISOString(),
+          })
+          .select("id")
+          .single();
+        if (iErr) throw iErr;
+        const sent = await sendOtpSms(String(t.branch_name ?? "").trim(), phone, smsCode);
+        if (!sent) {
+          // 못 보낸 인증번호는 바로 못 쓰게 한다(보내기 횟수에는 남는다 — 실패를 되풀이해 문자를 두드리지 못하게).
+          await admin.from("claim_sms_codes").update({ used_at: new Date().toISOString() }).eq("id", row.id);
+          await record("sms_send_failed");
+          return fail("sms_send_failed", SMS_MESSAGES.send_failed);
+        }
+        await record("sms_sent");
+        return json({ ok: true, status: "sms_sent", phoneMasked: maskPhone(phone), ttlSec: SMS_CODE_TTL_MS / 1000 });
+      }
+
+      // sms_verify — 이 번호 · 이 계정의 가장 최근 인증번호 하나만 본다.
+      const { data: rows, error: cErr } = await admin
+        .from("claim_sms_codes").select("id, code_hash, attempts, expires_at, used_at")
+        .eq("phone_hash", phoneHash).eq("user_id", t.user_id)
+        .order("created_at", { ascending: false }).limit(1);
+      if (cErr) throw cErr;
+      const c = (rows ?? [])[0] as { id: string; code_hash: string; attempts: number; expires_at: string; used_at: string | null } | undefined;
+      if (!c || c.used_at || Date.parse(c.expires_at) < Date.now() || c.attempts >= SMS_CODE_MAX_TRIES) {
+        await record("sms_expired");
+        return fail("sms_expired", SMS_MESSAGES.code_expired);
+      }
+      if ((await hashOf("smscode", `${phone}:${code}`)) !== c.code_hash) {
+        await admin.from("claim_sms_codes").update({ attempts: c.attempts + 1 }).eq("id", c.id);
+        await record("sms_mismatch");
+        return fail("sms_mismatch", SMS_MESSAGES.code_wrong);
+      }
+      // 한 번 맞힌 인증번호는 다시 못 쓴다(동시에 두 번 맞혀도 하나만 표를 받는다).
+      const { data: usedRows, error: uErr } = await admin
+        .from("claim_sms_codes").update({ used_at: new Date().toISOString() })
+        .eq("id", c.id).is("used_at", null).select("id");
+      if (uErr) throw uErr;
+      if (!usedRows || usedRows.length !== 1) {
+        await record("sms_expired");
+        return fail("sms_expired", SMS_MESSAGES.code_expired);
+      }
+      await record("sms_ok", t.user_id);
+      return json({ ok: true, status: "sms_ok", smsProof: await signSmsProof(serviceKey, phone, t.user_id) });
+    }
 
     if (action === "check") {
       await record(ev.status);
@@ -293,6 +433,7 @@ Deno.serve(async (req) => {
         return json({ ok: true, status: ev.status, ticket });
       }
       if (ev.status === "new" || ev.status === "existing") return json({ ok: true, status: ev.status });
+      if (ev.status === "need_sms") return json({ ok: false, status: ev.status, error: MESSAGES.need_sms, phoneMasked: maskPhone(phone) });
       return json({ ok: false, status: ev.status, error: MESSAGES[ev.status] });
     }
 

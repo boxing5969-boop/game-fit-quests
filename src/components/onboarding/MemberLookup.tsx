@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Search, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { clearLinkTicket, lookupStatusOf, saveLinkTicket, type LookupStatus } from "@/lib/memberEntry";
+import ClaimSmsStep from "./ClaimSmsStep";
 
 const digits = (s: string) => s.replace(/[^0-9]/g, "");
 const formatPhone = (v: string) => {
@@ -37,8 +38,11 @@ const MemberLookup = ({ onBack, onLogin, onKakao, kakaoBusy }: Props) => {
   const [busy, setBusy] = useState(false);
   // 이어받기 표 — 「카카오로 이어받기」를 누를 때만 기기에 둔다(찾기만 하고 떠나면 남지 않게, 2026-11-23 점검).
   const [ticket, setTicket] = useState<string | null>(null);
+  // 생년월일이 없는 회원 — 휴대폰 인증 창(need_sms)과 통과 표(15분 · 아이디 가입으로 넘길 때도 같이)
+  const [smsAsk, setSmsAsk] = useState<{ masked: string | null } | null>(null);
+  const [smsProof, setSmsProof] = useState<string | null>(null);
 
-  const find = async () => {
+  const find = async (proof: string | null = smsProof) => {
     setErr("");
     if (!name.trim()) return setErr("이름(실명)을 넣어 주세요");
     if (!/^0\d{9,10}$/.test(digits(phone))) return setErr("체육관에 등록한 전화번호를 정확히 넣어 주세요");
@@ -46,9 +50,14 @@ const MemberLookup = ({ onBack, onLogin, onKakao, kakaoBusy }: Props) => {
     setBusy(true);
     try {
       const { data } = await supabase.functions.invoke("claim-member-account", {
-        body: { action: "check", phone: digits(phone), name: name.trim(), birthDate: birth, ticket: true },
+        body: { action: "check", phone: digits(phone), name: name.trim(), birthDate: birth, ticket: true, ...(proof ? { smsProof: proof } : {}) },
       });
       const st: LookupStatus = lookupStatusOf(data);
+      if (st === "need_sms") {
+        const m = (data as { phoneMasked?: unknown } | null)?.phoneMasked;
+        setSmsAsk({ masked: typeof m === "string" ? m : null });
+        return;
+      }
       const got = (data as { ticket?: unknown } | null)?.ticket;
       if (st === "existing") {
         setTicket(typeof got === "string" ? got : null);
@@ -70,7 +79,7 @@ const MemberLookup = ({ onBack, onLogin, onKakao, kakaoBusy }: Props) => {
 
   const toIdSignup = () => {
     clearLinkTicket();
-    navigate("/signup", { state: { member: { name: name.trim(), phone: digits(phone), birth } } });
+    navigate("/signup", { state: { member: { name: name.trim(), phone: digits(phone), birth, smsProof } } });
   };
 
   const header = (title: string, back: () => void) => (
@@ -206,6 +215,20 @@ const MemberLookup = ({ onBack, onLogin, onKakao, kakaoBusy }: Props) => {
           {busy ? "찾는 중…" : "내 기록 찾기"}
         </button>
       </form>
+      {smsAsk && (
+        <ClaimSmsStep
+          name={name}
+          phone={digits(phone)}
+          birth={birth}
+          phoneMasked={smsAsk.masked}
+          onClose={() => setSmsAsk(null)}
+          onVerified={(p) => {
+            setSmsAsk(null);
+            setSmsProof(p);
+            void find(p);
+          }}
+        />
+      )}
     </div>
   );
 };

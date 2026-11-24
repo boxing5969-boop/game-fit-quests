@@ -71,11 +71,12 @@ export function clearLinkTicket(): void {
 }
 
 /** 첫 질문 다음 「다니고 있어요」 찾기 결과 — claim-member-account check 의 status 그대로 */
-export type LookupStatus = "existing" | "new" | "registered" | "mismatch" | "desk" | "locked" | "invalid" | "error";
+// need_sms — 생년월일이 등록되지 않은 회원(문자 지점): 휴대폰 인증번호를 거쳐야 한다(2026-11-24 · ClaimSmsStep).
+export type LookupStatus = "existing" | "new" | "registered" | "mismatch" | "desk" | "locked" | "need_sms" | "invalid" | "error";
 
 export function lookupStatusOf(v: unknown): LookupStatus {
   const s = (v as { status?: unknown } | null)?.status;
-  return s === "existing" || s === "new" || s === "registered" || s === "mismatch" || s === "desk" || s === "locked" || s === "invalid"
+  return s === "existing" || s === "new" || s === "registered" || s === "mismatch" || s === "desk" || s === "locked" || s === "need_sms" || s === "invalid"
     ? s
     : "error";
 }
