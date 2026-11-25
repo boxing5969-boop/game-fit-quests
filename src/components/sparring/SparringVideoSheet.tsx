@@ -205,7 +205,7 @@ const Body = ({ video, onClose }: Props) => {
             {video.reasons && video.reasons.length > 0 && (
               <p className="text-label text-foreground">신고 이유: {Array.from(new Set(video.reasons)).join(" · ")}</p>
             )}
-            <p className="text-label text-muted-foreground">영상을 보고 괜찮으면 다시 보이게, 문제가 있으면 내려 주세요.</p>
+            <p className="text-label text-muted-foreground">영상을 보고 괜찮으면 다시 보이게 하고 문제가 있으면 내려 주세요.</p>
             {confirm === "remove" ? (
               <Confirm
                 text="이 영상을 내려요. 올린 회원의 「내 영상」에서도 사라지고 되살릴 수 없어요."
@@ -419,7 +419,7 @@ const Body = ({ video, onClose }: Props) => {
                 </button>
               ))}
             </div>
-            <p className="text-micro text-muted-foreground">신고하면 영상이 바로 가려지고, 코치님이 확인해요. 누가 신고했는지는 알리지 않아요.</p>
+            <p className="text-micro text-muted-foreground">신고하면 영상이 바로 가려지고 코치님이 확인해요. 누가 신고했는지는 알리지 않아요.</p>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"

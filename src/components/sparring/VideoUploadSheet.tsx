@@ -236,7 +236,7 @@ const Body = ({ onClose, onDone }: { onClose: () => void; onDone: (videoId: stri
           on={feedback}
           onClick={() => setFeedback((v) => !v)}
           title="코치님 피드백 받기"
-          sub="코치님께 알림이 가고, 장면마다 피드백이 와요"
+          sub="코치님께 알림이 가고 장면마다 피드백이 와요"
         />
 
         <button
@@ -248,7 +248,7 @@ const Body = ({ onClose, onDone }: { onClose: () => void; onDone: (videoId: stri
             {othersOk && <CheckCircle2 className="h-3.5 w-3.5" />}
           </span>
           <span className="text-label leading-relaxed text-foreground">
-            영상에 나온 다른 회원이 있다면, 올려도 된다고 허락받았어요 <span className="text-muted-foreground">(필수 · 허락 없이 찍힌 영상은 신고되면 바로 가려져요)</span>
+            영상에 나온 다른 회원이 있다면 올려도 된다고 허락받았어요 <span className="text-muted-foreground">(필수 · 허락 없이 찍힌 영상은 신고되면 바로 가려져요)</span>
           </span>
         </button>
         <p className="text-micro leading-relaxed text-muted-foreground">
