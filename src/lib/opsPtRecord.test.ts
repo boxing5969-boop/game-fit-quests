@@ -146,6 +146,55 @@ describe("짝짓기", () => {
     expect(rowOf(done, s.id).state).toBe("ok");
   });
 
+  it("옛 수업권 남은 회(「끝남 → 수업」)는 바뀐 날 뒤의 수업과 잇는다 — 선릉 11/15 사례", () => {
+    // 11/10 새 수업권으로 바뀜(옛 수업권 남은 1회) → 지점장 「수업」. 11/15 수업(브로제이 18:59 옛 수업권 1→0 → 19:15 입장)
+    // 11/22 수업 → 11/23 새 수업권 20→19. 시작일이 11/12 라 11/10 끝남은 잇기만 한다
+    const s15 = ses("a", "2026-11-15");
+    const s22 = ses("a", "2026-11-22");
+    const base = {
+      started_on: "2026-11-12",
+      sessions: [s15, s22],
+      attendance: [came("a", "2026-11-15", "19:15"), came("a", "2026-11-22", "21:01")],
+    };
+    const before = matchPtRecord(data("2026-11-25", { ...base, events: [ev("a", "2026-11-23")] }));
+    expect(rowOf(before, s15.id).state).toBe("wait");
+    const res = matchPtRecord(
+      data("2026-11-25", { ...base, events: [ev("a", "2026-11-10", 1, { kind: "ended", status: "confirmed" }), ev("a", "2026-11-23")] }),
+    );
+    expect(rowOf(res, s15.id).state).toBe("ok");
+    expect(ptRowStatus(rowOf(res, s15.id)).text).toBe("옛 수업권 차감");
+    expect(rowOf(res, s22.id).state).toBe("ok");
+    expect(ptRowStatus(rowOf(res, s22.id)).text).toBe("차감 확인");
+    expect(res.extras).toHaveLength(0);
+    expect(ptCounts(res, null, true).total).toBe(0);
+  });
+
+  it("옛 수업권 남은 회 — 보통 차감이 먼저 고르고, 바뀐 날에서 31일 안만 · 못 이은 회는 묻는다", () => {
+    const s5 = ses("a", "2026-10-05");
+    const s6 = ses("a", "2026-10-06");
+    const far = ses("a", "2026-11-20");
+    const res = matchPtRecord(
+      data("2026-11-25", {
+        sessions: [s5, s6, far],
+        events: [ev("a", "2026-10-03", 2, { kind: "ended", status: "confirmed" }), ev("a", "2026-10-07")],
+      }),
+    );
+    expect(rowOf(res, s5.id).deducts[0].old).toBeUndefined();
+    expect(rowOf(res, s6.id).deducts[0].old).toBe(true);
+    expect(rowOf(res, far.id).state).toBe("wait");
+    expect(res.extras).toMatchObject([{ workDate: "2026-10-03", count: 1 }]);
+  });
+
+  it("시작일 앞 옛 수업권 남은 회 — 이을 수업이 없으면 묻지 않고, 확인 전(check)은 앞으로 잇지 않는다", () => {
+    const quiet = matchPtRecord(data("2026-11-25", { started_on: "2026-11-12", events: [ev("a", "2026-11-10", 1, { kind: "ended", status: "confirmed" })] }));
+    expect(quiet.extras).toHaveLength(0);
+    const s = ses("a", "2026-11-15");
+    const checking = matchPtRecord(
+      data("2026-11-25", { started_on: "2026-11-12", sessions: [s], events: [ev("a", "2026-11-13", 1, { kind: "ended", status: "check" })] }),
+    );
+    expect(rowOf(checking, s.id).state).toBe("wait");
+  });
+
   it("시작일 앞 수업은 맞춰 보지 않지만, 시작 뒤에 잡힌 차감은 설명한다", () => {
     const pre = ses("a", "2026-09-29");
     const attendance = [came("a", "2026-09-29")];

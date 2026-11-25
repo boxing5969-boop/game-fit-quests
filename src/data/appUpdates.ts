@@ -18,6 +18,18 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261126-pt-old-ticket",
+    date: "2026-11-26",
+    title: "근무 — 재등록 전 남은 PT도 수업과 맞춰요",
+    lines: [
+      "새 수업권으로 바뀔 때 남은 횟수를 「수업」으로 확인하면 그 뒤 첫 수업과 짝지어요",
+      "그 수업 줄에는 「옛 수업권 차감」이라고 보이고 「차감 대기」로 다시 묻지 않아요",
+    ],
+    link: { to: "/office?tab=work&pt=today", label: "근무 탭 열기" },
+    audience: "staff",
+    branches: SEOLLEUNG,
+  },
+  {
     id: "20261125-member-style",
     date: "2026-11-25",
     title: "나의 153 성향 검사",

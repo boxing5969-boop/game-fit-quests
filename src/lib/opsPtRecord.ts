@@ -10,7 +10,8 @@
  *   짝짓기: 회원마다, 차감(앱이 알아챈 날 = work_date)을 이른 것부터
  *     ① 그날에서 이틀 앞까지의 기록 중 가장 이른 것(차감은 회원마다 하루~이틀에 한 번 읽는다)
  *     ② 없으면 더 오래된 기록 중 가장 이른 것 = 늦은 차감(보정)
- *     ③ 그래도 없으면 「사유 없는 차감」. 기록보다 앞선 차감은 그 기록과 짝짓지 않는다.
+ *     ③ 그래도 없으면 「사유 없는 차감」. 기록보다 앞선 차감은 그 기록과 짝짓지 않는다
+ *       — 옛 수업권의 남은 회(「끝남 → 수업」)만 예외: 바뀐 날 뒤의 수업과도 잇는다(PT_OLD_TICKET_DAYS · 2026-11-25).
  *   사유 없는 차감에는 출석으로 어림한 실제 수업 날(guess — 알아채기 전 이틀 안의 입장)을 붙인다(2026-11-12 — 저녁 수업 차감이
  *     다음 날 잡혀 [기록하기]가 차감 날로 저장된 일). 기록 시트는 고른 날 입장이 없으면 앞 이틀의 입장을 알려 준다(ptNearEntry).
  */
@@ -28,6 +29,16 @@ export const PT_LAG_DAYS = 2;
  *   (서버 자동 기록 _ops_pt_auto_record 와 같은 값 — 20261116153257_ops_pt_auto_after_entry.sql).
  */
 export const PT_PRE_DEDUCT_HOURS = 3;
+/**
+ * 옛 수업권의 남은 회 — 새 수업권으로 바뀐 날 잡힌 「끝남」 카드를 지점장이 「수업」으로 닫은 차감(kind ended · confirmed).
+ *   앱은 지금 수업권만 읽어서, 옛 수업권에서 실제로 뺀 날은 보이지 않고 바뀐 날로만 남는다 → 바뀐 날 뒤 이 날 수 안의 수업 기록과도 잇는다.
+ *   (2026-11-25 대표님 「먼저 차감을 하고 출석체크하는 경우도 있어 — 재우 쌤이 잊어버릴까봐 오는날 미리 체크」 · 선릉 11/15 사례:
+ *    브로제이 18:59 옛 수업권 1→0 → 19:15 입장인데, 앱에는 11/10 「끝남 → 수업」뿐이라 11/15 기록이 차감 대기로 보였다.)
+ *   153OS 가 수업권 목록(pt_tickets)을 보내기 시작하면 옛 수업권 차감도 그날로 잡혀 이 길은 거의 안 쓰인다.
+ */
+export const PT_OLD_TICKET_DAYS = 31;
+/** 옛 수업권의 남은 회를 「수업」으로 닫은 차감인가 */
+export const isOldTicketUse = (e: Pick<OpsPtEvent, "kind" | "status">) => e.kind === "ended" && e.status === "confirmed";
 /** 출석 체크 없는 수업 — 한 달에 이 횟수를 넘으면 대표님께 표시 (2026-11-11 대표님 결정 4) */
 export const PT_NO_ENTRY_MONTH_LIMIT = 3;
 
@@ -154,6 +165,8 @@ export interface PtDeduct {
   days: number;
   /** 회원이 「아니에요」라고 했고 지점장 · 대표님이 아직 답하지 않은 차감(2-4) — 이 수업은 수당 보류 */
   disputed?: boolean;
+  /** 옛 수업권의 남은 회(「끝남 → 수업」)로 맞춘 차감 — 바뀐 날 뒤 수업이면 days 가 음수 */
+  old?: boolean;
 }
 
 /** ok 기록 · 차감 맞음 / pending 차감 확인 중(이틀 안) / wait 차감 대기 / prestart 시작 전 수업(맞춰 보지 않음) / info 차감 없는 기록 */
@@ -344,12 +357,17 @@ export const matchPtRecord = (data: PtRecordData): PtMatchResult => {
     for (let i = 0; i < Math.max(1, r.s.uses || 1); i += 1) list.push({ row: r, date: r.s.session_date, taken: false });
     slotsBy.set(r.key, list);
   }
-  const unitsBy = new Map<string, Array<{ e: OpsPtEvent; left: number }>>();
+  type Unit = { e: OpsPtEvent; left: number; old: boolean; pairOnly: boolean };
+  const unitsBy = new Map<string, Unit[]>();
   for (const e of [...(data.events ?? [])].sort((a, b) => a.work_date.localeCompare(b.work_date) || a.detected_at.localeCompare(b.detected_at))) {
-    if (!countsForPay(e) || e.used <= 0 || e.work_date < startedOn) continue;
+    if (!countsForPay(e) || e.used <= 0) continue;
+    const old = isOldTicketUse(e);
+    // 시작일 앞 차감은 세지 않는다 — 옛 수업권의 남은 회만 시작 뒤 수업과 잇기만 한다(못 이어도 묻지 않는다)
+    const pairOnly = e.work_date < startedOn;
+    if (pairOnly && !(old && dayDiff(e.work_date, startedOn) <= PT_OLD_TICKET_DAYS)) continue;
     const k = ptKeyOf(e.member_user_id, e.member_name);
     const list = unitsBy.get(k) ?? [];
-    list.push({ e, left: e.used });
+    list.push({ e, left: e.used, old, pairOnly });
     unitsBy.set(k, list);
   }
 
@@ -362,7 +380,7 @@ export const matchPtRecord = (data: PtRecordData): PtMatchResult => {
   const extras: PtExtra[] = [];
   for (const [k, units] of unitsBy) {
     const slots = slotsBy.get(k) ?? [];
-    const take = (u: { e: OpsPtEvent; left: number }, ok: (s: Slot) => boolean) => {
+    const take = (u: Unit, ok: (s: Slot) => boolean) => {
       while (u.left > 0) {
         const slot = slots.find((s) => !s.taken && ok(s));
         if (!slot) break;
@@ -372,6 +390,7 @@ export const matchPtRecord = (data: PtRecordData): PtMatchResult => {
           workDate: u.e.work_date,
           days: dayDiff(slot.date, u.e.work_date),
           ...(disputed.has(u.e.id) ? { disputed: true } : {}),
+          ...(u.old ? { old: true } : {}),
         });
         u.left -= 1;
       }
@@ -380,9 +399,13 @@ export const matchPtRecord = (data: PtRecordData): PtMatchResult => {
     for (const u of units) take(u, (s) => s.date <= u.e.work_date && dayDiff(s.date, u.e.work_date) <= PT_LAG_DAYS);
     // ② 늦은 차감 — 더 오래된 기록
     for (const u of units) take(u, (s) => s.date < u.e.work_date);
+    // ②-2 옛 수업권의 남은 회 — 보통 차감이 다 고른 뒤, 바뀐 날 뒤(PT_OLD_TICKET_DAYS 안)의 가장 이른 수업(2026-11-25)
+    for (const u of units) {
+      if (u.old) take(u, (s) => s.date > u.e.work_date && dayDiff(u.e.work_date, s.date) <= PT_OLD_TICKET_DAYS);
+    }
     // ③ 남은 것
     for (const u of units) {
-      if (u.left <= 0) continue;
+      if (u.left <= 0 || u.pairOnly) continue;
       if (clippedFrom && dayDiff(clippedFrom, u.e.work_date) <= PT_LAG_DAYS) continue;
       extras.push({
         key: k,
@@ -525,6 +548,7 @@ export const ptRowStatus = (r: PtRow): { text: string; tone: "ok" | "warn" | "mu
   if (r.state === "prestart") return { text: "시작 전 수업", tone: "muted" };
   if (r.state === "ok") {
     const last = r.deducts[r.deducts.length - 1];
+    if (last?.old) return { text: "옛 수업권 차감", tone: "ok" };
     return r.lateDeduct && last ? { text: `늦은 차감 ${mdOf(last.workDate)}`, tone: "muted" } : { text: "차감 확인", tone: "ok" };
   }
   if (r.s.kind === "moved" && r.s.moved_to) return { text: `→ ${mdOf(r.s.moved_to)}`, tone: "muted" };
