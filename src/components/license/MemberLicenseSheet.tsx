@@ -31,6 +31,8 @@ import { LICENSE_STAFF_LABEL, type LicenseLikeReason } from "@/services/king153S
 import { honorTitle } from "@/lib/staffDisplay";
 import { openCredentialChange } from "@/lib/appEvents";
 import BoxerLicenseCard from "@/components/license/BoxerLicenseCard";
+import MemberStyleCoachSection from "@/components/license/MemberStyleCoachSection";
+import { isStaffProfile } from "@/lib/staffDisplay";
 import { useCardDecoOf } from "@/services/cardDecoService";
 import CharacterSprite from "@/components/CharacterSprite";
 import SecondCheerSheet from "@/components/engagement/SecondCheerSheet";
@@ -290,6 +292,11 @@ const MemberLicenseSheet = ({ userId, onClose, extraAction, hideMessageButton }:
                       </button>
                     )}
                   </div>
+                )}
+
+                {/* 🧭 지도 카드 — 코치진만 · 검사를 한 회원만 (2026-11-25) */}
+                {!data.is_me && !staffCard && (role === "coach" || canSeeDetail || isStaffProfile(profile)) && (
+                  <MemberStyleCoachSection userId={data.user_id} />
                 )}
 
                 {canCheer && (

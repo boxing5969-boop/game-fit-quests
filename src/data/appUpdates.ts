@@ -18,6 +18,26 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261125-member-style",
+    date: "2026-11-25",
+    title: "나의 153 성향 검사",
+    lines: [
+      "5분 검사로 나에게 맞는 지도법을 코치님께 알려 드려요",
+      "고른 답은 나만 봐요 · 처음 하면 챔피언 머니 3,000",
+    ],
+    link: { to: "/mypage/attendance", label: "내 운동 기록에서 검사하기" },
+  },
+  {
+    id: "20261125-member-style-staff",
+    date: "2026-11-25",
+    title: "회원 카드에 지도 카드가 생겼어요",
+    lines: [
+      "성향 검사를 한 회원 카드에서 첫마디 · 설명 · 교정 · 칭찬법을 바로 봐요",
+      "그만둘 위험 신호와 붙잡는 한마디도 같이 나와요",
+    ],
+    audience: "staff",
+  },
+  {
     id: "20261125-staff-free-customize",
     date: "2026-11-25",
     title: "코치님은 캐릭터 꾸미기를 마음껏",
