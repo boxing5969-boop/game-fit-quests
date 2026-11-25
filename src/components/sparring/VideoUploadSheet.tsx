@@ -79,7 +79,8 @@ const Body = ({ onClose, onDone }: { onClose: () => void; onDone: (videoId: stri
   }, [url]);
 
   const tooLong = dur != null && dur > UPLOAD_MAX_SEC + 1;
-  const canSend = !!file && !tooLong && dur != null && othersOk && !busy && !!user;
+  // 길이(dur)를 못 읽어도 막지 않는다 — 아이폰은 미리보기 영상의 길이를 늦게 주거나 안 줄 수 있다. 그때는 줄이면서 잰 길이로 본다
+  const canSend = !!file && !tooLong && othersOk && !busy && !!user;
 
   const pick = (f: File | undefined) => {
     if (!f) return;
@@ -96,6 +97,7 @@ const Body = ({ onClose, onDone }: { onClose: () => void; onDone: (videoId: stri
     try {
       let blob: Blob = file;
       let type = file.type || "video/mp4";
+      let realDur: number | null = dur;
       if (isVideoCompressSupported()) {
         setBusy({ step: "영상 줄이는 중", pct: 0 });
         const r = await compressVideoToLimit(file, {
@@ -104,6 +106,10 @@ const Body = ({ onClose, onDone }: { onClose: () => void; onDone: (videoId: stri
           signal: ac.signal,
           onProgress: (p) => setBusy((b) => (b ? { ...b, pct: Math.min(99, Math.round(p * 100)) } : b)),
         });
+        if (realDur == null && Number.isFinite(r.durationSec)) realDur = r.durationSec;
+        if (realDur != null && realDur > UPLOAD_MAX_SEC + 1) {
+          throw new Error(`${Math.round(realDur)}초 영상이에요 — ${UPLOAD_MAX_SEC}초까지 올릴 수 있어요. 사진첩에서 잘라 주세요`);
+        }
         if (!r.skipped) {
           blob = r.blob;
           type = r.contentType || "video/mp4";
@@ -133,7 +139,7 @@ const Body = ({ onClose, onDone }: { onClose: () => void; onDone: (videoId: stri
         share,
         wantFeedback: feedback,
         othersOk,
-        durationSec: dur,
+        durationSec: realDur,
       });
       void qc.invalidateQueries({ queryKey: SPARVID_KEY });
       if (share && r.under14) toast.success("올렸어요 · 만 14세 미만은 「나만 보기」로 올라가요");
@@ -180,9 +186,14 @@ const Body = ({ onClose, onDone }: { onClose: () => void; onDone: (videoId: stri
             </div>
             <div className="flex items-center justify-between">
               <p className={cn("text-label", tooLong ? "font-bold text-destructive" : "text-muted-foreground")}>
-                {dur == null ? "영상 길이 확인 중…" : tooLong ? `${Math.round(dur)}초 — ${UPLOAD_MAX_SEC}초까지 올릴 수 있어요. 사진첩에서 잘라 주세요` : `${Math.round(dur)}초`}
+                {dur == null ? `${UPLOAD_MAX_SEC}초까지 올릴 수 있어요` : tooLong ? `${Math.round(dur)}초 — ${UPLOAD_MAX_SEC}초까지 올릴 수 있어요. 사진첩에서 잘라 주세요` : `${Math.round(dur)}초`}
               </p>
-              <button type="button" onClick={() => inputRef.current?.click()} className="text-label font-bold text-primary">
+              <button
+                type="button"
+                disabled={!!busy}
+                onClick={() => inputRef.current?.click()}
+                className="text-label font-bold text-primary disabled:opacity-40"
+              >
                 다른 영상
               </button>
             </div>
