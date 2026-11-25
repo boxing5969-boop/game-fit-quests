@@ -16,7 +16,7 @@ export interface AttendanceDay {
   /** 체크인 시각 ISO */
   at: string;
   end: string | null;
-  /** 운동 끝을 어떻게 쟀나 — 'checkout_scan'(두 번째 체크) · 'member_app'(운동 종료 버튼) · 'member_fix'(회원이 출석한 날부터 7일 안에 고침, 2026-11-19 · 11-21 7일) · null(기본 시간) */
+  /** 운동 끝을 어떻게 쟀나 — 'kiosk_exit'(얼굴 키오스크 [퇴장] 버튼, 2026-11-25) · 'checkout_scan'(두 번째 체크) · 'member_app'(운동 종료 버튼) · 'member_fix'(회원이 출석한 날부터 7일 안에 고침, 2026-11-19 · 11-21 7일) · null(기본 시간) */
   endSource: string | null;
   /** 그날 운동 시간(분) — 서버 workout_minutes 그대로 (두 번째 체크 · 종료 버튼 · 없으면 기본 66분, 최대 180분) */
   minutes: number;
@@ -228,15 +228,15 @@ export function bestMonthAllTime(list: readonly AttendanceDay[]): MonthCount | n
   return best;
 }
 
-/** 그날 운동 시간을 실제로 재서 기본보다 길게 쳤나 (두 번째 체크 · 운동 종료 버튼 · 시간 고침) — 아니면 '기본' */
+/** 그날 운동 시간을 실제로 재서 기본보다 길게 쳤나 (두 번째 체크 · 운동 종료 버튼 · 시간 고침 · 키오스크 퇴장) — 아니면 '기본' */
 export const measuredDay = (d: AttendanceDay): boolean =>
   !!d.end &&
-  (d.endSource === "checkout_scan" || d.endSource === "member_app" || d.endSource === "member_fix") &&
+  (d.endSource === "checkout_scan" || d.endSource === "member_app" || d.endSource === "member_fix" || d.endSource === "kiosk_exit") &&
   d.minutes > DEFAULT_SESSION_MINUTES;
 
 /** 코치진 운동 기록 줄 — 운동 끝을 어떻게 쟀나 (회원이 고친 시간은 '시간 고침'으로 드러낸다) */
 export const endSourceLabel = (src: string | null): string =>
-  src === "checkout_scan" ? "두 번째 체크" : src === "member_fix" ? "시간 고침" : "운동 종료";
+  src === "checkout_scan" ? "두 번째 체크" : src === "member_fix" ? "시간 고침" : src === "kiosk_exit" ? "퇴장" : "운동 종료";
 
 /** 분 → '1시간 25분' · '45분' · '3시간' */
 export function durationLabel(minutes: number): string {

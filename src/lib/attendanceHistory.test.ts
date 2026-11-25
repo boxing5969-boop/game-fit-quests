@@ -81,6 +81,10 @@ describe("helpers", () => {
     expect(endSourceLabel("member_fix")).toBe("시간 고침");
     expect(endSourceLabel("checkout_scan")).toBe("두 번째 체크");
     expect(endSourceLabel("member_app")).toBe("운동 종료");
+    // 얼굴 키오스크 [퇴장] (2026-11-25)
+    expect(endSourceLabel("kiosk_exit")).toBe("퇴장");
+    expect(measuredDay({ ...day, end: "2026-10-20T11:30:00Z", endSource: "kiosk_exit", minutes: 90 })).toBe(true);
+    expect(measuredDay({ ...day, end: "2026-10-20T10:40:00Z", endSource: "kiosk_exit", minutes: 66 })).toBe(false);
   });
   it("지금까지 가장 많이 운동한 달 — 날마다 목록 전체에서 (같으면 최근 달)", () => {
     const d = (day: string, minutes: number) => ({ day, at: `${day}T10:00:00Z`, end: null, endSource: null, minutes, method: "broj", branch: null });

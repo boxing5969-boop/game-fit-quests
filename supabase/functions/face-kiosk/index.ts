@@ -4,11 +4,13 @@
 //   · 키: 앱 공용 키(internal_sync_config.face_kiosk_key) 또는 153OS 지점 키(FC-6). 지점 키는 153OS 에 물어(/api/face/settings)
 //     맞으면 받아 주고 **지점은 키에서** 정한다 — 그전엔 지점 키를 넣은 키오스크의 출석이 여기서 401 로 조용히 막혔다
 //     (선릉 패드에 지점 키를 넣으니 153OS 판정은 되는데 마이복서153 출석 · TV 가 안 남던 것).
-//     지점 키는 checkin 만 — 옛 lookup · enroll · list(지점 구분 없음)는 앱 공용 키만(403).
-//   · [출석]/[퇴장] 버튼 판(state · checkout 액션)은 preview/face-kiosk-buttons — 대표님 「배포」 뒤 이 파일 위로 올라간다.
+//     지점 키는 checkin · state · checkout 만 — 옛 lookup · enroll · list(지점 구분 없음)는 앱 공용 키만(403).
+//   · v7(2026-11-25 대표님 「올리자」) — [출석]/[퇴장] 버튼판:
+//     state    — 오늘 출석했나 · 입장 시각 · 끝 기록(키오스크가 [출석] / [출석][퇴장] 중 무엇을 보일지 정한다)
+//     checkout — [퇴장] = DB kiosk_finish_workout(누른 시각으로 운동 시간 · XP 차액 정산). 안 누르고 가면 기본 운동 시간(66분).
 //
 // 액션: lookup(전화→회원), enroll(임베딩 등록+동의), list(매칭용 임베딩) — 2026-08-03 FC-2 부터 등록 · 명단 · 판정은 153OS 가 한다(옛 길, 호환으로 남김)
-//       checkin(출석)
+//       checkin(출석), state(오늘 상태), checkout(퇴장)
 // 원칙: 사진 저장 없음(임베딩만), 동의 없으면 등록 거부. qr-checkin·브로제이 브리지 무수정 — 별도 병렬 경로.
 //       출석 보상(XP)은 DB 트리거 attendance_base_xp 가 method 'face' 를 broj 와 같이 준다(2026-09-22).
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
@@ -91,8 +93,8 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const action = String(body?.action || "");
-    // 지점 키(153OS 가 알려 준 키)는 출석만 — 옛 전화 찾기 · 등록 · 명단(지점 구분 없는 길)은 앱 공용 키만
-    if (auth.branchName !== null && action !== "checkin") return json({ error: "forbidden" }, 403);
+    // 지점 키(153OS 가 알려 준 키)는 출석 · 오늘 상태 · 퇴장만 — 옛 전화 찾기 · 등록 · 명단(지점 구분 없는 길)은 앱 공용 키만
+    if (auth.branchName !== null && !["checkin", "state", "checkout"].includes(action)) return json({ error: "forbidden" }, 403);
 
     // ── 전화번호로 회원 찾기 (등록 1단계) ──
     if (action === "lookup") {
@@ -168,6 +170,46 @@ Deno.serve(async (req) => {
       });
       if (error) return json({ error: "출석 기록 실패" }, 500);
       return json({ ok: true, already: false });
+    }
+
+    // ── 오늘 상태 (2026-11-25) — 키오스크가 [출석] / [출석][퇴장] 중 무엇을 보일지 ──
+    if (action === "state") {
+      const userId = String(body?.user_id || "");
+      if (!userId) return json({ error: "입력 오류" }, 400);
+      const { data: rows, error } = await db.from("attendance_logs")
+        .select("checked_in_at, ended_at, ended_source, method")
+        .eq("user_id", userId).eq("is_duplicate", false)
+        .gte("checked_in_at", kstDayStartIso())
+        .order("checked_in_at", { ascending: true }).limit(1);
+      if (error) return json({ error: "상태 조회 실패" }, 500);
+      const r = rows?.[0] as { checked_in_at: string; ended_at: string | null; ended_source: string | null; method: string | null } | undefined;
+      return json({
+        ok: true,
+        attended: !!r,
+        started_at: r?.checked_in_at ?? null,
+        ended_at: r?.ended_at ?? null,
+        ended_source: r?.ended_source ?? null,
+        method: r?.method ?? null,
+      });
+    }
+
+    // ── 퇴장 (2026-11-25) — 누른 시각으로 운동 시간 · XP 차액 정산 ──
+    if (action === "checkout") {
+      const userId = String(body?.user_id || "");
+      if (!userId) return json({ error: "입력 오류" }, 400);
+      const { data, error } = await db.rpc("kiosk_finish_workout", { p_user_id: userId });
+      if (error) return json({ error: "퇴장 기록 실패" }, 500);
+      const r = (data ?? {}) as Record<string, unknown>;
+      if (r.success !== true) return json({ ok: false, code: typeof r.code === "string" ? r.code : "FAILED" });
+      return json({
+        ok: true,
+        already_finished: r.already_finished === true,
+        source: r.source ?? null,
+        minutes: typeof r.minutes === "number" ? r.minutes : null,
+        xp_granted: typeof r.xp_granted === "number" ? r.xp_granted : 0,
+        started_at: r.started_at ?? null,
+        ended_at: r.ended_at ?? null,
+      });
     }
 
     return json({ error: "unknown action" }, 400);
