@@ -18,6 +18,17 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261125-staff-free-customize",
+    date: "2026-11-25",
+    title: "코치님은 캐릭터 꾸미기를 마음껏",
+    lines: [
+      "코치님 · 지점장님은 꾸미기 아이템을 챔피언 머니 없이 바로 가질 수 있어요",
+      "레벨 제한도 없어요 · 명예의 전당 아이템만 그대로 잠겨 있어요",
+    ],
+    link: { to: "/character-studio", label: "캐릭터 꾸미기" },
+    audience: "staff",
+  },
+  {
     id: "20261125-sparring-video",
     date: "2026-11-25",
     title: "스파링 영상을 다시 보고 코치 피드백을 받아요",

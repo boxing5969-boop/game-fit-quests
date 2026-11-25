@@ -46,6 +46,7 @@ import {
 } from "@/data/characterCustomizationData";
 import { EFFECT_ART } from "@/data/effectArt";
 import { toGlobalLevel } from "@/lib/rankLabels";
+import { isStaffProfile } from "@/lib/staffDisplay";
 import {
   computeUserLevel,
   getUnlockStatus,
@@ -95,7 +96,7 @@ const LEAGUE_COLORS: Record<string, string> = {
 
 const CharacterStudioPage = () => {
   const navigate = useNavigate();
-  const { user, progress, role } = useAuth();
+  const { user, progress, role, profile } = useAuth();
   const { data: assignment } = useMemberCharacterAssignment();
   const { data: templatePresets } = useTemplatePresets();
   const { data: walletData } = useWallet();
@@ -107,7 +108,12 @@ const CharacterStudioPage = () => {
   const saveCustomization = useSaveCustomization();
   const { data: isInHallOfFame = false } = useIsInHallOfFame();
   const { data: ownedCustomizations = [] } = useOwnedCustomizations();
-  const isAdmin = role === "admin" || role === "super_admin";
+  // 관리자 — 명예의 전당 아이템까지 모두 열림.
+  const isRealAdmin = role === "admin" || role === "super_admin";
+  // 꾸미기 무료 · 레벨 제한 없음 = 관리자 + 지도진(코치님 · 지점장님) — 서버 _customize_free 와 같은 기준 (2026-11-25 대표님).
+  // 명예의 전당 아이템은 지도진도 잠김 → 아래 탭에는 hofOpen 을 isInHallOfFame 으로 넘긴다.
+  const isAdmin = isRealAdmin || role === "coach" || role === "branch_manager" || isStaffProfile(profile);
+  const hofOpen = isInHallOfFame || isRealAdmin;
 
   const currentPartsJson = (assignment?.character_presets as any)?.parts_json;
   const currentStyle = currentPartsJson?.style;
@@ -613,7 +619,7 @@ const CharacterStudioPage = () => {
               activeFilter={activeFilter}
               setActiveFilter={setActiveFilter}
               currentLeague={currentLeague}
-              isInHallOfFame={isInHallOfFame}
+              isInHallOfFame={hofOpen}
               isAdmin={isAdmin}
               ownedStyles={ownedStyles}
               walletBalance={walletData?.gems_balance || 0}
@@ -633,7 +639,7 @@ const CharacterStudioPage = () => {
               league={currentLeague}
               level={currentLevel}
               bossesCleared={progress?.bosses_cleared || 0}
-              isInHallOfFame={isInHallOfFame}
+              isInHallOfFame={hofOpen}
               isAdmin={isAdmin}
               walletBalance={walletData?.gems_balance || 0}
             />
@@ -1096,7 +1102,7 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
 
   const handleSelect = (catCode: string, opt: CustomizationOption) => {
     // HoF 게이트 — 서버 purchase_customization 의 hof_required 에러와 동일 경로.
-    if (opt.requirement === "hall_of_fame" && !isInHallOfFame && !isAdmin) {
+    if (opt.requirement === "hall_of_fame" && !isInHallOfFame) {
       toast("명예의 전당 입성 후 구매 가능");
       return;
     }
@@ -1194,7 +1200,7 @@ function CustomizeTab({ customization, onChange, league, level, bossesCleared, i
           const requiresBlack = !!opt.blackOnly && league !== "black";
 
           // 시각상 잠금 처리 (admin 은 풀컬러 + 클릭 가능)
-          const visuallyLocked = !isAdmin && (requiresHof || requiresLevel || requiresBlack);
+          const visuallyLocked = requiresHof || (!isAdmin && (requiresLevel || requiresBlack));
 
           // 구매 여부 — 실제 user_owned_customizations 기록 기준.
           // admin 도 예외 없음 (구매하면 "보유", 안 했으면 미보유).
@@ -1607,8 +1613,8 @@ function PresetTab({ filteredCharacters, selectedStyle, currentStyle, activeFilt
   const userRank = LEAGUE_ORDER[currentLeague] ?? 0;
 
   const isCharLocked = (char: (typeof PREBUILT_CHARACTERS)[number]) => {
-    if (isAdmin) return false;
     if (char.requirement === "hall_of_fame") return !isInHallOfFame;
+    if (isAdmin) return false;
     return (LEAGUE_ORDER[char.league] ?? 0) > userRank;
   };
 
