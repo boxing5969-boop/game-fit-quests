@@ -18,6 +18,31 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261125-sparring-video",
+    date: "2026-11-25",
+    title: "스파링 영상을 다시 보고 코치 피드백을 받아요",
+    lines: [
+      "스파링 동의서에서 영상 촬영을 고르면 내 경기를 찍어 드려요",
+      "훈련 탭 「오늘 할 것」의 내 스파링 영상에서 다시 봐요",
+      "코치님 피드백의 시각을 누르면 그 장면으로 가요",
+    ],
+    link: { to: "/missions", label: "훈련 탭 열기" },
+    branches: SEOLLEUNG,
+  },
+  {
+    id: "20261125-sparring-record",
+    date: "2026-11-25",
+    title: "타이머에서 스파링을 기록해요",
+    lines: [
+      "「스파링 기록」에서 오늘 출석한 두 명을 고르고 시작해요",
+      "영상 동의가 없는 회원은 바로 보이고 그 경기는 찍지 않아요",
+      "영상을 보다 「여기서 피드백」을 누르면 그 시각에 글이 남아요",
+    ],
+    link: { to: "/missions?timer=spar", label: "스파링 기록 열기" },
+    audience: "staff",
+    branches: SEOLLEUNG,
+  },
+  {
     id: "20261123-guardian",
     date: "2026-11-23",
     title: "엄마 · 아빠도 운동 알림을 받아요",
