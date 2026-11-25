@@ -10,6 +10,8 @@ lerna-debug.log*
 # Build artifacts
 node_modules
 dist
+# 얼굴 키오스크 face-api 0.22.2 원본 스크립트 — 위 dist 규칙에 걸려 사이트에 안 올라가 웹 키오스크가 「지금은 얼굴 출석이 안 돼요」로 멈췄다(2026-11-25)
+!public/vendor/face-api/dist/
 dist-ssr
 *.local
 
