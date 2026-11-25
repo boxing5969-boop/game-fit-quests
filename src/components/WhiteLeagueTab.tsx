@@ -54,6 +54,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import SparringConsentModal, { type SparringConsentRow } from "@/components/SparringConsentModal";
 import SparringVideoEntry from "@/components/sparring/SparringVideoEntry";
+import { SPARRING_CAMERA_ON } from "@/lib/sparringVideo";
 import { toGlobalLevel } from "@/lib/rankLabels";
 
 type LevelState = "complete" | "active" | "locked";
@@ -160,7 +161,7 @@ const WhiteLeagueTab = ({ onOpenMissionVideos, warmups, onOpenWarmup }: WhiteLea
             <LessonClassActions />
             {/* 🥊 복싱 타이머 — 자율 운동용 라운드 타이머 (2026-11-22 · ?timer=1 로도 열린다) */}
             <BoxingTimerEntry />
-            {/* 🎥 스파링 영상 (2026-11-25 · 레벨 상관없이 내 영상 · 우리 지점 영상 — 영상이 있을 때만 한 줄 · ?sparvid= 로 열린다) */}
+            {/* 🎥 훈련 영상 (2026-11-25 · 레벨 상관없이 · 11-26 회원이 직접 올리기 — 늘 한 줄 · ?sparvid= 로 열린다) */}
             <SparringVideoEntry />
           </>
         }
@@ -1210,8 +1211,8 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack, initialDetail = fals
                 <CheckCircle2 className="h-4 w-4" />
                 스파링 동의 완료{sparringConsent.status === "coach_confirmed" ? " · 코치 확인됨" : ""}
               </div>
-              {/* 🎥 스파링 영상 동의 (v2 · 2026-11-25) — 옛 동의서(v1)면 영상 칸만 다시 서명 */}
-              {sparringConsent.form_version !== "v2" ? (
+              {/* 🎥 스파링 영상 동의 (v2 · 2026-11-25) — 옛 동의서(v1)면 영상 칸만 다시 서명 · 카메라 준비 전에는 숨김(2026-11-26) */}
+              {!SPARRING_CAMERA_ON ? null : sparringConsent.form_version !== "v2" ? (
                 <button
                   onClick={() => setShowSparring(true)}
                   className="mt-2 w-full rounded-xl border border-primary/40 bg-primary/5 py-2.5 text-label font-bold text-primary transition-all active:scale-[0.98]"

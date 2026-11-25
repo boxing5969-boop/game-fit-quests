@@ -47,7 +47,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { isManagerRole } from "@/lib/rankLabels";
 import { isStaffProfile } from "@/lib/staffDisplay";
-import { seqLabel } from "@/lib/sparringVideo";
+import { SPARRING_CAMERA_ON, seqLabel } from "@/lib/sparringVideo";
 import { SPARVID_KEY, endMatch, type MatchStarted } from "@/services/sparringVideoService";
 import SparringRecorderPanel from "@/components/sparring/SparringRecorderPanel";
 
@@ -504,11 +504,13 @@ const Body = ({ onClose, startMode }: { onClose: () => void; startMode: "timer" 
   // 🥊 스파링 기록 (2026-11-25 스파링 영상 1차) — 코치 · 지점장만 칸이 보인다(권한은 서버가 다시 본다)
   const { role, profile } = useAuth();
   const isStaff = isManagerRole(role) || (!!profile && isStaffProfile(profile));
-  const [mode, setMode] = useState<"timer" | "spar">(startMode === "spar" && isStaff ? "spar" : "timer");
+  // 노트북 · 카메라가 준비될 때까지 칸을 숨긴다 (2026-11-26 대표님 「노트북 카메라 등등 준비되면 시작하자」 · SPARRING_CAMERA_ON)
+  const sparOn = SPARRING_CAMERA_ON && isStaff;
+  const [mode, setMode] = useState<"timer" | "spar">(startMode === "spar" && sparOn ? "spar" : "timer");
   // 알림으로 바로 열면 역할을 읽기 전일 수 있다 — 코치로 확인되면 그때 스파링 칸으로
   useEffect(() => {
-    if (startMode === "spar" && isStaff) setMode("spar");
-  }, [startMode, isStaff]);
+    if (startMode === "spar" && sparOn) setMode("spar");
+  }, [startMode, sparOn]);
   const [match, setMatch] = useState<MatchStarted | null>(null);
   const qc = useQueryClient();
   const set = (v: TimerSettings) => {
@@ -599,7 +601,7 @@ const Body = ({ onClose, startMode }: { onClose: () => void; startMode: "timer" 
           <X className="h-5 w-5" />
         </button>
       </div>
-      {isStaff && runKey == null && (
+      {sparOn && runKey == null && (
         <div className="mx-5 mb-3 grid grid-cols-2 gap-1 rounded-full bg-secondary p-1" role="tablist" aria-label="타이머 · 스파링 기록">
           {(
             [
@@ -631,7 +633,7 @@ const Body = ({ onClose, startMode }: { onClose: () => void; startMode: "timer" 
           onDone={match ? () => void finishMatch(false) : undefined}
           banner={sparBanner}
         />
-      ) : mode === "spar" && isStaff ? (
+      ) : mode === "spar" && sparOn ? (
         <SparringRecorderPanel
           s={s}
           onSettings={() => setMode("timer")}

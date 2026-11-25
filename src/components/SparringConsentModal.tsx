@@ -3,6 +3,7 @@ import { X, ShieldAlert, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { SPARRING_CAMERA_ON } from "@/lib/sparringVideo";
 
 export interface SparringConsentRow {
   id: string;
@@ -56,7 +57,8 @@ const SparringConsentModal = ({ participantDefaultName = "", onClose, onSigned }
 
   // 만 14세 미만은 1차(유튜브)에서 찍지 않는다
   const videoBlocked = isMinor && under14;
-  const videoOk = videoChoice === "yes" && !videoBlocked;
+  // 노트북 · 카메라 준비 전(SPARRING_CAMERA_ON=false)에는 영상 칸을 숨기고 묻지 않는다 (2026-11-26)
+  const videoOk = SPARRING_CAMERA_ON && videoChoice === "yes" && !videoBlocked;
 
   const healthValid = healthChoice === "none" || (healthChoice === "note" && healthNote.trim().length > 0);
   const guardianValid =
@@ -65,7 +67,7 @@ const SparringConsentModal = ({ participantDefaultName = "", onClose, onSigned }
       guardianRelation.trim().length > 0 &&
       guardianPhone.trim().length > 0 &&
       guardianSignature.trim().length > 0);
-  const videoValid = videoBlocked || videoChoice !== null;
+  const videoValid = !SPARRING_CAMERA_ON || videoBlocked || videoChoice !== null;
   const canSubmit =
     agreedRules && healthValid && participantName.trim().length > 0 && guardianValid && videoValid && !submitting;
 
@@ -97,7 +99,7 @@ const SparringConsentModal = ({ participantDefaultName = "", onClose, onSigned }
         minor_under14: videoBlocked,
         video_ok: videoOk,
         video_share_ok: videoOk && videoShare,
-        video_terms: SPARRING_VIDEO_TERMS,
+        video_terms: SPARRING_CAMERA_ON ? SPARRING_VIDEO_TERMS : null,
         video_agreed_at: videoOk ? new Date().toISOString() : null,
       })
       .select("id,status")
@@ -229,7 +231,8 @@ const SparringConsentModal = ({ participantDefaultName = "", onClose, onSigned }
           </span>
         </button>
 
-        {/* 스파링 영상 (선택 · v2) */}
+        {/* 스파링 영상 (선택 · v2) — 카메라 준비 전에는 숨김 */}
+        {SPARRING_CAMERA_ON && (
         <div className="mb-4 rounded-xl border border-border bg-secondary/30 p-3">
           <p className="mb-1 text-label font-bold text-foreground">🎥 스파링 영상 촬영 (선택)</p>
           <ul className="mb-2 space-y-1">
@@ -291,6 +294,7 @@ const SparringConsentModal = ({ participantDefaultName = "", onClose, onSigned }
             국외 보관: Google LLC(미국) · 스파링 영상 · 유튜브에 올릴 때 · 보관과 재생 · 동의를 거두거나 탈퇴할 때까지 · 거부하면 촬영하지 않음
           </p>
         </div>
+        )}
 
         {/* 참가자 서명 */}
         <div className="mb-4">

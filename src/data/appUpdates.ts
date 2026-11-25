@@ -18,6 +18,28 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261126-member-video-upload",
+    date: "2026-11-26",
+    title: "미트 · 스파링 영상을 직접 올려요",
+    lines: [
+      "훈련 탭 「훈련 영상」에서 60초까지 올릴 수 있어요",
+      "「코치님 피드백 받기」를 켜면 장면마다 피드백이 와요",
+      "우리 지점에 공개하거나 나만 볼 수 있어요",
+    ],
+    link: { to: "/missions?sparvid=1", label: "훈련 영상 열기" },
+  },
+  {
+    id: "20261126-member-video-staff",
+    date: "2026-11-26",
+    title: "회원이 올린 영상에 피드백해요",
+    lines: [
+      "「훈련 영상 › 코치 확인」에 피드백 요청과 신고가 모여요",
+      "신고된 영상은 바로 가려져요 · 보고 다시 보이기나 내리기",
+    ],
+    link: { to: "/missions?sparvid=1", label: "코치 확인 열기" },
+    audience: "staff",
+  },
+  {
     id: "20261126-pt-old-ticket",
     date: "2026-11-26",
     title: "근무 — 재등록 전 남은 PT도 수업과 맞춰요",
@@ -69,22 +91,11 @@ export const APP_UPDATES: readonly AppUpdate[] = [
       "같이 나온 회원 모두가 공개에 동의한 영상만 우리 지점에 보여요",
       "코치님 피드백의 시각을 누르면 그 장면으로 가요",
     ],
-    link: { to: "/missions?sparvid=1", label: "스파링 영상 보기" },
+    link: { to: "/missions?sparvid=1", label: "훈련 영상 보기" },
     branches: SEOLLEUNG,
   },
-  {
-    id: "20261125-sparring-record",
-    date: "2026-11-25",
-    title: "타이머에서 스파링을 기록해요",
-    lines: [
-      "「스파링 기록」에서 오늘 출석한 두 명을 고르고 시작해요",
-      "영상 동의가 없는 회원은 바로 보이고 그 경기는 찍지 않아요",
-      "영상을 보다 「여기서 피드백」을 누르면 그 시각에 글이 남아요",
-    ],
-    link: { to: "/missions?timer=spar", label: "스파링 기록 열기" },
-    audience: "staff",
-    branches: SEOLLEUNG,
-  },
+  // 20261125-sparring-record(코치 「타이머에서 스파링을 기록해요」)는 2026-11-26 뺐다 — 노트북 · 카메라가 준비될 때까지
+  //   타이머 「스파링 기록」 칸을 숨겼기 때문(SPARRING_CAMERA_ON). 다시 켜면 새 id 로 한 칸.
   {
     id: "20261123-guardian",
     date: "2026-11-23",

@@ -182,7 +182,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - [61 Claude API 크레딧](docs/features/61-Claude-API-크레딧.md)
 - [62 보호자 계정 · 우리 아이 · 운동을 끝낼까요?](docs/features/62-보호자-계정.md) — `src/lib/guardian.ts`
 - [63 얼굴 출석 키오스크 — 출석 · 퇴장 버튼 · 10초 자동 출석](docs/features/63-얼굴-출석-키오스크.md) — `src/pages/FaceKioskPage.tsx`
-- [64 스파링 영상 — 1차 유튜브 · 2차 자체 저장 대비](docs/features/64-스파링-영상.md) — `src/components/sparring/SparringRecorderPanel.tsx`
+- [64 훈련 영상 — 회원 직접 올리기 · 스파링 1차 유튜브(카메라 준비 뒤) · 2차 자체 저장 대비](docs/features/64-스파링-영상.md) — `src/components/sparring/SparringVideoEntry.tsx`
 
 ### Supabase 연결
 

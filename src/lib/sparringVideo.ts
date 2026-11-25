@@ -9,6 +9,43 @@
 
 export type VideoProvider = "youtube" | "r2" | "device" | "gdrive" | "storage";
 
+/**
+ * 링 카메라(코치 「스파링 기록」 · 동의서 「영상 촬영」 칸) 켜기 — 장비가 준비되면 true 로 (2026-11-25 대표님
+ * 「일단은 인스타그램처럼 회원님들 스스로가 직접 올리는 기능만 활성화해놓고 노트북 카메라 등등 준비되면 시작하자」)
+ */
+export const SPARRING_CAMERA_ON = false;
+
+/** 회원이 직접 올리는 영상 (2026-11-26) — 비공개 저장소 member-videos · 60초까지 · 90일 보관 */
+export const MEMBER_VIDEO_BUCKET = "member-videos";
+export const UPLOAD_MAX_SEC = 60;
+/** 저장소 한도와 같다 (50MB) */
+export const UPLOAD_MAX_BYTES = 50 * 1024 * 1024;
+
+export type VideoKind = "sparring" | "mitt" | "other";
+export const VIDEO_KINDS: readonly { key: VideoKind; label: string }[] = [
+  { key: "mitt", label: "미트" },
+  { key: "sparring", label: "스파링" },
+  { key: "other", label: "쉐도우 · 샌드백" },
+];
+export const kindLabel = (k: string | null | undefined): string =>
+  VIDEO_KINDS.find((x) => x.key === k)?.label ?? "훈련";
+
+/** 저장 경로 — 서버(sparvid_upload_register)가 `<내 id>/[A-Za-z0-9_.-]+` 만 받는다 */
+export function uploadPathOf(userId: string, ext: string, now: Date, rand: number): string {
+  const safeExt = /^[a-z0-9]{2,4}$/.test(ext) ? ext : "mp4";
+  const stamp = now.toISOString().replace(/[-:TZ.]/g, "").slice(0, 14);
+  const tail = Math.floor(rand * 1e9).toString(36);
+  return `${userId}/${stamp}_${tail}.${safeExt}`;
+}
+
+/** 파일 형식 → 확장자 */
+export function extOf(contentType: string, fileName = ""): string {
+  if (/quicktime/.test(contentType) || /\.mov$/i.test(fileName)) return "mov";
+  if (/webm/.test(contentType)) return "webm";
+  if (/3gpp/.test(contentType)) return "3gp";
+  return "mp4";
+}
+
 /** 녹화 노트북이 만드는 파일 이름 = 유튜브 제목 */
 export const MATCH_CODE_RE = /^[a-z0-9]+-\d{6}-\d{2,}$/;
 

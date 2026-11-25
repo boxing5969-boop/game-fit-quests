@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   MATCH_CODE_RE,
+  SPARRING_CAMERA_ON,
+  extOf,
+  kindLabel,
+  uploadPathOf,
   clockOf,
   filmBadge,
   filmBlockLine,
@@ -50,6 +54,29 @@ describe("경기 번호 · 시각 · 길이", () => {
     expect(seqLabel(7)).toBe("#07");
     expect(seqLabel(12)).toBe("#12");
     expect(seqLabel(null)).toBe("");
+  });
+});
+
+describe("회원 직접 올리기", () => {
+  it("저장 경로 = 내 id 폴더 + 서버가 받는 글자만", () => {
+    const p = uploadPathOf("021879a2-782d-49d6-807b-ecd10fbb119a", "mp4", new Date("2026-11-26T00:10:05.123Z"), 0.5);
+    expect(p).toMatch(/^021879a2-782d-49d6-807b-ecd10fbb119a\/[A-Za-z0-9_.-]+$/);
+    expect(p.endsWith(".mp4")).toBe(true);
+    expect(uploadPathOf("u", "../x", new Date(0), 0.1).endsWith(".mp4")).toBe(true);
+  });
+  it("확장자", () => {
+    expect(extOf("video/quicktime")).toBe("mov");
+    expect(extOf("", "a.MOV")).toBe("mov");
+    expect(extOf("video/webm")).toBe("webm");
+    expect(extOf("video/mp4")).toBe("mp4");
+  });
+  it("종류 이름", () => {
+    expect(kindLabel("mitt")).toBe("미트");
+    expect(kindLabel("sparring")).toBe("스파링");
+    expect(kindLabel(null)).toBe("훈련");
+  });
+  it("카메라 기능은 장비 준비 전까지 꺼 둔다", () => {
+    expect(SPARRING_CAMERA_ON).toBe(false);
   });
 });
 

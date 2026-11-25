@@ -1,11 +1,13 @@
 /**
- * 🎥 스파링 영상 플레이어 — 1차는 유튜브(일부공개) 영상만 튼다 (2026-11-25 · docs/features/64-스파링-영상.md)
+ * 🎥 훈련 영상 플레이어 — 유튜브(일부공개) · 회원이 올린 영상(비공개 저장소 member-videos) (2026-11-25 · docs/features/64-스파링-영상.md)
  *   · 코치 피드백 「여기서 피드백」은 지금 시각(now) · 멈춤(pause)을, 피드백 시각을 누르면 그 자리로(seek).
+ *   · provider "storage"(2026-11-26 회원 직접 올리기) = 1시간짜리 서명 주소로 <video> — 보기 권한은 저장소 정책이 본다.
  *   · 2차 플랜(R2 · 기기 · 드라이브)은 provider 로 갈라 여기만 넓힌다.
  */
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { ExternalLink } from "lucide-react";
 import { loadYouTubeIframeApi } from "@/lib/youtubeIframeApi";
+import { signedUrlOf } from "@/services/sparringVideoService";
 
 export interface SparringPlayerHandle {
   now: () => number | null;
@@ -22,12 +24,16 @@ const SparringVideoPlayer = forwardRef<SparringPlayerHandle, Props>(({ provider,
   const wrapRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- YT.Player
   const playerRef = useRef<any>(null);
+  // 회원이 올린 영상(provider storage · 2026-11-26) — 비공개 저장소 서명 주소로 <video>
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [src, setSrc] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
 
   useImperativeHandle(
     ref,
     () => ({
       now: () => {
+        if (videoRef.current) return videoRef.current.currentTime;
         try {
           const t = Number(playerRef.current?.getCurrentTime?.());
           return Number.isFinite(t) ? t : null;
@@ -36,6 +42,12 @@ const SparringVideoPlayer = forwardRef<SparringPlayerHandle, Props>(({ provider,
         }
       },
       seek: (sec: number) => {
+        const v = videoRef.current;
+        if (v) {
+          v.currentTime = Math.max(0, sec);
+          void v.play().catch(() => undefined);
+          return;
+        }
         try {
           playerRef.current?.seekTo?.(Math.max(0, sec), true);
           playerRef.current?.playVideo?.();
@@ -44,6 +56,10 @@ const SparringVideoPlayer = forwardRef<SparringPlayerHandle, Props>(({ provider,
         }
       },
       pause: () => {
+        if (videoRef.current) {
+          videoRef.current.pause();
+          return;
+        }
         try {
           playerRef.current?.pauseVideo?.();
         } catch {
@@ -53,6 +69,21 @@ const SparringVideoPlayer = forwardRef<SparringPlayerHandle, Props>(({ provider,
     }),
     [],
   );
+
+  useEffect(() => {
+    if (provider !== "storage") return;
+    let alive = true;
+    setFailed(false);
+    setSrc(null);
+    void signedUrlOf(externalId).then((u) => {
+      if (!alive) return;
+      if (u) setSrc(u);
+      else setFailed(true);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [provider, externalId]);
 
   useEffect(() => {
     if (provider !== "youtube") return;
@@ -84,6 +115,18 @@ const SparringVideoPlayer = forwardRef<SparringPlayerHandle, Props>(({ provider,
       playerRef.current = null;
     };
   }, [provider, externalId]);
+
+  if (provider === "storage") {
+    return (
+      <div className="relative flex min-h-[200px] w-full items-center justify-center overflow-hidden rounded-2xl bg-black">
+        {src ? (
+          <video ref={videoRef} src={src} controls playsInline preload="metadata" className="max-h-[62vh] w-full object-contain" />
+        ) : (
+          <p className="text-label text-white/70">{failed ? "영상을 열지 못했어요" : "영상을 불러오는 중…"}</p>
+        )}
+      </div>
+    );
+  }
 
   if (provider !== "youtube") {
     return (
