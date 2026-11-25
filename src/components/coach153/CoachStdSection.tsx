@@ -11,6 +11,8 @@
  *   · 대표님 · 지점장님: 맞춤 피드백(카드 현황 · 카드 부탁하기 · 피드백 쓰기 · 보낸 피드백 확인 현황) · 코치님 줄의 카드 표시
  *     — 카드 내용은 대표님만(지점장님은 있음/없음만)
  *   서버: coach_mind_state (20261105124544_coach_mind.sql) · 오삼코치 Edge Function coach-mind · 알림 링크 ?s=std · 카드 부탁 &mind=1
+ *
+ * 🧭 관장님 리드 가이드 · 관장님 이해 카드 (2026-11-26 대표님 · 성향 2단계) — CoachLeadSection(관장님 보기 lead · 코치님 보기 follow)
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -24,6 +26,7 @@ import { Card, CoachRowCard, FeedbackCard, MyFiveCard, MyWeeksCard, StandardsCar
 import { ObserveSheet, ReviewSheet, StartSheet, StdEditSheet } from "./CoachStdSheets";
 import { MindChip, MindInviteCard, MindMyCard, MindTeamCard, NotesList } from "./CoachMindCards";
 import { MindFormSheet, MindViewSheet, NoteComposeSheet, NoteReplySheet, NoteStatusSheet } from "./CoachMindSheets";
+import CoachLeadSection from "./CoachLeadSection";
 
 type View = "team" | "me";
 
@@ -224,6 +227,10 @@ export default function CoachStdSection({ branch, onCheckClass }: { branch: stri
             })
           )}
         </>
+      )}
+
+      {mindReady && (
+        <CoachLeadSection branch={md?.branch ?? d.branch ?? branch} mode={showMine ? "follow" : "lead"} onOpenMind={() => setFormOpen(true)} />
       )}
 
       <StandardsCard standards={standards} canEdit={!!d.hq} onEdit={(s) => setEditStd(s)} />

@@ -239,7 +239,7 @@ export function profileLines(p: MindProfileInput, scope: ProfileScope = "full"):
 
 // 이모지 · 이모지 꾸밈(U+FE0F) · 잇기(U+200D) — 눈에 안 보이는 글자는 \u 로 적는다(복사할 때 사라지지 않게)
 const EMOJI_RE = /\p{Extended_Pictographic}|\u{FE0F}|\u{200D}/gu;
-const PHONE_RE = /01[016789][-.\s]?\d{3,4}[-.\s]?\d{4}/;
+export const PHONE_RE = /01[016789][-.\s]?\d{3,4}[-.\s]?\d{4}/;
 const tidy = (v: unknown): string => (typeof v === "string" ? v.replace(EMOJI_RE, "").replace(/\s+/g, " ").trim() : "");
 const tidyList = (v: unknown): string[] => (Array.isArray(v) ? v.map(tidy).filter(Boolean) : []);
 
@@ -262,7 +262,7 @@ export const hasMbtiLabel = (s: string): boolean => MBTI_IN_TEXT.test(s) || MBTI
  * 카드 답을 말로 옮기는 문장 — '결론부터 듣는 걸 좋아하신다고 하셔서' 같은 말.
  * 맞춤은 순서 · 길이 · 말투 · 예시로만 보여야 한다(보낸 분이 글을 읽는다 · 코치님은 '분석당했다'고 느낀다).
  */
-const CARD_TALK = /(성향 ?카드|카드에서|카드에 |카드를 보|카드 답|고르셨|골라 ?주셨|답하셨|답해 ?주셨|적어 ?주셨|적으셨|써 ?주셨|좋아하신다고|원하신다고|싫어하신다고|편하시다고|편하다고 하셨|힘이 난다고 하셨|다고 하셨)/;
+export const CARD_TALK = /(성향 ?카드|카드에서|카드에 |카드를 보|카드 답|고르셨|골라 ?주셨|답하셨|답해 ?주셨|적어 ?주셨|적으셨|써 ?주셨|좋아하신다고|원하신다고|싫어하신다고|편하시다고|편하다고 하셨|힘이 난다고 하셨|다고 하셨)/;
 
 const digitsOf = (s: string): string[] => s.match(/\d+/g) ?? [];
 
