@@ -634,7 +634,7 @@ begin
     select s.user_id, '🥊 오늘의 스파링',
            format('경기 %s · 영상 %s · 피드백 기다림 %s%s', r.n, r.n_video, r.n_wait,
                   case when r.n_nofilm > 0 then format(' · 촬영 안 함 %s(원본도 지우기)', r.n_nofilm) else '' end),
-           '/coach?tab=sparring'
+           '/missions?timer=spar'
       from public._strategy_branch_staff(r.branch_name) s
      where not public.has_role(s.user_id, 'super_admin');
     get diagnostics v_n = row_count;
@@ -644,7 +644,7 @@ begin
 
   if array_length(v_lines, 1) > 0 then
     insert into public.notifications (user_id, title, body, link)
-    select distinct ur.user_id, '🥊 오늘의 스파링 (전 지점)', array_to_string(v_lines, ' / '), '/coach?tab=sparring'
+    select distinct ur.user_id, '🥊 오늘의 스파링 (전 지점)', array_to_string(v_lines, ' / '), '/missions?timer=spar'
       from public.user_roles ur where ur.role = 'super_admin';
     get diagnostics v_n = row_count;
     v_sent := v_sent + v_n;

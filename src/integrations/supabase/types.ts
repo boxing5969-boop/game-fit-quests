@@ -3808,10 +3808,15 @@ export type Database = {
           health_ok: boolean
           id: string
           is_minor: boolean
+          minor_under14: boolean
           participant_name: string
           signed_at: string
           status: string
           user_id: string
+          video_agreed_at: string | null
+          video_ok: boolean
+          video_share_ok: boolean
+          video_terms: string | null
         }
         Insert: {
           agreed_rules?: boolean
@@ -3827,10 +3832,15 @@ export type Database = {
           health_ok?: boolean
           id?: string
           is_minor?: boolean
+          minor_under14?: boolean
           participant_name: string
           signed_at?: string
           status?: string
           user_id: string
+          video_agreed_at?: string | null
+          video_ok?: boolean
+          video_share_ok?: boolean
+          video_terms?: string | null
         }
         Update: {
           agreed_rules?: boolean
@@ -3846,10 +3856,15 @@ export type Database = {
           health_ok?: boolean
           id?: string
           is_minor?: boolean
+          minor_under14?: boolean
           participant_name?: string
           signed_at?: string
           status?: string
           user_id?: string
+          video_agreed_at?: string | null
+          video_ok?: boolean
+          video_share_ok?: boolean
+          video_terms?: string | null
         }
         Relationships: []
       }

@@ -52,7 +52,8 @@ import { useMemberCharacterAssignment } from "@/hooks/useCharacterData";
 import CharacterSprite from "@/components/CharacterSprite";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import SparringConsentModal from "@/components/SparringConsentModal";
+import SparringConsentModal, { type SparringConsentRow } from "@/components/SparringConsentModal";
+import SparringVideoEntry from "@/components/sparring/SparringVideoEntry";
 import { toGlobalLevel } from "@/lib/rankLabels";
 
 type LevelState = "complete" | "active" | "locked";
@@ -159,6 +160,8 @@ const WhiteLeagueTab = ({ onOpenMissionVideos, warmups, onOpenWarmup }: WhiteLea
             <LessonClassActions />
             {/* 🥊 복싱 타이머 — 자율 운동용 라운드 타이머 (2026-11-22 · ?timer=1 로도 열린다) */}
             <BoxingTimerEntry />
+            {/* 🎥 내 스파링 영상 (2026-11-25 · 영상이 있을 때만 한 줄 · 알림 ?sparvid= 로 열린다) */}
+            <SparringVideoEntry />
           </>
         }
         // ② 내 레벨 — 레벨업까지 카드 · 레벨 n 훈련 자세히 보기 (코치 카드 안) → 아래 레벨 미션 영상 전체 · 전체 레벨 지도
@@ -361,20 +364,23 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack, initialDetail = fals
 
   // 🥊 스파링 신청 — 접촉 레벨(Lv.26+) 전용. 본인 최신 동의서 조회.
   const [showSparring, setShowSparring] = useState(false);
-  const [sparringConsent, setSparringConsent] = useState<{ id: string; status: string } | null>(null);
+  const [sparringConsent, setSparringConsent] = useState<SparringConsentRow | null>(null);
   useEffect(() => {
     const gl = ul?.globalLevel ?? 0;
     if (!user || gl < 26) return;
     let active = true;
     supabase
       .from("sparring_consents")
-      .select("id,status")
+      .select("id,status,form_version,video_ok")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle()
       .then(({ data }) => {
-        if (active) setSparringConsent(data ? { id: data.id, status: data.status } : null);
+        if (active)
+          setSparringConsent(
+            data ? { id: data.id, status: data.status, form_version: data.form_version, video_ok: data.video_ok } : null,
+          );
       });
     return () => {
       active = false;
@@ -1199,10 +1205,32 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack, initialDetail = fals
             접촉 훈련(라이트 스파링)은 부상 위험이 있어, 참가 전 안전 동의서 서명이 필요합니다.
           </p>
           {sparringConsent ? (
-            <div className="mt-3 flex items-center justify-center gap-1.5 rounded-xl bg-status-complete/10 py-3 text-body font-bold text-status-complete">
-              <CheckCircle2 className="h-4 w-4" />
-              스파링 동의 완료{sparringConsent.status === "coach_confirmed" ? " · 코치 확인됨" : ""}
-            </div>
+            <>
+              <div className="mt-3 flex items-center justify-center gap-1.5 rounded-xl bg-status-complete/10 py-3 text-body font-bold text-status-complete">
+                <CheckCircle2 className="h-4 w-4" />
+                스파링 동의 완료{sparringConsent.status === "coach_confirmed" ? " · 코치 확인됨" : ""}
+              </div>
+              {/* 🎥 스파링 영상 동의 (v2 · 2026-11-25) — 옛 동의서(v1)면 영상 칸만 다시 서명 */}
+              {sparringConsent.form_version !== "v2" ? (
+                <button
+                  onClick={() => setShowSparring(true)}
+                  className="mt-2 w-full rounded-xl border border-primary/40 bg-primary/5 py-2.5 text-label font-bold text-primary transition-all active:scale-[0.98]"
+                >
+                  🎥 스파링 영상 동의 추가하기 (선택)
+                </button>
+              ) : (
+                <p className="mt-2 text-center text-label text-muted-foreground">
+                  {sparringConsent.video_ok
+                    ? "🎥 영상 촬영 동의 · 영상은 「오늘 할 것」의 내 스파링 영상에서 봐요"
+                    : "영상 촬영은 하지 않아요"}
+                  {!sparringConsent.video_ok && (
+                    <button onClick={() => setShowSparring(true)} className="ml-1 font-bold text-primary underline-offset-2 hover:underline">
+                      바꾸기
+                    </button>
+                  )}
+                </p>
+              )}
+            </>
           ) : (
             <button
               onClick={() => setShowSparring(true)}

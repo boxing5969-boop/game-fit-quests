@@ -12,6 +12,8 @@ interface ConsentRow {
   signed_at: string;
   health_ok: boolean;
   health_note: string | null;
+  form_version: string;
+  video_ok: boolean;
 }
 
 const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
@@ -29,7 +31,7 @@ const CoachSparringInbox = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("sparring_consents")
-      .select("id,participant_name,is_minor,guardian_name,status,signed_at,health_ok,health_note")
+      .select("id,participant_name,is_minor,guardian_name,status,signed_at,health_ok,health_note,form_version,video_ok")
       .order("signed_at", { ascending: false })
       .limit(200);
     setLoading(false);
@@ -88,6 +90,16 @@ const CoachSparringInbox = () => {
                   {r.is_minor && (
                     <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[9px] font-bold text-primary">
                       미성년
+                    </span>
+                  )}
+                  {/* 🎥 스파링 영상 동의 (v2 · 2026-11-25) */}
+                  {r.form_version === "v2" && (
+                    <span
+                      className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${
+                        r.video_ok ? "bg-status-complete/15 text-status-complete" : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {r.video_ok ? "영상 동의" : "영상 촬영 안 함"}
                     </span>
                   )}
                 </div>

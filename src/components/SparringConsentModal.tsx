@@ -4,13 +4,32 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
+export interface SparringConsentRow {
+  id: string;
+  status: string;
+  form_version?: string | null;
+  video_ok?: boolean | null;
+}
+
 interface SparringConsentModalProps {
   participantDefaultName?: string;
   onClose: () => void;
-  onSigned: (row: { id: string; status: string }) => void;
+  onSigned: (row: SparringConsentRow) => void;
 }
 
-// 스파링 참가 안전 동의서 (정본: 153_BOXING_MASTER_CURRICULUM/00_GOVERNANCE/SPARRING_CONSENT_FORM.md, v1)
+/** 영상 동의 문구 판 — 문구를 바꾸면 올린다(DB video_terms) */
+export const SPARRING_VIDEO_TERMS = "sv1";
+
+// 스파링 영상 (v2 · 2026-11-25 스파링 영상 1차 — docs/features/64-스파링-영상.md). 선택 동의: 안 해도 스파링은 한다.
+const VIDEO_POINTS = [
+  "링 옆 카메라로 스파링을 찍어 「내 스파링 영상」에서 다시 보고 코치 피드백을 받습니다. 소리는 녹음하지 않습니다.",
+  "영상은 지점 유튜브 채널에 '일부공개'로 둡니다. 목록과 검색에는 나오지 않지만 링크를 가진 사람은 누구나 볼 수 있습니다.",
+  "같이 스파링한 상대 회원도 같은 영상을 받습니다.",
+  "동의를 거두거나 회원을 그만두면 영상을 내립니다. 원본 녹화는 7일 뒤 지웁니다.",
+  "동의하지 않아도 스파링은 그대로 합니다. 내가 나온 경기는 영상으로 만들지 않고 원본 녹화도 지웁니다.",
+];
+
+// 스파링 참가 안전 동의서 (정본: 153_BOXING_MASTER_CURRICULUM/00_GOVERNANCE/SPARRING_CONSENT_FORM.md, v1 · 영상 칸 v2)
 const CONDITIONS = [
   "보호장비 필수 착용 — 헤드기어 · 마우스피스 · 글러브(체중별 14~16oz) · 손붕대",
   "코치 감독 하에서만 진행 (무감독 스파링 금지)",
@@ -30,7 +49,14 @@ const SparringConsentModal = ({ participantDefaultName = "", onClose, onSigned }
   const [guardianRelation, setGuardianRelation] = useState("");
   const [guardianPhone, setGuardianPhone] = useState("");
   const [guardianSignature, setGuardianSignature] = useState("");
+  const [under14, setUnder14] = useState(false);
+  const [videoChoice, setVideoChoice] = useState<"yes" | "no" | null>(null);
+  const [videoShare, setVideoShare] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // 만 14세 미만은 1차(유튜브)에서 찍지 않는다
+  const videoBlocked = isMinor && under14;
+  const videoOk = videoChoice === "yes" && !videoBlocked;
 
   const healthValid = healthChoice === "none" || (healthChoice === "note" && healthNote.trim().length > 0);
   const guardianValid =
@@ -39,8 +65,9 @@ const SparringConsentModal = ({ participantDefaultName = "", onClose, onSigned }
       guardianRelation.trim().length > 0 &&
       guardianPhone.trim().length > 0 &&
       guardianSignature.trim().length > 0);
+  const videoValid = videoBlocked || videoChoice !== null;
   const canSubmit =
-    agreedRules && healthValid && participantName.trim().length > 0 && guardianValid && !submitting;
+    agreedRules && healthValid && participantName.trim().length > 0 && guardianValid && videoValid && !submitting;
 
   const handleSubmit = async () => {
     if (!user) {
@@ -56,7 +83,7 @@ const SparringConsentModal = ({ participantDefaultName = "", onClose, onSigned }
       .from("sparring_consents")
       .insert({
         user_id: user.id,
-        form_version: "v1",
+        form_version: "v2",
         agreed_rules: true,
         health_ok: healthChoice === "none",
         health_note: healthChoice === "note" ? healthNote.trim() : null,
@@ -67,6 +94,11 @@ const SparringConsentModal = ({ participantDefaultName = "", onClose, onSigned }
         guardian_phone: isMinor ? guardianPhone.trim() : null,
         guardian_signature: isMinor ? guardianSignature.trim() : null,
         status: "signed",
+        minor_under14: videoBlocked,
+        video_ok: videoOk,
+        video_share_ok: videoOk && videoShare,
+        video_terms: SPARRING_VIDEO_TERMS,
+        video_agreed_at: videoOk ? new Date().toISOString() : null,
       })
       .select("id,status")
       .single();
@@ -75,8 +107,8 @@ const SparringConsentModal = ({ participantDefaultName = "", onClose, onSigned }
       toast.error("동의서 제출에 실패했습니다. 다시 시도해 주세요");
       return;
     }
-    toast.success("스파링 동의가 완료되었습니다");
-    onSigned({ id: data.id, status: data.status });
+    toast.success(videoOk ? "스파링 동의 완료 · 영상 촬영도 동의하셨어요" : "스파링 동의가 완료되었습니다");
+    onSigned({ id: data.id, status: data.status, form_version: "v2", video_ok: videoOk });
   };
 
   const fieldClass =
@@ -197,6 +229,69 @@ const SparringConsentModal = ({ participantDefaultName = "", onClose, onSigned }
           </span>
         </button>
 
+        {/* 스파링 영상 (선택 · v2) */}
+        <div className="mb-4 rounded-xl border border-border bg-secondary/30 p-3">
+          <p className="mb-1 text-label font-bold text-foreground">🎥 스파링 영상 촬영 (선택)</p>
+          <ul className="mb-2 space-y-1">
+            {VIDEO_POINTS.map((t, i) => (
+              <li key={i} className="flex gap-2 text-label leading-relaxed text-muted-foreground">
+                <span className="mt-0.5 text-primary">·</span>
+                <span>{t}</span>
+              </li>
+            ))}
+          </ul>
+          {videoBlocked ? (
+            <p className="rounded-lg bg-muted px-3 py-2 text-label font-medium text-foreground">
+              만 14세 미만은 지금은 촬영하지 않습니다.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              {(
+                [
+                  ["yes", "촬영에 동의합니다"],
+                  ["no", "촬영하지 않습니다"],
+                ] as const
+              ).map(([v, label]) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setVideoChoice(v)}
+                  className={`rounded-xl border px-2 py-2.5 text-label font-bold transition-all active:scale-[0.98] ${
+                    videoChoice === v
+                      ? v === "yes"
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-foreground/30 bg-card text-foreground"
+                      : "border-border bg-card text-muted-foreground"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+          {videoOk && (
+            <button
+              type="button"
+              onClick={() => setVideoShare((v) => !v)}
+              className="mt-2 flex w-full items-start gap-2.5 rounded-xl border border-border bg-card p-3 text-left"
+            >
+              <span
+                className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md ${
+                  videoShare ? "bg-primary text-primary-foreground" : "bg-muted"
+                }`}
+              >
+                {videoShare && <CheckCircle2 className="h-3.5 w-3.5" />}
+              </span>
+              <span className="text-label leading-relaxed text-foreground">
+                커뮤니티에 보여도 됩니다 <span className="text-muted-foreground">(선택 · 같이 나온 사람도 동의한 영상만 올라가고, 영상마다 다시 고를 수 있습니다)</span>
+              </span>
+            </button>
+          )}
+          <p className="mt-2 text-micro leading-relaxed text-muted-foreground">
+            국외 보관: Google LLC(미국) · 스파링 영상 · 유튜브에 올릴 때 · 보관과 재생 · 동의를 거두거나 탈퇴할 때까지 · 거부하면 촬영하지 않음
+          </p>
+        </div>
+
         {/* 참가자 서명 */}
         <div className="mb-4">
           <label className="mb-1 block text-label font-bold text-foreground">참가자 성명 (서명)</label>
@@ -232,6 +327,25 @@ const SparringConsentModal = ({ participantDefaultName = "", onClose, onSigned }
         {isMinor && (
           <div className="mb-4 space-y-2 rounded-xl border border-primary/30 bg-primary/5 p-3">
             <p className="text-micro font-bold text-foreground">법정대리인 동의 (필수)</p>
+            <button
+              type="button"
+              onClick={() => setUnder14((v) => !v)}
+              className="flex w-full items-center justify-between rounded-xl border border-border bg-card px-3 py-2.5 text-left"
+            >
+              <span className="text-label font-medium text-foreground">참가자가 만 14세 미만입니다</span>
+              <span className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${under14 ? "bg-primary" : "bg-muted"}`}>
+                <span
+                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
+                    under14 ? "translate-x-5" : "translate-x-0.5"
+                  }`}
+                />
+              </span>
+            </button>
+            {videoOk && (
+              <p className="text-micro leading-relaxed text-muted-foreground">
+                법정대리인은 위 스파링 영상 촬영 선택에도 함께 동의합니다.
+              </p>
+            )}
             <input
               value={guardianName}
               onChange={(e) => setGuardianName(e.target.value)}

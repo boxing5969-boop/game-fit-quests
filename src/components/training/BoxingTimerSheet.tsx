@@ -9,7 +9,7 @@
  *   · 소리는 lib/loudBell(압축 + 키우기 — 최대한 크게) · 진동(안드로이드) · 화면 꺼짐 막기 · 시계로 세서 화면을 껐다 켜도 맞음.
  *   흰 바탕 · 글씨 6단계 이름만(큰 시계 숫자만 예외).
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Bell, Minus, Pause, Play, Plus, RotateCcw, SkipForward, Volume2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -42,6 +42,14 @@ import {
   type Cue,
   type TimerSettings,
 } from "@/lib/boxingTimer";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { isManagerRole } from "@/lib/rankLabels";
+import { isStaffProfile } from "@/lib/staffDisplay";
+import { seqLabel } from "@/lib/sparringVideo";
+import { SPARVID_KEY, endMatch, type MatchStarted } from "@/services/sparringVideoService";
+import SparringRecorderPanel from "@/components/sparring/SparringRecorderPanel";
 
 const STORE_KEY = "153timer:settings";
 
@@ -257,7 +265,19 @@ const Setup = ({ s, set, onStart }: { s: TimerSettings; set: (s: TimerSettings) 
 
 const now = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
 
-const Runner = ({ s, onEdit }: { s: TimerSettings; onEdit: () => void }) => {
+const Runner = ({
+  s,
+  onEdit,
+  onDone,
+  banner,
+}: {
+  s: TimerSettings;
+  onEdit: () => void;
+  /** 마지막 라운드가 끝났을 때 한 번 (스파링 기록 — 경기 끝) */
+  onDone?: () => void;
+  /** 맨 위 띠 (스파링 기록 — 경기 번호 · 두 사람 · 끝/취소) */
+  banner?: ReactNode;
+}) => {
   const [elapsed, setElapsed] = useState(0);
   const [running, setRunning] = useState(true);
   const accRef = useRef(0);
@@ -311,6 +331,12 @@ const Runner = ({ s, onEdit }: { s: TimerSettings; onEdit: () => void }) => {
 
   const phase = phaseAt(s, elapsed);
   const done = phase.kind === "done";
+
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
+  useEffect(() => {
+    if (done) onDoneRef.current?.();
+  }, [done]);
 
   const toggle = () => {
     unlockLoud();
@@ -370,6 +396,7 @@ const Runner = ({ s, onEdit }: { s: TimerSettings; onEdit: () => void }) => {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
+      {banner}
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-5">
         <p className={cn("text-title", done ? "text-primary" : tone)} aria-live="polite">
           {phaseLabel(phase, s)}
@@ -471,9 +498,19 @@ const Runner = ({ s, onEdit }: { s: TimerSettings; onEdit: () => void }) => {
 
 // ─────────────────────────────────────────────────────────────
 
-const Body = ({ onClose }: { onClose: () => void }) => {
+const Body = ({ onClose, startMode }: { onClose: () => void; startMode: "timer" | "spar" }) => {
   const [s, setS] = useState<TimerSettings>(() => loadSettings());
   const [runKey, setRunKey] = useState<number | null>(null);
+  // 🥊 스파링 기록 (2026-11-25 스파링 영상 1차) — 코치 · 지점장만 칸이 보인다(권한은 서버가 다시 본다)
+  const { role, profile } = useAuth();
+  const isStaff = isManagerRole(role) || (!!profile && isStaffProfile(profile));
+  const [mode, setMode] = useState<"timer" | "spar">(startMode === "spar" && isStaff ? "spar" : "timer");
+  // 알림으로 바로 열면 역할을 읽기 전일 수 있다 — 코치로 확인되면 그때 스파링 칸으로
+  useEffect(() => {
+    if (startMode === "spar" && isStaff) setMode("spar");
+  }, [startMode, isStaff]);
+  const [match, setMatch] = useState<MatchStarted | null>(null);
+  const qc = useQueryClient();
   const set = (v: TimerSettings) => {
     setS(v);
     saveSettings(v);
@@ -491,15 +528,60 @@ const Body = ({ onClose }: { onClose: () => void }) => {
   };
   const line = useMemo(() => settingsLine(s), [s]);
 
+  // 경기 끝 · 취소 → 기록하고 다음 두 사람 고르기로
+  const finishMatch = useCallback(
+    async (cancel: boolean) => {
+      const m = match;
+      if (!m) return;
+      setMatch(null);
+      setRunKey(null);
+      try {
+        await endMatch(m.id, cancel);
+        toast.success(cancel ? `${seqLabel(m.seq)} 경기를 취소했어요` : `${seqLabel(m.seq)} 경기 끝 · 다음 두 명을 골라 주세요`);
+      } catch (e) {
+        toast.error((e as Error).message);
+      }
+      void qc.invalidateQueries({ queryKey: SPARVID_KEY });
+    },
+    [match, qc],
+  );
+
+  const sparBanner = match ? (
+    <div className="mx-5 mb-2 flex items-center gap-2 rounded-2xl border border-border bg-card px-3 py-2">
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-body font-bold text-foreground">
+          {seqLabel(match.seq)} {match.a_name} vs {match.b_name}
+        </p>
+        <p className={cn("truncate text-micro", match.film_ok ? "text-status-complete" : "text-muted-foreground")}>
+          {match.film_ok ? "🎥 촬영 중" : "촬영 안 함"} · {match.match_code}
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={() => void finishMatch(true)}
+        className="h-9 shrink-0 rounded-full bg-secondary px-3 text-micro font-bold text-foreground active:scale-95"
+      >
+        취소
+      </button>
+      <button
+        type="button"
+        onClick={() => void finishMatch(false)}
+        className="h-9 shrink-0 rounded-full bg-foreground px-3 text-micro font-bold text-background active:scale-95"
+      >
+        경기 끝
+      </button>
+    </div>
+  ) : null;
+
   return (
     <div role="dialog" aria-modal="true" aria-label="복싱 타이머" className="fixed inset-0 z-[115] flex flex-col bg-background">
       <div className="flex items-center gap-2 px-4 pb-2 pt-[calc(env(safe-area-inset-top)+12px)]">
         <Bell className="h-5 w-5 shrink-0 text-primary" aria-hidden />
         <div className="min-w-0 flex-1">
-          <p className="text-heading text-foreground">복싱 타이머</p>
+          <p className="text-heading text-foreground">{mode === "spar" ? "스파링 기록" : "복싱 타이머"}</p>
           {runKey != null && <p className="truncate text-label text-muted-foreground">{line}</p>}
         </div>
-        {runKey != null && (
+        {runKey != null && !match && (
           <button
             type="button"
             onClick={() => setRunKey(null)}
@@ -517,14 +599,66 @@ const Body = ({ onClose }: { onClose: () => void }) => {
           <X className="h-5 w-5" />
         </button>
       </div>
-      {runKey == null ? <Setup s={s} set={set} onStart={start} /> : <Runner key={runKey} s={s} onEdit={() => setRunKey(null)} />}
+      {isStaff && runKey == null && (
+        <div className="mx-5 mb-3 grid grid-cols-2 gap-1 rounded-full bg-secondary p-1" role="tablist" aria-label="타이머 · 스파링 기록">
+          {(
+            [
+              ["timer", "타이머"],
+              ["spar", "🥊 스파링 기록"],
+            ] as const
+          ).map(([k, label]) => (
+            <button
+              key={k}
+              type="button"
+              role="tab"
+              aria-selected={mode === k}
+              onClick={() => setMode(k)}
+              className={cn(
+                "h-9 rounded-full text-label font-bold transition-all",
+                mode === k ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+      {runKey != null ? (
+        <Runner
+          key={runKey}
+          s={s}
+          onEdit={() => setRunKey(null)}
+          onDone={match ? () => void finishMatch(false) : undefined}
+          banner={sparBanner}
+        />
+      ) : mode === "spar" && isStaff ? (
+        <SparringRecorderPanel
+          s={s}
+          onSettings={() => setMode("timer")}
+          onStartMatch={(m) => {
+            setMatch(m);
+            start();
+          }}
+        />
+      ) : (
+        <Setup s={s} set={set} onStart={start} />
+      )}
     </div>
   );
 };
 
-const BoxingTimerSheet = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
+const BoxingTimerSheet = ({
+  open,
+  onClose,
+  startMode = "timer",
+}: {
+  open: boolean;
+  onClose: () => void;
+  /** "spar" = 코치 스파링 기록 칸으로 열기 (밤 11시 「오늘의 스파링」 알림 `/missions?timer=spar`) */
+  startMode?: "timer" | "spar";
+}) => {
   if (!open || typeof document === "undefined") return null;
-  return createPortal(<Body onClose={onClose} />, document.body);
+  return createPortal(<Body onClose={onClose} startMode={startMode} />, document.body);
 };
 
 export default BoxingTimerSheet;
