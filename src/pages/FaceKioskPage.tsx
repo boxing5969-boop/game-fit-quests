@@ -14,12 +14,26 @@
 //  - 매칭 즉시 환영 화면+사운드 → 워커 verify·앱 체크인은 백그라운드로 보내고 도착 시 문구 갱신.
 //    (출입 판단은 여전히 153OS 워커가 한다 — 화면 선표시는 UX일 뿐, 기록·판정 경로 불변)
 //  - 랜드마크는 기존 68 풀 모델 유지 — 등록된 특징값과 정렬 방식을 맞추기 위함(임의 교체 금지).
+//
+// 출석 · 퇴장 버튼(2026-11-25 대표님 「얼굴인식후 출석누르면 출석이 되고 … 퇴장 버튼을 누르면 운동 시간 저장」 ·
+//   「10초 자동출석으로 하자 · 퇴장 버튼을 누른사람만 모든 운동 시간 기록」) — 규칙은 lib/faceKioskFlow:
+//  - 인식 → 153OS verify(판정 · access_logs) → 앱 state(오늘 출석했나) → 카드
+//  - 출석 전: [출석] — 10초 안에 안 누르면 자동 출석. 다음 사람이 먼저 인식되면 앞사람 출석을 화면 없이 확정한다.
+//    [출석] = 153OS /api/face/attend(출석부 '153 얼굴출석') + 앱 face-kiosk checkin(출석 · 라이브보드 · XP 트리거) — 한쪽만 남아도 완료.
+//  - 출석한 회원: [출석][퇴장] — [퇴장] = 앱 face-kiosk checkout(누른 시각으로 운동 시간 · XP 차액). 안 누르면 닫히고 기본 운동 시간.
+//  - 앱에서 운동 종료 · 시간 고침을 한 날은 기록만 보여 준다. '제가 아니에요'는 기록 없이 닫는다.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toSpokenKo } from "@/lib/spokenKo";
+import { kstTime } from "@/lib/attendanceHistory";
 import { KIOSK_DEFAULTS, KIOSK_SETTINGS_POLL_MS, kioskVoiceLine, normalizeKioskSettings, rematchMs, type KioskSettings, type KioskSettingsState } from "@/lib/kioskSettings";
-import { KioskNoticeBar, KioskPausedScreen } from "@/components/kiosk/FaceKioskOverlays";
+import { KioskActionCard, KioskNoticeBar, KioskPausedScreen, type KioskCardView } from "@/components/kiosk/FaceKioskOverlays";
+import {
+  KIOSK_AUTO_ATTEND_MS, KIOSK_EXIT_IDLE_MS, KIOSK_FINISHED_MS, KIOSK_FLOW_TEXT, KIOSK_RESULT_MS,
+  kioskAttendResult, kioskCardKind, kioskFinishedLine, kioskLeaveResult, kioskStayLine,
+  parseKioskCheckout, parseKioskToday, remainingRatio, remainingSec, type KioskLeg, type KioskToday,
+} from "@/lib/faceKioskFlow";
 
 const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/face-kiosk`; // 앱측: 라이브보드 즉시 표시용
 const OS_URL = "https://153-boxing-os-api.boxing5969.workers.dev/api/face";     // 153OS: 판단·등록·장부(FC-2)
@@ -93,15 +107,31 @@ const MSG_DOWN_SUB = "데스크에 말씀해주시면 도와드릴게요";
 
 interface FaceProfile { user_id: string; name: string; embedding: number[] } // user_id = 153OS member_id
 
+// 인식 뒤 카드 (2026-11-25 출석 · 퇴장 버튼):
+//   checking(이용권 확인 중) → deny(거절) | enter([출석] · 10초 뒤 자동) | exit([출석][퇴장] · 안 누르면 닫힘) | finished(앱에서 끝낸 날)
+//   → result(출석 완료 · 운동 시간 저장 · 실패)
+type CardKind = "checking" | "deny" | "enter" | "exit" | "finished" | "result";
+
 interface Greet {
   seq: number;
+  memberId: string;       // 153OS member_id
   name: string;
   timeLine: string;
-  phase: "checking" | "done";
-  already: boolean;
-  deny: string | null;   // expired_membership | no_valid_grant | unknown_user | network
+  kind: CardKind;
+  deny: string | null;   // expired_membership | no_valid_grant | unknown_user | consent_revoked | network
   daysLeft: number | null;
+  appUserId: string | null; // 마이복서153 계정 — 없으면 153OS 출석부만(퇴장 · 운동 시간 없음)
+  today: KioskToday | null;
+  deadline: number | null;  // enter = 자동 출석 시각 · exit = 닫히는 시각
+  busy: boolean;
+  result: { action: "attend" | "leave"; ok: boolean; already: boolean; title: string; sub: string | null } | null;
+  retryNote: string | null; // 퇴장 저장 실패 — 카드를 남기고 다시 누르게
 }
+
+const newGreet = (seq: number, p: FaceProfile, timeLine: string): Greet => ({
+  seq, memberId: p.user_id, name: p.name, timeLine, kind: "checking", deny: null, daysLeft: null,
+  appUserId: null, today: null, deadline: null, busy: false, result: null, retryNote: null,
+});
 
 // 시간대별 인사말
 const timeGreeting = (): string => {
@@ -132,6 +162,73 @@ const detOpts = (fa: any) =>
 const lsGet = (k: string): string | null => { try { return localStorage.getItem(k); } catch { return null; } };
 const lsSet = (k: string, v: string): void => { try { localStorage.setItem(k, v); } catch { /* 무시 */ } };
 const lsDel = (k: string): void => { try { localStorage.removeItem(k); } catch { /* 무시 */ } };
+
+// ── 인식 뒤 카드 글 (2026-11-25) ──
+const DENY_TEXT: Record<string, string> = {
+  expired_membership: "이용권이 만료되었어요 — 데스크에 문의해주세요",
+  consent_revoked: "얼굴 등록이 해제되어 있어요 — 데스크에서 재등록해주세요",
+  network: "확인에 실패했어요 — 잠시 후 다시 인식해주세요",
+};
+const DENY_DEFAULT = "출석 확인 — 데스크에서 회원 정보를 확인해주세요";
+
+const renewNotice = (daysLeft: number | null): string | null =>
+  daysLeft === null || daysLeft > 7 ? null
+    : daysLeft <= 1 ? "이용권이 오늘까지예요 — 데스크에서 연장해주세요"
+    : `이용권이 ${daysLeft}일 남았어요 — 미리 연장해두면 편해요`;
+
+function cardViewOf(g: Greet, now: number): KioskCardView {
+  const base: KioskCardView = {
+    emoji: "🥊", name: g.name, timeLine: g.timeLine, status: null, statusTone: "muted", sub: null, notice: null,
+    attend: false, leave: false, leavePrimary: false, notMe: false, busy: g.busy, countdown: null,
+  };
+  switch (g.kind) {
+    case "checking":
+      return { ...base, status: KIOSK_FLOW_TEXT.checking };
+    case "deny":
+      return {
+        ...base,
+        emoji: g.deny === "expired_membership" ? "⏰" : g.deny === "network" ? "⚠️" : "📋",
+        status: DENY_TEXT[g.deny ?? ""] ?? DENY_DEFAULT,
+        statusTone: "pending",
+      };
+    case "enter":
+      return {
+        ...base, attend: true, notMe: true, notice: renewNotice(g.daysLeft),
+        status: g.busy ? "출석 기록 중…" : null,
+        countdown: g.busy ? null : {
+          ratio: remainingRatio(g.deadline, KIOSK_AUTO_ATTEND_MS, now),
+          hint: KIOSK_FLOW_TEXT.enterHint(Math.max(1, remainingSec(g.deadline, now))),
+        },
+      };
+    case "exit":
+      return {
+        ...base, emoji: "👋",
+        timeLine: kioskStayLine(g.today?.startedAt ?? null, now) ?? g.timeLine,
+        status: g.busy ? "저장 중…" : g.retryNote ?? KIOSK_FLOW_TEXT.exitHint,
+        statusTone: g.retryNote ? "pending" : "primary",
+        attend: true, leave: !!g.appUserId, leavePrimary: true,
+        countdown: g.busy ? null : {
+          ratio: remainingRatio(g.deadline, KIOSK_EXIT_IDLE_MS, now),
+          hint: KIOSK_FLOW_TEXT.exitIdle(Math.max(1, remainingSec(g.deadline, now))),
+        },
+      };
+    case "finished":
+      return { ...base, emoji: "✅", status: KIOSK_FLOW_TEXT.finishedTitle, statusTone: "primary", sub: kioskFinishedLine(g.today) };
+    case "result": {
+      const r = g.result;
+      if (!r) return base;
+      // 퇴장 결과는 이름 아래에 '18:05 입장 · 19:17 퇴장'
+      const inAt = r.action === "leave" && r.ok && g.today?.startedAt ? kstTime(g.today.startedAt) : "";
+      return {
+        ...base,
+        emoji: !r.ok ? "⚠️" : r.action === "leave" ? "💪" : r.already ? "✅" : "🥊",
+        timeLine: inAt ? `${inAt} 입장 · ${kstTime(new Date(now).toISOString())} 퇴장` : g.timeLine,
+        status: r.title, statusTone: r.ok ? "primary" : "pending", sub: r.sub,
+        notice: r.action === "attend" && r.ok ? renewNotice(g.daysLeft) : null,
+      };
+    }
+  }
+}
 
 const FaceKioskPage = () => {
   const { branchCode } = useParams();
@@ -294,6 +391,196 @@ const FaceKioskPage = () => {
     return () => { alive = false; window.clearInterval(t); };
   }, [kioskKey, osApi]);
 
+  // ── 인식 뒤 카드 — [출석](10초 뒤 자동) · [출석][퇴장](퇴장을 눌러야 실제 운동 시간) · 2026-11-25 ──
+  const mountedRef = useRef(true);
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
+  const greetRef = useRef<Greet | null>(null);
+  greetRef.current = greet;
+  // 카운트다운 글 · 막대를 다시 그리는 시계 — 카드에 마감이 있을 때만 돈다
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    if (!greet?.deadline || greet.busy) return;
+    const t = window.setInterval(() => setNowTick(Date.now()), 250);
+    return () => window.clearInterval(t);
+  }, [greet?.deadline, greet?.busy]);
+
+  // 오버레이 표시 시간 관리 — 결과 확정 시 타이머를 다시 걸어 문구가 반드시 보이게 한다(검수 반영)
+  const holdGreet = useCallback((seq: number, ms: number) => {
+    if (greetTimerRef.current) window.clearTimeout(greetTimerRef.current);
+    greetTimerRef.current = window.setTimeout(() => {
+      if (greetSeqRef.current === seq) setGreet(null);
+    }, ms);
+  }, []);
+  // 이 카드(seq)가 아직 화면에 있으면 고친다. 응답이 늦어 카드가 이미 닫혔으면(g === null) 다시 세운다 —
+  // 거절 회원이 사유를 못 보고 거절음만 듣지 않게(검수 반영). 다른 회원 카드가 떠 있으면 건드리지 않는다.
+  const upsertGreet = useCallback((seq: number, build: (g: Greet | null) => Greet) => {
+    setGreet((g) => (g && g.seq !== seq ? g : build(g && g.seq === seq ? g : null)));
+  }, []);
+
+  /** 출석 — 153OS 출석부(/api/face/attend) · 마이복서153(face-kiosk checkin · 라이브보드) 두 길. silent = 다음 사람이 와서 화면 없이 확정 */
+  const attendFor = useCallback(async (g: Greet, silent: boolean) => {
+    const seq = g.seq;
+    if (!silent) setGreet((cur) => (cur && cur.seq === seq ? { ...cur, busy: true } : cur));
+    const osLeg: Promise<KioskLeg> = osApi("attend", { member_id: g.memberId })
+      .then(({ status, json }) => {
+        if (status === 404 && !json?.error) return "skip"; // 아직 /attend 가 없는 153OS 워커 — 앱 기록만
+        if (!json?.success) return "fail";
+        return json?.data?.already === true ? "already" : "ok";
+      })
+      .catch((): KioskLeg => "fail");
+    const appLeg: Promise<KioskLeg> = g.appUserId
+      ? api({ action: "checkin", user_id: g.appUserId, branch_name: branchLabelRef.current })
+        .then(({ status, json }): KioskLeg => (status === 200 && json?.ok ? (json.already === true ? "already" : "ok") : "fail"))
+        .catch((): KioskLeg => "fail")
+      : Promise.resolve("skip");
+    const [os, app] = await Promise.all([osLeg, appLeg]);
+    if (os === "fail" || app === "fail") {
+      setDiag(`출석 기록 일부 실패 — 153OS:${os} · 앱:${app} (${new Date().toLocaleTimeString("ko-KR")})`);
+    }
+    const r = kioskAttendResult(os, app);
+    // 둘 다 실패면 30초 뒤 다시 인식되게 — 바로 풀면 차임이 계속 울린다(검수 반영)
+    if (!r.ok) lastSeenRef.current.set(g.memberId, Date.now() - rematchMs(kioskRef.current) + 30_000);
+    if (silent || !mountedRef.current || greetSeqRef.current !== seq) return;
+    setGreet((cur) => (cur && cur.seq === seq
+      ? { ...cur, kind: "result", busy: false, deadline: null, result: { action: "attend", ok: r.ok, already: r.already, title: r.title, sub: r.sub } }
+      : cur));
+    chime(r.ok ? "ok" : "deny");
+    holdGreet(seq, r.ok ? KIOSK_RESULT_MS : 5000);
+  }, [api, osApi, chime, holdGreet]);
+
+  /** 퇴장 — 누른 시각까지 실제 운동 시간 저장(서버 kiosk_finish_workout · XP 차액) */
+  const leaveFor = useCallback(async (g: Greet) => {
+    const seq = g.seq;
+    if (!g.appUserId) return;
+    setGreet((cur) => (cur && cur.seq === seq ? { ...cur, busy: true, retryNote: null } : cur));
+    let parsed = null;
+    try {
+      const { status, json } = await api({ action: "checkout", user_id: g.appUserId });
+      if (status === 200) parsed = parseKioskCheckout(json);
+    } catch { /* 네트워크 — 아래에서 다시 누르게 */ }
+    const r = kioskLeaveResult(parsed, g.name);
+    if (!mountedRef.current || greetSeqRef.current !== seq) return;
+    if (!r.ok && r.retry) {
+      // 저장 실패 — 카드를 남기고 다시 누를 시간을 준다
+      setGreet((cur) => (cur && cur.seq === seq
+        ? { ...cur, busy: false, retryNote: `${r.title} — ${r.sub ?? ""}`.trim(), deadline: Date.now() + KIOSK_EXIT_IDLE_MS }
+        : cur));
+      chime("deny");
+      holdGreet(seq, KIOSK_EXIT_IDLE_MS + 15_000);
+      return;
+    }
+    setGreet((cur) => (cur && cur.seq === seq
+      ? { ...cur, kind: "result", busy: false, deadline: null, result: { action: "leave", ok: r.ok, already: false, title: r.title, sub: r.sub } }
+      : cur));
+    chime(r.ok ? "ok" : "deny");
+    if (r.voice) speak(r.voice);
+    holdGreet(seq, r.ok ? KIOSK_RESULT_MS + 1500 : 5000);
+  }, [api, chime, speak, holdGreet]);
+
+  /** 제가 아니에요 — 기록 없이 닫는다(잘못 맞춘 얼굴은 다시 인식 간격 동안 또 뜨지 않는다) */
+  const notMe = useCallback((g: Greet) => {
+    setGreet((cur) => (cur && cur.seq === g.seq ? null : cur));
+  }, []);
+
+  /** 인식 직후 — 153OS 판정(verify) → 앱 오늘 상태(state) → 카드 고르기 */
+  const resolveCard = useCallback(async (p: FaceProfile, seq: number) => {
+    try {
+      const { status: vrStatus, json: vr } = await osApi("verify", { member_id: p.user_id });
+      if (vrStatus === 401) {
+        // 키오스크 키 회전 — 재설정 화면으로 (무한 재시도 루프 방지)
+        lsDel(KEY_LS);
+        setReady(false);
+        setKioskKey("");
+        return;
+      }
+      if (!vr?.success) throw new Error("verify 실패");
+      // 판정은 서버 allowed 기준(실차단 계약) — 부정을 기본값으로 둔다(필드 누락 시 통과 금지)
+      const allowed: boolean = vr?.data?.allowed === true;
+      const reason: string | null = vr?.data?.reason ?? null;
+      const name: string = vr?.data?.name || p.name;
+      const appUserId: string | null = vr?.data?.app_user_id ?? null;
+      const daysLeft = daysLeftOf(vr?.data?.end_date);
+      if (!allowed) {
+        // 거절: 60초 뒤 재시도 허용 — 데스크에서 결제 직후 다시 인식할 수 있게(검수 반영)
+        lastSeenRef.current.set(p.user_id, Date.now() - rematchMs(kioskRef.current) + 60_000);
+        if (!mountedRef.current) return;
+        upsertGreet(seq, (g) => ({
+          ...(g ?? newGreet(seq, p, greetLineOf(kioskRef.current))),
+          name, kind: "deny", deny: reason || "no_valid_grant", daysLeft, deadline: null, busy: false,
+        }));
+        holdGreet(seq, 5000);
+        chime("deny");
+        return;
+      }
+      // 오늘 출석했나 — 못 읽으면 출석 전으로(이미 출석했으면 출석 때 서버가 '이미 출석'으로 답한다)
+      let today: KioskToday | null = null;
+      if (appUserId) {
+        try {
+          const { status, json } = await api({ action: "state", user_id: appUserId });
+          if (status === 200) today = parseKioskToday(json);
+        } catch { /* 출석 전으로 */ }
+      }
+      const kind = kioskCardKind(today);
+      const base = { memberId: p.user_id, name, appUserId, today, daysLeft, deny: null, busy: false, result: null, retryNote: null };
+      if (!mountedRef.current) return;
+      if (greetSeqRef.current !== seq) {
+        // 그사이 다음 사람이 인식됨 — 들어오던 회원의 출석은 화면 없이 확정한다(출석이 빠지지 않게)
+        if (kind === "enter") void attendFor({ ...newGreet(seq, p, ""), ...base, kind: "enter", deadline: null }, true);
+        return;
+      }
+      const now = Date.now();
+      if (kind === "enter") {
+        upsertGreet(seq, (g) => ({ ...(g ?? newGreet(seq, p, greetLineOf(kioskRef.current))), ...base, kind, deadline: now + KIOSK_AUTO_ATTEND_MS }));
+        chime("ok");
+        speak(kioskVoiceLine(kioskRef.current.voice_text, name)); // 호명은 통과 확정 후 — 거절자에게 환영 음성이 나가는 모순 방지
+        holdGreet(seq, KIOSK_AUTO_ATTEND_MS + 15_000); // 안전 타이머 — 자동 출석은 카운트다운이 한다
+      } else if (kind === "exit") {
+        upsertGreet(seq, (g) => ({ ...(g ?? newGreet(seq, p, "")), ...base, kind, deadline: now + KIOSK_EXIT_IDLE_MS }));
+        chime("ping"); // 운동 중 지나가다 찍힌 회원도 있으니 호명은 하지 않는다
+        holdGreet(seq, KIOSK_EXIT_IDLE_MS + 15_000);
+      } else {
+        upsertGreet(seq, (g) => ({ ...(g ?? newGreet(seq, p, "")), ...base, kind, deadline: null }));
+        chime("ping");
+        holdGreet(seq, KIOSK_FINISHED_MS);
+      }
+    } catch {
+      // 확인 실패(네트워크 등): 30초 뒤 재시도 — 즉시 해제하면 차임·호명 무한 반복(검수 반영)
+      lastSeenRef.current.set(p.user_id, Date.now() - rematchMs(kioskRef.current) + 30_000);
+      if (!mountedRef.current) return;
+      upsertGreet(seq, (g) => ({ ...(g ?? newGreet(seq, p, greetLineOf(kioskRef.current))), kind: "deny", deny: "network", deadline: null, busy: false }));
+      holdGreet(seq, 4000);
+      chime("deny");
+    }
+  }, [api, osApi, chime, speak, holdGreet, upsertGreet, attendFor]);
+
+  /** 얼굴이 맞으면 — 앞사람 [출석] 카드가 떠 있으면 그 출석을 먼저 확정하고 새 카드 */
+  const showGreet = useCallback((p: FaceProfile) => {
+    const prev = greetRef.current;
+    if (prev && prev.kind === "enter" && !prev.busy) void attendFor(prev, true);
+    const seq = ++greetSeqRef.current;
+    setGreet(newGreet(seq, p, greetLineOf(kioskRef.current)));
+    chime("ping"); // 인식됨 신호(중립음) — 통과/거절음과 호명은 판정 확정 후
+    // 안전 타이머는 넉넉히(15초). 실제 소멸 시간은 결과 도착 시 holdGreet 이 다시 정한다.
+    holdGreet(seq, 15_000);
+    void resolveCard(p, seq);
+  }, [attendFor, chime, holdGreet, resolveCard]);
+  const showGreetRef = useRef(showGreet);
+  showGreetRef.current = showGreet;
+
+  // 카운트다운 끝 — [출석] 카드는 자동 출석, [퇴장] 카드는 기록 없이 닫기(기본 운동 시간)
+  useEffect(() => {
+    if (!greet || greet.busy || greet.deadline === null) return;
+    if (greet.kind !== "enter" && greet.kind !== "exit") return;
+    const seq = greet.seq;
+    const t = window.setTimeout(() => {
+      const g = greetRef.current;
+      if (!g || g.seq !== seq || g.busy) return;
+      if (g.kind === "enter") void attendFor(g, false);
+      else if (g.kind === "exit") setGreet((cur) => (cur && cur.seq === seq ? null : cur));
+    }, Math.max(0, greet.deadline - Date.now()));
+    return () => window.clearTimeout(t);
+  }, [greet, attendFor]);
+
   // face-api 스크립트 + 모델 + (병렬) 명단·카메라 + 워밍업
   useEffect(() => {
     if (!kioskKey || (branchCode && !branchName)) return;
@@ -373,95 +660,13 @@ const FaceKioskPage = () => {
   }, [kioskKey, branchName, branchCode, osApi]);
 
   // ── 인식 루프: 연속 실행 — 탐지가 끝나면 즉시 다음. 얼굴 없을 때만 짧게 쉼 ──
+  // 얼굴이 맞으면 카드 흐름(showGreet — 판정 · 오늘 상태 · [출석] / [퇴장])으로 넘긴다(2026-11-25).
   useEffect(() => {
     if (!ready) return;
     const fa = (window as any).faceapi;
     const OPTS = detOpts(fa);
     let alive = true;
     let timer: number | undefined;
-
-    // 오버레이 표시 시간 관리 — 결과 확정 시 타이머를 다시 걸어 문구가 반드시 보이게 한다(검수 반영)
-    const holdGreet = (seq: number, ms: number) => {
-      if (greetTimerRef.current) window.clearTimeout(greetTimerRef.current);
-      greetTimerRef.current = window.setTimeout(() => {
-        if (greetSeqRef.current === seq) setGreet(null);
-      }, ms);
-    };
-
-    // 매칭 즉시 인사 → verify(153OS 장부)·checkin(라이브보드)은 백그라운드에서 확정
-    const confirmAttendance = async (p: FaceProfile, seq: number) => {
-      try {
-        const { status: vrStatus, json: vr } = await osApi("verify", { member_id: p.user_id });
-        if (vrStatus === 401) {
-          // 키오스크 키 회전 — 재설정 화면으로 (무한 재시도 루프 방지)
-          lsDel(KEY_LS);
-          setReady(false);
-          setKioskKey("");
-          return;
-        }
-        if (!vr?.success) throw new Error("verify 실패");
-        const reason: string | null = vr?.data?.reason ?? null;
-        // 판정은 서버 allowed 기준(실차단 계약) — 부정을 기본값으로 둔다(필드 누락 시 통과 금지)
-        const allowed: boolean = vr?.data?.allowed === true;
-        const deny: string | null = allowed ? null : (reason || "no_valid_grant");
-        const appUserId: string | null = vr?.data?.app_user_id ?? null;
-        const daysLeft = daysLeftOf(vr?.data?.end_date);
-        let already = false;
-        if (appUserId && allowed) {
-          // 라이브보드 체크인은 부가 경로 — 실패해도 출석(원장) 성공 표시를 바꾸지 않는다
-          try {
-            const { json: ck } = await api({ action: "checkin", user_id: appUserId, branch_name: branchLabelRef.current });
-            already = ck?.already === true;
-          } catch { /* 부가 경로 실패 무시 */ }
-        }
-        if (deny) {
-          // 거절: 60초 뒤 재시도 허용 — 데스크에서 결제 직후 다시 인식할 수 있게(검수 반영)
-          lastSeenRef.current.set(p.user_id, Date.now() - rematchMs(kioskRef.current) + 60_000);
-        }
-        if (!alive || greetSeqRef.current !== seq) return;
-        // 응답이 느려 오버레이가 이미 사라졌어도(g === null) 결과를 다시 세운다 —
-        // 그러지 않으면 거절 회원이 사유는 못 보고 거절음만 듣는다(검수 반영).
-        setGreet((g) => (g && g.seq !== seq ? g : {
-          seq,
-          name: vr?.data?.name || g?.name || p.name,
-          timeLine: g?.timeLine ?? greetLineOf(kioskRef.current),
-          phase: "done",
-          already,
-          deny,
-          daysLeft,
-        }));
-        holdGreet(seq, deny ? 5000 : 3500);
-        if (deny) chime("deny");
-        else {
-          chime("ok");
-          speak(kioskVoiceLine(kioskRef.current.voice_text, vr?.data?.name || p.name)); // 호명은 통과 확정 후 — 거절자에게 환영 음성이 나가는 모순 방지
-        }
-      } catch {
-        // 기록 실패(네트워크 등): 30초 뒤 재시도 — 즉시 해제하면 차임·호명 무한 반복(검수 반영)
-        lastSeenRef.current.set(p.user_id, Date.now() - rematchMs(kioskRef.current) + 30_000);
-        if (!alive || greetSeqRef.current !== seq) return;
-        setGreet((g) => (g && g.seq !== seq ? g : {
-          seq,
-          name: g?.name ?? p.name,
-          timeLine: g?.timeLine ?? greetLineOf(kioskRef.current),
-          phase: "done",
-          already: false,
-          deny: "network",
-          daysLeft: null,
-        }));
-        holdGreet(seq, 4000);
-        chime("deny");
-      }
-    };
-
-    const showGreet = (p: FaceProfile) => {
-      const seq = ++greetSeqRef.current;
-      setGreet({ seq, name: p.name, timeLine: greetLineOf(kioskRef.current), phase: "checking", already: false, deny: null, daysLeft: null });
-      chime("ping"); // 인식됨 신호(중립음) — 통과/거절음과 호명은 판정 확정 후
-      // 안전 타이머는 넉넉히(15초). 실제 소멸 시간은 결과 도착 시 holdGreet 이 다시 정한다.
-      holdGreet(seq, 15_000);
-      void confirmAttendance(p, seq);
-    };
 
     const tick = async () => {
       if (!alive) return;
@@ -488,7 +693,7 @@ const FaceKioskPage = () => {
             const last = lastSeenRef.current.get(best.p.user_id) || 0;
             if (now - last > rematchMs(kioskRef.current)) {
               lastSeenRef.current.set(best.p.user_id, now);
-              showGreet(best.p);
+              showGreetRef.current(best.p);
             }
           }
         }
@@ -501,7 +706,7 @@ const FaceKioskPage = () => {
       alive = false;
       if (timer) window.clearTimeout(timer);
     };
-  }, [ready, enrollOpen, api, osApi, branchName, chime, speak]);
+  }, [ready, enrollOpen]);
 
   // ── 키 입력 화면 ──
   if (!kioskKey) {
@@ -524,24 +729,7 @@ const FaceKioskPage = () => {
     );
   }
 
-  const greetEmoji = greet
-    ? greet.phase === "checking" ? "🥊"
-      : greet.deny === "expired_membership" ? "⏰"
-      : greet.deny === "network" ? "⚠️"
-      : greet.deny ? "📋"
-      : greet.already ? "✅"
-      : "🥊"
-    : "🥊";
-
-  const greetStatus = greet
-    ? greet.phase === "checking" ? "출석 기록 중…"
-      : greet.deny === "expired_membership" ? "이용권이 만료되었어요 — 데스크에 문의해주세요"
-      : greet.deny === "consent_revoked" ? "얼굴 등록이 해제되어 있어요 — 데스크에서 재등록해주세요"
-      : greet.deny === "network" ? "기록에 실패했어요 — 잠시 후 다시 인식해주세요"
-      : greet.deny ? "출석 확인 — 데스크에서 회원 정보를 확인해주세요"
-      : greet.already ? "오늘은 이미 출석했어요!"
-      : "출석 완료! 좋은 운동 되세요"
-    : "";
+  const cardView = greet ? cardViewOf(greet, nowTick) : null;
 
   return (
     // fixed + z-[80]: 앱 하단 메뉴·AI 버튼 위를 덮는 전체화면 키오스크 (등록 버튼 가림 사고 방지)
@@ -583,29 +771,14 @@ const FaceKioskPage = () => {
       {ready && !down && !kiosk.settings.face_enabled && <KioskPausedScreen settings={kiosk.settings} />}
       {ready && !down && kiosk.settings.face_enabled && !greet && <KioskNoticeBar settings={kiosk.settings} />}
 
-      {/* 인사 오버레이 — 매칭 즉시 표시, 기록 확정 시 문구 갱신 */}
-      {greet && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/70 p-4">
-          <div className="animate-bounce-in w-full max-w-lg rounded-3xl bg-card p-10 text-center shadow-elev-3">
-            <p className="text-6xl">{greetEmoji}</p>
-            <p className="mt-4 text-4xl font-black text-foreground">{greet.name}님</p>
-            <p className="mt-1.5 text-lg font-bold text-muted-foreground">{greet.timeLine}</p>
-            <p className={`mt-3 text-xl font-black ${
-              greet.phase === "checking" ? "text-muted-foreground"
-                : greet.deny ? "text-status-pending"
-                : "text-primary"
-            }`}>
-              {greetStatus}
-            </p>
-            {greet.phase === "done" && !greet.deny && greet.daysLeft !== null && greet.daysLeft <= 7 && (
-              <p className="mt-3 rounded-xl bg-muted/50 px-3 py-2 text-sm font-bold text-status-pending">
-                {greet.daysLeft <= 1
-                  ? "이용권이 오늘까지예요 — 데스크에서 연장해주세요"
-                  : `이용권이 ${greet.daysLeft}일 남았어요 — 미리 연장해두면 편해요`}
-              </p>
-            )}
-          </div>
-        </div>
+      {/* 인식 뒤 카드 — 매칭 즉시 표시 → 판정 · 오늘 상태에 따라 [출석] / [출석][퇴장] (2026-11-25) */}
+      {greet && cardView && (
+        <KioskActionCard
+          view={cardView}
+          onAttend={() => { const g = greetRef.current; if (g && !g.busy) void attendFor(g, false); }}
+          onLeave={() => { const g = greetRef.current; if (g && !g.busy) void leaveFor(g); }}
+          onNotMe={() => { const g = greetRef.current; if (g && !g.busy) notMe(g); }}
+        />
       )}
 
       {/* 사운드 토글 (좌하단) */}
