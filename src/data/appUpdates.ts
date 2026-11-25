@@ -18,6 +18,17 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261126-coach-lead",
+    date: "2026-11-26",
+    title: "관장님 리드 가이드 · 이해 카드",
+    lines: [
+      "관장님은 코치님마다 맡기는 법 · 전하는 순서 · 첫 한마디를 받아요",
+      "관장님 이해 카드로 짧은 말 · 지시를 오해 없이 읽어요",
+      "153 기준 칸에서 봐요 · 평가에는 쓰지 않아요",
+    ],
+    audience: "staff",
+  },
+  {
     id: "20261126-pt-old-ticket",
     date: "2026-11-26",
     title: "근무 — 재등록 전 남은 PT도 수업과 맞춰요",
