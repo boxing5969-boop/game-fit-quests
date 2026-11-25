@@ -34,6 +34,11 @@ const CDN = "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2";
 const LOCAL_ASSETS = "/vendor/face-api";
 const IS_NATIVE_APP = typeof window !== "undefined"
   && (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.() === true;
+// face-api 스크립트 주소 — 웹은 끝에 ?v= 를 붙인다(2026-11-25). 20:40 전에는 이 파일이 사이트에 없어 같은 주소로
+// index.html 이 왔고(cache-control max-age=14400), 그걸 받은 폰은 4시간 동안 기억해 새로고침해도 「안 돼요」였다.
+// 새 주소로 받으면 그 기억을 피한다. 설치형 앱은 번들 그대로(캐시 문제 없음).
+const FACE_API_JS = "dist/face-api.min.js";
+const faceApiScriptUrl = (base: string): string => `${base}/${FACE_API_JS}${IS_NATIVE_APP ? "" : "?v=0.22.2"}`;
 
 // 번들 자산의 정확한 바이트 수(face-api 0.22.2 원본과 SHA256 동일 확인됨).
 // 하나라도 다르면 받다가 잘린 것이고, 그게 "tensor should have N values but has M" 의 원인이다.
@@ -69,7 +74,7 @@ const diagnoseAssets = async (base: string): Promise<string> => {
   for (const [rel, want] of Object.entries(ASSET_BYTES)) {
     const name = rel.split("/").pop() || rel;
     try {
-      const r = await fetch(`${base}/${rel}`, { cache: "no-store" });
+      const r = await fetch(rel === FACE_API_JS ? faceApiScriptUrl(base) : `${base}/${rel}`, { cache: "no-store" });
       if (!r.ok) { bad.push(`${name} HTTP${r.status}`); continue; }
       const got = (await r.arrayBuffer()).byteLength;
       if (got !== want) bad.push(`${name} ${got}/${want}B`);
@@ -303,13 +308,20 @@ const FaceKioskPage = () => {
         setStatus(MSG_PREP);
         const BASE = await resolveAssetBase();
         if (!(window as any).faceapi) {
-          await new Promise<void>((resolve, reject) => {
+          const loadScript = (src: string) => new Promise<void>((resolve, reject) => {
             const s = document.createElement("script");
-            s.src = `${BASE}/dist/face-api.min.js`;
+            s.src = src;
             s.onload = () => resolve();
-            s.onerror = () => reject(new Error("face-api 로드 실패"));
+            s.onerror = () => { s.remove(); reject(new Error("face-api 로드 실패")); };
             document.head.appendChild(s);
           });
+          try {
+            await loadScript(faceApiScriptUrl(BASE));
+          } catch (e) {
+            // 웹에서 사이트 사본을 못 받으면 같은 0.22.2 CDN 원본으로 한 번 더(모델 파일은 그대로 BASE). 설치형 앱은 CDN 금지.
+            if (IS_NATIVE_APP || BASE === CDN) throw e;
+            await loadScript(`${CDN}/${FACE_API_JS}`);
+          }
         }
         const fa = (window as any).faceapi;
         // 모델 로드 + 등록 명단 + 카메라를 병렬로 (시작 시간 단축)
