@@ -82,7 +82,7 @@ const MatchRow = ({ m, onOpen }: { m: DayMatch; onOpen: (v: SheetVideo) => void 
       : m.status === "live"
         ? { t: "진행 중", c: "bg-primary/15 text-primary" }
         : m.film_ok
-          ? { t: "🎥 촬영", c: "bg-status-complete/15 text-status-complete" }
+          ? { t: "🎥 촬영", c: "bg-emerald-50 text-emerald-700" }
           : { t: "촬영 안 함", c: "bg-muted text-muted-foreground" };
 
   return (
@@ -298,7 +298,7 @@ const SparringRecorderPanel = ({ s, onSettings, onStartMatch }: Props) => {
                 return (
                   <p key={p.user_id} className="flex items-center justify-between gap-2 text-body">
                     <span className="truncate font-bold text-foreground">{p.name}</span>
-                    <span className={cn("shrink-0 text-label", b.ok ? "text-status-complete" : "text-amber-700")}>{b.label}</span>
+                    <span className={cn("shrink-0 text-label", b.ok ? "text-emerald-700" : "text-amber-700")}>{b.label}</span>
                   </p>
                 );
               })}
@@ -349,7 +349,7 @@ const SparringRecorderPanel = ({ s, onSettings, onStartMatch }: Props) => {
                       {p.name}
                       {p.is_staff ? <span className="ml-1 text-micro font-medium text-muted-foreground">코치</span> : null}
                     </span>
-                    <span className={cn("block truncate text-micro", b.ok ? "text-status-complete" : "text-amber-700")}>
+                    <span className={cn("block truncate text-micro", b.ok ? "text-emerald-700" : "text-amber-700")}>
                       {b.label}
                     </span>
                     {p.checked_in_at && <span className="block text-micro text-muted-foreground">{hhmmOf(p.checked_in_at)} 출석</span>}

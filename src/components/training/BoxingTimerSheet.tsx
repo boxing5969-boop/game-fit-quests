@@ -552,7 +552,7 @@ const Body = ({ onClose, startMode }: { onClose: () => void; startMode: "timer" 
         <p className="truncate text-body font-bold text-foreground">
           {seqLabel(match.seq)} {match.a_name} vs {match.b_name}
         </p>
-        <p className={cn("truncate text-micro", match.film_ok ? "text-status-complete" : "text-muted-foreground")}>
+        <p className={cn("truncate text-micro", match.film_ok ? "text-emerald-700" : "text-muted-foreground")}>
           {match.film_ok ? "🎥 촬영 중" : "촬영 안 함"} · {match.match_code}
         </p>
       </div>
