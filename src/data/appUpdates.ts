@@ -31,13 +31,13 @@ export const APP_UPDATES: readonly AppUpdate[] = [
   {
     id: "20261125-sparring-video",
     date: "2026-11-25",
-    title: "스파링 영상을 다시 보고 코치 피드백을 받아요",
+    title: "스파링 영상을 보고 코치 피드백을 받아요",
     lines: [
-      "스파링 동의서에서 영상 촬영을 고르면 내 경기를 찍어 드려요",
-      "훈련 탭 「오늘 할 것」의 내 스파링 영상에서 다시 봐요",
+      "레벨 상관없이 내 영상과 우리 지점 회원 영상을 볼 수 있어요",
+      "같이 나온 회원 모두가 공개에 동의한 영상만 우리 지점에 보여요",
       "코치님 피드백의 시각을 누르면 그 장면으로 가요",
     ],
-    link: { to: "/missions", label: "훈련 탭 열기" },
+    link: { to: "/missions?sparvid=1", label: "스파링 영상 보기" },
     branches: SEOLLEUNG,
   },
   {

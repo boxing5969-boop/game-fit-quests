@@ -160,7 +160,7 @@ const WhiteLeagueTab = ({ onOpenMissionVideos, warmups, onOpenWarmup }: WhiteLea
             <LessonClassActions />
             {/* 🥊 복싱 타이머 — 자율 운동용 라운드 타이머 (2026-11-22 · ?timer=1 로도 열린다) */}
             <BoxingTimerEntry />
-            {/* 🎥 내 스파링 영상 (2026-11-25 · 영상이 있을 때만 한 줄 · 알림 ?sparvid= 로 열린다) */}
+            {/* 🎥 스파링 영상 (2026-11-25 · 레벨 상관없이 내 영상 · 우리 지점 영상 — 영상이 있을 때만 한 줄 · ?sparvid= 로 열린다) */}
             <SparringVideoEntry />
           </>
         }
@@ -1221,7 +1221,7 @@ const UnifiedLevelDetailView = ({ league, levelNum, onBack, initialDetail = fals
               ) : (
                 <p className="mt-2 text-center text-label text-muted-foreground">
                   {sparringConsent.video_ok
-                    ? "🎥 영상 촬영 동의 · 영상은 「오늘 할 것」의 내 스파링 영상에서 봐요"
+                    ? "🎥 영상 촬영 동의 · 영상은 「오늘 할 것」의 스파링 영상에서 봐요"
                     : "영상 촬영은 하지 않아요"}
                   {!sparringConsent.video_ok && (
                     <button onClick={() => setShowSparring(true)} className="ml-1 font-bold text-primary underline-offset-2 hover:underline">

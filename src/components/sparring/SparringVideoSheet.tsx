@@ -28,6 +28,10 @@ export interface SheetVideo {
   title?: string | null;
   recorded_at?: string | null;
   opponent_name?: string | null;
+  /** 우리 지점 영상 — "김OO vs 박OO" */
+  names?: string | null;
+  /** false = 다른 회원 영상(우리 지점 영상에서 엶) — 피드백 · 공개 단추 없이 영상만 */
+  is_mine?: boolean | null;
   my_share_ok?: boolean | null;
   others_share_ok?: boolean | null;
 }
@@ -41,7 +45,9 @@ const Body = ({ video, onClose }: Props) => {
   useModalDismiss(true, onClose, { back: true });
   const qc = useQueryClient();
   const playerRef = useRef<SparringPlayerHandle>(null);
-  const { data, isLoading } = useVideoComments(video.video_id);
+  // 다른 회원 영상: 코치 피드백은 영상에 나온 회원 · 코치진에게만(서버도 막는다) — 부르지 않는다
+  const others = video.is_mine === false;
+  const { data, isLoading } = useVideoComments(others ? null : video.video_id);
   const staff = !!data?.staff;
   const comments = data?.comments ?? [];
 
@@ -116,7 +122,11 @@ const Body = ({ video, onClose }: Props) => {
         <div className="min-w-0 flex-1">
           <p className="truncate text-heading text-foreground">🥊 스파링 영상</p>
           <p className="truncate text-label text-muted-foreground">
-            {[whenLabel(video.recorded_at), video.opponent_name ? `상대 ${video.opponent_name}` : "", video.title ?? ""]
+            {[
+              whenLabel(video.recorded_at),
+              video.names ?? (video.opponent_name ? `상대 ${video.opponent_name}` : ""),
+              others ? "" : (video.title ?? ""),
+            ]
               .filter(Boolean)
               .join(" · ")}
           </p>
@@ -180,6 +190,11 @@ const Body = ({ video, onClose }: Props) => {
           </div>
         )}
 
+        {others ? (
+          <p className="rounded-2xl border border-dashed border-border p-4 text-center text-label text-muted-foreground">
+            같이 나온 회원 모두가 공개에 동의한 영상이에요 · 코치 피드백은 영상에 나온 회원에게만 보여요
+          </p>
+        ) : (
         <div>
           <p className="mb-2 text-body font-bold text-foreground">코치 피드백 {comments.length > 0 ? comments.length : ""}</p>
           {isLoading ? (
@@ -239,19 +254,19 @@ const Body = ({ video, onClose }: Props) => {
             </ul>
           )}
         </div>
+        )}
 
-        {!staff && !isLoading && (
+        {!others && !staff && !isLoading && (
           <button
             type="button"
             onClick={toggleShare}
             className="flex w-full items-center justify-between gap-3 rounded-2xl border border-border bg-card p-3 text-left"
           >
             <span className="min-w-0">
-              <span className="block text-body font-bold text-foreground">커뮤니티에 보여도 돼요</span>
+              <span className="block text-body font-bold text-foreground">우리 지점 회원에게 보여도 돼요</span>
               <span className="block text-label text-muted-foreground">
-                같이 나온 사람도 켜야 올라가요
+                같이 나온 사람도 켜야 「우리 지점 영상」에 올라가요
                 {video.others_share_ok == null ? "" : video.others_share_ok ? " · 상대는 켰어요" : " · 상대는 아직"}
-                {" · 커뮤니티 영상 칸은 곧 열려요"}
               </span>
             </span>
             <span className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${share ? "bg-primary" : "bg-muted"}`}>
@@ -263,8 +278,8 @@ const Body = ({ video, onClose }: Props) => {
         )}
 
         <p className="text-micro leading-relaxed text-muted-foreground">
-          유튜브 일부공개 영상이에요. 링크를 가진 사람은 누구나 볼 수 있으니 링크를 다른 곳에 올리지 말아 주세요. 영상을
-          내리고 싶으면 코치님께 말씀해 주세요.
+          유튜브 일부공개 영상이에요. 링크를 가진 사람은 누구나 볼 수 있으니 링크를 다른 곳에 올리지 말아 주세요.
+          {others ? " 다른 회원님 영상이니 캡처해서 퍼 나르지 말아 주세요." : " 영상을 내리고 싶으면 코치님께 말씀해 주세요."}
         </p>
 
         {staff &&

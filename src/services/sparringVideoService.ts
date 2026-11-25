@@ -56,6 +56,27 @@ export const useMySparringVideos = (enabled: boolean) =>
 export const setVideoShare = (videoId: string, ok: boolean) =>
   call<{ share_ok: boolean }>("sparvid_set_share", { _video_id: videoId, _ok: ok }, "바꾸지 못했어요");
 
+/** 우리 지점 영상 — 같은 지점 회원 누구나(레벨 상관없이) · 영상에 나온 사람이 모두 공개에 동의한 영상만 (2026-11-25) */
+export interface SharedVideo {
+  video_id: string;
+  kind: "sparring" | "mitt" | "other";
+  provider: VideoProvider;
+  external_id: string;
+  title: string | null;
+  recorded_at: string;
+  names: string | null;
+  is_mine: boolean;
+  my_share_ok: boolean | null;
+}
+
+export const useSharedVideos = (enabled: boolean) =>
+  useQuery({
+    queryKey: [...SPARVID_KEY, "shared"],
+    enabled,
+    staleTime: 60_000,
+    queryFn: () => call<SharedVideo[]>("sparvid_shared_videos", { _limit: 60 }, "우리 지점 영상을 불러오지 못했어요"),
+  });
+
 // ── 피드백 ────────────────────────────────────────────────────
 export interface VideoComment {
   id: string;

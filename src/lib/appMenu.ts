@@ -66,6 +66,8 @@ export const APP_MENU: readonly AppMenuEntry[] = [
       { path: "/minigame", label: "복싱 트레이닝", glyph: "glove" },
       // 복싱 타이머 (2026-11-22) — 훈련 탭 위에 뜨는 라운드 타이머 화면 (주소는 훈련 탭 + ?timer=1)
       { path: "/missions?timer=1", label: "복싱 타이머", glyph: "bell" },
+      // 스파링 영상 (2026-11-25) — 레벨 상관없이 내 영상 · 우리 지점 영상 (훈련 탭 + ?sparvid=1)
+      { path: "/missions?sparvid=1", label: "스파링 영상", glyph: "play" },
       { path: "/handwrap", label: "붕대 감기", glyph: "handwrap" },
       // 2026-11-13 회원은 훈련 탭 「영상으로 배우기」로 옮겼다 — 코치진만 (카드 보기 · 고치기). 옛 주소 · 내 바로가기는 그리로 넘겨 준다
       { path: "/training-library", label: "훈련 라이브러리", glyph: "books", requires: "staff" },

@@ -283,7 +283,7 @@ const SparringConsentModal = ({ participantDefaultName = "", onClose, onSigned }
                 {videoShare && <CheckCircle2 className="h-3.5 w-3.5" />}
               </span>
               <span className="text-label leading-relaxed text-foreground">
-                커뮤니티에 보여도 됩니다 <span className="text-muted-foreground">(선택 · 같이 나온 사람도 동의한 영상만 올라가고, 영상마다 다시 고를 수 있습니다)</span>
+                우리 지점 회원들이 앱에서 봐도 됩니다 <span className="text-muted-foreground">(선택 · 같이 나온 사람도 동의한 영상만 「우리 지점 영상」에 올라가고, 영상마다 다시 고를 수 있습니다)</span>
               </span>
             </button>
           )}
