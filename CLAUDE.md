@@ -181,6 +181,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - [60 153 마켓 1단계 — 회원 용품 주문: 앱 주문 → 데스크…](docs/features/60-153-마켓-1단계.md) — `src/lib/market153.ts`
 - [61 Claude API 크레딧](docs/features/61-Claude-API-크레딧.md)
 - [62 보호자 계정 · 우리 아이 · 운동을 끝낼까요?](docs/features/62-보호자-계정.md) — `src/lib/guardian.ts`
+- [64 스파링 영상 — 1차 유튜브 · 2차 자체 저장 대비](docs/features/64-스파링-영상.md) — `src/components/sparring/SparringRecorderPanel.tsx`
 
 ### Supabase 연결
 
