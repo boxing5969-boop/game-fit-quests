@@ -18,6 +18,17 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261126-notif-deep-link",
+    date: "2026-11-26",
+    title: "알림을 누르면 바로 그 화면으로",
+    lines: [
+      "「PT 기록 · 이틀 넘은 확인 필요」는 그 코치님 카드의 PT 확인 필요로 가요",
+      "「출근 기록 없음」은 그날 근무 시트, 「새 회원」은 그 회원 화면이 열려요",
+      "관리하는 지점이 여럿이어도 알림을 보낸 지점으로 열려요",
+    ],
+    audience: "staff",
+  },
+  {
     id: "20261126-coach-lead",
     date: "2026-11-26",
     title: "관장님 리드 가이드 · 이해 카드",

@@ -6,6 +6,7 @@
  * 테스트: notifications.test.ts
  */
 import { dmBubbleTime, dmDayLabel, kstDayKey } from "@/lib/dmTime";
+import { opsWorkLink } from "@/lib/opsLink";
 
 export interface AppNotification {
   id: string;
@@ -33,15 +34,55 @@ type Row = {
   created_at?: unknown;
 };
 
+const OPS_WORK_LINK = "/office?tab=work";
+
+/** 「📍 출근 기록 없음」 본문 앞 "11/25 12:00 근무" → 그날(알림이 온 해, 알림 날보다 뒤면 지난해) */
+const dutyDayOf = (body: string, createdAt: string): string | null => {
+  const m = /^(\d{2})\/(\d{2})\s/.exec(body);
+  if (!m) return null;
+  const sent = kstDayKey(createdAt);
+  const y = Number(sent.slice(0, 4));
+  const day = `${y}-${m[1]}-${m[2]}`;
+  return day > sent ? `${y - 1}-${m[1]}-${m[2]}` : day;
+};
+
+/**
+ * 이미 와 있던 알림의 링크를 「바로 그 화면」으로 올려 읽는다 (2026-11-26 대표님 「내용 누르면 바로 그 부분으로 …
+ * 근무 메뉴로는 가는데 PT 확인 메뉴까지는 못 가네」). 이제 서버가 정확한 링크를 넣지만, 그 전에 쌓인 알림은
+ * 근무 탭 첫 화면(/office?tab=work)이나 링크 없음이라 화면에서 한 번 더 고쳐 읽는다 — lib/opsLink · OpsWorkTab.
+ */
+export function upgradeNotificationLink(title: string, body: string, link: string | null, createdAt: string): string | null {
+  if (link === OPS_WORK_LINK) {
+    // PT 기록 · 이틀 넘은 확인 필요 — 본문 첫 칸이 지점("선릉역점 · 기록 없는 입장 1건 · …")
+    if (title.startsWith("PT 기록 · 이틀 넘은 확인 필요")) {
+      const seg = (body.split(" · ")[0] ?? "").trim();
+      return opsWorkLink({ pt: "check", b: /점$/.test(seg) && seg.length <= 20 ? seg : null });
+    }
+    // 📍 출근 기록 없음 · 이름 — 그 코치의 그날 시트(근무자 카드 id 가 없어 이름으로)
+    const duty = /^📍️?\s*출근 기록 없음 · (.+)$/u.exec(title);
+    if (duty) return opsWorkLink({ staffname: duty[1].trim(), day: dutyDayOf(body, createdAt) });
+    return link;
+  }
+  if (link === null) {
+    // 링크 없이 오던 출석 · 레벨 알림 — 본문이 말하는 홈(내 카드 · 레벨)으로
+    if (title.startsWith("오늘 출석 완료!") && body.includes("홈에서")) return "/home";
+    if (/^레벨 \d+ 달성!/.test(title)) return "/home";
+  }
+  return link;
+}
+
 /** 서버 행 → 화면 모양. 모양이 이상한 행은 null */
 export function normalizeNotification(row: unknown): AppNotification | null {
   const r = (row ?? {}) as Row;
   if (typeof r.id !== "string" || typeof r.created_at !== "string") return null;
+  const title = typeof r.title === "string" && r.title.trim() ? r.title.trim() : "알림";
+  const body = typeof r.body === "string" ? r.body.trim() : "";
+  const up = upgradeNotificationLink(title, body, isSafeAppLink(r.link) ? r.link : null, r.created_at);
   return {
     id: r.id,
-    title: typeof r.title === "string" && r.title.trim() ? r.title.trim() : "알림",
-    body: typeof r.body === "string" ? r.body.trim() : "",
-    link: isSafeAppLink(r.link) ? r.link : null,
+    title,
+    body,
+    link: isSafeAppLink(up) ? up : null,
     readAt: typeof r.read_at === "string" ? r.read_at : null,
     createdAt: r.created_at,
   };

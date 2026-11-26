@@ -27,9 +27,12 @@
  *     — OpsPtPay · src/lib/opsPtPay.ts
  *   PT 월 마감 (2026-11-16 2-2): 달이 끝나면 코치 「확정」 → 대표님 · 회계매니저 「승인」 = 그 달 수당 잠금. 코치 화면 맨 위에 확정할 달,
  *     관리자 '확인할 것'에 승인 대기(돈을 보는 분만), 근무자 줄 · 합계는 잠긴 달이면 승인본 — OpsPtClose · src/lib/opsPtClose.ts
+ *   알림 링크 「누르면 바로 그 화면」 (2026-11-26 대표님 「근무 메뉴로는 가는데 PT 확인 메뉴까지는 못 가네」): &b=<지점> 그 지점부터 ·
+ *     &pt=check(PT 이틀 넘은 확인 필요) → 그 코치 카드 'PT' 탭 「확인 필요」 · &staff=<카드>&day=<날짜>(출근 기록 없음) → 그날 시트 ·
+ *     링크의 근무자가 보고 있는 지점에 없으면 관리하는 다른 지점에서 찾는다 — src/lib/opsLink.ts
  *   계산은 src/lib/opsWork.ts 한 곳 — 서버는 자료만.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ChevronRight, ClipboardCheck, FileSignature, Flag, Plus, ReceiptText } from "lucide-react";
 import { toast } from "sonner";
@@ -70,6 +73,7 @@ import {
   type OpsMonthData,
 } from "@/services/opsService";
 import { computePtMonth, type OpsPtSummary } from "@/lib/opsPt";
+import { OPS_LINK_KEYS, isOpsDay, matchOpsBranch, ptCheckTarget } from "@/lib/opsLink";
 import { ptCloseTodoText, type PtStatement } from "@/lib/opsPtClose";
 import { ptPayBasis, ptPayMonth, ptPayMonthCovered } from "@/lib/opsPtPay";
 import { matchPtRecord, ptCounts } from "@/lib/opsPtRecord";
@@ -143,7 +147,13 @@ const entryLine = (e: OpsEntry, byId: Map<string, OpsStaff>) => {
 const OpsWorkTab = ({ me }: { me: OpsMe }) => {
   const today = kstToday();
   const branches = useMemo(() => [...new Set([...me.manage, ...me.mine.map((m) => m.branch)])], [me]);
+  const [params, setParams] = useSearchParams();
+  // 알림 링크 「누르면 바로 그 화면」(2026-11-26 · lib/opsLink) — &b=<지점> 이면 그 지점부터, &day=<날짜> 가 지난달이면 그 달부터 연다
+  const linkBranch = matchOpsBranch(branches, params.get("b"));
+  const linkDay = params.get("day");
+  const linkMonth = isOpsDay(linkDay) && linkDay <= today ? monthOf(linkDay) : null;
   const [branch, setBranchState] = useState<string | null>(() => {
+    if (linkBranch) return linkBranch;
     const saved = readOpsBranch();
     return saved && branches.includes(saved) ? saved : branches[0] ?? null;
   });
@@ -154,10 +164,45 @@ const OpsWorkTab = ({ me }: { me: OpsMe }) => {
     setBranchState(b);
     saveOpsBranch(b);
   };
-  const [month, setMonth] = useState(() => monthOf(today));
+  const [month, setMonth] = useState(() => linkMonth ?? monthOf(today));
+  //   이미 열려 있던 근무 탭에 휴대폰 알림으로 왔을 때도 그 지점 · 그 달로
+  useEffect(() => {
+    if (linkBranch && linkBranch !== branch) setBranch(linkBranch);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [linkBranch]);
+  useEffect(() => {
+    if (linkMonth) setMonth(linkMonth);
+  }, [linkMonth]);
+  //   지점만 담긴 링크(&b= 하나)는 지점을 바꾼 뒤 지운다 — 가리키는 곳(pt · staff …)이 있으면 그 화면이 다 쓰고 함께 지운다
+  useEffect(() => {
+    if (!params.has("b") || (linkBranch && branch !== linkBranch)) return;
+    if (OPS_LINK_KEYS.some((k) => k !== "b" && params.has(k))) return;
+    setParams(
+      (p) => {
+        p.delete("b");
+        return p;
+      },
+      { replace: true },
+    );
+  }, [params, linkBranch, branch, setParams]);
+  //   링크가 가리키는 근무자가 이 지점에 없으면(지점이 안 적힌 옛 알림) 관리하는 다른 지점을 한 번씩 찾아본다 — ManagerView 가 부른다
+  const seekTried = useRef<string[]>([]);
+  const seekNext = useCallback((): boolean => {
+    if (branch && !seekTried.current.includes(branch)) seekTried.current.push(branch);
+    const next = me.manage.find((b) => !seekTried.current.includes(b));
+    if (!next) {
+      seekTried.current = [];
+      return false;
+    }
+    setBranchState(next);
+    saveOpsBranch(next);
+    return true;
+  }, [branch, me.manage]);
+  const seekDone = useCallback(() => {
+    seekTried.current = [];
+  }, []);
   const q = useOpsMonth(branch, month);
   // 계약서 한 장 — 알림 링크 /office?tab=work&contract=<id> · 코치님 '내 계약서' (2026-11-03)
-  const [params, setParams] = useSearchParams();
   const contractParam = params.get("contract");
   const contractId = contractParam && /^[0-9a-f-]{36}$/i.test(contractParam) ? contractParam : null;
   // PT 기록 예시 화면 — /office?tab=work&demo=1 (지어낸 자료, 서버를 부르지 않는다)
@@ -218,7 +263,7 @@ const OpsWorkTab = ({ me }: { me: OpsMe }) => {
           </button>
         </div>
       ) : q.data.manage ? (
-        <ManagerView data={q.data} ptDemo={ptDemo} />
+        <ManagerView data={q.data} ptDemo={ptDemo} seekNext={seekNext} seekDone={seekDone} />
       ) : (
         <CoachView data={q.data} onOpenContract={openContract} ptDemo={ptDemo} />
       )}
@@ -228,7 +273,18 @@ const OpsWorkTab = ({ me }: { me: OpsMe }) => {
 };
 
 // ───────────────────────── 관리 (대표님 · 지점장 · 회계매니저) ─────────────────────────
-const ManagerView = ({ data, ptDemo }: { data: OpsMonthData; ptDemo: boolean }) => {
+const ManagerView = ({
+  data,
+  ptDemo,
+  seekNext,
+  seekDone,
+}: {
+  data: OpsMonthData;
+  ptDemo: boolean;
+  /** 링크의 근무자가 이 지점에 없을 때 다른 지점으로 넘겨 찾기 — 넘겼으면 true */
+  seekNext: () => boolean;
+  seekDone: () => void;
+}) => {
   const decide = useOpsEntryDecide();
   const byId = useMemo(() => buildStaffById(data), [data]);
   const ctx = useMemo(
@@ -326,21 +382,76 @@ const ManagerView = ({ data, ptDemo }: { data: OpsMonthData; ptDemo: boolean }) 
         }))
         .filter((x) => x.n > 0)
     : [];
-  // 알림 링크 /office?tab=work&ptcoach=<근무자 카드> — 그 코치의 'PT' 탭을 연다(오류 신고 알림)
+  // ── 알림 링크 「누르면 바로 그 화면」 — 다 쓰면 주소에서 지운다(지점 b 도 함께 · lib/opsLink)
   const [params, setParams] = useSearchParams();
+  const dropLink = useCallback(
+    (...keys: string[]) =>
+      setParams(
+        (p) => {
+          for (const k of keys) p.delete(k);
+          p.delete("b");
+          return p;
+        },
+        { replace: true },
+      ),
+    [setParams],
+  );
+  // /office?tab=work&ptcoach=<근무자 카드> — 그 코치의 'PT' 탭을 연다(오류 신고 · 물어보기 답 알림)
+  //   이 지점 근무자가 아니면 관리하는 다른 지점에서 찾는다(2026-11-26 — 다른 지점을 보고 있으면 안 열리던 것)
   const ptCoachParam = params.get("ptcoach");
   useEffect(() => {
     if (!ptCoachParam) return;
     const s = data.staff.find((x) => x.id === ptCoachParam);
+    if (!s && seekNext()) return;
+    seekDone();
     if (s) setStaffSheet({ staff: s, tab: "pt" });
-    setParams(
-      (p) => {
-        p.delete("ptcoach");
-        return p;
-      },
-      { replace: true },
+    dropLink("ptcoach");
+  }, [ptCoachParam, data.staff, seekNext, seekDone, dropLink]);
+  // 「PT 기록 · 이틀 넘은 확인 필요」 — /office?tab=work&pt=check&b=<지점> (2026-11-26 대표님 「PT 확인 메뉴까지 바로」)
+  //   확인할 PT 기록이 있는 코치 카드의 'PT' 탭을 열고 「확인 필요」로 내려간다 · 그런 코치가 여럿이면 '확인할 것'으로 내려간다
+  const ptCheckParam = params.get("pt") === "check";
+  const ptLinkReady = ptCoaches.length === 0 || ((ptQ.isSuccess || ptQ.isError) && (ptRecQ.isSuccess || ptRecQ.isError));
+  const [ptFocus, setPtFocus] = useState(false);
+  const todoRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (!ptCheckParam || !ptLinkReady) return;
+    const target = ptCheckTarget(
+      ptRecTodo.map((x) => x.staff.id),
+      ptCoaches.filter((c) => c.active).map((c) => c.id),
     );
-  }, [ptCoachParam, data.staff, setParams]);
+    const s = target.kind === "coach" ? data.staff.find((x) => x.id === target.staffId) : undefined;
+    if (s) {
+      // PT 자료가 없으면(서버 오류) 'PT' 탭이 비어 보인다 — 그때는 카드만 연다
+      setPtFocus(!!pt);
+      setStaffSheet({ staff: s, tab: pt ? "pt" : undefined });
+    } else if (target.kind === "list") {
+      window.setTimeout(() => todoRef.current?.scrollIntoView({ block: "start", behavior: "smooth" }), 150);
+    } else {
+      toast("확인할 PT 기록이 없어요");
+    }
+    dropLink("pt");
+    // 준비된 그 순간의 자료로 한 번만
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ptCheckParam, ptLinkReady]);
+  // 「📍 출근 기록 없음 · 이름」 — /office?tab=work&b=<지점>&staff=<근무자 카드>&day=<날짜> → 그 코치의 그날 시트
+  //   옛 알림은 staffname=<이름>. 그날이 지난달이면 근무 탭이 그 달로 넘긴 뒤에 연다 · 이 지점에 없으면 다른 지점에서 찾는다
+  const staffParam = params.get("staff");
+  const staffNameParam = params.get("staffname");
+  const dayParam = params.get("day");
+  useEffect(() => {
+    if (!staffParam && !staffNameParam) return;
+    const day = isOpsDay(dayParam) && dayParam <= data.today ? dayParam : null;
+    if (day && day.slice(0, 7) !== data.month.slice(0, 7)) return; // 근무 탭이 그 달로 넘기는 중
+    const s =
+      data.staff.find((x) => x.id === staffParam) ??
+      (staffNameParam ? data.staff.find((x) => x.name === staffNameParam.trim()) : undefined);
+    if (!s && seekNext()) return;
+    seekDone();
+    if (!s) toast("이 근무자를 찾지 못했어요 — 아래 근무자 목록에서 골라 주세요");
+    else if (day && months.get(s.id)?.days.some((d) => d.date === day)) setDaySheet({ staffId: s.id, date: day });
+    else setStaffSheet({ staff: s });
+    dropLink("staff", "staffname", "day");
+  }, [staffParam, staffNameParam, dayParam, data.today, data.month, data.staff, months, seekNext, seekDone, dropLink]);
 
   // 계약서 — 돈을 보는 분(계약서에 시급이 있다)만: 근무자마다 '계약서 없음 · 서명 대기 · 사본 아직' (2026-11-03)
   const contractsQ = useOpsContractBranch(data.branch, canPay);
@@ -423,7 +534,7 @@ const ManagerView = ({ data, ptDemo }: { data: OpsMonthData; ptDemo: boolean }) 
         ptRepTodo.length > 0 ||
         ptCloseTodo.length > 0 ||
         dutyOpenList.length > 0) && (
-        <section className={card}>
+        <section ref={todoRef} className={cn(card, "scroll-mt-4")}>
           <h2 className="text-heading font-black text-foreground">확인할 것</h2>
           {duty && (
             <DutyManagerList
@@ -697,7 +808,10 @@ const ManagerView = ({ data, ptDemo }: { data: OpsMonthData; ptDemo: boolean }) 
 
       <OpsStaffSheet
         open={!!staffSheet}
-        onClose={() => setStaffSheet(null)}
+        onClose={() => {
+          setStaffSheet(null);
+          setPtFocus(false);
+        }}
         branch={data.branch}
         staff={openStaff}
         rules={data.rules}
@@ -708,7 +822,15 @@ const ManagerView = ({ data, ptDemo }: { data: OpsMonthData; ptDemo: boolean }) 
         ptPanel={
           openStaff?.pt_freelancer && pt && ptByCoach.get(openStaff.id) ? (
             <>
-              <OpsPtRecord branch={data.branch} manage payBelow coachId={ptDemo ? PT_SAMPLE_COACH : openStaff.id} month={data.month} demo={ptDemo} />
+              <OpsPtRecord
+                branch={data.branch}
+                manage
+                payBelow
+                coachId={ptDemo ? PT_SAMPLE_COACH : openStaff.id}
+                month={data.month}
+                demo={ptDemo}
+                focusTodo={ptFocus}
+              />
               <OpsPtPay
                 branch={data.branch}
                 coachId={ptDemo ? PT_SAMPLE_COACH : openStaff.id}

@@ -183,6 +183,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - [62 보호자 계정 · 우리 아이 · 운동을 끝낼까요?](docs/features/62-보호자-계정.md) — `src/lib/guardian.ts`
 - [63 얼굴 출석 키오스크 — 출석 · 퇴장 버튼 · 10초 자동 출석](docs/features/63-얼굴-출석-키오스크.md) — `src/pages/FaceKioskPage.tsx`
 - [64 스파링 영상 — 1차 유튜브 · 2차 자체 저장 대비](docs/features/64-스파링-영상.md) — `src/components/sparring/SparringRecorderPanel.tsx`
+- [65 알림을 누르면 바로 그 화면 — PT 확인 필요 · 출근 그날 · 새 회원](docs/features/65-알림-바로-그-화면.md) — `src/lib/opsLink.ts`
 
 ### Supabase 연결
 

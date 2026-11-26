@@ -768,9 +768,11 @@ interface Props {
   demo?: boolean;
   /** 관리자 화면 아래에 수당(OpsPtPanel)이 이어진다 — 머리글을 그린다 */
   payBelow?: boolean;
+  /** 관리자 화면 — 「PT 기록 · 이틀 넘은 확인 필요」 알림으로 열렸을 때 「확인 필요」로 내려간다 (2026-11-26) */
+  focusTodo?: boolean;
 }
 
-const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, payBelow = false }: Props) => {
+const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, payBelow = false, focusTodo = false }: Props) => {
   const q = useOpsPtRecord(branch, { demo, demoManage: manage });
   const actions = useOpsPtRecordActions(branch, { demo, demoManage: manage });
   // 월 마감(2026-11-16 2-2) — 관리자 화면의 「기록 기준」 칸을 아래 수당 카드(잠긴 달은 승인본)와 같은 숫자로. 횟수만 쓴다
@@ -794,16 +796,28 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
   const aactions = useOpsPtAskActions(branch, { demo, demoManage: manage });
   const [askInit, setAskInit] = useState<PtAskInit | null>(null);
 
-  // 알림을 누르고 왔을 때(/office?tab=work&pt=today) — 오늘 PT 로 내려온다
+  // 알림을 누르고 왔을 때(/office?tab=work&pt=today · pt=check) — 오늘 PT(확인 필요 포함)로 내려온다
   const [params] = useSearchParams();
   const rootRef = useRef<HTMLElement | null>(null);
-  const wantScroll = params.get("pt") === "today" && !manage;
+  const wantScroll = (params.get("pt") === "today" || params.get("pt") === "check") && !manage;
   const scrolled = useRef(false);
   useEffect(() => {
     if (!wantScroll || scrolled.current || !res || !rootRef.current) return;
     scrolled.current = true;
     rootRef.current.scrollIntoView({ block: "start", behavior: "smooth" });
   }, [wantScroll, res]);
+  // 관리자(근무자 카드 'PT' 탭) — 「이틀 넘은 확인 필요」 알림으로 열렸으면 「확인 필요」로 내려간다(시트가 다 열린 뒤)
+  const todoRef = useRef<HTMLDivElement | null>(null);
+  const todoScrolled = useRef(false);
+  useEffect(() => {
+    if (!manage || !focusTodo || todoScrolled.current || !res || !todoRef.current) return;
+    const el = todoRef.current;
+    const t = window.setTimeout(() => {
+      todoScrolled.current = true;
+      el.scrollIntoView({ block: "start", behavior: "smooth" });
+    }, 320);
+    return () => window.clearTimeout(t);
+  }, [manage, focusTodo, res]);
 
   if (!data) return null;
   const today = data.today ?? kstToday();
@@ -1096,7 +1110,9 @@ const OpsPtRecord = ({ branch, manage = false, coachId, month, demo = false, pay
             출석 체크 없는 수업 {cmp.noEntry}회{cmp.noEntryOver ? ` — 한 달 ${PT_NO_ENTRY_MONTH_LIMIT}회를 넘었어요` : ""}
           </p>
         )}
-        {todo}
+        <div ref={todoRef} className="scroll-mt-3">
+          {todo}
+        </div>
         <div className="mb-1.5 mt-4 flex items-center justify-between">
           <p className="text-label font-bold text-muted-foreground">수업 기록 ({Number(ym.slice(5, 7))}월 · {monthRows.length}건)</p>
           <button

@@ -6,6 +6,7 @@ import {
   normalizeNotification,
   notificationDayLabel,
   notificationTime,
+  upgradeNotificationLink,
   type AppNotification,
 } from "./notifications";
 
@@ -77,5 +78,50 @@ describe("날짜별 묶기", () => {
   });
   it("빈 목록", () => {
     expect(groupNotificationsByDay([], NOW)).toEqual([]);
+  });
+});
+
+// 2026-11-26 대표님 「내용 누르면 바로 그 부분으로 … 근무 메뉴로는 가는데 PT 확인 메뉴까지는 못 가네」 — 이미 와 있던 알림도 정확한 화면으로
+describe("옛 알림 링크 올려 읽기", () => {
+  const at = "2026-11-26T01:00:00Z"; // 11/26 10:00 KST
+  it("PT 기록 · 이틀 넘은 확인 필요 → PT 확인(그 지점)", () => {
+    const l = upgradeNotificationLink("PT 기록 · 이틀 넘은 확인 필요", "선릉역점 · 기록 없는 입장 1건 · 차감 대기 1건", "/office?tab=work", at);
+    expect(l).toBe("/office?tab=work&pt=check&b=%EC%84%A0%EB%A6%89%EC%97%AD%EC%A0%90");
+    expect(isSafeAppLink(l)).toBe(true);
+    expect(new URLSearchParams(l!.split("?")[1]).get("b")).toBe("선릉역점");
+  });
+  it("지점을 못 읽으면 지점 없이", () => {
+    expect(upgradeNotificationLink("PT 기록 · 이틀 넘은 확인 필요", "기록 없는 입장 1건", "/office?tab=work", at)).toBe("/office?tab=work&pt=check");
+  });
+  it("📍 출근 기록 없음 → 그 코치의 그날", () => {
+    const l = upgradeNotificationLink("📍 출근 기록 없음 · 이재현", "11/25 12:00 근무 · 60분이 지나도 출근 기록 · 신고가 없어요", "/office?tab=work", "2026-11-25T04:00:00Z");
+    expect(l).toBe("/office?tab=work&staffname=%EC%9D%B4%EC%9E%AC%ED%98%84&day=2026-11-25");
+    expect(isSafeAppLink(l)).toBe(true);
+  });
+  it("새해 첫날 받은 12/31 알림은 지난해 12/31", () => {
+    expect(upgradeNotificationLink("📍 출근 기록 없음 · 김코치", "12/31 22:00 근무 · 60분이 지나도", "/office?tab=work", "2027-01-01T00:30:00Z")).toBe(
+      "/office?tab=work&staffname=%EA%B9%80%EC%BD%94%EC%B9%98&day=2026-12-31",
+    );
+  });
+  it("이미 정확한 링크 · 다른 근무 알림은 그대로", () => {
+    expect(upgradeNotificationLink("PT 기록 확인", "오늘 PT 2건", "/office?tab=work&pt=today", at)).toBe("/office?tab=work&pt=today");
+    expect(upgradeNotificationLink("PT 기록 · 이틀 넘은 확인 필요", "선릉역점", "/office?tab=work&pt=check&b=x", at)).toBe("/office?tab=work&pt=check&b=x");
+    expect(upgradeNotificationLink("연장 근무 신청", "…", "/office?tab=work", at)).toBe("/office?tab=work");
+  });
+  it("링크 없던 출석 · 레벨 알림 → 홈", () => {
+    expect(upgradeNotificationLink("오늘 출석 완료! 🥊 챔피언 머니 +100", "현재 화이트 리그 Lv.3 — 홈에서 내 카드와 이번 주 순위를 확인하세요", null, at)).toBe("/home");
+    expect(upgradeNotificationLink("레벨 4 달성! 🥊", "출석 4회를 채워 자동으로 승급했어요", null, at)).toBe("/home");
+    expect(upgradeNotificationLink("승급 심사 대기 중 🥇", "타이틀매치에 도달했어요!", null, at)).toBeNull();
+  });
+  it("행 정리에서 바로 적용된다", () => {
+    const n = normalizeNotification({
+      id: "x",
+      title: "PT 기록 · 이틀 넘은 확인 필요",
+      body: "칠금점 · 차감 대기 1건",
+      link: "/office?tab=work",
+      read_at: null,
+      created_at: at,
+    });
+    expect(n?.link).toBe("/office?tab=work&pt=check&b=%EC%B9%A0%EA%B8%88%EC%A0%90");
   });
 });
