@@ -36,14 +36,18 @@ type Row = {
 
 const OPS_WORK_LINK = "/office?tab=work";
 
-/** 「📍 출근 기록 없음」 본문 앞 "11/25 12:00 근무" → 그날(알림이 온 해, 알림 날보다 뒤면 지난해) */
-const dutyDayOf = (body: string, createdAt: string): string | null => {
-  const m = /^(\d{2})\/(\d{2})\s/.exec(body);
-  if (!m) return null;
+/** "MM/DD" → 그날 — 알림이 온 날에서 가장 가까운 해(새해 첫날 받은 12/31 은 지난해 · 미리 낸 대타 요청 1/2 는 다음 해) */
+const mdDay = (mm: string, dd: string, createdAt: string): string => {
   const sent = kstDayKey(createdAt);
   const y = Number(sent.slice(0, 4));
-  const day = `${y}-${m[1]}-${m[2]}`;
-  return day > sent ? `${y - 1}-${m[1]}-${m[2]}` : day;
+  const t = Date.parse(`${sent}T00:00:00Z`);
+  const gap = (d: string) => Math.abs(Date.parse(`${d}T00:00:00Z`) - t);
+  return [y, y - 1, y + 1].map((yy) => `${yy}-${mm}-${dd}`).reduce((a, b) => (gap(b) < gap(a) ? b : a));
+};
+/** 「📍 출근 기록 없음」 · 「📍 출근 신고」 본문 앞 "11/25 12:00 …" → 그날 */
+const dutyDayOf = (body: string, createdAt: string): string | null => {
+  const m = /^(\d{2})\/(\d{2})\s/.exec(body);
+  return m ? mdDay(m[1], m[2], createdAt) : null;
 };
 
 /**
@@ -61,6 +65,19 @@ export function upgradeNotificationLink(title: string, body: string, link: strin
     // 📍 출근 기록 없음 · 이름 — 그 코치의 그날 시트(근무자 카드 id 가 없어 이름으로)
     const duty = /^📍️?\s*출근 기록 없음 · (.+)$/u.exec(title);
     if (duty) return opsWorkLink({ staffname: duty[1].trim(), day: dutyDayOf(body, createdAt) });
+    // 승인 요청 — 「확인할 것」의 그 줄(승인 · 반려)로 (2026-11-26 「클릭하면 바로 할수있게」 · 요청 id 가 없어 이름 · 날짜로)
+    //   ⏱ 연장 근무 신청 "박성현 · 11/25 60분 — 승인해 주세요" · 🔁 수업 대타 요청 "박성현 → 김코치 · 11/25 14:00~15:00"
+    if (/^⏱️?\s*연장 근무 신청/u.test(title)) {
+      const m = /^(.+?) · (\d{2})\/(\d{2})\s/.exec(body);
+      return opsWorkLink({ todo: "overtime", staffname: m?.[1]?.trim(), day: m ? mdDay(m[2], m[3], createdAt) : null });
+    }
+    if (/^🔁️?\s*수업 대타 요청/u.test(title)) {
+      const m = /^(.+?) → .+? · (\d{2})\/(\d{2})\s/.exec(body);
+      return opsWorkLink({ todo: "cover", staffname: m?.[1]?.trim(), day: m ? mdDay(m[2], m[3], createdAt) : null });
+    }
+    //   📍 출근 신고 · 이름 "11/25 와 있었어요 10:58 — 확인해 주세요"
+    const rep = /^📍️?\s*출근 신고 · (.+)$/u.exec(title);
+    if (rep) return opsWorkLink({ todo: "duty", staffname: rep[1].trim(), day: dutyDayOf(body, createdAt) });
     return link;
   }
   if (link === null) {

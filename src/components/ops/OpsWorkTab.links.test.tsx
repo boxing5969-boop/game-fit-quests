@@ -34,6 +34,7 @@ vi.mock("@/integrations/supabase/client", () => {
 });
 vi.mock("sonner", () => ({ toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }) }));
 
+import { toast } from "sonner";
 import OpsWorkTab from "./OpsWorkTab";
 import { kstToday } from "./OpsParts";
 import { buildPtSample, PT_SAMPLE_COACH } from "@/lib/opsPtRecordSample";
@@ -176,5 +177,73 @@ describe("근무자 카드 PT 탭 — 회원 이름", () => {
     const deducts = screen.getByText("차감 기록 (브로제이)").nextElementSibling as HTMLElement;
     expect(deducts.textContent).toContain("나무");
     expect(deducts.textContent).not.toContain("ㄴㅁ");
+  });
+});
+
+// 2026-11-26 대표님 「연장근무신청했는데 이것도 클릭하면 바로 할수있게해줘」 — 승인 요청 알림 → 「확인할 것」의 그 줄(승인 · 반려)
+describe("승인 요청 알림", () => {
+  const entry = (id: string, status: string, kind = "overtime") => ({
+    id,
+    staff_id: "s-sy",
+    work_date: today,
+    kind,
+    status,
+    minutes: 60,
+    start_time: null,
+    end_time: null,
+    cover_staff_id: null,
+    reason: "마감 연장",
+  });
+  const withEntries = (list: unknown[]) => {
+    const r = (globalThis as { __rpc?: Record<string, Route> }).__rpc!;
+    const base = r.ops_month;
+    r.ops_month = (a) => {
+      const d = base(a) as Record<string, unknown>;
+      return a.p_branch === SEOL ? { ...d, entries: list } : d;
+    };
+  };
+
+  it("연장 근무 신청(&entry=) → 그 요청 줄이 빛나고 그 자리에 승인 · 반려 단추", async () => {
+    withEntries([entry("e-ot", "pending")]);
+    renderAt(`/office?tab=work&b=%EC%84%A0%EB%A6%89%EC%97%AD%EC%A0%90&entry=e-ot&day=${today}`);
+    await waitFor(() => expect(document.getElementById("ops-entry-e-ot")?.className).toContain("ring-2"), { timeout: 4000 });
+    const row = document.getElementById("ops-entry-e-ot")!;
+    expect(row.textContent).toContain("승인");
+    expect(row.textContent).toContain("반려");
+    await waitFor(() => expect(scrolled).toHaveBeenCalled());
+    await waitFor(() => expect(loc()).toBe("?tab=work"));
+  });
+
+  it("옛 알림(todo=overtime · 이름 · 날짜, 지점 없이) — 칠금점을 보고 있어도 선릉 그 요청을 찾는다", async () => {
+    withEntries([entry("e-ot2", "pending")]);
+    renderAt(`/office?tab=work&todo=overtime&staffname=${encodeURIComponent("성윤 코치")}&day=${today}`);
+    await waitFor(() => expect(document.getElementById("ops-entry-e-ot2")?.className).toContain("ring-2"), { timeout: 4000 });
+    await waitFor(() => expect(loc()).toBe("?tab=work"));
+  });
+
+  it("이미 승인한 요청이면 그렇다고 알리고 그날 시트를 연다", async () => {
+    withEntries([entry("e-done", "approved")]);
+    renderAt(`/office?tab=work&b=%EC%84%A0%EB%A6%89%EC%97%AD%EC%A0%90&entry=e-done&day=${today}`);
+    expect(await screen.findByText(/^성윤 코치 · /, {}, { timeout: 4000 })).toBeTruthy();
+    expect(vi.mocked(toast)).toHaveBeenCalledWith("이미 승인한 요청이에요");
+  });
+
+  it("출근 신고(&dutyreport=) → 그 신고 줄이 빛난다", async () => {
+    const r = (globalThis as { __rpc?: Record<string, Route> }).__rpc!;
+    r.ops_duty_reports = (a) => ({
+      branch: a.p_branch,
+      manage: true,
+      can_set: true,
+      today,
+      setting: { on: true, coach_after_min: 15, manager_after_min: 60, started_on: today },
+      reports:
+        a.p_branch === SEOL
+          ? [{ id: "d-1", staff_id: "s-sy", staff_name: "성윤 코치", work_date: today, kind: "here", at_time: "10:58", minutes: 300, note: null, status: "open", created_at: `${today}T02:00:00Z`, mine: false, decided_at: null, decide_note: null }]
+          : [],
+    });
+    renderAt(`/office?tab=work&b=%EC%84%A0%EB%A6%89%EC%97%AD%EC%A0%90&dutyreport=d-1&day=${today}`);
+    await waitFor(() => expect(document.getElementById("ops-duty-d-1")?.className).toContain("ring-2"), { timeout: 4000 });
+    expect(document.getElementById("ops-duty-d-1")!.textContent).toContain("반려");
+    await waitFor(() => expect(loc()).toBe("?tab=work"));
   });
 });

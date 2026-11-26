@@ -125,3 +125,26 @@ describe("옛 알림 링크 올려 읽기", () => {
     expect(n?.link).toBe("/office?tab=work&pt=check&b=%EC%B9%A0%EA%B8%88%EC%A0%90");
   });
 });
+
+// 2026-11-26 「연장근무신청했는데 이것도 클릭하면 바로 할수있게해줘」 — 옛 승인 요청 알림도 그 줄로
+describe("옛 승인 요청 알림 링크", () => {
+  const at = "2026-11-26T03:21:00Z"; // 11/26 12:21 KST
+  const q = (l: string | null) => Object.fromEntries(new URLSearchParams((l ?? "").split("?")[1] ?? ""));
+  it("⏱ 연장 근무 신청 → todo=overtime · 이름 · 날짜", () => {
+    const l = upgradeNotificationLink("⏱ 연장 근무 신청", "김하나 · 11/25 60분 — 승인해 주세요", "/office?tab=work", at);
+    expect(q(l)).toEqual({ tab: "work", todo: "overtime", staffname: "김하나", day: "2026-11-25" });
+    expect(isSafeAppLink(l)).toBe(true);
+  });
+  it("🔁 수업 대타 요청 → todo=cover · 요청한 코치 · 날짜", () => {
+    const l = upgradeNotificationLink("🔁 수업 대타 요청", "김하나 → 이두리 · 11/27 14:00~15:00", "/office?tab=work", at);
+    expect(q(l)).toEqual({ tab: "work", todo: "cover", staffname: "김하나", day: "2026-11-27" });
+  });
+  it("📍 출근 신고 · 이름 → todo=duty · 이름 · 날짜", () => {
+    const l = upgradeNotificationLink("📍 출근 신고 · 김하나", "11/26 와 있었어요 10:58 — 확인해 주세요", "/office?tab=work", at);
+    expect(q(l)).toEqual({ tab: "work", todo: "duty", staffname: "김하나", day: "2026-11-26" });
+  });
+  it("새 링크(entry · dutyreport 가 든 것)는 그대로", () => {
+    const l = "/office?tab=work&b=%EC%84%A0&entry=abc&day=2026-11-25";
+    expect(upgradeNotificationLink("⏱ 연장 근무 신청", "김하나 · 11/25 60분 — 승인해 주세요", l, at)).toBe(l);
+  });
+});

@@ -18,6 +18,16 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261126-approval-links",
+    date: "2026-11-26",
+    title: "승인 요청 알림 — 누르면 바로 승인",
+    lines: [
+      "연장 근무 · 수업 대타 · 출근 신고 알림을 누르면 그 요청이 빛나요",
+      "그 자리에서 승인 · 반려를 바로 누르면 돼요",
+    ],
+    audience: "staff",
+  },
+  {
     id: "20261126-received153-cheer",
     date: "2026-11-26",
     title: "받은 153 — 돌려주기가 더 정확해졌어요",

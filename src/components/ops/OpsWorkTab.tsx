@@ -73,7 +73,7 @@ import {
   type OpsMonthData,
 } from "@/services/opsService";
 import { computePtMonth, withPtLabels, type OpsPtSummary } from "@/lib/opsPt";
-import { OPS_LINK_KEYS, isOpsDay, matchOpsBranch, ptCheckTarget } from "@/lib/opsLink";
+import { OPS_LINK_KEYS, isOpsDay, isOpsTodoKind, matchOpsBranch, ptCheckTarget } from "@/lib/opsLink";
 import { ptCloseTodoText, type PtStatement } from "@/lib/opsPtClose";
 import { ptPayBasis, ptPayMonth, ptPayMonthCovered } from "@/lib/opsPtPay";
 import { matchPtRecord, ptCounts } from "@/lib/opsPtRecord";
@@ -439,8 +439,12 @@ const ManagerView = ({
   const staffParam = params.get("staff");
   const staffNameParam = params.get("staffname");
   const dayParam = params.get("day");
+  const entryParam = params.get("entry");
+  const dutyRepParam = params.get("dutyreport");
+  const todoParam = params.get("todo");
+  const approvalLink = !!entryParam || !!dutyRepParam || isOpsTodoKind(todoParam);
   useEffect(() => {
-    if (!staffParam && !staffNameParam) return;
+    if ((!staffParam && !staffNameParam) || approvalLink) return;
     const day = isOpsDay(dayParam) && dayParam <= data.today ? dayParam : null;
     if (day && day.slice(0, 7) !== data.month.slice(0, 7)) return; // 근무 탭이 그 달로 넘기는 중
     const s =
@@ -452,7 +456,68 @@ const ManagerView = ({
     else if (day && months.get(s.id)?.days.some((d) => d.date === day)) setDaySheet({ staffId: s.id, date: day });
     else setStaffSheet({ staff: s });
     dropLink("staff", "staffname", "day");
-  }, [staffParam, staffNameParam, dayParam, data.today, data.month, data.staff, months, seekNext, seekDone, dropLink]);
+  }, [staffParam, staffNameParam, dayParam, approvalLink, data.today, data.month, data.staff, months, seekNext, seekDone, dropLink]);
+  // 「⏱ 연장 근무 신청」 · 「🔁 수업 대타 요청」 · 「📍 출근 신고」 (2026-11-26 대표님 「연장근무신청했는데 이것도 클릭하면 바로 할수있게해줘」)
+  //   /office?tab=work&b=<지점>&entry=<요청> 또는 &dutyreport=<신고> (&day=<날짜>) → 「확인할 것」의 그 줄(승인 · 반려)로 내려가 잠깐 빛난다.
+  //   옛 알림은 todo=overtime|cover|duty + staffname + day 로 같은 줄을 찾는다. 이미 처리됐으면 알리고 그날 시트를 연다
+  const [focus, setFocus] = useState<{ kind: "entry" | "duty"; id: string } | null>(null);
+  const dutyReady = dutyQ.isSuccess || dutyQ.isError;
+  useEffect(() => {
+    if (!approvalLink) return;
+    const day = isOpsDay(dayParam) && dayParam <= data.today ? dayParam : null;
+    if (day && day.slice(0, 7) !== data.month.slice(0, 7)) return; // 근무 탭이 그 달로 넘기는 중
+    const wantDuty = !!dutyRepParam || todoParam === "duty";
+    if (wantDuty && !dutyReady) return;
+    const who = staffNameParam?.trim() || null;
+    const openDay = (staffId: string, date: string) => {
+      if (months.get(staffId)?.days.some((d) => d.date === date)) setDaySheet({ staffId, date });
+    };
+    if (!wantDuty) {
+      const kinds = todoParam === "overtime" || todoParam === "cover" ? [todoParam] : ["overtime", "cover"];
+      const cands = data.entries.filter((e) =>
+        entryParam
+          ? e.id === entryParam
+          : kinds.includes(e.kind) && (!day || e.work_date === day) && (!who || byId.get(e.staff_id)?.name === who),
+      );
+      const e = cands.find((x) => x.status === "pending") ?? cands[0];
+      if (!e && seekNext()) return;
+      seekDone();
+      if (!e) toast("이 요청을 찾지 못했어요 — 이미 처리됐을 수 있어요");
+      else if (e.status === "pending") setFocus({ kind: "entry", id: e.id });
+      else {
+        toast(e.status === "approved" ? "이미 승인한 요청이에요" : e.status === "rejected" ? "이미 반려한 요청이에요" : "취소된 요청이에요");
+        openDay(e.staff_id, e.work_date);
+      }
+    } else {
+      const cands = (duty?.reports ?? []).filter((r) =>
+        dutyRepParam ? r.id === dutyRepParam : (!day || r.work_date === day) && (!who || r.staff_name === who),
+      );
+      const r = cands.find((x) => x.status === "open") ?? cands[0];
+      if (!r && seekNext()) return;
+      seekDone();
+      if (!r) toast("이 출근 신고를 찾지 못했어요 — 이미 처리됐을 수 있어요");
+      else if (r.status === "open") setFocus({ kind: "duty", id: r.id });
+      else {
+        toast("이미 처리한 출근 신고예요");
+        openDay(r.staff_id, r.work_date);
+      }
+    }
+    dropLink("entry", "dutyreport", "todo", "staff", "staffname", "day");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [approvalLink, entryParam, dutyRepParam, todoParam, staffNameParam, dayParam, dutyReady, data.today, data.month, data.entries, duty]);
+  //   찾은 줄로 내려가 4초 동안 빛나게
+  useEffect(() => {
+    if (!focus) return;
+    const t1 = window.setTimeout(
+      () => document.getElementById(`ops-${focus.kind}-${focus.id}`)?.scrollIntoView({ block: "center", behavior: "smooth" }),
+      150,
+    );
+    const t2 = window.setTimeout(() => setFocus(null), 4000);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
+  }, [focus]);
 
   // 계약서 — 돈을 보는 분(계약서에 시급이 있다)만: 근무자마다 '계약서 없음 · 서명 대기 · 사본 아직' (2026-11-03)
   const contractsQ = useOpsContractBranch(data.branch, canPay);
@@ -542,6 +607,7 @@ const ManagerView = ({
               data={duty}
               actions={dutyAct}
               hq={data.hq}
+              focusId={focus?.kind === "duty" ? focus.id : null}
               scheduledOf={(r) => months.get(r.staff_id)?.days.find((d) => d.date === r.work_date)?.scheduledMin ?? null}
               onOpenDay={(r) => {
                 if (months.get(r.staff_id)?.days.some((d) => d.date === r.work_date)) setDaySheet({ staffId: r.staff_id, date: r.work_date });
@@ -637,7 +703,14 @@ const ManagerView = ({
               {pending.map((e) => {
                 const canDecide = e.kind === "cover" || data.hq;
                 return (
-                  <li key={e.id} className="rounded-xl bg-amber-50 p-3">
+                  <li
+                    key={e.id}
+                    id={`ops-entry-${e.id}`}
+                    className={cn(
+                      "scroll-mt-24 rounded-xl bg-amber-50 p-3 transition-shadow",
+                      focus?.kind === "entry" && focus.id === e.id && "ring-2 ring-primary ring-offset-2",
+                    )}
+                  >
                     <p className="text-label font-bold text-amber-800">
                       {ENTRY_TITLE[e.kind]} · {fmtDay(e.work_date)}
                     </p>

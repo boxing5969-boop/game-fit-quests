@@ -274,6 +274,7 @@ export const DutyManagerList = ({
   hq,
   scheduledOf,
   onOpenDay,
+  focusId,
 }: {
   data: DutyData;
   actions: DutyActions;
@@ -283,6 +284,8 @@ export const DutyManagerList = ({
   scheduledOf: (r: DutyReport) => number | null;
   /** 그날 시트(시간 고쳐 승인) */
   onOpenDay?: (r: DutyReport) => void;
+  /** 「📍 출근 신고」 알림으로 왔을 때 잠깐 빛낼 신고 (2026-11-26 · 줄 id = ops-duty-<신고>) */
+  focusId?: string | null;
 }) => {
   const open = dutyOpen(data.reports);
   if (open.length === 0) return null;
@@ -301,7 +304,11 @@ export const DutyManagerList = ({
         const own = r.mine && !hq;
         const needMin = r.kind !== "off" && r.minutes == null;
         return (
-          <li key={r.id} className="rounded-xl bg-amber-50 p-3">
+          <li
+            key={r.id}
+            id={`ops-duty-${r.id}`}
+            className={cn("scroll-mt-24 rounded-xl bg-amber-50 p-3 transition-shadow", focusId === r.id && "ring-2 ring-primary ring-offset-2")}
+          >
             <button type="button" onClick={() => onOpenDay?.(r)} disabled={!onOpenDay} className="block w-full text-left">
               <p className="flex items-center gap-1 text-label font-bold text-amber-800">
                 <Clock3 className="h-4 w-4" /> 출근 신고 · {fmtDay(r.work_date)}

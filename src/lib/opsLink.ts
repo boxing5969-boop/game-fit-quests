@@ -6,6 +6,9 @@
  *   …&pt=check                            「PT 기록 · 이틀 넘은 확인 필요」 → 확인할 PT 기록이 있는 코치 카드의 'PT' 탭 「확인 필요」(여럿이면 '확인할 것')
  *   …&staff=<근무자 카드>&day=<날짜>        「📍 출근 기록 없음」 → 그 코치의 그날 시트
  *   …&staffname=<이름>&day=<날짜>           옛 알림(근무자 카드 id 가 없던 때) — 이름으로 찾는다
+ *   …&entry=<요청>&day=<날짜>              「⏱ 연장 근무 신청」 · 「🔁 수업 대타 요청」 → 「확인할 것」의 그 요청(승인 · 반려)이 빛난다 (2026-11-26 「클릭하면 바로」)
+ *   …&dutyreport=<신고>&day=<날짜>         「📍 출근 신고」 → 「확인할 것」의 그 신고(승인 · 반려)
+ *   …&todo=overtime|cover|duty&staffname=<이름>&day=<날짜>   위 둘의 옛 알림(요청 id 가 없던 때)
  *
  *   판단은 여기 한 곳 · 화면은 OpsWorkTab · 옛 알림 올려 읽기는 lib/notifications · 시험 opsLink.test.ts
  */
@@ -31,7 +34,11 @@ export const opsWorkLink = (q: Record<string, string | null | undefined>): strin
 };
 
 /** 링크가 가리키는 곳을 다 쓰면 지우는 주소 칸 */
-export const OPS_LINK_KEYS = ["b", "pt", "staff", "staffname", "day", "ptcoach"] as const;
+export const OPS_LINK_KEYS = ["b", "pt", "staff", "staffname", "day", "ptcoach", "entry", "dutyreport", "todo"] as const;
+
+/** 옛 승인 요청 알림의 todo 칸 */
+export type OpsTodoKind = "overtime" | "cover" | "duty";
+export const isOpsTodoKind = (v: string | null | undefined): v is OpsTodoKind => v === "overtime" || v === "cover" || v === "duty";
 
 export type PtCheckTarget = { kind: "coach"; staffId: string } | { kind: "list" } | { kind: "none" };
 
