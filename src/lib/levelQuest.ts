@@ -105,7 +105,7 @@ export interface QuestStampInput {
   progressFloor: number;
   /** 오늘 체육관에 왔나 (get_my_workout_today) */
   attendedToday: boolean;
-  /** 오늘 레벨이 올랐나 — 오늘 출석은 지난 레벨 몫이라 이번 레벨 칸은 비어 있다 */
+  /** 오늘 레벨이 올랐나 — 코치 승인이면 오늘 출석은 지난 레벨 몫(칸 0) · 출석 자동 승급(2026-11-27~)이면 오늘 출석이 새 레벨 첫 칸일 수 있다 */
   leveledUpToday: boolean;
 }
 
@@ -116,8 +116,9 @@ export function questStamps(i: QuestStampInput): QuestStamp[] {
   const filled = Math.min(n, floor);
   const prog = Number(i.progress);
   const frac = Number.isFinite(prog) ? Math.min(0.99, Math.max(0, prog - floor)) : 0;
-  // 오늘 왔으면 마지막으로 채운 칸이 오늘 칸 (오늘 레벨이 올랐으면 오늘 출석은 지난 레벨 몫)
-  const todayIdx = i.attendedToday && !i.leveledUpToday && filled > 0 ? filled - 1 : -1;
+  // 오늘 왔으면 마지막으로 채운 칸이 오늘 칸 — 오늘 레벨이 올랐어도 칸이 채워져 있으면 그건 오늘 출석(승급시킨 출석을 새 레벨로 넘김 ·
+  // 2026-11-27). 코치 승인처럼 오늘 출석이 지난 레벨 몫이면 칸이 0이라 오늘 칸이 없다.
+  const todayIdx = i.attendedToday && filled > 0 ? filled - 1 : -1;
   const off = levelDayOffset(i.league, i.level);
   return Array.from({ length: n }, (_, k) => ({
     day: off + k + 1,
@@ -135,8 +136,9 @@ export function kstDay(v: string | number | Date | null | undefined): string {
 }
 
 /**
- * 오늘 레벨이 올랐나 — 이번 레벨 시작(level_started_at = since)이 오늘(한국)이고, 오늘 체육관에 왔고, 이번 레벨 출석이 아직 0.
- * 출석 자동 승급은 그 출석 바로 뒤를 레벨 시작으로 적고, 코치 승인 · 타이틀매치 통과도 그때부터라 오늘 출석은 지난 레벨 몫이다.
+ * 오늘 레벨이 올랐나 — 이번 레벨 시작(level_started_at = since)이 오늘(한국)이고, 오늘 체육관에 왔고, 이번 레벨 출석이 오늘 것뿐(0 또는 1).
+ * 코치 승인 · 타이틀매치 통과는 그때부터라 오늘 출석은 지난 레벨 몫(0). 출석 자동 승급은 (2026-11-27~) 승급시킨 오늘 출석이
+ * 요건을 채우는 데 필요 없었으면 새 레벨 첫 출석(1 — DB 20261127002959_levelup_carry_visit.sql) · 필요했으면 지난 레벨 몫(0).
  * 처음 시작한 레벨(누적 레벨 1)은 레벨업이 아니다.
  */
 export function leveledUpToday(i: {
@@ -146,7 +148,7 @@ export function leveledUpToday(i: {
   sessions: number;
   attendedToday: boolean;
 }): boolean {
-  if (!i.attendedToday || !i.since || i.globalLevel <= 1 || Number(i.sessions) > 0) return false;
+  if (!i.attendedToday || !i.since || i.globalLevel <= 1 || Number(i.sessions) > 1) return false;
   return kstDay(i.since) === i.today;
 }
 

@@ -104,10 +104,15 @@ describe("수업 도장 칸", () => {
     ]);
   });
 
-  it("오늘 레벨이 올랐으면 오늘 출석은 지난 레벨 몫 — 이번 레벨 칸에 「오늘」이 없다", () => {
+  it("코치 승인으로 오늘 레벨이 올랐으면 오늘 출석은 지난 레벨 몫 — 이번 레벨 칸에 「오늘」이 없다", () => {
     const s = questStamps({ ...base, level: 5, progressFloor: 0, progress: 0, attendedToday: true, leveledUpToday: true });
     expect(s.map((x) => x.state)).toEqual(["next", "todo", "todo"]);
     expect(s.map((x) => x.day)).toEqual([13, 14, 15]);
+  });
+
+  it("출석 자동 승급(2026-11-27~) — 승급시킨 오늘 출석이 새 레벨 첫 칸 「오늘」", () => {
+    const s = questStamps({ ...base, level: 5, progressFloor: 1, progress: 1, attendedToday: true, leveledUpToday: true });
+    expect(s.map((x) => x.state)).toEqual(["today", "next", "todo"]);
   });
 
   it("요건을 넘긴 진행도(심사 대기 중 더 온 출석)는 칸을 넘치지 않는다 · 다음 칸 없음", () => {
@@ -139,11 +144,15 @@ describe("오늘 레벨이 올랐나", () => {
     expect(leveledUpToday({ ...base, since: "2026-11-17T14:59:00.000Z" })).toBe(false);
   });
 
-  it("어제 올랐거나 · 처음 시작한 레벨 · 이번 레벨 출석이 있거나 · 오늘 안 왔으면 아니다", () => {
+  it("출석 자동 승급(2026-11-27~) — 승급시킨 오늘 출석이 새 레벨에 들어가 이번 레벨 출석 1이어도 오늘 레벨업", () => {
+    expect(leveledUpToday({ ...base, since: "2026-11-18T09:06:56+09:00", sessions: 1 })).toBe(true);
+  });
+
+  it("어제 올랐거나 · 처음 시작한 레벨 · 이번 레벨 출석이 오늘 것보다 많거나 · 오늘 안 왔으면 아니다", () => {
     const since = "2026-11-18T01:00:00.000Z";
     expect(leveledUpToday({ ...base, since: "2026-11-16T01:00:00.000Z" })).toBe(false);
     expect(leveledUpToday({ ...base, since, globalLevel: 1 })).toBe(false);
-    expect(leveledUpToday({ ...base, since, sessions: 1 })).toBe(false);
+    expect(leveledUpToday({ ...base, since, sessions: 2 })).toBe(false);
     expect(leveledUpToday({ ...base, since, attendedToday: false })).toBe(false);
     expect(leveledUpToday({ ...base, since: null })).toBe(false);
     expect(leveledUpToday({ ...base, since: "엉뚱한 값" })).toBe(false);

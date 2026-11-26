@@ -18,6 +18,16 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261127-levelup-carry",
+    date: "2026-11-27",
+    title: "레벨업한 날 출석도 다음 레벨 도장으로",
+    lines: [
+      "출석으로 레벨이 오른 날, 그날 출석이 다음 레벨 첫 도장이 돼요",
+      "매번 2시간 넘게 운동하면 블루 리그는 레벨당 4번이면 올라요",
+    ],
+    link: { to: "/home", label: "홈에서 보기" },
+  },
+  {
     id: "20261126-owner-numbers",
     date: "2026-11-26",
     title: "관장님 숫자 · 지도자 홈 맨 위 네 칸",
