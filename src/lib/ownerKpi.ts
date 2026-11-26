@@ -305,19 +305,23 @@ export interface OwnerTodo {
   count: number;
   /** 아래 ① 기간 임박 명단으로 내려가기 */
   jump: boolean;
+  /** 153운영본부 CRM 명단으로 가기(CRM 을 볼 수 있을 때 · 2026-11-27 관장님 앱 ②) */
+  to?: string;
 }
 
-/** expiring = 지도자 홈 ① 기간 임박 숫자(아래 명단과 같은 숫자) */
-export function ownerTodos(d: OwnerHomeData, expiring: { count: number; days: number }): OwnerTodo[] {
+/** expiring = 지도자 홈 ① 기간 임박 숫자(아래 명단과 같은 숫자) · crm = 153OS CRM 을 볼 수 있다(그때만 명단으로 가는 길) */
+export function ownerTodos(d: OwnerHomeData, expiring: { count: number; days: number }, opts: { crm?: boolean } = {}): OwnerTodo[] {
   const t = d.owner?.todo;
+  const noVisit = t?.noVisit7 ?? 0;
   return [
     { key: "expiring", text: `기간 임박 ${expiring.count}명`, sub: `D-${expiring.days} 안 · 아래 ① 명단`, count: expiring.count, jump: expiring.count > 0 },
     {
       key: "noVisit",
-      text: `7일 넘게 안 온 회원 ${t?.noVisit7 ?? 0}명`,
-      sub: "기간 임박은 빼고 · 명단은 다음 단계 CRM에서",
-      count: t?.noVisit7 ?? 0,
+      text: `7일 넘게 안 온 회원 ${noVisit}명`,
+      sub: opts.crm ? "기간 임박은 빼고 · 누르면 CRM 명단" : "기간 임박은 빼고 · 명단은 153OS CRM에서",
+      count: noVisit,
       jump: false,
+      ...(opts.crm && noVisit > 0 ? { to: "/office?tab=crm&g=novisit7" } : {}),
     },
     {
       key: "leads",
@@ -325,6 +329,7 @@ export function ownerTodos(d: OwnerHomeData, expiring: { count: number; days: nu
       sub: `24시간 넘게 연락 전 · 이번 달 문의 ${t?.leadsMonth ?? 0}건`,
       count: t?.leadsOverdue ?? 0,
       jump: false,
+      ...(opts.crm ? { to: "/office?tab=crm&crm=customers" } : {}),
     },
   ];
 }

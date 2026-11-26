@@ -84,6 +84,14 @@ describe("ownerTodos · ownerStamp · 계산 방법", () => {
     expect(t[0]).toMatchObject({ jump: true, sub: "D-14 안 · 아래 ① 명단" });
     expect(t[2].sub).toBe("24시간 넘게 연락 전 · 이번 달 문의 3건");
     expect(ownerTodos(normalizeOwnerHome(raw()), { count: 0, days: 14 })[0].jump).toBe(false);
+    expect(t[1].to).toBeUndefined();
+  });
+
+  it("오늘 할 일 — CRM 을 볼 수 있으면 7일 안 옴 · 문의는 CRM 명단으로", () => {
+    const t = ownerTodos(normalizeOwnerHome(raw()), { count: 24, days: 14 }, { crm: true });
+    expect(t[1]).toMatchObject({ to: "/office?tab=crm&g=novisit7", sub: "기간 임박은 빼고 · 누르면 CRM 명단" });
+    expect(t[2].to).toBe("/office?tab=crm&crm=customers");
+    expect(t[0].to).toBeUndefined();
   });
 
   it("기준 시각 — 6시간 넘게 그대로면 경고", () => {

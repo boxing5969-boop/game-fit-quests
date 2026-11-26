@@ -24,6 +24,7 @@ import { useMenuLayout } from "@/hooks/useMenuLayout";
 import { useStrategyBadge } from "@/services/strategyService";
 import { useOfficeMe } from "@/services/officeService";
 import { useMarketOn } from "@/services/marketOn";
+import { useCrmOn } from "@/services/crmOn";
 import { isManagerRole } from "@/lib/rankLabels";
 import {
   MAX_FOLDER_ITEMS,
@@ -181,6 +182,8 @@ const HomeMenuGrid = ({ variant = "card", onNavigate }: Props) => {
 
   // 153 마켓 칸 — 우리 지점 마켓이 켜져 있을 때만 (서버 market_home · 2026-11-17)
   const market = useMarketOn();
+  // 153OS CRM 칸 — 관장(지점장) · 본사이고 CRM 켠 지점일 때만 (서버 crm_scope · 2026-11-27, 앱 권한이 지점장 이상인 분만 묻는다)
+  const crm = useCrmOn(role === "branch_manager" || role === "super_admin" || role === "admin");
 
   const viewer: MenuViewer = useMemo(
     () => ({
@@ -191,8 +194,9 @@ const HomeMenuGrid = ({ variant = "card", onNavigate }: Props) => {
       manager: isManagerRole(role),
       admin: role === "admin" || role === "super_admin",
       market,
+      crm,
     }),
-    [diet, staff, office, dmOff, role, market],
+    [diet, staff, office, dmOff, role, market, crm],
   );
 
   const { layout, save } = useMenuLayout();

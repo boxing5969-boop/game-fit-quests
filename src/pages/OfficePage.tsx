@@ -33,6 +33,10 @@
  *   · ?tab=manual — ManualTab: 153 매뉴얼 1권 서재 · 목차 · 한 장씩 읽기 · 확인 문제 · 서명(?ch=<장>), 대표님 · 지점장님은 읽음 현황
  *   · 코치진 모두(전략 회의와 같은 기준) — 서명 · 현황 권한은 서버 coach_manual_* 가 정한다
  *
+ *   「CRM」 탭 (2026-11-27 대표님 「다음가자」 · 관장님 앱 ② 153OS CRM 보기 · docs/features/69):
+ *   · ?tab=crm — OpsCrmTab: 할 일 · 회원 · 고객 · 회원 카드(읽기만). 관장 · 지점장 · 본사만(서버 crm_scope · 선릉역점부터)
+ *   · ?crm=members|customers 작은 탭 · ?g=<할 일 묶음> · 예시 ?tab=crm&demo=1 · 탭이 일곱이면 한 줄에 작은 글씨로
+ *
  *   「오늘 청소」 (2026-11-16 대표님 「운영본부 탭에 청소 매뉴얼 … 코치님들이 직관적으로 보고 수행할수있도록」 · 1단계):
  *   · 탭 줄 바로 아래 띠(OpsCleanEntry) — 오늘 내 차례가 남은 코치님은 어느 탭에서나, 대표님 · 지점 관리자는 근무 · 일정 탭에서
  *   · 누르면 전체 화면 한 장 · /office?clean=<시간대|1>(&cd=날짜) 로 바로 열기 · 예시 ?cleandemo=coach|manager
@@ -58,6 +62,7 @@ import { OpsCleanEntry } from "@/components/ops/OpsClean";
 import OpsSalesTab from "@/components/ops/OpsSalesTab";
 import { useOpsMe } from "@/services/opsService";
 import { useOpsSalesScope } from "@/services/opsSalesService";
+import { useCrmScope } from "@/services/crmOn";
 import { useOfficeOnline } from "@/lib/officePresence";
 import { useStrategyBadge } from "@/services/strategyService";
 import {
@@ -76,10 +81,12 @@ import {
 
 // 매뉴얼 탭은 따로 받는 조각 — 읽기 화면 · 앱 안 예시 책이 커서 (2026-11-11)
 const ManualTab = lazy(() => import("@/components/manual/ManualTab"));
+// CRM 탭도 따로 — 관장 · 지점장 · 본사만 받는다 (2026-11-27)
+const OpsCrmTab = lazy(() => import("@/components/ops/OpsCrmTab"));
 
 const STATUSES: OfficeStatus[] = ["on", "class", "away"];
 
-type OfficeTab = "office" | "strategy" | "work" | "plan" | "sales" | "manual";
+type OfficeTab = "office" | "strategy" | "work" | "plan" | "sales" | "crm" | "manual";
 
 const OfficePage = () => {
   const navigate = useNavigate();
@@ -105,6 +112,11 @@ const OfficePage = () => {
   const salesBranches = salesQ.data ?? [];
   const hasSales = salesBranches.length > 0;
   const salesKnown = opsKnown && (!askSales || salesQ.isSuccess || salesQ.isError);
+  // CRM 탭 — 관장(지점장) · 본사이고 CRM 켠 지점일 때 (서버 crm_scope · 2026-11-27). 앱 권한이 지점장 이상인 분만 묻는다
+  const crmQ = useCrmScope(adminRole);
+  const crmScope = crmQ.data;
+  const hasCrm = crmScope?.on === true;
+  const crmKnown = !adminRole || crmQ.isSuccess || crmQ.isError;
 
   const [branch, setBranchState] = useState<string | null>(readOfficeBranch);
   const stateQ = useOfficeState(branch, hasOffice);
@@ -126,13 +138,14 @@ const OfficePage = () => {
   // 탭이 다섯 이상이면 '전략 회의'는 '전략'으로 줄인다(390px 한 줄)
   // PT 기록 예시 화면 — 근무 탭이 없는 코치진이 ?tab=work&demo=1 로 왔을 때만 (지어낸 자료 · 서버를 부르지 않는다)
   const ptDemoOnly = staff && !hasWork && opsKnown && params.get("tab") === "work" && params.get("demo") === "1";
-  const fiveTabs = [hasOffice, staff, hasWork || ptDemoOnly, staff || hasWork, hasSales, staff].filter(Boolean).length >= 5;
+  const fiveTabs = [hasOffice, staff, hasWork || ptDemoOnly, staff || hasWork, hasSales, hasCrm, staff].filter(Boolean).length >= 5;
   const tabs: Array<{ v: OfficeTab; label: string; badge: number }> = [
     ...(hasOffice ? [{ v: "office" as const, label: "사무실", badge: 0 }] : []),
     ...(staff ? [{ v: "strategy" as const, label: fiveTabs ? "전략" : "전략 회의", badge: strategyBadge }] : []),
     ...(hasWork || ptDemoOnly ? [{ v: "work" as const, label: "근무", badge: 0 }] : []),
     ...(staff || hasWork ? [{ v: "plan" as const, label: "일정", badge: 0 }] : []),
     ...(hasSales ? [{ v: "sales" as const, label: "매출", badge: 0 }] : []),
+    ...(hasCrm ? [{ v: "crm" as const, label: "CRM", badge: 0 }] : []),
     ...(staff ? [{ v: "manual" as const, label: "매뉴얼", badge: 0 }] : []),
   ];
   const want = params.get("tab");
@@ -145,9 +158,11 @@ const OfficePage = () => {
           ? "plan"
           : want === "sales"
             ? "sales"
-            : want === "manual"
-              ? "manual"
-              : "office";
+            : want === "crm"
+              ? "crm"
+              : want === "manual"
+                ? "manual"
+                : "office";
   const tab: OfficeTab = tabs.some((t) => t.v === wanted) ? wanted : tabs[0]?.v ?? "strategy";
   const setTab = (t: OfficeTab) =>
     setParams(
@@ -157,6 +172,8 @@ const OfficePage = () => {
         p.delete("minutes");
         p.delete("contract");
         p.delete("ch");
+        p.delete("crm");
+        p.delete("g");
         return p;
       },
       { replace: true },
@@ -215,7 +232,9 @@ const OfficePage = () => {
                   ? "팀 일정 · 내 일정"
                   : tab === "sales"
                     ? "일반 수강권 · PT 매출"
-                    : tab === "manual"
+                    : tab === "crm"
+                      ? "153OS CRM · 할 일 · 회원 · 고객"
+                      : tab === "manual"
                       ? "153 매뉴얼 · 읽기 · 확인 문제 · 서명"
                       : "코치님 · 지점장님 · 대표님만"
           }
@@ -233,7 +252,12 @@ const OfficePage = () => {
         />
       }
     >
-      {!staffKnown || (staff && !officeKnown) || (!staff && !opsKnown) || (want === "work" && !opsKnown) || (want === "sales" && !salesKnown) ? (
+      {!staffKnown ||
+      (staff && !officeKnown) ||
+      (!staff && !opsKnown) ||
+      (want === "work" && !opsKnown) ||
+      (want === "sales" && !salesKnown) ||
+      (want === "crm" && !crmKnown) ? (
         <div className="space-y-3" aria-hidden>
           <div className="h-12 animate-pulse rounded-2xl bg-card shadow-elev-1" />
           <div className="aspect-[4/5] w-full animate-pulse rounded-3xl bg-card shadow-elev-1" />
@@ -252,7 +276,9 @@ const OfficePage = () => {
             aria-label="153운영본부"
             className={cn(
               "grid gap-1 rounded-2xl bg-secondary/70 p-1",
-              tabs.length >= 6
+              tabs.length >= 7
+                ? "grid-cols-7"
+                : tabs.length === 6
                 ? "grid-cols-6"
                 : tabs.length === 5
                   ? "grid-cols-5"
@@ -272,7 +298,8 @@ const OfficePage = () => {
                 onClick={() => tab !== t.v && setTab(t.v)}
                 className={cn(
                   "flex h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl font-black transition-all active:scale-[0.98]",
-                  tabs.length >= 4 ? "text-label" : "text-body",
+                  // 일곱 칸(대표님: 사무실 · 전략 · 근무 · 일정 · 매출 · CRM · 매뉴얼)은 작은 글씨 — 390px · 글씨 '크게'에서도 한 줄
+                  tabs.length >= 7 ? "gap-0.5 text-micro tracking-tight" : tabs.length >= 4 ? "text-label" : "text-body",
                   tab === t.v ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground",
                 )}
               >
@@ -301,6 +328,17 @@ const OfficePage = () => {
         <OpsWorkTab me={opsMe} />
       ) : tab === "sales" ? (
         <OpsSalesTab branches={salesBranches} />
+      ) : tab === "crm" && crmScope?.on ? (
+        <Suspense
+          fallback={
+            <div className="space-y-3" aria-hidden>
+              <div className="h-36 animate-pulse rounded-2xl bg-card" />
+              <div className="h-72 animate-pulse rounded-2xl bg-card" />
+            </div>
+          }
+        >
+          <OpsCrmTab scope={crmScope} />
+        </Suspense>
       ) : tab === "plan" ? (
         <OpsPlanTab />
       ) : tab === "manual" ? (

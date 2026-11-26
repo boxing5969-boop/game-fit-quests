@@ -18,6 +18,18 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261127-os-crm",
+    date: "2026-11-27",
+    title: "153OS CRM · 153운영본부 「CRM」 탭",
+    lines: [
+      "기간 임박 · 7일 안 옴 · 첫 4주 회원을 할 일 명단으로 봐요",
+      "이름 · 전화 뒷자리로 찾고, 누르면 회원 카드(방문 · 결제)가 열려요",
+      "톡톡 손님 · 이번 달 첫 결제 · 재등록도 함께 · 관장님 · 지점장님만 봐요",
+    ],
+    audience: "staff",
+    branches: SEOLLEUNG,
+  },
+  {
     id: "20261127-levelup-carry",
     date: "2026-11-27",
     title: "레벨업한 날 출석도 다음 레벨 도장으로",

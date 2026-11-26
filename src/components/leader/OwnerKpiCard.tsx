@@ -4,6 +4,7 @@
  *   관장 · 지점장 · 본사만(LeaderHome 이 그때만 붙인다 · 매출 칸은 서버가 권한대로 뺀다). 글 · 칸 = lib/ownerKpi.ts
  */
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ArrowDownRight, ArrowRight, ArrowUpRight, ChevronRight, Info } from "lucide-react";
 
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -24,14 +25,17 @@ export interface OwnerKpiCardProps {
   /** 지도자 홈 ① 기간 임박(아래 명단과 같은 숫자) */
   expiring: { count: number; days: number };
   onJumpExpiring?: () => void;
+  /** 153OS CRM 을 볼 수 있다 — 7일 안 옴 · 문의 줄을 누르면 153운영본부 CRM 명단으로 (2026-11-27) */
+  crmOn?: boolean;
   className?: string;
 }
 
-const OwnerKpiCard = ({ data, expiring, onJumpExpiring, className }: OwnerKpiCardProps) => {
+const OwnerKpiCard = ({ data, expiring, onJumpExpiring, crmOn, className }: OwnerKpiCardProps) => {
+  const navigate = useNavigate();
   const [help, setHelp] = useState<OwnerTileKey | null>(null);
   useBackClose(!!help, () => setHelp(null));
   const tiles = ownerTiles(data);
-  const todos = ownerTodos(data, expiring);
+  const todos = ownerTodos(data, expiring, { crm: crmOn });
   const stamp = ownerStamp(data);
   const h = help ? ownerTileHelp(help, data) : null;
 
@@ -86,12 +90,13 @@ const OwnerKpiCard = ({ data, expiring, onJumpExpiring, className }: OwnerKpiCar
                 <span className="block text-micro text-muted-foreground">{t.sub}</span>
               </span>
             );
+            const go = t.jump && onJumpExpiring ? onJumpExpiring : t.to ? () => navigate(t.to as string) : null;
             return (
               <li key={t.key}>
-                {t.jump && onJumpExpiring ? (
+                {go ? (
                   <button
                     type="button"
-                    onClick={onJumpExpiring}
+                    onClick={go}
                     className="flex w-full items-center justify-between gap-2 py-2 text-left active:opacity-70"
                   >
                     {body}

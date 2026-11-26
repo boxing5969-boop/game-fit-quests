@@ -18,8 +18,9 @@ export interface AppMenuItem {
   glyph: MenuGlyphName;
   /** 이 조건이 켜진 사람에게만 보인다 — diet: 다이어트 프로그램 회원 · staff: 코치님·지점장·운영진 ·
    *  office: 지점 회의실이 켜진 지점의 지도진 · 대표님 (서버 office_me) ·
-   *  market: 우리 지점 153 마켓이 켜져 있다 (서버 market_home — 2026-11-17) */
-  requires?: "diet" | "staff" | "office" | "market";
+   *  market: 우리 지점 153 마켓이 켜져 있다 (서버 market_home — 2026-11-17) ·
+   *  crm: 관장 · 지점장 · 본사이고 CRM 켠 지점 (서버 crm_scope — 2026-11-27) */
+  requires?: "diet" | "staff" | "office" | "market" | "crm";
 }
 
 /**
@@ -45,6 +46,9 @@ export const APP_MENU: readonly AppMenuEntry[] = [
   //   → 예전 '전략 회의실' 칸(/messages?tab=strategy)을 빼고, 이 칸을 코치진 모두에게(사무실이 없는 지점은 전략 회의만).
   //   같은 날 대표님 "지점 회의실이란 이름 153운영본부라고 이름 바꾸고" → 이름 153운영본부 · 탭 「근무」(근무 시간 · 시간표 · 대타 · 연장)
   { path: "/office", label: "153운영본부", glyph: "chat", requires: "staff" },
+  // 153OS CRM — 153운영본부 「CRM」 탭 바로가기(할 일 · 회원 · 고객 · 회원 카드, 읽기만). 관장 · 지점장 · 본사만
+  //   2026-11-27 대표님 「다음가자」(관장님 앱 ② · 결정 4 「운영본부 새 탭 + 메뉴 바로가기」 · 선릉역점부터)
+  { path: "/office?tab=crm", label: "153OS CRM", glyph: "idcard", requires: "crm" },
   // 로드맵 — 랭크업(/rank-up): 40단계 길 · 리그별 레벨업 기준 · 타이틀매치 · 단증 도전.
   //   2026-10-10 하단 '랭크업' 탭을 뺀 뒤 MY복서 라이센스 카드 승급 막대로만 들어갈 수 있었다.
   //   2026-10-30 대표님 "로드맵 메뉴가 안 보여" → 회원 메뉴 2번째 칸(코치진은 153운영본부 다음).
@@ -134,6 +138,7 @@ export const buildAppMenu = (opts: {
   staff?: boolean;
   office?: boolean;
   market?: boolean;
+  crm?: boolean;
   hide?: (path: string) => boolean;
 }): AppMenuEntry[] => {
   const visible = (m: AppMenuItem) =>
@@ -141,6 +146,7 @@ export const buildAppMenu = (opts: {
     (m.requires !== "staff" || opts.staff === true) &&
     (m.requires !== "office" || opts.office === true) &&
     (m.requires !== "market" || opts.market === true) &&
+    (m.requires !== "crm" || opts.crm === true) &&
     !opts.hide?.(m.path);
   const out: AppMenuEntry[] = [];
   for (const e of APP_MENU) {
@@ -156,5 +162,5 @@ export const buildAppMenu = (opts: {
 };
 
 /** 펼친 목록 — 묶음 안의 메뉴까지 한 줄로 (검색·테스트용) */
-export const flatAppMenu = (opts: { diet: boolean; staff?: boolean; office?: boolean; market?: boolean }): AppMenuItem[] =>
+export const flatAppMenu = (opts: { diet: boolean; staff?: boolean; office?: boolean; market?: boolean; crm?: boolean }): AppMenuItem[] =>
   buildAppMenu(opts).flatMap((e) => (isMenuFolder(e) ? [...e.items] : [e]));

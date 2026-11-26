@@ -19,9 +19,10 @@ import { FEATURES } from "@/lib/appSearch";
 /**
  * diet: 다이어트 프로그램 회원 · staff: 코치님·지점장·운영진 · office: 사무실이 켜진 지점 지도진 ·
  * dm: 메시지를 쓸 수 있는 계정 · manager: 앱 권한 코치·지점장·관리자(관리자 화면 /manager 에 들어가는 분) ·
- * admin: 관리자 · 전체관리자 · market: 우리 지점 153 마켓이 켜져 있다(서버 market_home)
+ * admin: 관리자 · 전체관리자 · market: 우리 지점 153 마켓이 켜져 있다(서버 market_home) ·
+ * crm: 관장 · 지점장 · 본사이고 CRM 켠 지점(서버 crm_scope — 2026-11-27)
  */
-export type MenuRequire = "diet" | "staff" | "office" | "dm" | "manager" | "admin" | "market";
+export type MenuRequire = "diet" | "staff" | "office" | "dm" | "manager" | "admin" | "market" | "crm";
 
 export interface MenuViewer {
   diet: boolean;
@@ -32,6 +33,8 @@ export interface MenuViewer {
   admin: boolean;
   /** 우리 지점 153 마켓이 켜져 있다 — 안 넘기면 꺼진 것으로 */
   market?: boolean;
+  /** 153OS CRM 을 볼 수 있다 — 안 넘기면 꺼진 것으로 */
+  crm?: boolean;
 }
 
 export const canSee = (req: MenuRequire | undefined, v: MenuViewer): boolean => !req || v[req] === true;
@@ -184,6 +187,15 @@ export const SHORTCUT_EXTRAS: readonly MenuCatalogItem[] = [
     "153운영본부 — 이 달 매출",
     ["매출", "이번 달 매출", "pt 매출"],
     "admin",
+  ),
+  // 기본 메뉴(appMenu)에 있는 칸 — 여기는 설명 · 검색어만 보탠다 (2026-11-27)
+  x(
+    "/office?tab=crm",
+    "153OS CRM",
+    "idcard",
+    "153운영본부 — 할 일 · 회원 · 고객 · 회원 카드",
+    ["crm", "153os", "회원 관리", "고객 관리", "회원 카드", "기간 임박", "안 온 회원", "톡톡 손님"],
+    "crm",
   ),
   x("/admin", "전체 관리", "gear", "본사 대시보드", ["본사", "전체 관리", "대시보드", "슈퍼 관리자"], "admin"),
 ];

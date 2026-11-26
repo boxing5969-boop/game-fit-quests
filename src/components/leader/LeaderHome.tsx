@@ -50,6 +50,7 @@ import { isStaffProfile } from "@/lib/staffDisplay";
 import { cn } from "@/lib/utils";
 import { useCoachDaily } from "@/services/coachDailyService";
 import { useOwnerHome, useOwnerRefresh } from "@/services/ownerHomeService";
+import { useCrmOn } from "@/services/crmOn";
 import {
   useCoachPhotoUrls,
   useLeaderContact,
@@ -468,6 +469,8 @@ const LeaderHome = ({ className }: { className?: string }) => {
   const ownerOn = !!q.data?.on && (q.data.role === "manager" || q.data.role === "admin");
   const oq = useOwnerHome(q.data?.branch ?? null, maybeStaff && !demo && ownerOn);
   useOwnerRefresh(demo ? undefined : oq.data);
+  // 153OS CRM 을 볼 수 있나 — 관장님 숫자의 7일 안 옴 · 문의 줄을 CRM 명단으로 (2026-11-27 관장님 앱 ②)
+  const crmOn = useCrmOn(maybeStaff && !demo && ownerOn);
   const ownerData = demo ? OWNER_DEMO : oq.data;
   const paths = useMemo(() => {
     const rows = data ? [...data.expiring, ...data.winback, ...data.starters].map((r) => r.photoPath) : [];
@@ -536,6 +539,7 @@ const LeaderHome = ({ className }: { className?: string }) => {
               data={ownerData}
               expiring={{ count: data.counts.expiring, days: data.conf.expiringDays }}
               onJumpExpiring={() => document.getElementById("leader-expiring")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              crmOn={crmOn}
             />
           ) : undefined
         }
