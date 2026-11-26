@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { findOsamiFaq, type OsamiFaqLink } from "@/data/osamiFaq";
 import { buildKbContext, isCoachingTopic, matchOsamiFaq, planOsamiReply, type OsamiMatch } from "@/lib/osamiKb";
 import { dropUnknownEmoji } from "@/lib/emoji3d/core";
+import { isOwnerQuestion, OSAMI_ASK_EVENT, OWNER_CHIPS, ownerSubtitle, ownerWelcome, takePendingOsamiAsk } from "@/lib/ownerAsk";
+import { useOwnerAiScope, useRefreshOwnerAiScope } from "@/services/ownerAiScope";
 
 /**
  * 🥊 오삼 코치 — 2단 답변 (2026-10-03)
@@ -15,6 +17,9 @@ import { dropUnknownEmoji } from "@/lib/emoji3d/core";
  *   2단: 복싱 기술·식단·고민처럼 지식 베이스에 없는 질문만 chat-assistant 에지 함수(AI)로 보낸다.
  *        이때 같은 지식 베이스에서 고른 관련 항목(kb)을 함께 보내 AI 가 앱 사실을 틀리지 않게 한다 — 서버에 복사본 없음.
  * 경로는 하나다 — 이 컴포넌트 + supabase/functions/chat-assistant. 새 챗 박스를 만들지 않는다.
+ * 관장 모드(2026-11-27 관장님 앱 ③ · lib/ownerAsk): 관장 · 지점장 · 본사이고 켠 지점이면 첫 인사 · 추천 질문이 관장님 것으로 바뀌고,
+ *   운영 숫자 질문은 앱 안내를 건너뛰어 AI 로(owner: true) — 서버가 153OS 숫자 도구로 답한다. 진행 글(status)은 「생각 중」 자리에.
+ *   관장님 숫자 칸의 질문 단추는 창 이벤트(osami:ask)로 이 창을 열고 바로 묻는다.
  */
 
 type Suggestion = { id: string; q: string };
@@ -114,6 +119,12 @@ const ChatAssistant = () => {
   const cacheRef = useRef(new Map<string, { answer: string; at: number }>());
   /** 계정이 바뀔 때마다 1씩 — 진행 중이던 AI 답이 새 계정의 대화에 붙지 않게 */
   const sessionRef = useRef(0);
+  /** 관장 모드 — 창을 열었을 때만 서버에 묻는다(지점장 이상 계정만) */
+  const { data: ownerScope } = useOwnerAiScope(open);
+  const ownerOn = ownerScope?.on === true;
+  const refreshOwner = useRefreshOwnerAiScope();
+  /** 서버 진행 글 — 「153OS 지금 숫자 보는 중이에요」 */
+  const [aiStatus, setAiStatus] = useState<string | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -141,14 +152,16 @@ const ChatAssistant = () => {
    * 2단 — AI 코치에게 묻는다 (지식 베이스에 없거나 회원이 직접 요청했을 때).
    * trailing: 답이 끝난 뒤 말풍선 아래 붙일 "관련 앱 안내" 칩 (1단 후보가 애매했던 경우).
    */
-  const askAi = useCallback(async (text: string, history: Msg[], trailing: Suggestion[] = []) => {
-    const qKey = normalizeQ(text);
+  const askAi = useCallback(async (text: string, history: Msg[], trailing: Suggestion[] = [], opts: { owner?: boolean } = {}) => {
+    const owner = !!opts.owner;
+    const qKey = (owner ? "owner:" : "") + normalizeQ(text);
     const cached = cacheRef.current.get(qKey);
     if (cached && Date.now() - cached.at < CACHE_TTL_MS) {
       push({ role: "assistant", source: "ai", content: cached.answer, suggestions: trailing });
       return;
     }
     setIsLoading(true);
+    setAiStatus(null);
     const session = sessionRef.current;
     const stale = () => sessionRef.current !== session;
     let assistantSoFar = "";
@@ -172,7 +185,8 @@ const ChatAssistant = () => {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         // kb: 지식 베이스에서 고른 관련 항목 + (앱 화제면) 기능 지도 — 서버가 [앱 안내]·[앱 기능 지도] 로 프롬프트에 끼운다
-        body: JSON.stringify({ messages: [...convo, { role: "user", content: text }], kb: kbFor(text, history) }),
+        // owner: 관장 모드로 물어 달라 — 서버가 owner_ai_scope 로 다시 확인한다(꺼져 있으면 보통 오삼코치)
+        body: JSON.stringify({ messages: [...convo, { role: "user", content: text }], kb: kbFor(text, history), ...(owner ? { owner: true } : {}) }),
       });
 
       if (!resp.ok || !resp.body) {
@@ -223,6 +237,22 @@ const ChatAssistant = () => {
 
           try {
             const parsed = JSON.parse(jsonStr);
+            // 관장 모드 진행 글 — 「생각 중」 자리에 보여 준다
+            if (typeof parsed.status === "string") {
+              if (!stale()) setAiStatus(parsed.status);
+              continue;
+            }
+            // 도구를 부르기 전에 쓴 앞말 — 지우고 진행 글을 다시 보여 준다
+            if (parsed.reset === true) {
+              assistantSoFar = "";
+              if (!stale()) {
+                setMessages((prev) => {
+                  const last = prev[prev.length - 1];
+                  return last?.role === "assistant" && last.source === "ai" && !last.isError ? prev.slice(0, -1) : prev;
+                });
+              }
+              continue;
+            }
             const content = parsed.choices?.[0]?.delta?.content as string | undefined;
             if (content && !stale()) {
               assistantSoFar += content;
@@ -260,6 +290,8 @@ const ChatAssistant = () => {
       } else {
         throw new Error("AI 코치의 답이 비어서 왔어요. 다시 한 번 물어봐 주세요.");
       }
+      // 관장 모드 — 오늘 남은 숫자 질문 수를 다시 읽는다
+      if (owner) refreshOwner();
     } catch (e) {
       if (stale()) return; // 그사이 로그아웃·계정 전환 — 앞 계정의 오류를 새 대화에 띄우지 않는다
       // AI 가 막혀도 앱 안내는 보여 줄 수 있다 — 비슷한 항목이 있으면 칩으로
@@ -272,11 +304,12 @@ const ChatAssistant = () => {
       });
     } finally {
       setIsLoading(false);
+      setAiStatus(null);
     }
-  }, [push]);
+  }, [push, refreshOwner]);
 
   /** 회원 말 한 마디 처리 — 1단(즉답) → 2단(AI) */
-  const handleQuestion = useCallback(async (raw: string, opts: { forceAi?: boolean } = {}) => {
+  const handleQuestion = useCallback(async (raw: string, opts: { forceAi?: boolean; owner?: boolean } = {}) => {
     const text = raw.trim();
     if (!text || isLoading) return;
     const now = Date.now();
@@ -288,9 +321,13 @@ const ChatAssistant = () => {
     push(userMsg);
     setInput("");
 
+    // 관장 모드 — AI 질문은 모두 관장 모드로, 운영 숫자 질문은 앱 안내 즉답을 건너뛴다 (lib/ownerAsk)
+    const owner = ownerOn || !!opts.owner;
+    const ownerData = owner && isOwnerQuestion(text);
+
     // 어디로 보낼지는 lib/osamiKb.ts planOsamiReply 가 정한다 (테스트로 고정된 판단)
     let trailing: Suggestion[] = [];
-    if (!opts.forceAi) {
+    if (!opts.forceAi && !ownerData) {
       const plan = planOsamiReply(text);
       if (plan.kind === "small") { push({ role: "assistant", source: "local", content: plan.reply }); return; }
       if (plan.kind === "faq") { showFaq(plan.best.entry.id, toSuggestions(plan.others, undefined, 2), text); return; }
@@ -327,8 +364,25 @@ const ChatAssistant = () => {
       push({ role: "assistant", source: "local", content: "알겠어요. AI 코치는 쉬고 있을게요. 앱 사용법은 지금처럼 바로 답해 드려요.", suggestions: trailing });
       return;
     }
-    await askAi(text, [...history, userMsg], trailing);
-  }, [askAi, isApiLimitReached, isLoading, messages, push, showFaq, user]);
+    await askAi(text, [...history, userMsg], trailing, { owner });
+  }, [askAi, isApiLimitReached, isLoading, messages, ownerOn, push, showFaq, user]);
+
+  // 관장님 숫자 칸의 질문 단추(lib/ownerAsk askOsami) — 창을 열고 바로 묻는다. 이 조각이 늦게 받아졌으면 남겨 둔 질문을 꺼낸다.
+  const handleRef = useRef(handleQuestion);
+  useEffect(() => {
+    handleRef.current = handleQuestion;
+  });
+  useEffect(() => {
+    const ask = () => {
+      const d = takePendingOsamiAsk();
+      if (!d) return;
+      setOpen(true);
+      window.setTimeout(() => void handleRef.current(d.q, { forceAi: true, owner: !!d.owner }), 0);
+    };
+    ask();
+    window.addEventListener(OSAMI_ASK_EVENT, ask);
+    return () => window.removeEventListener(OSAMI_ASK_EVENT, ask);
+  }, []);
 
   const send = (e: React.FormEvent) => {
     e.preventDefault();
@@ -391,7 +445,7 @@ const ChatAssistant = () => {
                       온라인
                     </span>
                   </div>
-                  <p className="text-micro text-gray-400 font-medium">앱 사용법은 바로 · 복싱·식단은 AI 코치가</p>
+                  <p className="text-micro text-gray-400 font-medium">{ownerOn && ownerScope ? ownerSubtitle(ownerScope) : "앱 사용법은 바로 · 복싱·식단은 AI 코치가"}</p>
                 </div>
               </div>
               <button
@@ -404,7 +458,7 @@ const ChatAssistant = () => {
             </div>
 
             <div className="relative mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              {QUICK_CHIPS.map((chip) => (
+              {(ownerOn ? OWNER_CHIPS : QUICK_CHIPS).map((chip) => (
                 <button
                   key={chip}
                   type="button"
@@ -449,7 +503,7 @@ const ChatAssistant = () => {
                     <div className="mb-1 flex items-center gap-1 text-micro font-bold tracking-wide text-orange-500"><Bot size={11} /> AI 코치</div>
                   )}
                   {/* AI 답변: 153 아이콘이 없는 이모지는 지운다 (있는 것은 입체 아이콘으로 보인다, 2026-10-16) */}
-                  {m.source === "ai" ? dropUnknownEmoji(stripMarkdown(m.content)) : m.content}
+                  {m.source === "ai" ? dropUnknownEmoji(stripMarkdown(m.content)) : m === WELCOME_MSG && ownerOn && ownerScope ? ownerWelcome(ownerScope) : m.content}
 
                   {/* 앱 안 바로가기 */}
                   {m.links && m.links.length > 0 && (
@@ -517,7 +571,7 @@ const ChatAssistant = () => {
                 <div className="rounded-2xl rounded-tl-md border border-gray-100 bg-white px-4 py-3 shadow-elev-1">
                   <div className="flex items-center gap-1.5">
                     <Sparkles size={14} className="text-orange-400 animate-spin" style={{ animationDuration: "2s" }} />
-                    <span className="text-label text-gray-500 font-medium">AI 코치가 생각 중...</span>
+                    <span className="text-label text-gray-500 font-medium">{aiStatus ?? "AI 코치가 생각 중..."}</span>
                   </div>
                   <div className="mt-1.5 flex gap-1">
                     <span className="h-2 w-2 rounded-full bg-gray-300 animate-bounce" />
