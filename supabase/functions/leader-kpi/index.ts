@@ -7,10 +7,14 @@
 //   계산: 153OS registration_report(서버 키 OS_SERVICE_KEY — 서버에만)를 100일씩 네 번 읽어(한 번에 3,000줄 한도)
 //         _shared/leaderKpi.ts 로 재등록률을 낸다 → leader_kpi(숫자만) · leader_member_flags(「첫 수강권」 — 같은 이름이 하나뿐인 회원만).
 //   사진 정리: leader_photo_cleanup_targets → 저장소 coach-photos 에서 지우기(SQL 로는 못 지운다) → leader_photo_mark_purged.
+//   관장님 숫자(2026-11-26 대표님 「추천대로」 · docs/features/69 · 마이그레이션 20261126234059_owner_home.sql):
+//     · 재등록률(전체) = 같은 줄로 computeAllRenew → leader_kpi.payload.all
+//     · 출석 · 유효 회원 · 매출 · 할 일 = 153OS owner_home_kpi(지점 이름) → leader_owner_kpi(지금) · leader_owner_kpi_days(오늘 날짜)
+//     · 크론은 둘 다 · 화면은 body.owner = true 일 때 관장님 숫자만(관장 · 지점장 · 본사 — 코치는 못 부른다 · 10분 안 계산은 건너뜀)
 //   verify_jwt = false (config.toml) — 크론 키 또는 아래에서 직접 로그인 확인.
 // deno-lint-ignore-file no-explicit-any
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
-import { addDays, computeLeaderKpi, matchMembers, type RegRow } from "../_shared/leaderKpi.ts";
+import { addDays, computeAllRenew, computeLeaderKpi, matchMembers, type RegRow } from "../_shared/leaderKpi.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -21,6 +25,7 @@ const json = (b: unknown, s = 200) =>
 
 const BUCKET = "coach-photos";
 const FRESH_MINUTES = 30;
+const OWNER_FRESH_MINUTES = 10;
 const WINDOWS = 4;
 const WINDOW_DAYS = 100;
 
@@ -76,12 +81,31 @@ async function refreshBranch(app: SupabaseClient, rows: RegRow[], branch: string
   }
   await app.from("leader_member_flags").delete().eq("branch_name", branch).lt("updated_at", runStart);
 
-  const payload = { ...kpi, source: "153OS registration_report", truncated, matched: matched.length, members: members.length };
+  const all = computeAllRenew(rows, branch, today);
+  const payload = { ...kpi, all, source: "153OS registration_report", truncated, matched: matched.length, members: members.length };
   const { error: kErr } = await app
     .from("leader_kpi")
     .upsert({ branch_name: branch, payload, computed_at: new Date().toISOString() }, { onConflict: "branch_name" });
   if (kErr) throw new Error(`kpi: ${kErr.message}`);
-  return { branch, rate: kpi.recent.rate, n: kpi.recent.n, matched: matched.length };
+  return { branch, rate: kpi.recent.rate, n: kpi.recent.n, matched: matched.length, allRate: all.prev.rate };
+}
+
+/** 관장님 숫자 — 153OS owner_home_kpi(숫자만) → leader_owner_kpi · leader_owner_kpi_days */
+async function refreshOwner(app: SupabaseClient, os: SupabaseClient, branch: string, today: string) {
+  const { data, error } = await os.rpc("owner_home_kpi", { p_branch_name: branch, p_day: today });
+  if (error) throw new Error(`owner_home_kpi ${branch}: ${error.message}`);
+  if (!data || typeof data !== "object" || (data as any).error) throw new Error(`owner_home_kpi ${branch}: ${(data as any)?.error ?? "empty"}`);
+  const at = new Date().toISOString();
+  const { error: oErr } = await app
+    .from("leader_owner_kpi")
+    .upsert({ branch_name: branch, payload: data, computed_at: at }, { onConflict: "branch_name" });
+  if (oErr) throw new Error(`owner: ${oErr.message}`);
+  const { error: dErr } = await app
+    .from("leader_owner_kpi_days")
+    .upsert({ branch_name: branch, day: today, payload: data, computed_at: at }, { onConflict: "branch_name,day" });
+  if (dErr) throw new Error(`owner_days: ${dErr.message}`);
+  const att = (data as any).attendance ?? {};
+  return { branch, owner: true, active: (data as any).members?.active ?? null, attRate: att.rate ?? null };
 }
 
 async function cleanupPhotos(app: SupabaseClient) {
@@ -109,6 +133,8 @@ Deno.serve(async (req) => {
 
   const { data: setting } = await app.from("app_settings").select("value").eq("key", "leader_home").maybeSingle();
   const onBranches: string[] = Array.isArray(setting?.value?.branches) ? setting.value.branches.map(String) : [];
+  const ownerBranches: string[] = (Array.isArray(setting?.value?.owner_branches) ? setting.value.owner_branches.map(String) : onBranches)
+    .filter((b: string) => onBranches.includes(b));
 
   // 1) 크론
   const autoKey = req.headers.get("x-auto-key") || "";
@@ -120,8 +146,10 @@ Deno.serve(async (req) => {
   }
 
   let targets: string[] = [];
+  let ownerTargets: string[] = [];
   if (cron) {
     targets = onBranches;
+    ownerTargets = ownerBranches;
   } else {
     // 2) 화면 — 로그인한 지도진 · 본사만, 자기 지점(본사는 고른 지점)
     const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
@@ -139,22 +167,44 @@ Deno.serve(async (req) => {
     if (!hq && !staff) return json({ error: "forbidden" }, 403);
     const branch = hq && typeof body?.branch === "string" && body.branch.trim() ? body.branch.trim() : String(me?.branch_name ?? "");
     if (!branch || !onBranches.includes(branch)) return json({ ok: true, skipped: "branch_off" });
-    const { data: prev } = await app.from("leader_kpi").select("computed_at").eq("branch_name", branch).maybeSingle();
-    const fresh = prev?.computed_at && Date.now() - Date.parse(prev.computed_at) < FRESH_MINUTES * 60_000;
-    if (fresh && !(hq && body?.force === true)) return json({ ok: true, skipped: "fresh", branch });
-    targets = [branch];
+    if (body?.owner === true) {
+      // 관장님 숫자 — 관장(지점장) · 본사만
+      if (!hq && !roleSet.has("branch_manager")) return json({ error: "forbidden" }, 403);
+      if (!ownerBranches.includes(branch)) return json({ ok: true, skipped: "owner_off", branch });
+      const { data: prevOwner } = await app.from("leader_owner_kpi").select("computed_at").eq("branch_name", branch).maybeSingle();
+      const ownerFresh = prevOwner?.computed_at && Date.now() - Date.parse(prevOwner.computed_at) < OWNER_FRESH_MINUTES * 60_000;
+      if (ownerFresh && !(hq && body?.force === true)) return json({ ok: true, skipped: "fresh", branch, owner: true });
+      ownerTargets = [branch];
+    } else {
+      const { data: prev } = await app.from("leader_kpi").select("computed_at").eq("branch_name", branch).maybeSingle();
+      const fresh = prev?.computed_at && Date.now() - Date.parse(prev.computed_at) < FRESH_MINUTES * 60_000;
+      if (fresh && !(hq && body?.force === true)) return json({ ok: true, skipped: "fresh", branch });
+      targets = [branch];
+    }
   }
 
   const today = kstToday();
   const results: unknown[] = [];
-  if (targets.length > 0) {
-    try {
-      const os = createClient(OS_URL, OS_KEY, { auth: { persistSession: false } });
-      const { rows, truncated } = await readRegistrations(os, today);
-      for (const b of targets) results.push(await refreshBranch(app, rows, b, today, truncated));
-    } catch (e) {
-      console.error("leader-kpi", (e as Error).message);
-      return json({ error: "kpi_failed", detail: (e as Error).message }, 502);
+  if (targets.length > 0 || ownerTargets.length > 0) {
+    const os = createClient(OS_URL, OS_KEY, { auth: { persistSession: false } });
+    if (targets.length > 0) {
+      try {
+        const { rows, truncated } = await readRegistrations(os, today);
+        for (const b of targets) results.push(await refreshBranch(app, rows, b, today, truncated));
+      } catch (e) {
+        console.error("leader-kpi", (e as Error).message);
+        if (!cron) return json({ error: "kpi_failed", detail: (e as Error).message }, 502);
+        results.push({ error: "kpi_failed", detail: (e as Error).message });
+      }
+    }
+    for (const b of ownerTargets) {
+      try {
+        results.push(await refreshOwner(app, os, b, today));
+      } catch (e) {
+        console.error("leader-kpi owner", (e as Error).message);
+        if (!cron) return json({ error: "owner_failed", detail: (e as Error).message }, 502);
+        results.push({ branch: b, error: "owner_failed", detail: (e as Error).message });
+      }
     }
   }
   const photos = cron ? await cleanupPhotos(app) : null;

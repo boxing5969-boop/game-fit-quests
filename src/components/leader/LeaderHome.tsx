@@ -6,6 +6,7 @@
  *   켠 지점 지도진 · 본사에게만 — 회원 · '회원으로 보기' · 꺼진 지점 · 함수가 없을 때는 아무것도 그리지 않는다.
  *   글 · 순서 = lib/leaderHome.ts · 데이터 = services/leaderHomeService.ts · 미리보기 예시 = 홈 주소 ?demo=leader (지도진만)
  *   맨 위 칸 = 코치 매일 리포트 · 오늘 미션(CoachDailyCard · 2026-11-26 · 12/1부터 코치님 화면 · 그 전에는 관리자 미리보기)
+ *   그 위 = 관장님 숫자(OwnerKpiCard · 2026-11-26 대표님 「추천대로」 · 관장 · 지점장 · 본사만 · docs/features/69)
  */
 import { useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -14,6 +15,7 @@ import { toast } from "sonner";
 
 import CoachDailyCard from "@/components/leader/CoachDailyCard";
 import LeaderPhotoSheet, { type LeaderPhotoTarget } from "@/components/leader/LeaderPhotoSheet";
+import OwnerKpiCard from "@/components/leader/OwnerKpiCard";
 import OpsDayNoteSheet from "@/components/ops/OpsDayNoteSheet";
 import { useAuth } from "@/contexts/AuthContext";
 import { openMemberCard } from "@/lib/appEvents";
@@ -42,10 +44,12 @@ import {
   type StarterRow,
   type WinbackRow,
 } from "@/lib/leaderHome";
+import { OWNER_DEMO } from "@/lib/ownerKpi";
 import { kstHm } from "@/lib/promise153";
 import { isStaffProfile } from "@/lib/staffDisplay";
 import { cn } from "@/lib/utils";
 import { useCoachDaily } from "@/services/coachDailyService";
+import { useOwnerHome, useOwnerRefresh } from "@/services/ownerHomeService";
 import {
   useCoachPhotoUrls,
   useLeaderContact,
@@ -177,11 +181,13 @@ export interface LeaderHomeViewProps {
   onBranch?: (branch: string) => void;
   /** 머리 아래 맨 위 칸 — 코치 매일 리포트 · 오늘 미션 */
   top?: ReactNode;
+  /** 그보다 위 — 관장님 숫자(관장 · 지점장 · 본사) */
+  owner?: ReactNode;
   className?: string;
 }
 
 /** 그리기만 — 화면 확인 · 시험용 (데이터는 아래 LeaderHome) */
-export const LeaderHomeView = ({ data, photoUrls = {}, busyId = null, onContact, onUndo, onPhoto, onNote, onBranch, top, className }: LeaderHomeViewProps) => {
+export const LeaderHomeView = ({ data, photoUrls = {}, busyId = null, onContact, onUndo, onPhoto, onNote, onBranch, top, owner, className }: LeaderHomeViewProps) => {
   const [tab, setTab] = useState<"expiring" | "winback">("expiring");
   const [allExp, setAllExp] = useState(false);
   const [allSt, setAllSt] = useState(false);
@@ -236,6 +242,7 @@ export const LeaderHomeView = ({ data, photoUrls = {}, busyId = null, onContact,
         <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" aria-hidden />
         지금 체육관 {data.counts.here}명 · 우선 회원 {priorityHere}명
       </p>
+      {owner && <div className="mt-3">{owner}</div>}
       {top && <div className="mt-3">{top}</div>}
 
       {/* 숫자 하나 — 신규 재등록률 */}
@@ -258,7 +265,7 @@ export const LeaderHomeView = ({ data, photoUrls = {}, busyId = null, onContact,
       </div>
 
       {/* ① 기간 임박 */}
-      <div className="mt-5">
+      <div id="leader-expiring" className="mt-5 scroll-mt-20">
         <div className="flex items-baseline justify-between gap-2">
           <h3 className="text-body font-black text-foreground">① 기간 임박</h3>
           <span className="text-label text-muted-foreground">첫 수강권 {data.counts.expiringFirst}명</span>
@@ -458,6 +465,10 @@ const LeaderHome = ({ className }: { className?: string }) => {
   const data = demo ? LEADER_DEMO : q.data;
   const dq = useCoachDaily(q.data?.branch ?? null, maybeStaff && !demo && !!q.data?.on);
   const daily = demo ? COACH_DAILY_DEMO : dq.data;
+  const ownerOn = !!q.data?.on && (q.data.role === "manager" || q.data.role === "admin");
+  const oq = useOwnerHome(q.data?.branch ?? null, maybeStaff && !demo && ownerOn);
+  useOwnerRefresh(demo ? undefined : oq.data);
+  const ownerData = demo ? OWNER_DEMO : oq.data;
   const paths = useMemo(() => {
     const rows = data ? [...data.expiring, ...data.winback, ...data.starters].map((r) => r.photoPath) : [];
     const ms = daily?.on ? [...daily.missions, ...(daily.team ?? []).flatMap((t) => t.missions)].map((m) => m.photoPath) : [];
@@ -519,6 +530,15 @@ const LeaderHome = ({ className }: { className?: string }) => {
         onNote={demo ? undefined : (r) => setNoteFor(r)}
         onBranch={(b) => setBranch(b)}
         top={daily?.on ? <CoachDailyCard data={daily} photoUrls={urls.data} busyMember={busyId} onAction={onMission} /> : undefined}
+        owner={
+          ownerData?.on ? (
+            <OwnerKpiCard
+              data={ownerData}
+              expiring={{ count: data.counts.expiring, days: data.conf.expiringDays }}
+              onJumpExpiring={() => document.getElementById("leader-expiring")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            />
+          ) : undefined
+        }
         className={className}
       />
       {!demo && (

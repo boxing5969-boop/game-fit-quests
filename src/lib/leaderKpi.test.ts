@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   addMonths,
+  computeAllRenew,
   computeLeaderKpi,
   isPassProduct,
   matchMembers,
@@ -88,6 +89,49 @@ describe("computeLeaderKpi", () => {
     expect(by["오지수"]).toBeUndefined();
     expect(by["윤서연"]).toBeUndefined();
     expect(kpi.avgRenewAmount).toBe(Math.round((480000 + 220000 + 220000) / 3));
+  });
+});
+
+describe("computeAllRenew — 재등록률(전체 회원 · 관장님 홈)", () => {
+  const P1 = "153복싱짐 1개월 주3회 기간권";
+  const rows: RegRow[] = [
+    // 갑 — 8/1 산 것이 8/31 끝 · 8/25 미리 연장(8/31 다음부터 → 9/30 끝) · 10/20 다시(11/19 끝)
+    row("2026-08-01", "갑", P1, "new"),
+    row("2026-08-25", "갑", P1, "renew"),
+    row("2026-10-20", "갑", P1, "renew"),
+    // 을 — 10/5 끝 · 다시 안 옴
+    row("2026-09-05", "을", P1, "new"),
+    // 병 — 같은 날 두 줄(1개월 + 1개월) = 2개월 → 11/14 끝
+    row("2026-09-15", "병", P1, "new"),
+    row("2026-09-15", "병", P1, "renew"),
+    // 정 — 10/20 끝 · 11/25 늦게 다시(30일 넘음)
+    row("2026-09-20", "정", P1, "new"),
+    row("2026-11-25", "정", P1, "renew"),
+    // 경 — 11/29 끝 · 아직 안 끝남
+    row("2026-10-30", "경", P1, "new"),
+    // 빼는 것 — PT · 다른 지점 · 환불
+    row("2026-09-05", "기", "퍼스널 트레이닝 20회권", "new", 1000000),
+    row("2026-09-05", "을", P1, "renew", 220000, "153복싱짐 칠금점"),
+    row("2026-10-01", "을", P1, "refund", -220000),
+  ];
+  const all = computeAllRenew(rows, A, "2026-11-26");
+  const by = Object.fromEntries(all.months.map((m) => [m.month, m]));
+
+  it("미리 산 수강권은 앞 끝 다음부터 이어 붙이고, 30일 안 다시 결제를 센다", () => {
+    expect(by["2026-08"]).toMatchObject({ n: 1, renewed30: 1, rate: 100, complete: true });
+    expect(by["2026-09"]).toMatchObject({ n: 1, renewed30: 1, complete: true, settleOn: "2026-10-31" });
+  });
+
+  it("지난달 — 30일 넘긴 늦은 재등록은 놓친 것 · 확정 전이면 확정 날짜", () => {
+    expect(all.prev).toMatchObject({ month: "2026-10", n: 2, renewed30: 0, renewed: 1, lost: 2, rate: 0, complete: false, settleOn: "2026-12-01" });
+    expect(all.prev2.month).toBe("2026-09");
+  });
+
+  it("이번 달 — 같은 날 두 줄은 하나로 · 아직 안 끝남 / 끝나고 기다리는 중", () => {
+    expect(all.current).toMatchObject({ month: "2026-11", n: 3, renewed30: 0, open: 1, waiting: 2, lost: 0 });
+    for (const m of all.months) expect(m.renewed30 + m.open + m.waiting + m.lost).toBe(m.n);
+    expect(all.months).toHaveLength(7);
+    expect(all.months[0].month).toBe("2026-05");
   });
 });
 

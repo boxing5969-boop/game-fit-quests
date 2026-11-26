@@ -3,6 +3,7 @@
 //   · 첫 수강권이 끝나는 날 = 첫 결제일 + 개월 × 30일(상품 이름에서 '3개월+1개월' = 4개월).
 //   · 재등록 = 첫 결제 뒤 다른 날 같은 이름의 수강권 결제. 끝난 뒤 30일 안이면 renewed30.
 //   · 이름은 계산과 앱 회원 맞추기에만 쓰고 저장하지 않는다(leader_kpi 에는 숫자만).
+//   · 재등록률(전체 회원 · 관장님 홈) = computeAllRenew — 아래 「재등록률(전체)」 (2026-11-26 · docs/features/69).
 //   Edge Function leader-kpi 가 쓰고, 시험은 src/lib/leaderKpi.test.ts.
 
 export interface RegRow {
@@ -90,17 +91,18 @@ interface Cohort {
   renewDay: string | null;
 }
 
+/** 재등록률에 세는 결제 — 그 지점 · 수강권(PT · 락커 · 운동복 · 일일권 빼고) · 금액 > 0 · 이름 있음 */
+const isCountedPass = (r: RegRow, branch: string): boolean =>
+  r.branch === branch &&
+  (r.kind === "new" || r.kind === "renew") &&
+  amountOf(r.amount) > 0 &&
+  isPassProduct(r.product) &&
+  productMonths(r.product) !== 0 &&
+  normName(r.member) !== "";
+
 /** 한 지점의 줄로 재등록률 · 회원별 결제 요약 */
 export function computeLeaderKpi(rows: readonly RegRow[], branch: string, today: string): { kpi: LeaderKpi; members: KpiMember[] } {
-  const mine = rows.filter(
-    (r) =>
-      r.branch === branch &&
-      (r.kind === "new" || r.kind === "renew") &&
-      amountOf(r.amount) > 0 &&
-      isPassProduct(r.product) &&
-      productMonths(r.product) !== 0 &&
-      normName(r.member) !== "",
-  );
+  const mine = rows.filter((r) => isCountedPass(r, branch));
 
   const byName = new Map<string, RegRow[]>();
   for (const r of mine) {
@@ -179,6 +181,124 @@ export function computeLeaderKpi(rows: readonly RegRow[], branch: string, today:
       graceDays: GRACE_DAYS,
     },
     members,
+  };
+}
+
+// ─── 재등록률(전체) — 관장님 홈 숫자 (2026-11-26 대표님 「추천대로」 · docs/features/69) ───────────
+//   · 같은 회원 · 같은 날 결제는 하나로 합친다(개월 합).
+//   · 끝나는 날 = 시작 + 개월 × 30일. 앞 수강권이 아직 안 끝났을 때 산 것은 그 끝 다음부터 이어 붙인다(브로제이 연장과 같게).
+//   · 재등록 = 그 결제 다음 결제가 끝나는 날 + 30일 안(끝나기 전에 미리 산 것 포함).
+//   · 한 회원이 같은 달에 두 번 끝나면 그 달 마지막 것 하나만 센다.
+//   · 그 달 마지막 날 + 31일부터 확정(complete). 이름 대조라 추정 — 신규 재등록률과 같은 기준.
+
+export interface RenewMonth {
+  /** 수강권이 끝나는 달 'YYYY-MM' */
+  month: string;
+  /** 그 달에 끝나는 회원 */
+  n: number;
+  /** 끝나고 30일 안(전 포함) 다시 결제 */
+  renewed30: number;
+  /** 언제든 다시 결제 */
+  renewed: number;
+  /** 아직 안 끝남 · 다음 결제 없음 */
+  open: number;
+  /** 끝났고 30일이 아직 안 지남 · 다음 결제 없음 */
+  waiting: number;
+  /** 30일 안에 다시 결제하지 않음(늦은 재등록 포함) */
+  lost: number;
+  /** renewed30 ÷ n (%) */
+  rate: number | null;
+  /** 결과가 정해진 달인가 */
+  complete: boolean;
+  /** 확정되는 날 */
+  settleOn: string;
+}
+
+export interface AllRenew {
+  /** 지난달 — 관장님 홈 큰 숫자 */
+  prev: RenewMonth;
+  /** 그 전 달 — 화살표 비교 */
+  prev2: RenewMonth;
+  /** 이번 달 — 진행 중 */
+  current: RenewMonth;
+  /** 최근 6달 + 이번 달 */
+  months: RenewMonth[];
+  graceDays: number;
+  basis: "sales-name";
+}
+
+/** 'YYYY-MM' 의 마지막 날 */
+const monthEnd = (month: string): string => addDays(`${addMonths(month, 1)}-01`, -1);
+
+/** 한 지점의 줄로 재등록률(전체 회원) */
+export function computeAllRenew(rows: readonly RegRow[], branch: string, today: string): AllRenew {
+  const byName = new Map<string, RegRow[]>();
+  for (const r of rows) {
+    if (!isCountedPass(r, branch)) continue;
+    const k = normName(r.member);
+    const list = byName.get(k);
+    if (list) list.push(r);
+    else byName.set(k, [r]);
+  }
+
+  const ends: { end: string; renewDay: string | null }[] = [];
+  for (const list of byName.values()) {
+    list.sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : 0));
+    const days: { day: string; months: number | null }[] = [];
+    for (const r of list) {
+      const m = productMonths(r.product);
+      const last = days[days.length - 1];
+      if (last && last.day === r.day) {
+        if (m && m > 0) last.months = (last.months ?? 0) + m;
+      } else {
+        days.push({ day: r.day, months: m && m > 0 ? m : null });
+      }
+    }
+    const best = new Map<string, { end: string; renewDay: string | null }>();
+    let prevEnd: string | null = null;
+    for (let i = 0; i < days.length; i++) {
+      const d = days[i];
+      if (!d.months) continue;
+      const start = prevEnd && prevEnd > d.day ? prevEnd : d.day;
+      const end = addDays(start, d.months * 30);
+      prevEnd = end;
+      const key = end.slice(0, 7);
+      const cur = best.get(key);
+      if (!cur || end >= cur.end) best.set(key, { end, renewDay: i + 1 < days.length ? days[i + 1].day : null });
+    }
+    for (const v of best.values()) ends.push(v);
+  }
+
+  const r30 = (e: { end: string; renewDay: string | null }) => e.renewDay !== null && e.renewDay <= addDays(e.end, GRACE_DAYS);
+  const agg = (month: string): RenewMonth => {
+    const list = ends.filter((e) => e.end.slice(0, 7) === month);
+    const n = list.length;
+    const renewed30 = list.filter(r30).length;
+    const settleOn = addDays(monthEnd(month), GRACE_DAYS + 1);
+    return {
+      month,
+      n,
+      renewed30,
+      renewed: list.filter((e) => e.renewDay !== null).length,
+      open: list.filter((e) => e.renewDay === null && e.end >= today).length,
+      waiting: list.filter((e) => e.renewDay === null && e.end < today && addDays(e.end, GRACE_DAYS) >= today).length,
+      lost: list.filter((e) => !r30(e) && addDays(e.end, GRACE_DAYS) < today).length,
+      rate: n > 0 ? Math.round((renewed30 / n) * 1000) / 10 : null,
+      complete: settleOn <= today,
+      settleOn,
+    };
+  };
+
+  const thisMonth = today.slice(0, 7);
+  const months: RenewMonth[] = [];
+  for (let i = -RECENT_MONTHS; i <= 0; i++) months.push(agg(addMonths(thisMonth, i)));
+  return {
+    prev: months[RECENT_MONTHS - 1],
+    prev2: months[RECENT_MONTHS - 2],
+    current: months[RECENT_MONTHS],
+    months,
+    graceDays: GRACE_DAYS,
+    basis: "sales-name",
   };
 }
 

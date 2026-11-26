@@ -18,6 +18,18 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261126-owner-numbers",
+    date: "2026-11-26",
+    title: "관장님 숫자 · 지도자 홈 맨 위 네 칸",
+    lines: [
+      "재등록률 · 출석률 · 유효 회원 · 이번 달 매출을 한눈에 봐요",
+      "칸을 누르면 어떻게 셌는지 · 지난달보다 얼마나 바뀌었는지 보여요",
+      "오늘 연락할 회원 수도 세 줄로 · 매출은 관장님만 봐요",
+    ],
+    audience: "staff",
+    branches: SEOLLEUNG,
+  },
+  {
     id: "20261126-boxraw-ambassador",
     date: "2026-11-26",
     title: "153 마켓에 BOXRAW 공식 앰버서더 칸",
