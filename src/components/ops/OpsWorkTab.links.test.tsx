@@ -137,3 +137,44 @@ describe("근무 탭 알림 링크", () => {
     await waitFor(() => expect(loc()).toBe("?tab=work"));
   });
 });
+
+// 2026-11-26 대표님 「이름이 이상하게 나와」 — 근무자 카드 'PT' 탭 「회원별」 · 차감 기록도 PT 이름표로 (지어낸 회원: 앱 이름 sky_01 → 한하늘, ㄴㅁ → 나무)
+describe("근무자 카드 PT 탭 — 회원 이름", () => {
+  it("회원별 · 차감 기록이 앱 이름 대신 PT 이름표로 보인다", async () => {
+    const r = (globalThis as { __rpc?: Record<string, Route> }).__rpc!;
+    const mem = (user_id: string, name: string, remaining: number) => ({ user_id, name, ticket: "퍼스널 트레이닝 20회권", remaining, end_date: null, checked_at: null });
+    r.ops_pt_month = () => ({
+      manage: true,
+      pay: true,
+      rates: [],
+      members: [mem("sample-m1", "sky_01", 12), mem("sample-m3", "ㄴㅁ", 4)],
+      events: [
+        {
+          id: "e1",
+          member_user_id: "sample-m3",
+          member_name: "ㄴㅁ",
+          ticket_name: "퍼스널 트레이닝 20회권",
+          before: 5,
+          after: 4,
+          used: 1,
+          kind: "used",
+          status: "auto",
+          coach_staff_id: PT_SAMPLE_COACH,
+          work_date: today,
+          detected_at: `${today}T01:00:00Z`,
+          note: null,
+        },
+      ],
+    });
+    renderAt(`/office?tab=work&b=%EC%84%A0%EB%A6%89%EC%97%AD%EC%A0%90&ptcoach=${PT_SAMPLE_COACH}`);
+    const label = await screen.findByText("회원별", {}, { timeout: 4000 });
+    const list = label.nextElementSibling as HTMLElement;
+    await waitFor(() => expect(list.textContent).toContain("나무"));
+    expect(list.textContent).toContain("한하늘");
+    expect(list.textContent).not.toContain("ㄴㅁ");
+    expect(list.textContent).not.toContain("sky_01");
+    const deducts = screen.getByText("차감 기록 (브로제이)").nextElementSibling as HTMLElement;
+    expect(deducts.textContent).toContain("나무");
+    expect(deducts.textContent).not.toContain("ㄴㅁ");
+  });
+});

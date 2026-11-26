@@ -18,6 +18,17 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261126-pt-name-label",
+    date: "2026-11-26",
+    title: "근무 — PT 회원 이름을 이름표로",
+    lines: [
+      "근무자 카드 PT 탭의 회원별 · 차감 기록도 PT 이름표로 보여요",
+      "이름표가 없는 회원은 앱 이름 그대로예요",
+    ],
+    audience: "staff",
+    branches: SEOLLEUNG,
+  },
+  {
     id: "20261126-notif-deep-link",
     date: "2026-11-26",
     title: "알림을 누르면 바로 그 화면으로",

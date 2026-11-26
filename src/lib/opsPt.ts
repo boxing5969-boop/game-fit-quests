@@ -166,3 +166,33 @@ export const computePtMonth = (
     members: list,
   };
 };
+
+/**
+ * PT 이름표를 화면 이름에 입힌다 (2026-11-26 대표님 「이름이 이상하게 나와」 — 근무자 카드 'PT' 탭 회원별 · 차감 기록).
+ *   앱 이름(profiles.name)이 기호 · 자음 · 영어 별명인 회원은 PT 기록에서 붙인 이름표(ops_pt_member_labels)로 보인다.
+ *   이름표는 PT 기록 자료(ops_pt_record members)에만 오므로 그 목록을 받아 회원 · 차감 줄의 이름 글자만 바꾼다
+ *   — 계산 키(user_id) · 수당은 그대로. 이름표가 없거나 회원 id 가 없는 줄은 앱 이름 그대로.
+ */
+export const withPtLabels = <T extends { members: OpsPtMember[]; events: OpsPtEvent[] }>(
+  d: T | undefined,
+  labelled: ReadonlyArray<{ user_id: string; label: string | null }> | null | undefined,
+): T | undefined => {
+  if (!d || !labelled?.length) return d;
+  const byId = new Map<string, string>();
+  for (const m of labelled) {
+    const l = m.label?.trim();
+    if (m.user_id && l) byId.set(m.user_id, l);
+  }
+  if (byId.size === 0) return d;
+  return {
+    ...d,
+    members: d.members.map((m) => {
+      const l = m.user_id ? byId.get(m.user_id) : undefined;
+      return l ? { ...m, name: l } : m;
+    }),
+    events: d.events.map((e) => {
+      const l = e.member_user_id ? byId.get(e.member_user_id) : undefined;
+      return l ? { ...e, member_name: l } : e;
+    }),
+  };
+};

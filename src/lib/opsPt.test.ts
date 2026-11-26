@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { classifyTicket, computePtMonth, perUseRate, withholding33, type OpsPtEvent, type OpsPtRate } from "./opsPt";
+import { classifyTicket, computePtMonth, perUseRate, withPtLabels, withholding33, type OpsPtEvent, type OpsPtMember, type OpsPtRate } from "./opsPt";
 
 // 예시 수당표 (실제 금액은 DB 에만)
 const rates: OpsPtRate[] = [
@@ -75,5 +75,43 @@ describe("153운영본부 PT 수당", () => {
     const s = computePtMonth([ev({ ticket_name: "퍼스널 트레이닝 30회권" })], [], rates, "c1");
     expect(s.unpriced).toBe(1);
     expect(s.gross).toBe(0);
+  });
+});
+
+// 2026-11-26 대표님 「이름이 이상하게 나와」 — 앱 이름이 기호 · 자음만인 회원은 PT 이름표로 (지어낸 이름)
+describe("PT 이름표 입히기", () => {
+  const mem = (user_id: string, name: string): OpsPtMember => ({ user_id, name, ticket: "퍼스널 트레이닝 20회권", remaining: 5, end_date: null, checked_at: null });
+  const data = {
+    branch: "b",
+    members: [mem("m1", "◡̈"), mem("m2", "ㄹㅎ"), mem("m3", "김하나")],
+    events: [ev({ member_user_id: "m1", member_name: "◡̈" }), ev({ member_user_id: null, member_name: "ㄹㅎ" }), ev({ member_user_id: "m3", member_name: "김하나" })],
+  };
+  const labels = [
+    { user_id: "m1", label: "한하늘" },
+    { user_id: "m2", label: " 강바다 " },
+    { user_id: "m3", label: null },
+  ];
+  it("이름표가 있는 회원 · 차감 줄만 이름이 바뀌고 나머지는 그대로", () => {
+    const d = withPtLabels(data, labels)!;
+    expect(d.members.map((m) => m.name)).toEqual(["한하늘", "강바다", "김하나"]);
+    // 회원 id 없는 차감 줄은 이름으로만 이어져 있어 그대로 둔다
+    expect(d.events.map((e) => e.member_name)).toEqual(["한하늘", "ㄹㅎ", "김하나"]);
+    expect(d.branch).toBe("b");
+  });
+  it("계산은 그대로 — 같은 회원 · 같은 횟수 · 같은 수당", () => {
+    const before = computePtMonth(data.events, data.members, rates, "c1");
+    const after = computePtMonth(withPtLabels(data, labels)!.events, withPtLabels(data, labels)!.members, rates, "c1");
+    expect(after.uses).toBe(before.uses);
+    expect(after.gross).toBe(before.gross);
+    // 같은 횟수끼리는 이름 순이라 줄 순서만 바뀔 수 있다 — 회원(key)별로 견준다
+    const rows = (s: typeof before) => s.members.map((m) => [m.key, m.usedThisMonth, m.pay]).sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+    expect(rows(after)).toEqual(rows(before));
+    expect(after.members.find((m) => m.key === "m1")?.name).toBe("한하늘");
+  });
+  it("이름표 목록이 없으면 받은 자료 그대로(같은 객체)", () => {
+    expect(withPtLabels(data, undefined)).toBe(data);
+    expect(withPtLabels(data, [])).toBe(data);
+    expect(withPtLabels(data, [{ user_id: "m1", label: "  " }])).toBe(data);
+    expect(withPtLabels(undefined, labels)).toBeUndefined();
   });
 });

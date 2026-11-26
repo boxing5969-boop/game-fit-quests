@@ -72,7 +72,7 @@ import {
   type OpsMe,
   type OpsMonthData,
 } from "@/services/opsService";
-import { computePtMonth, type OpsPtSummary } from "@/lib/opsPt";
+import { computePtMonth, withPtLabels, type OpsPtSummary } from "@/lib/opsPt";
 import { OPS_LINK_KEYS, isOpsDay, matchOpsBranch, ptCheckTarget } from "@/lib/opsLink";
 import { ptCloseTodoText, type PtStatement } from "@/lib/opsPtClose";
 import { ptPayBasis, ptPayMonth, ptPayMonthCovered } from "@/lib/opsPtPay";
@@ -309,7 +309,10 @@ const ManagerView = ({
   // PT — 브로제이 차감 기록 → 코치별 수당 (2026-10-29). PT 위탁 코치가 있는 지점만 읽는다
   const ptCoaches = data.staff.filter((s) => s.pt_freelancer);
   const ptQ = useOpsPtMonth(data.branch, data.month, ptCoaches.length > 0);
-  const pt = ptQ.data;
+  // PT 기록(2026-11-11) — 켠 지점만: 코치별 확인 필요(사유 없는 차감 · 차감 대기 · 기록 없는 입장 · 늦은 기록)
+  const ptRecQ = useOpsPtRecord(data.branch, { enabled: ptCoaches.length > 0, demo: ptDemo, demoManage: true });
+  // 회원 이름은 PT 이름표로(2026-11-26 대표님 「이름이 이상하게 나와」 — 앱 이름이 기호 · 자음인 회원) · 화면 글자만, 계산 그대로
+  const pt = useMemo(() => withPtLabels(ptQ.data, ptRecQ.data?.members), [ptQ.data, ptRecQ.data]);
   // 돈 = 대표님 · 회계매니저(data.pay). 예전 서버(pay 없음)는 관리자 = 돈
   const canPay = data.pay ?? data.manage;
   const ptPay = !!pt && (pt.pay ?? pt.manage) && canPay;
@@ -321,8 +324,6 @@ const ManagerView = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pt, data.staff, ptPay]);
   const ptToCheck = pt ? pt.events.filter((e) => e.status === "check") : [];
-  // PT 기록(2026-11-11) — 켠 지점만: 코치별 확인 필요(사유 없는 차감 · 차감 대기 · 기록 없는 입장 · 늦은 기록)
-  const ptRecQ = useOpsPtRecord(data.branch, { enabled: ptCoaches.length > 0, demo: ptDemo, demoManage: true });
   const ptRec = useMemo(() => (ptRecQ.data?.on ? matchPtRecord(ptRecQ.data) : null), [ptRecQ.data]);
   const ptRecTodo = ptRec
     ? ptCoaches.map((c) => ({ staff: c, n: ptCounts(ptRec, ptDemo ? PT_SAMPLE_COACH : c.id, true).total })).filter((x) => x.n > 0)
@@ -935,9 +936,12 @@ const CoachView = ({ data, onOpenContract, ptDemo }: { data: OpsMonthData; onOpe
   // PT 위탁 코치 — 내 PT 회원 · 이번 달 차감 · 내 PT 수당(서버가 본인에게 수당표를 보낼 때만)
   const ptQ = useOpsPtMonth(data.branch, data.month, !!mine?.pt_freelancer);
   const ptPay = !!ptQ.data?.pay && (ptQ.data?.rates.length ?? 0) > 0;
+  //   내 PT 회원 이름도 PT 이름표로(2026-11-26) — 아래 「오늘 PT」와 같은 자료(같은 캐시)라 서버를 더 부르지 않는다
+  const ptRecQ = useOpsPtRecord(data.branch, { enabled: !!mine?.pt_freelancer && !ptDemo });
+  const ptShown = useMemo(() => withPtLabels(ptQ.data, ptRecQ.data?.members), [ptQ.data, ptRecQ.data]);
   const ptSummary = useMemo(
-    () => (ptQ.data && mine ? computePtMonth(ptQ.data.events, ptQ.data.members, ptPay ? ptQ.data.rates : null, mine.id) : null),
-    [ptQ.data, mine, ptPay],
+    () => (ptShown && mine ? computePtMonth(ptShown.events, ptShown.members, ptPay ? ptShown.rates : null, mine.id) : null),
+    [ptShown, mine, ptPay],
   );
   // PT 월 마감(2026-11-16 2-2) — 달이 끝나면 내 수당 줄을 보고 확정한다. 서버에 마감 함수가 없으면 null(예전 화면)
   const ptCloseCtx = usePtCloseBook(data.branch, ptPay && ptQ.data ? ptQ.data.rates : null, { enabled: !!mine?.pt_freelancer && !ptDemo });
@@ -1055,7 +1059,7 @@ const CoachView = ({ data, onOpenContract, ptDemo }: { data: OpsMonthData; onOpe
           {!ptDemo && (
             <OpsPtPay branch={data.branch} coachId={mine.id} month={data.month} rates={ptPay ? ptQ.data.rates : null} monthEvents={ptQ.data.events} panelBelow />
           )}
-          <OpsPtPanel summary={ptSummary} events={ptQ.data.events.filter((e) => e.coach_staff_id === mine.id)} manage={false} showPay={ptPay} />
+          <OpsPtPanel summary={ptSummary} events={(ptShown ?? ptQ.data).events.filter((e) => e.coach_staff_id === mine.id)} manage={false} showPay={ptPay} />
         </section>
       )}
 
