@@ -196,6 +196,25 @@ const NoticeVisual = ({ visual, level }: { visual: GymNoticeVisual; level: FitLe
           {level < 3 && <p className="mt-1 text-[28px] font-bold leading-snug text-gray-400">{visual.sub}</p>}
         </div>
       );
+    case "brand":
+      // 제휴 브랜드(BOXRAW) — 어두운 TV 위에 흰 판 + 공식 로고(검정) · 알약 · 지점 한 줄
+      return (
+        <div className={cn(panel(level), "items-center text-center")}>
+          <span className={cn("flex w-full items-center justify-center rounded-2xl bg-white", level < 2 ? "px-10 py-8" : "px-8 py-6")}>
+            <img src={visual.logo} alt={visual.logoAlt} className="h-auto w-full max-w-[300px]" />
+          </span>
+          <p
+            className={cn(
+              "inline-flex items-center gap-2 rounded-full bg-primary px-5 py-1.5 text-[30px] font-black leading-snug text-gray-950",
+              level < 2 ? "mt-5" : "mt-3",
+            )}
+          >
+            <ShieldCheck className="h-8 w-8 shrink-0" strokeWidth={2.5} />
+            {visual.badge}
+          </p>
+          {level < 3 && <p className="mt-2 text-[28px] font-bold leading-snug text-gray-300">{visual.sub}</p>}
+        </div>
+      );
     case "pass":
       return (
         <div className={panel(level)}>

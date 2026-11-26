@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: vi.fn() } }));
 
 import { GYM_NOTICES } from "@/data/gymNotices";
+import { BOXRAW_CODE, BOXRAW_LINK } from "@/data/boxraw";
 import {
   NOTICE_MAX,
   NOTICE_TAB_MS,
@@ -54,6 +55,8 @@ const visualText = (n: GymNotice): string[] => {
       return [v.preset, v.clock, v.round, v.sub];
     case "pass":
       return [v.nowLabel, v.nowSub, v.nextLabel, v.nextSub];
+    case "brand":
+      return [v.badge, v.sub];
   }
 };
 const allText = (n: GymNotice) => [n.tag, n.kicker, ...n.hook, n.answer, ...n.proofs, n.ease, ...(n.qr?.caption ?? []), ...visualText(n)];
@@ -101,9 +104,9 @@ describe("TV 2번 「체육관 공지사항」 — 시간표", () => {
 });
 
 describe("TV 2번 「체육관 공지사항」 — 고르기", () => {
-  it("선릉역점: 샤워실 → 성향 검사 → 복싱 타이머 → 수강권 결제 (4장)", () => {
-    expect(gymNoticesFor(SUNREUNG, TODAY).map((n) => n.tag)).toEqual(["샤워실", "성향 검사", "복싱 타이머", "수강권 결제"]);
-    expect(gymNoticesFor(` ${SUNREUNG} `, TODAY)).toHaveLength(4);
+  it("선릉역점: 샤워실 → BOXRAW → 성향 검사 → 복싱 타이머 → 수강권 결제 (5장)", () => {
+    expect(gymNoticesFor(SUNREUNG, TODAY).map((n) => n.tag)).toEqual(["샤워실", "BOXRAW", "성향 검사", "복싱 타이머", "수강권 결제"]);
+    expect(gymNoticesFor(` ${SUNREUNG} `, TODAY)).toHaveLength(5);
   });
 
   it("다른 지점 · 지점을 모르면 공지 없음(TV 2번은 예전 그대로)", () => {
@@ -113,7 +116,7 @@ describe("TV 2번 「체육관 공지사항」 — 고르기", () => {
     expect(gymNoticesFor(null, TODAY)).toEqual([]);
   });
 
-  it("기간 — from · until 은 그날 포함 · 지난 공지는 빠지고 5장째부터는 잘린다", () => {
+  it("기간 — from · until 은 그날 포함 · 지난 공지는 빠지고 6장째부터는 잘린다", () => {
     const base = GYM_NOTICES[0];
     const list: GymNotice[] = [
       { ...base, id: "a", from: "2026-11-27" },
@@ -123,9 +126,10 @@ describe("TV 2번 「체육관 공지사항」 — 고르기", () => {
       { ...base, id: "e" },
       { ...base, id: "f" },
       { ...base, id: "g" },
+      { ...base, id: "h" },
     ];
-    expect(gymNoticesFor(SUNREUNG, TODAY, list).map((n) => n.id)).toEqual(["c", "d", "e", "f"]);
-    expect(gymNoticesFor(SUNREUNG, "2026-11-27", list).map((n) => n.id)).toEqual(["a", "d", "e", "f"]);
+    expect(gymNoticesFor(SUNREUNG, TODAY, list).map((n) => n.id)).toEqual(["c", "d", "e", "f", "g"]);
+    expect(gymNoticesFor(SUNREUNG, "2026-11-27", list).map((n) => n.id)).toEqual(["a", "d", "e", "f", "g"]);
   });
 });
 
@@ -181,6 +185,16 @@ describe("TV 2번 「체육관 공지사항」 — 글", () => {
     expect(n.qr).toBeUndefined();
   });
 
+  it("BOXRAW — 대표님 말 그대로(MOU · 명품 브랜드 · 대표 미팅 · 인터뷰 · 사전 심사 · 300만 원 · 샌드백 · 트레이닝복) · 코드 · QR 전용 링크", () => {
+    const n = GYM_NOTICES.find((x) => x.tag === "BOXRAW")!;
+    const text = allText(n).join(" ");
+    for (const w of ["MOU", "명품 브랜드", "대표님", "인터뷰", "사전 심사", "300만 원", "샌드백", "트레이닝복", "앰버서더", BOXRAW_CODE]) {
+      expect(text, w).toContain(w);
+    }
+    expect(n.qr?.path).toBe(BOXRAW_LINK);
+    expect(n.visual.kind).toBe("brand");
+  });
+
   it("앱 기능 공지의 숫자는 코드 값과 같다 — 성향 검사 문항 · 챔피언 머니 · 타이머 틀 · 마일리지 10%", () => {
     const style = GYM_NOTICES.find((x) => x.tag === "성향 검사")!;
     const items = TYPE_ITEMS.length + BIG5_ITEMS.length + PREF_ITEMS.length;
@@ -207,11 +221,16 @@ describe("TV 2번 「체육관 공지사항」 — 글", () => {
     expect(pass.qr?.path).toBe("/membership");
   });
 
-  it("QR — 앱 주소 하나 · 어디서 왔는지 표시", () => {
+  it("QR — 앱 주소면 어디서 왔는지 표시 · 바깥 주소는 BOXRAW 전용 링크 글자 그대로만", () => {
     for (const n of GYM_NOTICES) {
       if (!n.qr) continue;
-      expect(n.qr.path.startsWith("/")).toBe(true);
       const url = noticeQrUrl(n.qr.path);
+      if (n.qr.path.startsWith("https://")) {
+        expect(n.qr.path, `${n.id} 바깥 QR`).toBe(BOXRAW_LINK);
+        expect(url).toBe(BOXRAW_LINK);
+        continue;
+      }
+      expect(n.qr.path.startsWith("/")).toBe(true);
       expect(url.startsWith(`${APP_ORIGIN}/`)).toBe(true);
       expect(url).toMatch(/[?&]from=tv-notice$/);
     }

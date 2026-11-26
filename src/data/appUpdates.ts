@@ -18,6 +18,18 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261126-boxraw-ambassador",
+    date: "2026-11-26",
+    title: "153 마켓에 BOXRAW 공식 앰버서더 칸",
+    lines: [
+      "선릉역점이 BOXRAW 공식 앰버서더 체육관이 됐어요",
+      "153 마켓 맨 위 BOXRAW 칸에서 공식몰 전용 링크로 들어가요",
+      "결제할 때 프로모션 코드 153boxing20 을 넣어 주세요",
+    ],
+    link: { to: "/market", label: "153 마켓 보기" },
+    branches: SEOLLEUNG,
+  },
+  {
     id: "20261126-coach-daily",
     date: "2026-11-26",
     title: "코치 매일 리포트 · 12/1부터 아침 6시 40분",

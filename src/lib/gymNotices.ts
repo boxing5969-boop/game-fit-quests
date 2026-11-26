@@ -5,7 +5,7 @@
  *
  * TV 2번 왼쪽 큰 칸(런칭 이벤트가 끝난 뒤)은 두 탭을 1분씩 번갈아 보여 준다 — 시계 기준(TV 를 껐다 켜도 · 여러 대여도 같은 화면):
  *   짝수 분 = 「마이복서153」(가치 전달 장면 하나 · 장면은 두 분에 하나씩 넘어간다) · 홀수 분 = 「체육관 공지사항」.
- *   공지 탭 1분 안에서 공지가 차례로 넘어간다(4장이면 15초씩 · 3장이면 20초씩). 한 지점에 4장까지(그 뒤는 잘린다).
+ *   공지 탭 1분 안에서 공지가 차례로 넘어간다(5장이면 12초씩 · 4장이면 15초씩). 한 지점에 5장까지(그 뒤는 잘린다 · 11/26 BOXRAW 소식으로 4 → 5).
  *   그 지점 공지가 없으면(다른 지점 · 기간이 끝남) 예전 그대로 가치 전달만 1분마다.
  * 글은 src/data/gymNotices.ts 한 곳 — 이 파일은 고르기 · 시간 계산만.
  */
@@ -14,8 +14,8 @@ import { APP_ORIGIN } from "@/lib/appValueReel";
 
 /** 탭 한 번 = 1분 (가치 전달 장면 한 장과 같은 길이) */
 export const NOTICE_TAB_MS = 60_000;
-/** 공지 탭에 한 번에 도는 공지 수 상한 — 15초 아래로 줄지 않게 */
-export const NOTICE_MAX = 4;
+/** 공지 탭에 한 번에 도는 공지 수 상한 — 12초 아래로 줄지 않게(2026-11-26 BOXRAW 소식을 더해 4 → 5 · 사이니지 한 장 읽기 7~8초) */
+export const NOTICE_MAX = 5;
 
 /** 공지 안에서 나타나는 차례(공지 시작부터 ms) — 15초 공지라 3초 안에 다 보인다(나타날 때 페이드 한 번씩 · 그 뒤엔 그대로) */
 export const NOTICE_BEATS = {
@@ -31,7 +31,9 @@ export type GymNoticeVisual =
   | { kind: "shower"; status: string }
   | { kind: "style"; title: string; bars: readonly { label: string; value: number }[]; foot: string }
   | { kind: "timer"; preset: string; clock: string; round: string; rounds: number; sub: string }
-  | { kind: "pass"; nowLabel: string; nowSub: string; nextLabel: string; nextSub: string };
+  | { kind: "pass"; nowLabel: string; nowSub: string; nextLabel: string; nextSub: string }
+  /** 제휴 브랜드 — 흰 판 위 로고(정적 파일) + 알약 한 줄 + 작은 줄 */
+  | { kind: "brand"; logo: string; logoAlt: string; badge: string; sub: string };
 
 export interface GymNotice {
   /** 'YYYYMMDD-짧은-이름' — 한 번 정하면 바꾸지 않는다 */
@@ -55,7 +57,7 @@ export interface GymNotice {
   /** 의심 해소 · 맺는 한 줄 */
   ease: string;
   visual: GymNoticeVisual;
-  /** 앱 화면으로 가는 QR 하나 — 체육관 소식(샤워실 등)은 없음 */
+  /** QR 하나 — 앱 화면 경로('/…') 또는 제휴 공식몰 주소('https://…' 그대로 · BOXRAW 전용 링크) · 체육관 소식(샤워실 등)은 없음 */
   qr?: { path: string; caption: readonly [string, string] };
 }
 
@@ -98,6 +100,6 @@ export function msToNextTurn(nowMs: number, count: number): number {
   return Math.max(1, Math.min(toMinute, turn.startedAt + turn.ms - t));
 }
 
-/** QR 주소 — 어느 화면에서 왔는지 끝에 표시 */
+/** QR 주소 — 앱 화면은 어느 화면에서 왔는지 끝에 표시 · 바깥 주소(https://)는 글자 그대로(전용 링크의 추적 값을 건드리지 않는다) */
 export const noticeQrUrl = (path: string): string =>
-  `${APP_ORIGIN}${path}${path.includes("?") ? "&" : "?"}from=tv-notice`;
+  path.startsWith("https://") ? path : `${APP_ORIGIN}${path}${path.includes("?") ? "&" : "?"}from=tv-notice`;

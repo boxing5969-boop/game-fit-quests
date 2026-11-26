@@ -7,6 +7,7 @@
  *   서버 market_home 이 {on:false} 면(켜지 않은 지점 · 상품이 아직 없음) 준비 중 안내만 보인다.
  *   「어디서 사 오나」 줄(2026-11-18 — 골든챔스에서 체육관 도매가로 사 온다)은 늘 보이고, 누르면 판매 안내 첫 칸으로.
  *   예시 화면 /market?demo=1 — 서버를 부르지 않는다(가격은 지어낸 숫자).
+ *   2026-11-26 BOXRAW 공식 앰버서더 칸(BoxrawCard · data/boxraw.ts) — 앰버서더 지점(선릉역점)만 「어디서 사 오나」 줄 아래에. 주문은 공식몰에서.
  *   계산 · 글 lib/market153 · 읽고 쓰기 services/marketService.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -19,7 +20,9 @@ import { CompareBadge, OrderStatusChip, OrderSteps, ProductThumb } from "@/compo
 import MarketProductSheet from "@/components/market/MarketProductSheet";
 import MarketOrdersSheet from "@/components/market/MarketOrdersSheet";
 import MarketWishSheet from "@/components/market/MarketWishSheet";
+import BoxrawCard from "@/components/market/BoxrawCard";
 import { useAuth } from "@/contexts/AuthContext";
+import { isBoxrawBranch } from "@/data/boxraw";
 import { isManagerRole } from "@/lib/rankLabels";
 import {
   MARKET_SOURCE,
@@ -234,6 +237,9 @@ const MarketPage = () => {
             </span>
             <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
           </button>
+
+          {/* BOXRAW 공식 앰버서더 칸 — 앰버서더 지점만 · 공식몰 전용 링크 · 프로모션 코드 (2026-11-26) */}
+          {isBoxrawBranch(home.branch) && <BoxrawCard />}
 
           {cats.length > 1 && (
             <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="분류">

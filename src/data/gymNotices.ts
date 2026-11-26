@@ -4,7 +4,7 @@
  *    공지사항은 총 3개정도만 돌아가게 만들자」 — 시간표 · 고르기는 lib/gymNotices.ts · 그리기는 components/liveBoard/GymNoticeBoard.tsx)
  *
  * 쓰는 법
- *   · 적은 차례대로 돈다(4장이면 15초씩) · 한 지점에 4장까지. 지점은 정식 이름(branches) · 기간은 from / until('YYYY-MM-DD', 둘 다 그날 포함).
+ *   · 적은 차례대로 돈다(5장이면 12초씩 · 4장이면 15초씩) · 한 지점에 5장까지. 지점은 정식 이름(branches) · 기간은 from / until('YYYY-MM-DD', 둘 다 그날 포함).
  *   · 내리려면 그 칸을 지우거나 until 을 어제로. 고칠 땐 글만(id 는 그대로).
  *   · 회원 말 · 해요체 · 2~4m 거리에서 읽히게 짧게 — 글자 칸 수(TV 폭) · 153 금칙 · 긴 줄표는 시험(gymNotices.test.ts)이 본다.
  *   · 앱 기능 공지의 내용은 그 기능의 앱 업데이트 글(data/appUpdates.ts)과 같은 사실만 — 숫자는 코드 값(성향 검사 36문항 · 챔피언 머니 3,000 ·
@@ -12,6 +12,7 @@
  *   · 한글 AI 티 지우기(공용 스킬 im-not-ai) 거친 글 — 줄표 · 연결어미 쉼표 · 같은 끝맺음 반복 없이.
  */
 import type { GymNotice } from "@/lib/gymNotices";
+import { BOXRAW_CODE, BOXRAW_LINK } from "@/data/boxraw";
 
 const SEOLLEUNG = ["153복싱짐 선릉역점"] as const;
 
@@ -28,7 +29,22 @@ export const GYM_NOTICES: readonly GymNotice[] = [
     ease: "기다려 주셔서 감사해요",
     visual: { kind: "shower", status: "보일러 교체 완료" },
   },
-  // ② 나의 153 성향 검사 (2026-11-25 · 내 운동 기록 카드 MemberStyleCard — QR 은 ?style=1 로 카드까지 내려와 검사 창을 연다)
+  // ② BOXRAW 공식 앰버서더 체육관 (2026-11-26 23시 대표님 「이부분도 체육관 회원님들에게는 좋은 소식이니까 공지하자」 · 「복싱계의 명품 브랜드라고
+  //    소개해줘」 — MOU · 영국 대표 미팅 · 인터뷰와 사전 심사 · 300만 원 상당 장비 · 샌드백 전면 교체 · 코치 트레이닝복 지원 · 전용 링크 · 코드)
+  //    QR = 대표님이 준 앰버서더 전용 링크 그대로(추적 값) · 글 · 링크 정본은 data/boxraw.ts
+  {
+    id: "20261126-boxraw-ambassador",
+    branches: SEOLLEUNG,
+    tag: "BOXRAW",
+    kicker: "인터뷰와 사전 심사를 거쳐",
+    hook: ["BOXRAW 공식", "앰버서더 체육관"],
+    answer: "복싱계 명품 브랜드와 MOU를 맺었어요",
+    proofs: ["영국 BOXRAW 대표님과 직접 미팅", "300만 원 상당 장비 · 샌드백 전면 교체", "코치님 트레이닝복도 BOXRAW 지원"],
+    ease: `공식몰 결제 때 코드 ${BOXRAW_CODE} 넣어요`,
+    visual: { kind: "brand", logo: "/market/boxraw/logo.svg", logoAlt: "BOXRAW", badge: "공식 앰버서더 체육관", sub: "153복싱짐 선릉역점" },
+    qr: { path: BOXRAW_LINK, caption: ["BOXRAW", "공식몰 가기"] },
+  },
+  // ③ 나의 153 성향 검사 (2026-11-25 · 내 운동 기록 카드 MemberStyleCard — QR 은 ?style=1 로 카드까지 내려와 검사 창을 연다)
   {
     id: "20261126-app-style",
     branches: SEOLLEUNG,
@@ -51,7 +67,7 @@ export const GYM_NOTICES: readonly GymNotice[] = [
     },
     qr: { path: "/mypage/attendance?style=1", caption: ["성향 검사", "시작하기"] },
   },
-  // ③ 복싱 타이머 (2026-11-22 · 훈련 탭 「오늘 할 것」 BoxingTimerEntry · ?timer=1 로 바로 열린다)
+  // ④ 복싱 타이머 (2026-11-22 · 훈련 탭 「오늘 할 것」 BoxingTimerEntry · ?timer=1 로 바로 열린다)
   {
     id: "20261126-app-timer",
     branches: SEOLLEUNG,
@@ -65,7 +81,7 @@ export const GYM_NOTICES: readonly GymNotice[] = [
     visual: { kind: "timer", preset: "자율 운동", clock: "3:00", round: "1라운드", rounds: 6, sub: "3분 · 쉬기 30초 · 6라운드" },
     qr: { path: "/missions?timer=1", caption: ["복싱 타이머", "열기"] },
   },
-  // ④ 수강권 앱 결제 — 시작일 고르기(2026-11-21 · 선릉역점) · 마일리지 10%(lib/cartPricing.ts)
+  // ⑤ 수강권 앱 결제 — 시작일 고르기(2026-11-21 · 선릉역점) · 마일리지 10%(lib/cartPricing.ts)
   {
     id: "20261126-app-pass",
     branches: SEOLLEUNG,

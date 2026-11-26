@@ -75,7 +75,7 @@ describe("TV 2번 「마이복서153」 ↔ 「체육관 공지사항」 탭", (
     expect(screen.getByText("체육관 공지사항")).toBeInTheDocument();
   });
 
-  it("홀수 분 첫 15초 — 샤워실 공지(QR 없이) · 공지 탭이 지금 탭", async () => {
+  it("홀수 분 첫 12초 — 샤워실 공지(QR 없이) · 공지 탭이 지금 탭", async () => {
     answer(SUNREUNG);
     now = DAY0 + NOTICE_TAB_MS + 1_000;
     wrap(<LaunchEventBoard branchName={SUNREUNG} />);
@@ -88,9 +88,21 @@ describe("TV 2번 「마이복서153」 ↔ 「체육관 공지사항」 탭", (
     expect(screen.queryByRole("article", { name: /마이복서153 · / })).toBeNull();
   });
 
-  it("홀수 분 다음 15초씩 — 성향 검사 · 복싱 타이머 · 수강권 결제(QR 하나씩)", async () => {
+  it("홀수 분 다음 12초 — BOXRAW 공식 앰버서더(흰 판 로고 · 코드 · QR 공식몰)", async () => {
     answer(SUNREUNG);
-    now = DAY0 + NOTICE_TAB_MS + 16_000;
+    now = DAY0 + NOTICE_TAB_MS + 13_000;
+    wrap(<LaunchEventBoard branchName={SUNREUNG} />);
+    const brand = await screen.findByRole("article", { name: "체육관 공지 · BOXRAW" });
+    expect(brand).toHaveTextContent("앰버서더 체육관");
+    expect(brand).toHaveTextContent("복싱계 명품 브랜드와 MOU를 맺었어요");
+    expect(brand).toHaveTextContent("153boxing20");
+    expect(brand).toHaveTextContent(/BOXRAW\s*공식몰 가기/);
+    expect(screen.getByAltText("BOXRAW")).toHaveAttribute("src", "/market/boxraw/logo.svg");
+  });
+
+  it("그다음 12초씩 — 성향 검사 · 복싱 타이머 · 수강권 결제(QR 하나씩)", async () => {
+    answer(SUNREUNG);
+    now = DAY0 + NOTICE_TAB_MS + 25_000;
     const a = wrap(<LaunchEventBoard branchName={SUNREUNG} />);
     const style = await screen.findByRole("article", { name: "체육관 공지 · 성향 검사" });
     expect(style).toHaveTextContent("코치님이 알까요?");
@@ -98,7 +110,7 @@ describe("TV 2번 「마이복서153」 ↔ 「체육관 공지사항」 탭", (
     expect(style).toHaveTextContent("카메라로 찍어요");
     a.unmount();
 
-    now = DAY0 + NOTICE_TAB_MS + 31_000;
+    now = DAY0 + NOTICE_TAB_MS + 37_000;
     const b = wrap(<LaunchEventBoard branchName={SUNREUNG} />);
     const timer = await screen.findByRole("article", { name: "체육관 공지 · 복싱 타이머" });
     expect(timer).toHaveTextContent("3:00");
