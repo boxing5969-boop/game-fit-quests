@@ -185,6 +185,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - [64 스파링 영상 — 1차 유튜브 · 2차 자체 저장 대비](docs/features/64-스파링-영상.md) — `src/components/sparring/SparringRecorderPanel.tsx`
 - [65 알림을 누르면 바로 그 화면 — PT 확인 필요 · 출근 그날 · 새 회원](docs/features/65-알림-바로-그-화면.md) — `src/lib/opsLink.ts`
 - [66 지도자 홈 — 코치 · 관장 · 관리자 홈 맨 위 · 신규 재등록률 · 기간 임박 · 재미 위험 신규 · 코치용 사진](docs/features/66-지도자-홈.md) — `src/components/leader/LeaderHome.tsx`
+- [67 라이브보드 TV 2번 「체육관 공지사항」 탭 — 마이복서153 ↔ 공지 1분씩](docs/features/67-라이브보드-TV-2번-체육관-공지사항.md) — `src/data/gymNotices.ts`
 
 ### Supabase 연결
 

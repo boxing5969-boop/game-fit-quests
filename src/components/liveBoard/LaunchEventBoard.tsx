@@ -23,6 +23,9 @@
  *   수상자를 못 읽으면(함수 없음 · 열쇠) 한 줄 없이 가치 전달만 · 이벤트 정보를 못 읽어도 가치 전달(TV 가 비면 안 된다).
  *   새 이벤트가 열리면(upcoming · active) 저절로 예전 이벤트 보드. 첫 응답 전엔 비워 둔다(이벤트 보드 ↔ 가치 전달 깜빡임 막기).
  *   11/17 「수상자 축하」 한 장(LaunchAwardsBoard)은 지우지 않고 둔다(다음 시상 때 다시 쓸 수 있게).
+ *
+ * 2026-11-26 대표님 「우리 런칭이벤트 했던 사이니지 모니터에 체육관 공지사항 탭하나 만들자」:
+ *   한 줄 아래 칸을 Tv2Tabs 로 — 공지가 있는 지점은 「마이복서153」(가치 전달) ↔ 「체육관 공지사항」(GymNoticeBoard)을 1분씩 번갈아.
  */
 import { useEffect, useMemo, useState } from "react";
 import { Crown, Heart, Smartphone, CalendarCheck, Trophy } from "lucide-react";
@@ -31,8 +34,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { readBoardKey } from "@/lib/boardKey";
 import { awardsView, normalizeAwards, type AwardsData } from "@/lib/launchAwards";
 import { awardsStripOf } from "@/lib/appValueReel";
-import AppValueReel from "@/components/liveBoard/AppValueReel";
 import LaunchAwardsStrip from "@/components/liveBoard/LaunchAwardsStrip";
+import Tv2Tabs from "@/components/liveBoard/Tv2Tabs";
 import { LAUNCH_EVENT_CATEGORIES, KING_META, fmtKstDate, type KingCategory, type LaunchEventStatus } from "@/services/king153Service";
 
 interface TvRow { rank: number; display_name: string; score: number | string }
@@ -132,7 +135,8 @@ const LaunchEventBoard = ({ branchName }: Props) => {
       <section aria-label="마이복서153 가치 전달" className="flex h-full min-h-0 flex-col gap-3 px-6 py-3">
         {strip && <LaunchAwardsStrip strip={strip} />}
         <div className="min-h-0 flex-1">
-          <AppValueReel branchName={branchName} awardsRules={awardsData?.rules ?? null} />
+          {/* 공지가 있는 지점(선릉역점)은 「마이복서153」 ↔ 「체육관 공지사항」 1분씩 · 없으면 가치 전달만 (2026-11-26) */}
+          <Tv2Tabs branchName={branchName} awardsRules={awardsData?.rules ?? null} />
         </div>
       </section>
     );
