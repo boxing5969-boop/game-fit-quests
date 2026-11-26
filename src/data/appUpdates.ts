@@ -18,6 +18,18 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261126-leader-home",
+    date: "2026-11-26",
+    title: "지도자 홈 — 홈 맨 위에 오늘 챙길 회원",
+    lines: [
+      "신규 재등록률과 목표까지 남은 인원이 맨 위에 보여요",
+      "수강권이 곧 끝나는 회원 · 재미 붙이기 어려운 신규를 얼굴과 함께",
+      "「이야기함」을 누르면 누가 언제 이야기했는지 코치님 모두 봐요",
+    ],
+    audience: "staff",
+    branches: SEOLLEUNG,
+  },
+  {
     id: "20261126-work-checks",
     date: "2026-11-26",
     title: "나만의 체크 — 업무 체크도 만들어요",

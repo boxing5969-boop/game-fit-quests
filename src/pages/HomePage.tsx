@@ -76,6 +76,7 @@ import BirthdayCongratsCard from "@/components/home/BirthdayCongratsCard";
 import GrowthLessonCard from "@/components/home/GrowthLessonCard";
 import OfficeEntryCard from "@/components/office/OfficeEntryCard";
 import HomeCleanCard from "@/components/home/HomeCleanCard";
+import LeaderHome from "@/components/leader/LeaderHome";
 import CommunityTodayStrip from "@/components/home/CommunityTodayStrip";
 import HomePullToRefresh from "@/components/home/HomePullToRefresh";
 import { useTodayBirthdays } from "@/services/birthdayService";
@@ -653,6 +654,9 @@ const HomePage = ({ view = "menu" }: { view?: "menu" | "myboxer" }) => {
         //     나머지 기능은 아래 '전체 메뉴'를 펼쳐야 보인다 — 지운 게 아니라 접은 것.
         //     (2026-09-29 "첫 화면 = 전체 메뉴만" 결정은 이 결정으로 대체)
         <div className="space-y-5">
+          {/* 🧭 지도자 홈 — 코치 · 관장 · 관리자 홈 맨 위 (2026-11-26 대표님 「코치님용 관장님용 관리자용 홈화면 · 신규 회원 재등록률 70%」
+              · 1순위 기간 임박 · 2순위 재미 위험 신규). 켠 지점 지도진 · 본사에게만 — 회원에게는 아무것도 그리지 않는다 */}
+          <LeaderHome />
           {renderHero(true, showLevelQuest)}
           {/* 🎨 카드 꾸미기 · ⭐ 리뷰 미션 (2026-11-21 대표님 「구글 · 네이버 · 당근 리뷰를 미션으로 · 리뷰를 달면 마일리지와 선물 ·
               선물은 프로필 카드를 꾸밀 수 있는 것 · 꾸민 카드는 사이니지에」). 회원 카드에만 */}
