@@ -16,6 +16,8 @@
  *   (3-5 · DB 20261114101236_calendar_stage35.sql) 내 일정 · 기념일 = set_my_cal_event · remove_my_cal_event (useSaveMyEvent ·
  *   useRemoveMyEvent) · 검색 = search_my_calendar (useCalendarSearch) · 캘린더 켜고 끄기 · 리그 테마 = set_my_calendar_view
  *   (useSetCalendarView — 누르는 순간 바뀌고 실패하면 되돌림). 글 · 검사는 lib/memberEvents.ts.
+ *   (업무 체크 · 2026-11-26 · DB 20261126125548_member_check_work.sql) 새 업무 체크만 set_my_check_item 에 p_kind:'work' 를 더 보낸다
+ *   (운동 · 고치기는 예전 부름 그대로) · get_my_calendar 항목의 kind 로 운동 · 업무를 가른다(없으면 운동).
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -138,7 +140,11 @@ export function useSaveCheckItem() {
   return useMutation({
     mutationFn: async (v: { draft: CheckItemDraft; id?: string | null; prevIds?: readonly string[]; hadGoal?: boolean }) => {
       const { data, error } = await rpc("set_my_check_item", checkItemPayload(v.draft, v.id));
-      if (error) throw new Error(translateError(error, "잠시 뒤 다시 해 주세요"));
+      if (error) {
+        // (업무 체크) 업무 칸이 아직 없는 DB(옛 미리보기) — 운동 체크는 예전 부름이라 그대로 된다
+        if (isMissingFn(error) && v.draft.kind === "work") throw new Error("업무 체크는 아직 쓸 수 없어요 — 잠시 뒤 다시 해 주세요");
+        throw new Error(translateError(error, "잠시 뒤 다시 해 주세요"));
+      }
       const goal = checkGoalOf(v.draft);
       if (goal == null && !v.hadGoal) return;
       let id = v.id ?? null;

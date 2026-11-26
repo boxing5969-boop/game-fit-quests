@@ -19,9 +19,13 @@
  *     오늘 아직이면 「1분 읽기」(onGrowth → 홈의 오늘의 1분 성장 서랍). 켠 지점 회원 · check_from 날부터만 (lib/growthStage2.ts).
  *   · (운동 시간 고치기 · 2026-11-21 대표님 「7일까지」) 운동 종료를 깜빡해 기본 시간으로 쳐진 날은 들어온 시각 아래
  *     「운동한 시간 고치기」(onFixWorkout — 출석한 날부터 7일 안 · 한 번만 · 창은 components/home/WorkoutFixSheet).
+ *   · (업무 체크 · 2026-11-26 대표님 「업무 체크 리스트도 만들수있게 해줘」) 업무 체크는 체크 칩 아래 「업무」 줄에 따로 —
+ *     눌러서 끝냈어요 · 한 줄은 workProgress('업무 2개 끝냈어요 · 1개 더 하면 다 끝나요'). 금색 별 · 위 한 줄에는 안 셈.
+ *     오늘은 줄 오른쪽 「고치기」 = 나만의 체크 시트 업무 칸(onManage('work')).
  */
 import { useLayoutEffect, useRef, useState } from "react";
 import {
+  Briefcase,
   CalendarDays,
   Check,
   ChevronRight,
@@ -69,8 +73,11 @@ import {
   dayChecks,
   isStarDay,
   journalPhotos,
+  kindItems,
   stickerOf,
+  workProgress,
   type CalState,
+  type CheckItemKind,
   type DayCheck,
   type JournalVisibility,
   type StickerKey,
@@ -112,7 +119,8 @@ export interface DayChecksPanelProps {
   onCheer: () => void;
   /** (1분 성장 2단계) 오늘 아직 안 읽은 '1분 성장' 칸을 누르면 — 홈의 「오늘의 1분 성장」을 연다 */
   onGrowth?: () => void;
-  onManage: () => void;
+  /** 나만의 체크 시트 — (업무 체크) 'work' 면 업무 칸부터 */
+  onManage: (kind?: CheckItemKind) => void;
   /** (2-2) 저요 한 운동 모집을 누르면 — 커뮤니티 '오늘 같이 해요' */
   onOpenCalls?: () => void;
   /** (2-3) 앞날 — '이 날을 목표일로' (D-day 시트를 그 날로) */
@@ -498,6 +506,10 @@ export const DayChecksPanel = ({
   const dayTodos = todosOn(cal.todos, day);
   const star = isStarDay(checks);
   const progress = checkProgress(checks, isToday);
+  // (업무 체크) 업무 칸은 「업무」 줄에 따로 — 금색 별 · 위 한 줄에는 안 센다
+  const mainChecks = checks.filter((c) => !c.work);
+  const workChecks = checks.filter((c) => c.work);
+  const workLine = workProgress(checks, isToday);
   const sticker = stickerOf(info?.sticker);
   const stickerExtended = !!sticker && STICKERS.findIndex((x) => x.key === sticker.key) >= STICKER_FIRST_ROW;
   const showAllStickers = moreStickers || stickerExtended;
@@ -509,6 +521,9 @@ export const DayChecksPanel = ({
   }, [journal?.content, journal?.mood, fullLine, compact, day]);
   const VisIcon = journal ? VIS_ICON[journal.visibility] : null;
   const activeItems = cal.items.filter((i) => i.archivedOn == null).length;
+  // (업무 체크) 업무 체크만 있으면 시트를 업무 칸으로 연다
+  const manageKind: CheckItemKind | undefined =
+    kindItems(cal.items, "workout").length === 0 && kindItems(cal.items, "work").length > 0 ? "work" : undefined;
   // (2-3) 코치 한마디 · 그날 한 일 · D-day · 기념일
   const notes = notesOn(cal.notes, day);
   const acts = actsOn(cal.acts, day);
@@ -574,7 +589,7 @@ export const DayChecksPanel = ({
         {compact ? (
           <button
             type="button"
-            onClick={onManage}
+            onClick={() => onManage(manageKind)}
             className="inline-flex h-8 shrink-0 items-center gap-0.5 text-label font-bold text-primary active:opacity-70"
           >
             나만의 체크
@@ -635,7 +650,7 @@ export const DayChecksPanel = ({
       <Agenda day={day} today={today} events={events} calls={calls} onOpenCalls={onOpenCalls} />
 
       <div className="mt-2 flex flex-wrap gap-1.5" role="group" aria-label="체크">
-        {checks.map((c) => (
+        {mainChecks.map((c) => (
           <CheckChip
             key={c.key}
             c={c}
@@ -650,6 +665,43 @@ export const DayChecksPanel = ({
         ))}
       </div>
       {progress && <p className="mt-2 text-label font-bold text-foreground">{progress}</p>}
+      {/* (업무 체크) 업무 줄 — 금색 별 · 위 한 줄과 따로 */}
+      {workChecks.length > 0 && (
+        <div className="mt-3 border-t border-border/70 pt-2.5" role="group" aria-label="업무 체크">
+          <div className="flex items-center justify-between gap-2">
+            <p className="flex items-center gap-1 text-label font-bold text-muted-foreground">
+              <Briefcase className="h-4 w-4" aria-hidden />
+              업무
+            </p>
+            {isToday && (
+              <button
+                type="button"
+                onClick={() => onManage("work")}
+                className="inline-flex h-8 shrink-0 items-center gap-0.5 text-label font-bold text-primary active:opacity-70"
+              >
+                고치기
+                <ChevronRight className="h-4 w-4" aria-hidden />
+              </button>
+            )}
+          </div>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {workChecks.map((c) => (
+              <CheckChip
+                key={c.key}
+                c={c}
+                today={isToday}
+                editable={editable}
+                busy={busy}
+                onToggle={onToggle}
+                onWriteLine={onWriteLine}
+                onCheer={onCheer}
+                onGrowth={onGrowth}
+              />
+            ))}
+          </div>
+          {workLine && <p className="mt-2 text-label font-bold text-foreground">{workLine}</p>}
+        </div>
+      )}
       {/* (3-4) 오늘이 마감인 할 일 — 지난 날 카드에는 그리지 않는다 */}
       {isToday && <Todos todos={dayTodos} canCheck onTodo={onTodo} />}
 
@@ -722,7 +774,7 @@ export const DayChecksPanel = ({
 
       {isToday && !compact && (
         <div className="mt-2 flex flex-wrap items-center gap-x-4">
-          <button type="button" onClick={onManage} className="inline-flex h-9 items-center gap-0.5 text-label font-bold text-primary active:opacity-70">
+          <button type="button" onClick={() => onManage(manageKind)} className="inline-flex h-9 items-center gap-0.5 text-label font-bold text-primary active:opacity-70">
             {activeItems > 0 ? "나만의 체크 고치기" : "나만의 체크 만들기"}
             <ChevronRight className="h-4 w-4" aria-hidden />
           </button>

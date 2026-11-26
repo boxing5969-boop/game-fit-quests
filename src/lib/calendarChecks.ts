@@ -16,6 +16,10 @@
  *   · (오늘의 1분 성장 2단계 · 2026-11-17 대표님 「다음진행」 · 선릉역점부터) 저절로 체크에 '1분 성장' 한 칸 —
  *     그날 「오늘의 1분 성장」을 읽었으면 채워진다. get_my_calendar 가 아니라 get_my_growth 로 읽어 붙인다(CalState.growth ·
  *     services/calendarCheckService). 드는 날 = check_from 부터(그 앞 날은 예전 그대로) · 서버 _cal_check_count 와 같은 식.
+ *   · (업무 체크 · 2026-11-26 대표님 「운동 체크리스트도 있지만 업무 체크 리스트도 만들수있게 해줘」 · 「다음가자」) 나만의 체크에 종류
+ *     kind = 운동(지금까지 · 3개) · 업무(5개 · 단위 건/통/개/번/분/시간). 업무 칸은 DayCheck.work — 금색 별 · 한 줄(checkProgress) ·
+ *     서버 _cal_check_count(저녁 체크 알림 · 일요일 돌아보기)에 세지 않고, 그날 카드에 「업무」 줄로 따로(workProgress).
+ *     DB 20261126125548_member_check_work.sql — 서버가 kind 를 안 주면(옛 DB) 모두 운동으로 읽는다.
  */
 import { weekdayOfYmd } from "@/lib/promise153";
 import { normalizeCalls, normalizeEvents, type CalCall, type CalEvent } from "@/lib/calendarEvents";
@@ -46,6 +50,24 @@ export const CHECK_TARGET_MAX = 9999;
 export const CHECK_EDIT_DAYS = 6;
 export const CHECK_UNITS = ["번", "분", "라운드", "세트", "km", "개"] as const;
 export type CheckUnit = (typeof CHECK_UNITS)[number];
+
+/** (업무 체크) 나만의 체크 종류 — 운동(지금까지 만든 것 · 기본) · 업무 */
+export type CheckItemKind = "workout" | "work";
+export const CHECK_KINDS: readonly { key: CheckItemKind; label: string }[] = [
+  { key: "workout", label: "운동" },
+  { key: "work", label: "업무" },
+];
+/** 업무 체크는 5개까지 (운동은 CHECK_ITEM_MAX 3개 — 따로 센다 · 서버 set_my_check_item 과 같다) */
+export const WORK_ITEM_MAX = 5;
+export const WORK_UNITS = ["건", "통", "개", "번", "분", "시간"] as const;
+export type WorkUnit = (typeof WORK_UNITS)[number];
+export const kindOf = (i: { kind?: CheckItemKind | null }): CheckItemKind => (i.kind === "work" ? "work" : "workout");
+export const kindLabel = (k: CheckItemKind): string => (k === "work" ? "업무" : "운동");
+export const checkMaxOf = (k: CheckItemKind): number => (k === "work" ? WORK_ITEM_MAX : CHECK_ITEM_MAX);
+export const unitsOf = (k: CheckItemKind): readonly (CheckUnit | WorkUnit)[] => (k === "work" ? WORK_UNITS : CHECK_UNITS);
+/** 그 종류의 지금 체크 (뺀 것 빼고) */
+export const kindItems = <T extends { kind?: CheckItemKind | null; archivedOn: string | null }>(items: readonly T[], k: CheckItemKind): T[] =>
+  items.filter((i) => i.archivedOn == null && kindOf(i) === k);
 
 export type StickerKey =
   | "strong"
@@ -105,6 +127,15 @@ export const CHECK_EXAMPLES: readonly { label: string; target: number | null; un
   { label: "스트레칭", target: 5, unit: "분" },
 ];
 
+/** (업무 체크) 업무 예시 — 회원(직장인) · 코치님 모두 쓰기 쉬운 것 · 눌러서 채움 */
+export const WORK_EXAMPLES: readonly { label: string; target: number | null; unit: WorkUnit | null }[] = [
+  { label: "카톡 · 메일 답장", target: null, unit: null },
+  { label: "오늘 할 일 정리", target: null, unit: null },
+  { label: "집중 업무", target: 50, unit: "분" },
+  { label: "연락", target: 5, unit: "건" },
+];
+export const examplesOf = (k: CheckItemKind) => (k === "work" ? WORK_EXAMPLES : CHECK_EXAMPLES);
+
 // ───────────────────────── 서버 값 ─────────────────────────
 export interface CheckItem {
   id: string;
@@ -117,6 +148,8 @@ export interface CheckItem {
   weekGoal: number | null;
   createdOn: string;
   archivedOn: string | null;
+  /** (업무 체크) 종류 — 없으면 운동 (kindOf) */
+  kind?: CheckItemKind;
 }
 
 export type JournalVisibility = "branch" | "partners" | "private";
@@ -236,6 +269,7 @@ function normalizeItem(raw: unknown): CheckItem | null {
     weekGoal: wg != null && wg >= 1 && wg <= WEEK_GOAL_MAX ? wg : null,
     createdOn,
     archivedOn: ymd(r.archived_on),
+    kind: str(r.kind) === "work" ? "work" : "workout",
   };
 }
 
@@ -344,6 +378,8 @@ export interface DayCheck {
   itemId?: string;
   /** (3-4) 주 n번 체크 — 그날 해도 되고 안 해도 되는 칸 · 금색 별 · 한 줄에 세지 않는다 */
   flex?: boolean;
+  /** (업무 체크) 업무 칸 — 「업무」 줄에 따로 · 금색 별 · 한 줄에 세지 않는다 */
+  work?: boolean;
 }
 
 /** '1분 성장' 칸 이름 */
@@ -376,20 +412,32 @@ export function dayChecks(
         done: done.has(i.id),
         itemId: i.id,
         ...(i.weekGoal ? { flex: true } : {}),
+        ...(kindOf(i) === "work" ? { work: true } : {}),
       }),
     ),
   ];
 }
 
-/** 금색 별 — 그날의 체크를 다 채운 날 · (3-4) 주 n번 체크는 세지 않는다(서버 _cal_check_count 와 같은 식) */
+/** 금색 별 — 그날의 체크를 다 채운 날 · (3-4) 주 n번 · (업무 체크) 업무 칸은 세지 않는다(서버 _cal_check_count 와 같은 식) */
 export const isStarDay = (checks: readonly DayCheck[]): boolean => {
-  const must = checks.filter((c) => !c.flex);
+  const must = checks.filter((c) => !c.flex && !c.work);
   return must.length > 0 && must.every((c) => c.done);
 };
 
-/** 한 줄 — 채운 것과 다음 한 걸음만 (지난 날 0개는 아무 말도 안 한다) · 주 n번 체크는 세지 않는다 */
+/** (업무 체크) 「업무」 줄 한 줄 — 채운 것과 다음 한 걸음만 (지난 날 0개는 말 없음) · 주 n번 업무는 세지 않는다 */
+export function workProgress(checks: readonly DayCheck[], isToday: boolean): string | null {
+  const must = checks.filter((c) => c.work && !c.flex);
+  const total = must.length;
+  const done = must.filter((c) => c.done).length;
+  if (total === 0) return null;
+  if (done === total) return isToday ? "오늘 업무 체크를 다 끝냈어요" : "업무 체크를 다 끝낸 날이에요";
+  if (done === 0) return isToday ? "끝낸 업무를 하나씩 눌러 체크해요" : null;
+  return isToday ? `업무 ${done}개 끝냈어요 · ${total - done}개 더 하면 다 끝나요` : `이날 업무 ${done}개 끝냈어요`;
+}
+
+/** 한 줄 — 채운 것과 다음 한 걸음만 (지난 날 0개는 아무 말도 안 한다) · 주 n번 · 업무 체크는 세지 않는다 */
 export function checkProgress(checks: readonly DayCheck[], isToday: boolean): string | null {
-  const must = checks.filter((c) => !c.flex);
+  const must = checks.filter((c) => !c.flex && !c.work);
   const total = must.length;
   const done = must.filter((c) => c.done).length;
   if (total === 0) return null;
@@ -424,25 +472,36 @@ export interface CheckItemDraft {
   label: string;
   /** 비우면 숫자 없이 (예: 스트레칭) */
   target: string;
-  unit: CheckUnit | null;
+  unit: CheckUnit | WorkUnit | null;
   /** 요일(schedule 'days') — 예전 화면처럼 비우면 매일 */
   weekdays: number[];
   /** (3-4) 없으면 예전처럼 — 요일을 골랐으면 'days', 아니면 'daily' */
   schedule?: CheckSchedule;
   /** (3-4) 주 n번 (schedule 'goal') */
   goal?: number;
+  /** (업무 체크) 없으면 운동 */
+  kind?: CheckItemKind;
 }
 
-export const emptyCheckDraft = (): CheckItemDraft => ({ label: "", target: "", unit: "번", weekdays: [], schedule: "daily", goal: 3 });
+/** 새 체크 초안 — 운동은 예전 그대로(매일 · 번) · (업무 체크) 업무는 평일(월~금) · 건 */
+export const emptyCheckDraft = (kind: CheckItemKind = "workout"): CheckItemDraft =>
+  kind === "work"
+    ? { label: "", target: "", unit: "건", weekdays: [1, 2, 3, 4, 5], schedule: "days", goal: 3, kind: "work" }
+    : { label: "", target: "", unit: "번", weekdays: [], schedule: "daily", goal: 3, kind: "workout" };
 
-export const draftFromItem = (i: CheckItem): CheckItemDraft => ({
-  label: i.label,
-  target: i.target != null ? String(i.target) : "",
-  unit: (CHECK_UNITS as readonly string[]).includes(i.unit ?? "") ? (i.unit as CheckUnit) : "번",
-  weekdays: i.weekdays ?? [],
-  schedule: i.weekGoal ? "goal" : i.weekdays ? "days" : "daily",
-  goal: i.weekGoal ?? 3,
-});
+export const draftFromItem = (i: CheckItem): CheckItemDraft => {
+  const kind = kindOf(i);
+  const units = unitsOf(kind) as readonly string[];
+  return {
+    label: i.label,
+    target: i.target != null ? String(i.target) : "",
+    unit: units.includes(i.unit ?? "") ? (i.unit as CheckUnit | WorkUnit) : kind === "work" ? "건" : "번",
+    weekdays: i.weekdays ?? [],
+    schedule: i.weekGoal ? "goal" : i.weekdays ? "days" : "daily",
+    goal: i.weekGoal ?? 3,
+    kind,
+  };
+};
 
 /** 고른 방식 (예전 초안은 요일이 있으면 'days') */
 export const scheduleOf = (d: CheckItemDraft): CheckSchedule => d.schedule ?? (d.weekdays.length > 0 && d.weekdays.length < 7 ? "days" : "daily");
@@ -458,7 +517,7 @@ export function checkItemError(d: CheckItemDraft): string | null {
   if (t) {
     const v = Number(t.replace(/,/g, ""));
     if (!Number.isInteger(v) || v < 1 || v > CHECK_TARGET_MAX) return "목표 숫자는 1부터 9,999까지 적어 주세요";
-    if (d.unit && !(CHECK_UNITS as readonly string[]).includes(d.unit)) return "단위를 다시 골라 주세요";
+    if (d.unit && !(unitsOf(kindOf(d)) as readonly string[]).includes(d.unit)) return "단위를 다시 골라 주세요";
   }
   if (d.weekdays.some((w) => !Number.isInteger(w) || w < 0 || w > 6)) return "요일을 다시 골라 주세요";
   const sc = scheduleOf(d);
@@ -477,6 +536,8 @@ export function checkItemPayload(d: CheckItemDraft, id?: string | null) {
     p_target: target,
     p_unit: target != null ? d.unit : null,
     p_weekdays: days.length === 0 || days.length === 7 ? null : days,
+    // (업무 체크) 새 업무 체크만 종류를 보낸다 — 운동 · 고치기는 예전과 같은 부름(서버가 만든 종류를 지킨다 · 옛 DB 도 그대로 됨)
+    ...(!id && kindOf(d) === "work" ? { p_kind: "work" as const } : {}),
   };
 }
 

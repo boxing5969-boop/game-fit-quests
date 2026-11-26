@@ -75,7 +75,7 @@ import { attendanceByDay, monthBounds, monthOf, monthWeeks, shiftMonth, weekOf }
 import { kstToday } from "@/lib/attendanceCheer";
 import { dayMoments, freshStartLine, monthRecap, type DayMoment } from "@/lib/calendarMoments";
 import { isPromisedDay, promiseSentence, promiseStatus, type Promise153 } from "@/lib/promise153";
-import { calendarRange, dayChecks, isStarDay, stickerOf, type StickerKey } from "@/lib/calendarChecks";
+import { calendarRange, dayChecks, isStarDay, stickerOf, type CheckItemKind, type StickerKey } from "@/lib/calendarChecks";
 import { DOT_CALL, DOT_CLOSED, DOT_EVENT, callsOn, closedDaySet, eventDot, eventsOn } from "@/lib/calendarEvents";
 import {
   DDAY_CHIP,
@@ -622,6 +622,8 @@ const WorkoutCalendarCard = ({
   const fixQ = useMyWorkoutFix(withChecks);
   const [fixOpen, setFixOpen] = useState<WorkoutFixItem | null>(null);
   const [sheet, setSheet] = useState<SheetKey | null>(null);
+  // (업무 체크) 나만의 체크 시트를 열 종류 — 그날 카드 「업무」 줄에서 열면 업무
+  const [itemsKind, setItemsKind] = useState<CheckItemKind>("workout");
   const [sheetDay, setSheetDay] = useState<string | null>(null);
   const [sheetMonth, setSheetMonth] = useState<string>(() => monthOf(today));
   const [mounted, setMounted] = useState<Record<SheetKey, boolean>>({
@@ -645,6 +647,10 @@ const WorkoutCalendarCard = ({
   const closeSheet = () => {
     setSheet(null);
     void qc.invalidateQueries({ queryKey: CAL2_KEY }); // 한 줄 · 응원을 마쳤으면 체크가 채워진다
+  };
+  const openItems = (k?: CheckItemKind) => {
+    setItemsKind(k ?? "workout");
+    openSheet("items");
   };
   // (2-3) 출석한 153 기념일 = 금색 도장 (첫 도장 · 출석 축하가 먼저)
   const moments = useMemo(
@@ -710,7 +716,7 @@ const WorkoutCalendarCard = ({
         onWriteLine={() => openSheet("line")}
         onCheer={() => openSheet("cheer")}
         onGrowth={() => navigate("/home?growth=1")}
-        onManage={() => openSheet("items")}
+        onManage={openItems}
         onOpenCalls={() => navigate("/myboxer/community?together=1")}
         onGoal={(d) => openSheet("dday", d)}
         onAddEvent={day >= today ? newEvent : undefined}
@@ -1102,6 +1108,7 @@ const WorkoutCalendarCard = ({
             open={sheet === "items"}
             onOpenChange={(v) => (v ? setSheet("items") : closeSheet())}
             items={cal.items.filter((i) => i.archivedOn == null)}
+            initialKind={itemsKind}
             nudge={cal.nudge}
             recap={cal.recap}
             onOpenFeed={feedOk ? () => openSheet("feed") : undefined}
@@ -1193,7 +1200,7 @@ const WorkoutCalendarCard = ({
             onToggle={(day, itemId, done) => doneM.mutate({ day, itemId, done }, { onError: (e) => toast.error((e as Error).message) })}
             onSticker={(day, key) => stickerM.mutate({ day, sticker: key }, { onError: (e) => toast.error((e as Error).message) })}
             onWriteLine={() => openSheet("line")}
-            onManage={() => openSheet("items")}
+            onManage={openItems}
           />
         </Suspense>
       )}

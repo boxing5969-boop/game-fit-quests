@@ -18,6 +18,17 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261126-work-checks",
+    date: "2026-11-26",
+    title: "나만의 체크 — 업무 체크도 만들어요",
+    lines: [
+      "나만의 체크 맨 위에서 운동 · 업무를 골라요 · 업무는 5개까지",
+      "끝낸 업무는 그날 카드 「업무」 줄에서 눌러 체크해요",
+      "금색 별은 지금처럼 운동 체크로 받아요",
+    ],
+    link: CAL,
+  },
+  {
     id: "20261126-approval-links",
     date: "2026-11-26",
     title: "승인 요청 알림 — 누르면 바로 승인",

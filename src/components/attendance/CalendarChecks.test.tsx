@@ -164,3 +164,47 @@ describe("운동 달력 그날 카드 — 운동 시간 고치기 (2026-11-21 7�
     expect(screen.queryByRole("button", { name: "운동한 시간 고치기" })).toBeNull();
   });
 });
+
+describe("운동 달력 그날 카드 — 업무 체크 (2026-11-26)", () => {
+  const calW = normalizeCalendar({
+    on: true,
+    today: "2026-11-12",
+    items: [
+      { id: "jab", label: "잽", target: 100, unit: "번", weekdays: null, created_on: "2026-11-01" },
+      { id: "mail", label: "카톡 · 메일 답장", target: null, unit: null, weekdays: null, kind: "work", created_on: "2026-11-01" },
+      { id: "call", label: "연락", target: 5, unit: "건", weekdays: [1, 2, 3, 4, 5], kind: "work", created_on: "2026-11-01" },
+    ],
+    days: [
+      { day: "2026-11-03", cheer: true, journal: { id: "j", content: "첫 미트", visibility: "private" }, done: ["jab", "mail"], sticker: null },
+    ],
+  });
+  const bw = { ...base, cal: calW };
+
+  it("오늘 — 업무 줄이 따로 · 누르면 끝냈어요 · 「고치기」는 업무 칸으로", () => {
+    const onToggle = vi.fn();
+    const onManage = vi.fn();
+    render(<DayChecksPanel {...bw} day="2026-11-12" attended={null} compact onToggle={onToggle} onManage={onManage} />);
+    const work = screen.getByRole("group", { name: "업무 체크" });
+    expect(work.textContent).toContain("업무");
+    expect(screen.getByText("끝낸 업무를 하나씩 눌러 체크해요")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /연락 5건/ }));
+    expect(onToggle).toHaveBeenCalledWith("call", true);
+    // 위 체크 줄에는 업무 칩이 없다
+    expect(screen.getByRole("group", { name: "체크" }).textContent).not.toContain("연락");
+    fireEvent.click(screen.getByRole("button", { name: /고치기/ }));
+    expect(onManage).toHaveBeenCalledWith("work");
+    expect(document.body.textContent).not.toMatch(/못|안 했|놓쳤|빠졌|실패/);
+  });
+
+  it("지난 날 — 운동을 다 채웠으면 업무가 남아도 금색 별 · 업무 줄은 끝낸 만큼만", () => {
+    render(<DayChecksPanel {...bw} day="2026-11-03" attended={att} onToggle={noop} />);
+    expect(screen.getByText("금색 별을 받은 날이에요")).toBeTruthy();
+    expect(screen.getByText("이날 업무 1개 끝냈어요")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /고치기/ })).toBeNull();
+  });
+
+  it("업무 체크가 없으면 업무 줄도 없다", () => {
+    render(<DayChecksPanel {...base} day="2026-11-12" attended={null} compact onToggle={noop} />);
+    expect(screen.queryByRole("group", { name: "업무 체크" })).toBeNull();
+  });
+});

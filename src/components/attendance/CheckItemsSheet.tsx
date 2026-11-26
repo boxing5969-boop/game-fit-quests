@@ -8,6 +8,9 @@
  *   체크마다 '이번 주 2/3번' · 'n주째 이어 가요' · '가장 길게 n주' (get_my_habits — 달성률 · 놓친 날은 없음) ·
  *   「마감 있는 할 일」 — 넣기(30자 · 오늘 · 내일 · 이번 주 일요일 · 날짜) · 끝냈어요 · 고치기 · 빼기 · 마감이 지나면 '다음에 해도 돼요'.
  *   습관 · 할 일 글 · 계산은 lib/memberHabits.ts.
+ *   (업무 체크 · 2026-11-26 대표님 「운동 체크리스트도 있지만 업무 체크 리스트도 만들수있게 해줘」 · 「다음가자」) 맨 위 [운동 | 업무] —
+ *   업무는 5개까지 · 단위 건/통/개/번/분/시간 · 예시 4개 · 처음 요일은 평일. 목록 · 만들기는 고른 종류만(고치기는 만든 종류 그대로).
+ *   initialKind = 그날 카드 「업무」 줄에서 열면 업무부터.
  */
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -17,17 +20,21 @@ import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } f
 import { Switch } from "@/components/ui/switch";
 import { hmLabel } from "@/lib/calendarEvents";
 import {
-  CHECK_EXAMPLES,
-  CHECK_ITEM_MAX,
+  CHECK_KINDS,
   CHECK_LABEL_MAX,
-  CHECK_UNITS,
   checkItemError,
+  checkMaxOf,
   draftFromItem,
   emptyCheckDraft,
+  examplesOf,
   itemLabel,
+  kindItems,
+  kindLabel,
   scheduleOf,
+  unitsOf,
   type CheckItem,
   type CheckItemDraft,
+  type CheckItemKind,
   type CheckSchedule,
 } from "@/lib/calendarChecks";
 import {
@@ -66,8 +73,10 @@ import type { CalRecapPref } from "@/lib/calendarTogether";
 export interface CheckItemsSheetProps {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  /** 지금 있는 나만의 체크 (뺀 것 빼고) */
+  /** 지금 있는 나만의 체크 (뺀 것 빼고 · 운동 · 업무 모두) */
   items: readonly CheckItem[];
+  /** (업무 체크) 열 때 고를 종류 — 없으면 운동 */
+  initialKind?: CheckItemKind;
   /** (2-2) 저녁 체크 알림 — 켰나 · 몇 시 */
   nudge?: { on: boolean; at: string };
   /** (2-4) 일요일 주간 돌아보기 알림 — 이 회원에게 가는 지점(sends)일 때만 칸이 보인다 */
@@ -330,8 +339,15 @@ const TodoSection = ({ todos, today }: { todos: readonly MemberTodo[]; today: st
   );
 };
 
-const CheckItemsSheet = ({ open, onOpenChange, items, nudge, recap, onOpenFeed }: CheckItemsSheetProps) => {
-  const [draft, setDraft] = useState<CheckItemDraft>(emptyCheckDraft);
+/** (업무 체크) 종류마다 안내 한 줄 · 이름 칸 예시 · 목표 숫자 예시 */
+const KIND_COPY: Record<CheckItemKind, { desc: (max: number) => string; placeholder: string; target: string }> = {
+  workout: { desc: (max) => `내가 정한 운동을 달력에 체크해요 · ${max}개까지`, placeholder: "예: 잽", target: "100" },
+  work: { desc: (max) => `오늘 끝낸 업무를 달력에 체크해요 · ${max}개까지`, placeholder: "예: 보고서 쓰기", target: "5" },
+};
+
+const CheckItemsSheet = ({ open, onOpenChange, items, initialKind = "workout", nudge, recap, onOpenFeed }: CheckItemsSheetProps) => {
+  const [kind, setKind] = useState<CheckItemKind>(initialKind);
+  const [draft, setDraft] = useState<CheckItemDraft>(() => emptyCheckDraft(initialKind));
   const [editId, setEditId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -344,17 +360,31 @@ const CheckItemsSheet = ({ open, onOpenChange, items, nudge, recap, onOpenFeed }
   const habits = habitsQ.data?.on ? habitsQ.data : null;
   const today = habits?.today ?? kstToday();
   const habitOf = useMemo(() => new Map<string, HabitItem>((habits?.items ?? []).map((h) => [h.id, h])), [habits]);
-  const full = items.length >= CHECK_ITEM_MAX;
+  // (업무 체크) 고른 종류의 체크만 — 운동 3개 · 업무 5개를 따로 센다
+  const shown = useMemo(() => kindItems(items, kind), [items, kind]);
+  const max = checkMaxOf(kind);
+  const full = shown.length >= max;
   const showForm = editId != null || !full;
   const schedule = scheduleOf(draft);
+  const copy = KIND_COPY[kind];
 
   useEffect(() => {
     if (!open) return;
-    setDraft(emptyCheckDraft());
+    setKind(initialKind);
+    setDraft(emptyCheckDraft(initialKind));
     setEditId(null);
     setError(null);
     setConfirmId(null);
-  }, [open]);
+  }, [open, initialKind]);
+
+  const switchKind = (k: CheckItemKind) => {
+    if (k === kind) return;
+    setKind(k);
+    setDraft(emptyCheckDraft(k));
+    setEditId(null);
+    setError(null);
+    setConfirmId(null);
+  };
 
   const set = (patch: Partial<CheckItemDraft>) => {
     setDraft((d) => ({ ...d, ...patch }));
@@ -370,8 +400,8 @@ const CheckItemsSheet = ({ open, onOpenChange, items, nudge, recap, onOpenFeed }
     try {
       const prev = editId ? items.find((i) => i.id === editId) : null;
       await save.mutateAsync({ draft, id: editId, prevIds: items.map((i) => i.id), hadGoal: !!prev?.weekGoal });
-      toast.success(editId ? "체크를 고쳤어요" : "나만의 체크를 만들었어요 · 오늘부터 달력에서 체크해요");
-      setDraft(emptyCheckDraft());
+      toast.success(editId ? "체크를 고쳤어요" : `${kindLabel(kind)} 체크를 만들었어요 · 오늘부터 달력에서 체크해요`);
+      setDraft(emptyCheckDraft(kind));
       setEditId(null);
     } catch (err) {
       setError((err as Error).message);
@@ -389,7 +419,7 @@ const CheckItemsSheet = ({ open, onOpenChange, items, nudge, recap, onOpenFeed }
       setConfirmId(null);
       if (editId === id) {
         setEditId(null);
-        setDraft(emptyCheckDraft());
+        setDraft(emptyCheckDraft(kind));
       }
     } catch (err) {
       setError((err as Error).message);
@@ -405,12 +435,38 @@ const CheckItemsSheet = ({ open, onOpenChange, items, nudge, recap, onOpenFeed }
       <DrawerContent className="max-h-[92vh]">
         <DrawerHeader className="pb-2 text-left">
           <DrawerTitle className="text-heading">나만의 체크</DrawerTitle>
-          <DrawerDescription className="text-label">내가 정한 운동을 달력에 체크해요 · {CHECK_ITEM_MAX}개까지</DrawerDescription>
+          <DrawerDescription className="text-label">{copy.desc(max)}</DrawerDescription>
         </DrawerHeader>
         <div className="space-y-5 overflow-y-auto px-4 pb-[calc(env(safe-area-inset-bottom,0px)+16px)]">
-          {items.length > 0 && (
-            <ul className="divide-y divide-border rounded-2xl border border-border bg-card" aria-label="지금 있는 체크">
-              {items.map((i) => {
+          {/* (업무 체크) 운동 · 업무 고르기 — 종류마다 몇 개 만들었는지 */}
+          <div role="tablist" aria-label="체크 종류" className="grid grid-cols-2 gap-1 rounded-xl bg-muted/70 p-1">
+            {CHECK_KINDS.map((k) => {
+              const on = kind === k.key;
+              const n = kindItems(items, k.key).length;
+              return (
+                <button
+                  key={k.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={on}
+                  onClick={() => switchKind(k.key)}
+                  className={cn(
+                    "flex h-11 items-center justify-center gap-1.5 rounded-lg text-body font-black transition-all active:scale-[0.98]",
+                    on ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground",
+                  )}
+                >
+                  {k.label}
+                  <span className={cn("text-label font-bold tabular-nums", on ? "text-primary" : "text-muted-foreground")}>
+                    {n}/{checkMaxOf(k.key)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {shown.length > 0 && (
+            <ul className="divide-y divide-border rounded-2xl border border-border bg-card" aria-label={`지금 있는 ${kindLabel(kind)} 체크`}>
+              {shown.map((i) => {
                 const h = habitOf.get(i.id);
                 const week = h ? weekLine(h.week) : null;
                 const streak = h ? streakParts(h.nowWeeks, h.bestWeeks) : [];
@@ -465,19 +521,21 @@ const CheckItemsSheet = ({ open, onOpenChange, items, nudge, recap, onOpenFeed }
 
           {full && editId == null && (
             <p className="rounded-xl bg-muted/60 px-4 py-3 text-label text-muted-foreground">
-              {CHECK_ITEM_MAX}개를 다 만들었어요 · 하나를 빼면 새로 만들 수 있어요
+              {kindLabel(kind)} 체크 {max}개를 다 만들었어요 · 하나를 빼면 새로 만들 수 있어요
             </p>
           )}
 
           {showForm && (
-            <section aria-label={editId ? "체크 고치기" : "새 체크"} className="space-y-4">
+            <section aria-label={editId ? "체크 고치기" : `새 ${kindLabel(kind)} 체크`} className="space-y-4">
               {editId == null && (
                 <div className="flex flex-wrap gap-1.5">
-                  {CHECK_EXAMPLES.filter((ex) => !items.some((i) => i.label === ex.label)).map((ex) => (
+                  {examplesOf(kind).filter((ex) => !shown.some((i) => i.label === ex.label)).map((ex) => (
                     <button
                       key={ex.label}
                       type="button"
-                      onClick={() => set({ label: ex.label, target: ex.target != null ? String(ex.target) : "", unit: ex.unit ?? "번" })}
+                      onClick={() =>
+                        set({ label: ex.label, target: ex.target != null ? String(ex.target) : "", unit: ex.unit ?? (kind === "work" ? "건" : "번") })
+                      }
                       className="rounded-full border border-border bg-card px-3 py-1.5 text-label font-bold text-foreground active:scale-95"
                     >
                       {itemLabel(ex)}
@@ -495,7 +553,7 @@ const CheckItemsSheet = ({ open, onOpenChange, items, nudge, recap, onOpenFeed }
                   value={draft.label}
                   maxLength={CHECK_LABEL_MAX + 5}
                   onChange={(e) => set({ label: e.target.value })}
-                  placeholder="예: 잽"
+                  placeholder={copy.placeholder}
                   className="mt-2 h-12 w-full rounded-xl border border-border bg-card px-4 text-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />
               </div>
@@ -510,11 +568,11 @@ const CheckItemsSheet = ({ open, onOpenChange, items, nudge, recap, onOpenFeed }
                     value={draft.target}
                     inputMode="numeric"
                     onChange={(e) => set({ target: e.target.value.replace(/[^\d,]/g, "").slice(0, 6) })}
-                    placeholder="100"
+                    placeholder={copy.target}
                     className="h-12 w-28 rounded-xl border border-border bg-card px-4 text-body tabular-nums text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
                   />
                   <div className={cn("flex flex-wrap gap-1.5", !hasTarget && "opacity-40")}>
-                    {CHECK_UNITS.map((u) => (
+                    {unitsOf(kind).map((u) => (
                       <button
                         key={u}
                         type="button"
@@ -616,7 +674,7 @@ const CheckItemsSheet = ({ open, onOpenChange, items, nudge, recap, onOpenFeed }
                     type="button"
                     onClick={() => {
                       setEditId(null);
-                      setDraft(emptyCheckDraft());
+                      setDraft(emptyCheckDraft(kind));
                       setError(null);
                     }}
                     className="flex h-14 flex-1 items-center justify-center rounded-2xl bg-muted text-body font-bold text-foreground active:scale-[0.98]"
@@ -630,7 +688,7 @@ const CheckItemsSheet = ({ open, onOpenChange, items, nudge, recap, onOpenFeed }
                   disabled={busy || !draft.label.trim()}
                   className="flex h-14 flex-[2] items-center justify-center rounded-2xl bg-primary text-body font-black text-primary-foreground active:scale-[0.98] disabled:opacity-50"
                 >
-                  {save.isPending ? "저장하는 중…" : editId ? "이렇게 고칠게요" : "체크 만들기"}
+                  {save.isPending ? "저장하는 중…" : editId ? "이렇게 고칠게요" : `${kindLabel(kind)} 체크 만들기`}
                 </button>
               </div>
             </section>

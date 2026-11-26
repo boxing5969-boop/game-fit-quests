@@ -5,9 +5,11 @@ import {
   applySticker,
   calendarRange,
   canEditDay,
+  WORK_ITEM_MAX,
   checkItemError,
   checkItemPayload,
   checkGoalOf,
+  checkMaxOf,
   checkProgress,
   dayChecks,
   draftFromItem,
@@ -15,8 +17,11 @@ import {
   isStarDay,
   itemLabel,
   itemsForDay,
+  kindItems,
+  kindOf,
   normalizeCalendar,
   stickerOf,
+  workProgress,
   type CheckItem,
 } from "./calendarChecks";
 
@@ -178,7 +183,72 @@ describe("운동 달력 체크 — 글 · 만들기", () => {
       p_unit: null,
       p_weekdays: null,
     });
-    expect(draftFromItem(ROPE)).toEqual({ label: "줄넘기", target: "10", unit: "분", weekdays: [1, 3, 5], schedule: "days", goal: 3 });
+    expect(draftFromItem(ROPE)).toEqual({ label: "줄넘기", target: "10", unit: "분", weekdays: [1, 3, 5], schedule: "days", goal: 3, kind: "workout" });
+  });
+});
+
+// (업무 체크 · 2026-11-26) 운동 3개 · 업무 5개 · 업무는 금색 별 · 한 줄에 세지 않는다 (서버 _cal_check_count 와 같은 식)
+describe("운동 달력 체크 — 업무 체크", () => {
+  const MAIL: CheckItem = { id: "mail", label: "카톡 · 메일 답장", target: null, unit: null, weekdays: null, weekGoal: null, createdOn: "2026-11-01", archivedOn: null, kind: "work" };
+  const CALL: CheckItem = { id: "call", label: "연락", target: 5, unit: "건", weekdays: [1, 2, 3, 4, 5], weekGoal: null, createdOn: "2026-11-01", archivedOn: null, kind: "work" };
+  const day = (done: string[]) => ({ day: "2026-11-12", cheer: true, give153: false, journal: { id: "j", content: "미트", mood: null, photoUrl: null, visibility: "private" as const, at: "" }, done, sticker: null });
+
+  it("읽기 — kind 'work' 만 업무 · 없거나 다른 값이면 운동(옛 DB)", () => {
+    const s = normalizeCalendar({
+      on: true,
+      items: [
+        { id: "a", label: "잽", created_on: "2026-11-01" },
+        { id: "b", label: "연락", target: 5, unit: "건", kind: "work", created_on: "2026-11-01" },
+        { id: "c", label: "줄넘기", kind: "dance", created_on: "2026-11-01" },
+      ],
+    });
+    expect(s.items.map((i) => i.kind)).toEqual(["workout", "work", "workout"]);
+    expect(kindOf({})).toBe("workout");
+    expect(kindItems([JAB, MAIL, CALL, { ...MAIL, id: "gone", archivedOn: "2026-11-05" }], "work").map((i) => i.id)).toEqual(["mail", "call"]);
+    expect([checkMaxOf("workout"), checkMaxOf("work"), WORK_ITEM_MAX]).toEqual([3, 5, 5]);
+  });
+
+  it("그날 체크 — 업무 칸은 work · 금색 별 · 한 줄에는 안 셈 · 업무 줄은 따로", () => {
+    // 목요일 — 체육관 · 응원 · 한 줄 · 잽 + 업무 2(카톡 · 연락 평일)
+    const checks = dayChecks("2026-11-12", true, day(["jab"]), [JAB, MAIL, CALL]);
+    expect(checks.filter((c) => c.work).map((c) => c.itemId)).toEqual(["mail", "call"]);
+    expect(isStarDay(checks)).toBe(true); // 업무를 안 했어도 운동 체크를 다 채웠으면 금색 별
+    expect(checkProgress(checks, true)).toBe("오늘 금색 별을 받았어요");
+    expect(workProgress(checks, true)).toBe("끝낸 업무를 하나씩 눌러 체크해요");
+    expect(workProgress(checks, false)).toBeNull(); // 지난 날 0개는 말 없음
+    const one = dayChecks("2026-11-12", true, day(["jab", "mail"]), [JAB, MAIL, CALL]);
+    expect(workProgress(one, true)).toBe("업무 1개 끝냈어요 · 1개 더 하면 다 끝나요");
+    expect(workProgress(one, false)).toBe("이날 업무 1개 끝냈어요");
+    const all = dayChecks("2026-11-12", true, day(["jab", "mail", "call"]), [JAB, MAIL, CALL]);
+    expect(workProgress(all, true)).toBe("오늘 업무 체크를 다 끝냈어요");
+    expect(workProgress(all, false)).toBe("업무 체크를 다 끝낸 날이에요");
+    // 토요일 — 평일 업무(연락)는 그날 칸 없음
+    expect(dayChecks("2026-11-14", false, undefined, [MAIL, CALL]).filter((c) => c.work).map((c) => c.itemId)).toEqual(["mail"]);
+    // 업무 체크만 있는 날 — 운동 한 줄은 저절로 체크만 센다
+    expect(checkProgress(dayChecks("2026-11-12", false, undefined, [MAIL]), true)).toBe("하나씩 채우면 금색 별이 돼요");
+    expect(workProgress(dayChecks("2026-11-12", false, undefined, [JAB]), true)).toBeNull();
+  });
+
+  it("만들기 — 업무 초안은 평일 · 건 / 단위는 종류마다 · 새 업무만 p_kind", () => {
+    const w = emptyCheckDraft("work");
+    expect(w).toMatchObject({ kind: "work", unit: "건", schedule: "days", weekdays: [1, 2, 3, 4, 5] });
+    expect(emptyCheckDraft()).toMatchObject({ kind: "workout", unit: "번", schedule: "daily", weekdays: [] });
+    expect(checkItemError({ ...w, label: "연락", target: "5", unit: "통" })).toBeNull();
+    expect(checkItemError({ ...w, label: "보고서", target: "2", unit: "시간" })).toBeNull();
+    expect(checkItemError({ ...w, label: "연락", target: "5", unit: "라운드" })).toBe("단위를 다시 골라 주세요");
+    expect(checkItemError({ ...emptyCheckDraft(), label: "잽", target: "5", unit: "건" })).toBe("단위를 다시 골라 주세요");
+    expect(checkItemPayload({ ...w, label: " 연락 ", target: "5", unit: "건" })).toEqual({
+      p_id: null,
+      p_label: "연락",
+      p_target: 5,
+      p_unit: "건",
+      p_weekdays: [1, 2, 3, 4, 5],
+      p_kind: "work",
+    });
+    expect(checkItemPayload({ ...w, label: "연락", target: "5", unit: "건" }, "call")).not.toHaveProperty("p_kind"); // 고치기 = 만든 종류 그대로
+    expect(checkItemPayload({ ...emptyCheckDraft(), label: "잽", target: "100", unit: "번" })).not.toHaveProperty("p_kind");
+    expect(draftFromItem(CALL)).toEqual({ label: "연락", target: "5", unit: "건", weekdays: [1, 2, 3, 4, 5], schedule: "days", goal: 3, kind: "work" });
+    expect(draftFromItem({ ...MAIL, target: 3, unit: "라운드" }).unit).toBe("건"); // 업무 단위가 아니면 '건'
   });
 });
 
