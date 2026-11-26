@@ -1099,6 +1099,20 @@ export async function runOwnerTurns(opts: {
   }
 }
 
+// ─── 평가(owner-eval) — 답에 나온 숫자가 도구 결과에 있는지 ───
+const numTokens = (s: string): string[] =>
+  (s.match(/\d[\d,]*(?:\.\d+)?/g) ?? []).map((t) => t.replace(/,/g, "").replace(/^0+(?=\d)/, "").replace(/\.0+$/, ""));
+
+/**
+ * 답 글의 숫자 중 도구 결과 · 허용 글(지시문 · 질문 · 질문한 사람 줄)에 없는 것 — 0 이면 「숫자는 도구에서만」 통과.
+ *   번호 글머리(줄 첫머리 「1.」)는 뺀다. 반올림한 숫자(67.2 → 67)는 걸린다 — 사람이 다시 본다.
+ */
+export function unmatchedNumbers(answer: string, outputs: unknown[], allowedText: string): string[] {
+  const hay = new Set<string>([...numTokens(JSON.stringify(outputs ?? [])), ...numTokens(allowedText)]);
+  const body = (answer ?? "").replace(/^\s*\d+\.\s/gm, "");
+  return [...new Set(numTokens(body))].filter((n) => !hay.has(n));
+}
+
 // ─── 화면으로 보내는 SSE(OpenAI 모양 · 옛 화면은 choices 가 없는 줄을 그냥 넘긴다) ───
 export const sseText = (text: string): string => `data: ${JSON.stringify({ choices: [{ index: 0, delta: { content: text } }] })}\n\n`;
 /** 진행 글 — 오삼코치 화면이 「생각 중」 자리에 보여 준다 */

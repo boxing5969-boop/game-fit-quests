@@ -7,7 +7,7 @@ import { analyzeMealImage } from "../_shared/mealVision.ts";
 import { buildClaudeBody, CLAUDE_API_URL, CLAUDE_CHAT_MODEL, CLAUDE_COACH_MODEL, claudeHeaders, claudeMessage, claudeStream, claudeToOpenAiSse, hasClaude, keepAlive, logAiUsage, messageText, usageOf, type SystemPart } from "../_shared/claude.ts";
 import { buildFeedbackSystem, buildFeedbackUser, checkFeedback, cleanMarks, FEEDBACK_SCHEMA, parseFeedbackJson, retryNote, stdAllowText, type FeedbackStd } from "../_shared/coachFeedback.ts";
 import { cleanKo, KO_STYLE, koTells } from "../_shared/koStyle.ts";
-import { OWNER_FAIL_TEXT, OWNER_PROMPT, ownerRoundBody, ownerScopeLine, parseOwnerScope, runOwnerTurns, SSE_DONE, sseReset, sseStatus, sseText, sumUsage, type Msg as OwnerMsg, type OwnerScope } from "../_shared/ownerAi.ts";
+import { OWNER_FAIL_TEXT, OWNER_PROMPT, ownerRoundBody, ownerScopeLine, parseOwnerScope, runOwnerTurns, SSE_DONE, sseReset, sseStatus, sseText, sumUsage, unmatchedNumbers, type Msg as OwnerMsg, type OwnerScope } from "../_shared/ownerAi.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -871,7 +871,8 @@ async function startOwnerMode(o: {
 /**
  * 관장 모드 시험 입구 — 대표님 계정으로 들어가지 않고 30문항 평가를 돌린다(2026-11-27 · 시험 질문 30개의 숫자가 153OS 와 같은지).
  *   x-auto-key = internal_sync_config.auto_sync_key(서버끼리만 아는 값) 일 때만. 한도는 세지 않는다(take 는 늘 ok). 비용은 owner_eval 로 기록.
- *   body: { action: "owner-eval", questions: string[](6개까지), role?: "admin"|"manager", sales?: boolean, quota_over?: boolean, take_fail?: boolean }
+ *   body: { action: "owner-eval", questions: string[](6개까지), role?: "admin"|"manager", sales?: boolean, quota_over?: boolean, take_fail?: boolean, full?: boolean }
+ *   답마다 unmatched = 답에 나온 숫자 중 도구 결과 · 지시문 · 질문에 없는 것(0 이면 통과 · 반올림은 사람이 본다). full 이면 도구 결과도 함께.
  */
 async function handleOwnerEval(body: any, key: string): Promise<Response> {
   const json = (b: unknown, status = 200) =>
@@ -898,9 +899,10 @@ async function handleOwnerEval(body: any, key: string): Promise<Response> {
     questions.map(async (q) => {
       const t0 = Date.now();
       const tools = scope.left > 0;
+      const scopeLine = ownerScopeLine(scope, t0, { tools });
       const base = buildClaudeBody({
         model: CLAUDE_CHAT_MODEL,
-        system: [SYSTEM_PROMPT, { text: OWNER_PROMPT, cache: true }, ownerScopeLine(scope, t0, { tools })],
+        system: [SYSTEM_PROMPT, { text: OWNER_PROMPT, cache: true }, scopeLine],
         messages: [{ role: "user", content: q }],
         maxTokens: OWNER_MAX_TOKENS,
         stream: true,
@@ -931,7 +933,8 @@ async function handleOwnerEval(body: any, key: string): Promise<Response> {
           q,
           answer: r.text,
           tells: koTells(r.text),
-          calls: r.calls.map((c) => ({ name: c.name, input: c.input, output: c.output, ms: c.ms })),
+          unmatched: unmatchedNumbers(r.text, r.calls.map((c) => c.output), [OWNER_PROMPT, q, scopeLine].join("\n")),
+          calls: r.calls.map((c) => ({ name: c.name, input: c.input, ms: c.ms, ...(body?.full === true ? { output: c.output } : {}) })),
           rounds: r.rounds,
           quota: r.quota,
           statuses,

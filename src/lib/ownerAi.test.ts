@@ -29,6 +29,7 @@ import {
   summarizeTeam,
   summarizeTrendOs,
   sumUsage,
+  unmatchedNumbers,
   wonText,
   type OwnerScope,
 } from "../../supabase/functions/_shared/ownerAi.ts";
@@ -647,3 +648,13 @@ describe("도구 고리", () => {
     expect(r3.error).toContain("overloaded");
   });
 });
+
+describe("평가 — 답의 숫자가 도구 결과에 있나", () => {
+  it("도구 · 허용 글에 없는 숫자만 걸린다(번호 글머리 · 쉼표 · 앞 0 무시)", () => {
+    const outputs = [{ attendance: { last7_rate_text: "67.2%", range_text: "11/21~11/27" }, sales: { to_date_text: "2,156만 원" } }];
+    expect(unmatchedNumbers("1. 출석률 67.2%(11/21~11/27)\n2. 매출 2,156만 원 · 목표 80%", outputs, "목표 80%")).toEqual([]);
+    expect(unmatchedNumbers("출석률 67%예요. 기준 · 11/27 01:40", outputs, "")).toEqual(["67", "01", "40"].map((n) => n.replace(/^0+(?=\d)/, "")));
+    expect(unmatchedNumbers("", [], "")).toEqual([]);
+  });
+});
+
