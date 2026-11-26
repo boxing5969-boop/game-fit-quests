@@ -3,3 +3,5 @@ raw/
 out/
 camera_test/
 __pycache__/
+selftest_tmp/
+selftest.log

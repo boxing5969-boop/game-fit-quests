@@ -323,8 +323,11 @@ ENCODERS = {
     "h264_nvenc": ["-c:v", "h264_nvenc", "-preset", "p4", "-rc", "vbr", "-cq", "{q}", "-b:v", "0"],
     "h264_qsv": ["-c:v", "h264_qsv", "-global_quality", "{q}", "-look_ahead", "0"],
     "h264_amf": ["-c:v", "h264_amf", "-quality", "speed", "-rc", "cqp", "-qp_i", "{q}", "-qp_p", "{q}"],
-    "libx264": ["-c:v", "libx264", "-preset", "veryfast", "-crf", "{q}"],
+    "libx264": ["-c:v", "libx264", "-preset", "veryfast", "-crf", "{q}", "-sc_threshold", "0"],
 }
+# 조각 이름은 상대 경로로만 준다 — ffmpeg 를 그 폴더(cwd)에서 돌린다.
+# 윈도우의 strftime 은 폴더 이름에 한글이 있으면 빈 이름을 돌려줘 녹화가 바로 멈춘다(2026-11-26 선릉 노트북 · 「앱 자료」 폴더).
+SEG_PATTERN = "%Y%m%d-%H%M%S.ts"
 
 
 def pick_encoder(cfg: dict) -> str:
@@ -357,16 +360,16 @@ def camera_input(cfg: dict) -> list[str]:
     return a + ["-i", cam or "/dev/video0"]
 
 
-def record_args(cfg: dict, enc: str, raw: Path, seconds: float | None = None) -> list[str]:
+def record_args(cfg: dict, enc: str, seconds: float | None = None) -> list[str]:
+    """녹화 명령 — 조각을 쓸 폴더를 cwd 로 주고 돌린다(SEG_PATTERN 참고)."""
     q = str(cfg["quality"])
     a = ["ffmpeg", "-hide_banner", "-loglevel", "warning", *camera_input(cfg), "-an",
          "-map", "0:v:0", "-pix_fmt", "yuv420p", *[x.replace("{q}", q) for x in ENCODERS[enc]],
-         "-g", str(int(cfg["framerate"]) * 2), "-sc_threshold", "0"]
+         "-g", str(int(cfg["framerate"]) * 2)]
     if seconds:
         a += ["-t", str(seconds)]
     a += ["-f", "segment", "-segment_time", str(int(cfg["segment_minutes"]) * 60), "-segment_atclocktime", "1",
-          "-segment_format", "mpegts", "-reset_timestamps", "1", "-strftime", "1",
-          str(raw / "%Y%m%d-%H%M%S.ts")]
+          "-segment_format", "mpegts", "-reset_timestamps", "1", "-strftime", "1", SEG_PATTERN]
     return a
 
 
@@ -385,7 +388,7 @@ def cmd_record(args: argparse.Namespace) -> int:
     print(f"■ 녹화 시작 — {cfg['video_size']} {cfg['framerate']}fps · 소리 없음 · {enc} · {cfg['segment_minutes']}분 조각 → {raw}")
     print("  끝내려면 이 창에서 Ctrl+C (조각은 그대로 남아요)")
     try:
-        return subprocess.run(record_args(cfg, enc, raw, args.seconds)).returncode
+        return subprocess.run(record_args(cfg, enc, args.seconds), cwd=raw).returncode
     except KeyboardInterrupt:
         print("\n■ 녹화를 멈췄어요.")
         return 0
@@ -398,7 +401,7 @@ def cmd_test_camera(args: argparse.Namespace) -> int:
     test_dir.mkdir(exist_ok=True)
     enc = pick_encoder(cfg)
     print(f"■ 카메라 5초 시험 ({enc}) …")
-    r = subprocess.run(record_args(cfg, enc, test_dir, 5))
+    r = subprocess.run(record_args(cfg, enc, 5), cwd=test_dir)
     files = sorted(test_dir.glob("*.ts"))
     if r.returncode == 0 and files:
         print(f"✓ 됐어요: {files[-1]} — 열어서 화면이 링 전체를 담는지 보세요.")
