@@ -18,6 +18,18 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261127-owner-ai",
+    date: "2026-11-27",
+    title: "오삼코치 관장 모드 · 숫자로 물어보기",
+    lines: [
+      "「출석률 왜 떨어졌어?」처럼 물으면 153OS 숫자를 보고 답해요",
+      "오늘 연락할 회원 이름과 이유까지 · 관장님 숫자 칸 단추로 바로",
+      "관장님 · 지점장님만 · 지점마다 하루 50번까지예요",
+    ],
+    audience: "staff",
+    branches: SEOLLEUNG,
+  },
+  {
     id: "20261127-level-guide",
     date: "2026-11-27",
     title: "레벨업 안내 · 레벨이 오르는 방법을 한눈에",
