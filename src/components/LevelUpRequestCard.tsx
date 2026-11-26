@@ -56,7 +56,7 @@ import {
   cheerMood,
   dailyQuest,
   kstDay,
-  lastStampTag,
+  lastStampLabel,
   leagueBars,
   leagueRoad,
   levelFill,
@@ -72,6 +72,7 @@ import {
 } from "@/lib/levelQuest";
 import { useMyWorkoutToday } from "@/hooks/useWorkoutTime";
 import { useMileageRules } from "@/hooks/useMileage";
+import { openLevelGuide } from "@/lib/levelGuide";
 
 interface Cycle {
   sessions: number; days: number; minutes: number;
@@ -282,16 +283,32 @@ const LevelUpRequestCard = ({
     ? "레벨 10은 타이틀매치 — 파트너와 타이틀미션을 연습하고 지점장님께 심사를 신청해요. 지점장님이 영상으로 봐요 (도전 3번)"
     : isBoss
       ? approvalOnly
-        ? `레벨 10은 출석 ${req}회를 채우면 승급 심사에 올라가요${minDays > 0 ? ` (최소 ${minDays}일)` : ""}. ${who}이 승인하면 ${nextName}로 가요`
+        ? `레벨 10은 트레이닝 ${req}일을 채우면 승급 심사에 올라가요${minDays > 0 ? ` (최소 ${minDays}일)` : ""}. ${who}이 승인하면 ${nextName}로 가요`
         : `레벨 10은 승급 심사예요. ${who}이 직접 보고 승인하면 ${nextName}로 가요`
       : approvalOnly
-        ? `${RANK_LABELS[league] ?? ""} 리그부터는 출석 ${req}회를 채우면 승급 심사가 열리고, ${authorityLabel(levelupRules, league, level)}이 직접 보고 승급해요${
+        ? `${RANK_LABELS[league] ?? ""} 리그부터는 트레이닝 ${req}일을 채우면 승급 심사가 열리고, ${authorityLabel(levelupRules, league, level)}이 직접 보고 승급해요${
             minDays > 0 ? ` · 레벨마다 최소 ${minDays}일` : ""
           }`
-        : `입구 얼굴 인식으로 출석이 쌓여요. 출석 ${req}회를 채우면 자동으로 다음 레벨로 올라가요`;
+        : // 2026-11-27 대표님 — 「출석하면 레벨업」이 아니라 트레이닝한 날이 1일차 · 2일차로 쌓여 레벨업 (앱에서 누를 건 없다)
+          `체육관에서 트레이닝한 날이 1일차, 2일차로 쌓여요. 앱에서 누를 건 없고, 트레이닝 ${req}일을 채우면 자동으로 다음 레벨로 올라가요`;
   const fastTrackRule = isFastTrack
     ? `패스트 트랙 — 타이틀매치를 통과하면 ${nextName}의 1레벨이 아니라 그 리그의 타이틀매치로 바로 가요. 심사 항목은 똑같이 보여 드려야 해요`
     : null;
+
+  // ? 를 누르면 — 규칙 한두 줄 + 레벨업 안내(새 튜토리얼 5장) 다시 보기 (2026-11-27)
+  const rulePanel = ruleOpen ? (
+    <div className="mt-3 space-y-1.5 rounded-xl bg-muted/50 px-3 py-2.5 text-label text-foreground">
+      <p>{rule}</p>
+      {fastTrackRule && <p>{fastTrackRule}</p>}
+      <button
+        type="button"
+        onClick={() => openLevelGuide("rule")}
+        className="-mx-1 flex items-center gap-0.5 rounded-lg px-1 py-1 font-bold text-primary active:bg-muted"
+      >
+        레벨업 안내 다시 보기 <ChevronRight className="h-4 w-4" aria-hidden />
+      </button>
+    </div>
+  ) : null;
 
   const previews = preview && !isBoss ? nextVideos.filter((v) => !!youtubeThumb(v.videoUrl)).slice(0, 2) : [];
 
@@ -355,7 +372,7 @@ const LevelUpRequestCard = ({
   // 게이지 — 1번 남으면 선물이 들썩 · 다 모으면(심사 대기 · 보완 요청이 아니면) 마지막 홈까지 차고 선물이 둥실
   const near = showStamps && !upToday && questNear({ visitsLeft, meets: cycle.meets, pending: isPending, revision: isRevision });
   const ready = showStamps && cycle.meets && !upToday && !isPending && !isRevision;
-  const lastAria = lastStampTag(needsReview);
+  const lastLabel = lastStampLabel(needsReview);
   // 오늘의 퀘스트 — 오면 바로 받는 것 (실제로 받는 값만 · 오면 「받았어요」)
   const quest = missions
     ? dailyQuest({
@@ -404,12 +421,7 @@ const LevelUpRequestCard = ({
 
       {isFastTrack && <p className="mt-2 text-label font-bold text-reward">⚡ 패스트 트랙 · 직행권 {gates}장</p>}
 
-      {ruleOpen && (
-        <div className="mt-3 space-y-1.5 rounded-xl bg-muted/50 px-3 py-2.5 text-label text-foreground">
-          <p>{rule}</p>
-          {fastTrackRule && <p>{fastTrackRule}</p>}
-        </div>
-      )}
+      {rulePanel}
 
       <div ref={railRef}>
         {showStamps ? (
@@ -419,7 +431,7 @@ const LevelUpRequestCard = ({
             stamps={stamps}
             goalKind={isBoss ? "league" : "level"}
             goalLabel={goalLabel}
-            lastTag={{ tag: lastAria.replace(/\s*도장$/, ""), aria: lastAria }}
+            lastTag={lastLabel}
             near={near}
             ready={ready}
             invite={!attendedToday}
@@ -483,12 +495,7 @@ const LevelUpRequestCard = ({
         <p className="mt-3 text-label font-bold text-reward">⚡ 패스트 트랙 · 직행권 {gates}장</p>
       )}
 
-      {ruleOpen && (
-        <div className="mt-3 space-y-1.5 rounded-xl bg-muted/50 px-3 py-2.5 text-label text-foreground">
-          <p>{rule}</p>
-          {fastTrackRule && <p>{fastTrackRule}</p>}
-        </div>
-      )}
+      {rulePanel}
 
       {guide && <LevelMissionSection guide={guide} videos={missionVideos} onDone={markDone} />}
       {missions && titleButtonEl}

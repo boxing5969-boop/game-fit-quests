@@ -2,7 +2,7 @@
  * 마이복서153 — 감동편지 (Welcome / Promotion Letter).
  *
  * 말해보카의 "Welcome Letter" 처럼, 앱 경험 중간에 한 통의 손편지가 도착한다.
- * 오삼이 환영 모달(OsamiWelcomeModal · 첫 로그인 사용법 안내)과는 별개로,
+ * 레벨업 안내(새 튜토리얼 · components/levelGuide — 2026-11-27 옛 오삼 환영 모달 자리)와는 별개로,
  * "마음을 건드리는 편지" 하나를 정해진 순간에 단 1회 보여준다.
  *
  * 편지 종류 (총 5통):
@@ -37,14 +37,14 @@
  *   · 셋업 라우트(/, /onboarding 등)와 QR 출석 화면에서는 노출 안 함.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, X } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { getTutorialCampState } from "@/features/tutorial-camp/tutorialCampStorage";
+import { getGuideGate, guideHoldsLetters, subscribeGuideGate } from "@/lib/levelGuide";
 import { isStaffProfile } from "@/lib/staffDisplay";
 import { toGlobalLevel } from "@/lib/rankLabels";
 import {
@@ -344,6 +344,9 @@ const WelcomeLetter = () => {
   const growStamps = growQ.data?.stamps;
   const markGrowthSeen = useMarkGrowthSeen();
 
+  // 레벨업 안내(새 튜토리얼 · 2026-11-27)와 순서 — 안내를 확인 중 · 띄울 차례 · 띄우는 중 · 이번 접속에 띄웠으면 편지는 기다린다
+  const guideHold = guideHoldsLetters(useSyncExternalStore(subscribeGuideGate, getGuideGate, getGuideGate));
+
   // 관리자가 설정 화면에서 고친 문구 — 웰컴·코치 편지를 띄울 때만 읽는다(없으면 기본 문구)
   const needsTemplate = activeKey === "welcome" || activeKey === "coach";
   const lettersQ = useQuery({
@@ -379,11 +382,9 @@ const WelcomeLetter = () => {
         return;
       }
 
-      // 튜토리얼·7일 스타터 캠프가 진행/대기 중이면 편지 보류 — 캠프 안내와 겹침 방지.
-      // 캠프는 튜토리얼 5단계 완료 시 자동 시작되므로 끝나기 전엔 안 띄운다.
-      // completed/skipped(종료) 또는 not_started(튜토리얼 건너뛰어 캠프 미진행) 진입에서만 도착.
-      const campStatus = getTutorialCampState().status;
-      if (campStatus === "active" || campStatus === "paused") return;
+      // 레벨업 안내가 먼저 (2026-11-27 — 옛 7일 캠프 보류 자리). 안내를 띄운 접속에는 편지를 다음 접속으로 미룬다 —
+      // 창이 연달아 뜨지 않게. 결정을 잠그지 않고 돌아간다(안내 상태가 바뀌면 다시 판단 · 다음 접속에 도착).
+      if (guideHold) return;
 
       const p = profile as unknown as LetterProfile;
       // 아래 경우엔 결정을 미룬다(잠그지 않는다) — 조건이 갖춰지면 같은 세션 안에서도 다시 판단한다.
@@ -448,7 +449,7 @@ const WelcomeLetter = () => {
     };
     const t = window.setTimeout(decide, 1200);
     return () => window.clearTimeout(t);
-  }, [user, profile, progress, role, isAdminRole, isCoach, location.pathname, attSettled, attPending, motSettled, motPending, growSettled, growPending, growStamps]);
+  }, [user, profile, progress, role, isAdminRole, isCoach, location.pathname, attSettled, attPending, motSettled, motPending, growSettled, growPending, growStamps, guideHold]);
 
   // 결정되면 살짝 지연 후 등장 (스플래시/다른 모달 정리 후). 문구를 읽는 중이면 기다린다(기본 문구 깜빡임 방지).
   const templateLoading = needsTemplate && lettersQ.isLoading;

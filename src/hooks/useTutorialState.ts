@@ -31,6 +31,14 @@ import {
 
 const STEP_COUNT = TUTORIAL_STEPS.length; // 5
 
+/**
+ * 옛 오삼 5단계 가이드 · 7일 캠프 — 2026-11-27 레벨업 안내(components/levelGuide)로 바뀌어 끈다.
+ *   대표님 「듀토리얼 지금은 너무 복잡한데 … 7일 캠프는 이제 빼자 … 레벨업 시스템에 대해서 동기부여 해주자」
+ *   false 면 isEligible 이 늘 false — 가이드 화면 · 훈련 탭의 옛 강조(첫 미션 · 6탭 안내)가 꺼지고, 캠프도 저절로 시작하지 않는다.
+ *   서버 기록(tutorial_step · 보상)은 그대로 둔다 (이미 받은 보상 · 칭호는 그대로).
+ */
+export const LEGACY_TUTORIAL_ON = false;
+
 /** 같은 단계 축하를 여러 화면(이 훅을 쓰는 컴포넌트 여럿)이 한꺼번에 터뜨리지 않게 — 10초 안에는 한 번만 */
 const recentCelebrations = new Map<string, number>();
 
@@ -162,7 +170,7 @@ export function useTutorialState() {
     // 64-J: 5 단계 완료 → 7일 캠프 자동 시작 (status === 'not_started' 일 때만)
     //   회원 흐름: 온보딩 → 환영 인사 → 가이드 5단계 → 7일 캠프
     //   이미 시작/완료/스킵된 경우엔 재시작하지 않음 (멱등 보장)
-    if (isFinal && campState.status === "not_started") {
+    if (LEGACY_TUTORIAL_ON && isFinal && campState.status === "not_started") {
       window.setTimeout(() => {
         try {
           startCamp();
@@ -300,7 +308,7 @@ export function useTutorialState() {
     /** 사용자가 명시적으로 스킵했는지. */
     isSkipped,
     /** Should the overlay render? */
-    isEligible: !!user && !isCompleted && !isFinished && !isSkipped,
+    isEligible: LEGACY_TUTORIAL_ON && !!user && !isCompleted && !isFinished && !isSkipped,
     /** 0..5 */
     stepsCompleted,
     /** 0..1 */

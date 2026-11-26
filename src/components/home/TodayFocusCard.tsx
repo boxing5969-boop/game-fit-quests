@@ -8,10 +8,9 @@
  *   4. 내 최근 변화 1줄
  *
  * 보호 규칙:
- *   · 캠프 state 는 localStorage read-only
  *   · 153마인드셋 횟수는 마인드셋 화면과 같은 숫자 — 계정 기록(get_my_mindset_stats, 30초 캐시).
  *     불러오기 전에는 이 기기에 남은 '내 계정' 기록으로 (2026-10-19 검수: 홈 '20회 완료'인데 화면은 '총 0번'이던 것)
- *   · 153마인드셋 / 캠프 / 공식 훈련 흐름 0 변경
+ *   · 153마인드셋 / 공식 훈련 흐름 0 변경 (7일 캠프 칸은 2026-11-27 뺐다 — 레벨업 안내로 바뀜)
  *   · 표현 금지어 0
  */
 
@@ -21,8 +20,6 @@ import { ChevronRight, Compass, Sparkles, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMindsetStats } from "@/services/mindsetService";
-import { getTutorialCampState } from "@/features/tutorial-camp/tutorialCampStorage";
-import { getStep, getStepsCountByDay } from "@/features/tutorial-camp/tutorialCampSteps";
 
 const VIZ_RECORDS_KEY = "myboxer.visualization.records";
 
@@ -71,34 +68,19 @@ const TodayFocusCard = () => {
   const { user } = useAuth();
   const [today, setToday] = useState<FocusItem | null>(null);
   const [recommend, setRecommend] = useState<FocusItem | null>(null);
-  const [campDays, setCampDays] = useState(0);
   const { data: mind } = useMindsetStats();
   const localViz = useMemo(() => readVizCount(user?.id ?? null), [user?.id]);
 
   useEffect(() => {
-    // 캠프 활성 상태에 따라 "오늘 할 일" 결정
-    const camp = getTutorialCampState();
-    if (camp.status === "active") {
-      const step = getStep(camp.currentDay, camp.currentStep);
-      const total = getStepsCountByDay(camp.currentDay);
-      setToday({
-        label: `오늘의 입문 캠프 — Day ${camp.currentDay}`,
-        detail: step
-          ? `${step.title} · ${camp.currentStep + 1} / ${total}`
-          : "오늘 한 단계만 보면 충분해요.",
-        to: step?.route ?? "/home",
-        icon: Target,
-      });
-    } else {
-      setToday({
-        label: "오늘의 마인드셋 1라운드",
-        detail: "153복싱짐으로 돌아온 사람 · 3분",
-        to: "/myboxer/visualization",
-        icon: Target,
-      });
-    }
+    // 오늘 할 일 — 마인드셋 1라운드 (2026-11-27 7일 입문 캠프는 레벨업 안내로 바뀌어 캠프 칸을 뺐다)
+    setToday({
+      label: "오늘의 마인드셋 1라운드",
+      detail: "153복싱짐으로 돌아온 사람 · 3분",
+      to: "/myboxer/visualization",
+      icon: Target,
+    });
 
-    // 추천 활동 — 캠프 상태와 무관, 가벼운 한 줄
+    // 추천 활동 — 가벼운 한 줄
     setRecommend({
       label: "오늘 한 줄 챙기기",
       detail: "복싱 IQ 한 줄 또는 오늘 운동 한 줄",
@@ -106,8 +88,6 @@ const TodayFocusCard = () => {
       to: "/myboxer",
       icon: Compass,
     });
-
-    setCampDays(camp.completedDays.length);
   }, []);
 
   // 최근 변화 1줄 — 153마인드셋 누적 (마인드셋 화면과 같은 숫자)
@@ -120,9 +100,8 @@ const TodayFocusCard = () => {
       const day = lastIso ? kstDate(lastIso) : null;
       return `153마인드셋 ${total}회 완료${day ? ` · 마지막 ${day}` : ""}`;
     }
-    if (campDays > 0) return `입문 캠프 ${campDays}일 진행`;
     return "오늘부터 한 칸씩 쌓으면 됩니다.";
-  }, [mind, localViz, campDays]);
+  }, [mind, localViz]);
 
   const lines = useMemo(() => [today, recommend].filter(Boolean) as FocusItem[], [
     today,

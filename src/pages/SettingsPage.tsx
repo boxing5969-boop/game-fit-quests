@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
+import { openLevelGuide } from "@/lib/levelGuide";
 import { useOnboardingState } from "@/hooks/useOnboardingState";
-import { useTutorialState } from "@/hooks/useTutorialState";
 import DietSettingsSection from "@/components/diet/DietSettingsSection";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,8 +21,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { isManagerRole } from "@/lib/rankLabels";
-import { useTutorialCamp } from "@/features/tutorial-camp/useTutorialCamp";
-import { openTutorialCustomizer } from "@/features/tutorial-camp/TutorialCustomizer";
 import LaunchEventSettingsCard from "@/components/admin/LaunchEventSettingsCard";
 import MileageSettingsCard from "@/components/admin/MileageSettingsCard";
 import LevelTestCard from "@/components/admin/LevelTestCard";
@@ -84,9 +82,6 @@ const SettingsPage = () => {
   const { resetOnboarding } = useOnboardingState();
   const qc = useQueryClient();
   const [deleteOpen, setDeleteOpen] = useState(false); // 계정 삭제 확인 창
-
-  // 7일 스타터 캠프 — admin 진입 (옵션 C)
-  const { start: startCamp, reset: resetCamp } = useTutorialCamp();
 
   const [name, setName] = useState("");
   const [nickname, setNickname] = useState("");
@@ -262,7 +257,6 @@ const SettingsPage = () => {
   const otherBranches = (branches || []).filter(
     (b) => b.name !== profile.branch_name && (b as { is_visible?: boolean }).is_visible !== false,
   );
-  const isSuperAdmin = role === "super_admin";
   // 진짜 전체관리자 — '회원으로 보기' 중(role 은 member)에도 이 카드는 보여야 끄고 지점을 바꿀 수 있다 (2026-10-21)
   const isRealSuperAdmin = realRole === "super_admin";
 
@@ -449,16 +443,16 @@ const SettingsPage = () => {
           </div>
         </div>
 
-        {/* Onboarding replay — 저빈도라 기본 접힘(더보기) */}
+        {/* 온보딩 · 레벨업 안내 다시 보기 — 저빈도라 기본 접힘(더보기).
+            2026-11-27 옛 오삼 환영 인사 · 오삼 5단계 가이드 · 7일 캠프는 레벨업 안내(새 튜토리얼 5장)로 바뀌었다 */}
         <details className="group animate-slide-up rounded-2xl border border-border bg-card p-5 shadow-elev-1" style={{ animationDelay: "0.01s" }}>
           <summary className="flex cursor-pointer list-none items-center justify-between text-body font-bold text-foreground [&::-webkit-details-marker]:hidden">
-            <span>온보딩 / 오삼 가이드 다시 보기</span>
+            <span>온보딩 / 레벨업 안내 다시 보기</span>
             <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-90" />
           </summary>
           <p className="mb-3 mt-3 text-label leading-relaxed text-muted-foreground">
-            · <strong>온보딩</strong> — 마이복서153 소개 8 슬라이드<br />
-            · <strong>오삼 환영 인사</strong> — 가운데 큰 모달 (안녕하세요! 오삼이에요)<br />
-            · <strong>오삼 가이드 5단계</strong> — 왼쪽 하단 작은 오삼이가 1단계부터 안내
+            · <strong>온보딩</strong> — 마이복서153 소개 슬라이드<br />
+            · <strong>레벨업 안내</strong> — 트레이닝으로 레벨이 오르는 방법과 보상 (5장)
           </p>
           <div className="flex flex-wrap gap-2">
             <button
@@ -470,31 +464,14 @@ const SettingsPage = () => {
             >
               온보딩 다시 보기
             </button>
-            <RestartTutorialButton onDone={() => navigate("/home")} />
-            <RestartGuideOnlyButton onDone={() => navigate("/home")} />
-            {isAdmin && (
-              <>
-                <button
-                  onClick={() => {
-                    // 진행 / 완료 / paused 상태 모두 처음부터 — reset 후 start
-                    // (이전엔 startCamp 만 → cooldown / completed 시 재실행 안 됨)
-                    resetCamp();
-                    startCamp();
-                    toast.success("7일 스타터 캠프 — Day 1 부터 다시 시작 🥊");
-                    navigate("/home");
-                  }}
-                  className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2.5 text-body font-bold text-amber-700 transition-all active:scale-95 dark:text-amber-400"
-                >
-                  🥊 7일 스타터 캠프 처음부터 시작 <span className="ml-1 text-micro font-normal opacity-70">(admin)</span>
-                </button>
-              </>
-            )}
+            <button
+              type="button"
+              onClick={() => openLevelGuide("settings")}
+              className="rounded-xl bg-reward/15 px-4 py-2.5 text-body font-bold text-reward transition-all active:scale-95"
+            >
+              레벨업 안내 다시 보기
+            </button>
           </div>
-          {isAdmin && (
-            <p className="mt-2 text-micro text-amber-700/80 dark:text-amber-400/80">
-              ※ 운영 테스트용. 회원에게는 아직 노출되지 않습니다.
-            </p>
-          )}
         </details>
 
         {/* 153 다이어트 — feature flag off 유저에겐 아무것도 렌더되지 않음 */}
@@ -781,25 +758,7 @@ const SettingsPage = () => {
         {/* 65-S: 마이페이지에서 이관 — 회원관리/가이드/153다이어트/로그아웃 */}
         <div className="animate-slide-up rounded-2xl border border-border bg-card shadow-elev-1" style={{ animationDelay: "0.18s" }}>
           <h2 className="border-b border-border px-5 py-4 text-body font-bold text-foreground">메뉴</h2>
-          {/* 화면 커스텀 도구 — 전체관리자 계정 전용 (2026-10-15 대표님: 떠 있는 '커스텀' 버튼을 설정 메뉴로, 내 계정만) */}
-          {isSuperAdmin && (
-            <button
-              onClick={() => {
-                openTutorialCustomizer();
-                navigate("/home");
-              }}
-              className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50"
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-muted-foreground">🛠️</span>
-                <span className="min-w-0 text-left">
-                  <span className="block text-body text-foreground">화면 커스텀 도구</span>
-                  <span className="block text-label text-muted-foreground">튜토리얼 강조 위치 · 순서 편집 (내 계정 전용)</span>
-                </span>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </button>
-          )}
+          {/* (2026-11-27) '화면 커스텀 도구'(옛 7일 캠프 편집)는 레벨업 안내로 바뀌어 뺐다 */}
           {(role === "coach" || role === "admin" || role === "branch_manager" || role === "super_admin") && (
             <button onClick={() => navigate("/manager")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
               <div className="flex items-center gap-3">
@@ -864,78 +823,6 @@ const SettingsPage = () => {
         </div>
       </div>
     </div>
-  );
-};
-
-// 인라인 helper — 신규 useTutorialState.restart (오삼 floating mascot 사용)
-const RestartTutorialButton = ({ onDone }: { onDone: () => void }) => {
-  const { restart: restartTutorial } = useTutorialState();
-  const [busy, setBusy] = useState(false);
-  return (
-    <button
-      type="button"
-      disabled={busy}
-      onClick={async () => {
-        setBusy(true);
-        try {
-          const ok = await restartTutorial();
-          if (!ok) {
-            toast.error("다시 시작에 실패했습니다. 잠시 후 다시 시도해주세요.");
-            return;
-          }
-          toast.success("튜토리얼을 다시 시작합니다 🥊");
-          onDone();
-        } finally {
-          setBusy(false);
-        }
-      }}
-      className="rounded-xl bg-reward/15 px-4 py-2.5 text-body font-bold text-reward transition-all active:scale-95 disabled:opacity-60"
-    >
-      {busy ? "준비 중…" : "🥊 오삼 환영 인사"}
-    </button>
-  );
-};
-
-// 64-K: 오삼 5단계 가이드(왼쪽 하단 floating)만 다시 시작 — 환영 모달은 안 띄움.
-//   · useTutorialState.restart() 사용 — RPC + setLocalCompleted(0) +
-//     lastStepsRef reset + refreshProfile 까지 모두 호출
-//     (이전엔 RPC 만 호출 → local state 가 5 그대로라 isFinished=true →
-//      isEligible=false 로 가이드가 마운트 안 됨)
-//   · restart 가 osami-welcome-seen 을 제거하므로 직후 다시 set →
-//     환영 모달 노출 차단, 가이드만 시작
-const RestartGuideOnlyButton = ({ onDone }: { onDone: () => void }) => {
-  const { restart: restartTutorial } = useTutorialState();
-  const [busy, setBusy] = useState(false);
-  return (
-    <button
-      type="button"
-      disabled={busy}
-      onClick={async () => {
-        setBusy(true);
-        try {
-          const ok = await restartTutorial();
-          if (!ok) {
-            toast.error("다시 시작에 실패했습니다. 잠시 후 다시 시도해주세요.");
-            return;
-          }
-          // restart 가 osami-welcome-seen 을 제거 → 가이드만 시작 위해 다시 set
-          if (typeof window !== "undefined") {
-            try {
-              window.localStorage.setItem("osami-welcome-seen", "1");
-            } catch {
-              /* noop */
-            }
-          }
-          toast.success("오삼 5단계 가이드를 다시 시작합니다 🥊");
-          onDone();
-        } finally {
-          setBusy(false);
-        }
-      }}
-      className="rounded-xl border border-reward/30 bg-reward/5 px-4 py-2.5 text-body font-bold text-reward transition-all active:scale-95 disabled:opacity-60"
-    >
-      {busy ? "준비 중…" : "🥊 오삼 5단계 가이드"}
-    </button>
   );
 };
 

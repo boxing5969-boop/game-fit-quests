@@ -31,7 +31,7 @@ interface StampRailProps {
   goalKind: "level" | "league";
   /** 목표 칸 이름 — "레벨 5" · "블랙 리그" */
   goalLabel: string;
-  /** 마지막 칸 — 보이는 이름표("레벨업" · "마지막")와 읽어 주는 이름("레벨업 도장" · "마지막 도장") */
+  /** 마지막 칸 — 보이는 이름표("레벨업" · "마지막")와 읽어 주는 이름("레벨업하는 날" · "심사 전 마지막 날" — lastStampLabel) */
   lastTag: { tag: string; aria: string };
   /** 남은 출석 1번 — 선물이 들썩인다 */
   near: boolean;
@@ -274,7 +274,7 @@ export const QuestStampRail = ({ league, startLabel, stamps, goalKind, goalLabel
   const showCaption = (k: number) => n <= 3 || k === focusIdx;
 
   return (
-    <ol className="mt-3 flex items-start pb-6 pt-8" aria-label={`${goalLabel}까지 수업 도장`}>
+    <ol className="mt-3 flex items-start pb-6 pt-8" aria-label={`${goalLabel}까지 트레이닝 일차`}>
       {/* 지금 레벨 */}
       <li className="relative z-10 flex shrink-0 flex-col items-center" aria-label={`지금 ${startLabel}`}>
         <span className="flex items-center justify-center" style={{ height: `${boxH}rem` }}>
@@ -357,7 +357,7 @@ const QuestStampGrid = ({
   const n = stamps.length;
   return (
     <div className="mt-4">
-      <ol className="grid grid-cols-10 gap-y-2.5" aria-label={`${goalLabel}까지 수업 도장`}>
+      <ol className="grid grid-cols-10 gap-y-2.5" aria-label={`${goalLabel}까지 트레이닝 일차`}>
         {stamps.map((s, k) => {
           const isLast = k === n - 1;
           const isFilled = s.state === "done" || s.state === "today";

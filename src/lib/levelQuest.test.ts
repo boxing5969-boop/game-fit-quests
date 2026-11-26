@@ -336,8 +336,8 @@ describe("v2 — 리그 막대 · 목표가 눈앞 · 마지막 도장", () => {
     expect(questNear({ ...base, meets: true })).toBe(false);
     expect(questNear({ ...base, pending: true })).toBe(false);
     expect(questNear({ ...base, revision: true })).toBe(false);
-    expect(lastStampTag(false)).toBe("레벨업 도장");
-    expect(lastStampTag(true)).toBe("마지막 도장");
+    expect(lastStampTag(false)).toBe("레벨업하는 날");
+    expect(lastStampTag(true)).toBe("심사 전 마지막 날");
   });
 });
 
@@ -359,7 +359,7 @@ describe("v2 — 오늘의 퀘스트 (실제로 받는 값만)", () => {
   it("오기 전 — 도장 +1 · 챔피언 머니 +100 · 마일리지(운영 설정)", () => {
     const q = dailyQuest(base);
     expect(q).toMatchObject({ done: false, title: "오늘의 퀘스트", note: "오면 받아요" });
-    expect(values(q)).toEqual(["도장 +1", "챔피언 머니 +100", "마일리지 +300"]);
+    expect(values(q)).toEqual(["트레이닝 +1일", "챔피언 머니 +100", "마일리지 +300"]);
   });
 
   it("도장을 다 모았으면 — 출석 리그는 「레벨업!」 · 심사 리그 · 심사 대기 · 레벨 10은 도장 칸 없이", () => {
@@ -372,14 +372,14 @@ describe("v2 — 오늘의 퀘스트 (실제로 받는 값만)", () => {
   it("오늘 왔으면 「받았어요」 — 오늘 칸이 찍힌 날 도장 +1 · 레벨업한 날 레벨업", () => {
     const q = dailyQuest({ ...base, attendedToday: true, stampedToday: true });
     expect(q).toMatchObject({ done: true, title: "오늘의 퀘스트 완료!", note: "받았어요" });
-    expect(values(q)).toEqual(["도장 +1", "챔피언 머니 +100", "마일리지 +300"]);
+    expect(values(q)).toEqual(["트레이닝 +1일", "챔피언 머니 +100", "마일리지 +300"]);
     expect(values(dailyQuest({ ...base, attendedToday: true, leveledUpToday: true }))[0]).toBe("레벨업 레벨업!");
     // 칸이 늘지 않은 날(심사 대기 등)은 도장 없이
     expect(values(dailyQuest({ ...base, attendedToday: true, pending: true }))).toEqual(["챔피언 머니 +100", "마일리지 +300"]);
   });
 
   it("마일리지를 끄거나 못 읽었으면 마일리지 칸 없이", () => {
-    expect(values(dailyQuest({ ...base, mileage: null }))).toEqual(["도장 +1", "챔피언 머니 +100"]);
+    expect(values(dailyQuest({ ...base, mileage: null }))).toEqual(["트레이닝 +1일", "챔피언 머니 +100"]);
     expect(values(dailyQuest({ ...base, mileage: { enabled: false, attendance: 300 } }))).toHaveLength(2);
     expect(values(dailyQuest({ ...base, mileage: { enabled: true, attendance: 0 } }))).toHaveLength(2);
   });

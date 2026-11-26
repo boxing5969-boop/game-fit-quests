@@ -22,7 +22,7 @@
  *   · 목표가 가까울수록 더 크게(목표 기울기 효과) — 남은 출석 1번이면 「1번만 더 오면 레벨 5!」 · 마지막 칸 = 「레벨업 도장」 ·
  *     선물이 들썩인다 (questHero · questNear · lastStampTag)
  *   · 빈칸을 채우고 싶은 마음(미완성 효과) — 빈 홈은 움푹, 채운 칸은 반짝 · 운동 보너스로 다음 칸이 조금 찬 것도 보인다
- *   · 바로 받는 보상 — 오늘의 퀘스트: 오늘 오면 도장 +1 · 챔피언 머니 +100 · 마일리지(운영 설정), 오면 「받았어요」 (dailyQuest)
+ *   · 바로 받는 보상 — 오늘의 퀘스트: 오늘 오면 트레이닝 +1일 · 챔피언 머니 +100 · 마일리지(운영 설정), 오면 「받았어요」 (dailyQuest)
  *   · 다음이 궁금하게 — 보상 상자에 다음 레벨에서 배울 기술 한 줄 (questSkill — 잠금이 아니라 '배워요')
  *   · 레벨업한 날 — 「레벨 5 달성 보상 · 받았어요」 (questReward received)
  * 실제로 받는 값만 쓴다 — 하루 출석 챔피언 머니 100 = 서버 attendance_base_xp_trg(한국 날짜 하루 한 번) · 출석 마일리지 =
@@ -211,13 +211,14 @@ export type CheerMood = "first" | "fresh" | "leveledUp" | "today" | "between" | 
  * 응원 한 줄 — 날마다 돌아가며 (같은 날은 같은 말). 한 줄에 들어가게 짧게 · 숫자 없이(도장 칸이 일차를 말한다) ·
  * 못한 것 · 빠진 날은 말하지 않는다. 바꾸면 시험(levelQuest.test.ts)이 길이 · 낱말을 본다.
  */
+// 2026-11-27 대표님 「회원님들에게 도장이랑 표현도 너무 유아틱해」 → 「트레이닝 1일차 · 2일차」 — 회원 글에 '도장'을 쓰지 않는다
 export const CHEER_LINES: Readonly<Record<"first" | "fresh" | "leveledUp" | "today" | "between" | "full", readonly string[]>> = {
-  first: ["첫 수업이 가장 멋진 시작이에요", "첫 도장을 찍으러 와요"],
-  fresh: ["새 레벨 첫 도장을 찍으러 와요", "새 레벨, 새 동작이 기다려요"],
+  first: ["첫 수업이 가장 멋진 시작이에요", "첫 트레이닝이 기다리고 있어요"],
+  fresh: ["새 레벨 첫 수업을 시작해요", "새 레벨, 새 동작이 기다려요"],
   leveledUp: ["오늘 수업으로 레벨업했어요", "반복이 만든 레벨업이에요"],
-  today: ["오늘 도장 꾹! 몸이 기억해요", "오늘도 반복 하나 해냈어요", "수업 완료! 더 단단해졌어요"],
-  between: ["다음 도장을 찍으러 와요", "한 번 더 오면 몸이 기억해요", "오늘의 한 번이 실력이 돼요"],
-  full: ["도장 완성! 다음 출석에 레벨업"],
+  today: ["오늘 트레이닝, 몸이 기억해요", "오늘도 반복 하나 해냈어요", "수업 완료! 더 단단해졌어요"],
+  between: ["다음 수업이 기다리고 있어요", "한 번 더 오면 몸이 기억해요", "오늘의 한 번이 실력이 돼요"],
+  full: ["다음 수업에 바로 레벨업"],
 };
 
 export interface CheerMoodInput {
@@ -367,18 +368,26 @@ export function questNear(i: { visitsLeft: number; meets: boolean; pending: bool
   return i.visitsLeft === 1 && !i.meets && !i.pending && !i.revision;
 }
 
-/** 마지막 도장 칸 이름 — 출석으로 오르는 리그는 「레벨업 도장」, 심사 리그(레드 · 블랙 · 레벨 10)는 「마지막 도장」 */
+/**
+ * 마지막 일차 칸 이름 — 보이는 이름표(「레벨업」 · 「마지막」)와 읽어 주는 이름.
+ * 출석으로 오르는 리그는 「레벨업하는 날」, 심사 리그(레드 · 블랙 · 레벨 10)는 「심사 전 마지막 날」 (2026-11-27 '도장' 대신)
+ */
+export function lastStampLabel(needsReview: boolean): { tag: string; aria: string } {
+  return needsReview ? { tag: "마지막", aria: "심사 전 마지막 날" } : { tag: "레벨업", aria: "레벨업하는 날" };
+}
+
+/** 마지막 일차 칸 읽어 주는 이름 (lastStampLabel(...).aria) */
 export function lastStampTag(needsReview: boolean): string {
-  return needsReview ? "마지막 도장" : "레벨업 도장";
+  return lastStampLabel(needsReview).aria;
 }
 
 export type DailyQuestKey = "stamp" | "levelup" | "money" | "mileage";
 
 export interface DailyQuestItem {
   key: DailyQuestKey;
-  /** 무엇 — "도장" · "레벨업" · "챔피언 머니" · "마일리지" (읽기 · 시험) */
+  /** 무엇 — "트레이닝" · "레벨업" · "챔피언 머니" · "마일리지" (읽기 · 시험) */
   name: string;
-  /** 얼마 — "+1" · "레벨업!" · "+100" · "+300" */
+  /** 얼마 — "+1일" · "레벨업!" · "+100" · "+300" */
   value: string;
 }
 
@@ -408,19 +417,19 @@ export interface DailyQuestInput {
 
 /**
  * 오늘의 퀘스트 — 체육관에 오면 바로 받는 것 (게임의 하루 퀘스트처럼 · 실제로 받는 값만).
- *   · 도장 +1 — 이번 레벨이 도장으로 가고 아직 칸이 남았을 때 (심사 대기 · 다 모은 뒤 · 레벨 10 타이틀매치는 없음)
+ *   · 트레이닝 +1일 — 이번 레벨이 일차 칸으로 가고 아직 칸이 남았을 때 (심사 대기 · 다 모은 뒤 · 레벨 10 타이틀매치는 없음)
  *   · 레벨업! — 출석으로 오르는 리그에서 도장을 다 모았으면 다음 출석이 레벨업
  *   · 챔피언 머니 +100 · 마일리지 — 출석하면 하루 한 번 (서버 트리거)
- * 오늘 왔으면 같은 칸을 「받았어요」로 — 레벨업한 날은 레벨업, 오늘 칸이 찍힌 날은 도장 +1.
+ * 오늘 왔으면 같은 칸을 「받았어요」로 — 레벨업한 날은 레벨업, 오늘 칸이 찬 날은 트레이닝 +1일.
  */
 export function dailyQuest(i: DailyQuestInput): DailyQuest {
   const items: DailyQuestItem[] = [];
   if (i.attendedToday) {
     if (i.leveledUpToday) items.push({ key: "levelup", name: "레벨업", value: "레벨업!" });
-    else if (i.stampedToday) items.push({ key: "stamp", name: "도장", value: "+1" });
+    else if (i.stampedToday) items.push({ key: "stamp", name: "트레이닝", value: "+1일" });
   } else if (i.stamps && !i.pending) {
     if (i.meets && !i.needsReview) items.push({ key: "levelup", name: "레벨업", value: "레벨업!" });
-    else if (!i.meets && i.visitsLeft > 0) items.push({ key: "stamp", name: "도장", value: "+1" });
+    else if (!i.meets && i.visitsLeft > 0) items.push({ key: "stamp", name: "트레이닝", value: "+1일" });
   }
   items.push({ key: "money", name: "챔피언 머니", value: `+${won(ATTEND_MONEY)}` });
   const m = i.mileage && i.mileage.enabled && i.mileage.attendance > 0 ? i.mileage : null;
