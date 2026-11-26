@@ -23,7 +23,7 @@ export const APP_UPDATES: readonly AppUpdate[] = [
     title: "153 마켓에 BOXRAW 공식 앰버서더 칸",
     lines: [
       "선릉역점이 BOXRAW 공식 앰버서더 체육관이 됐어요",
-      "153 마켓 맨 위 BOXRAW 칸에서 공식몰 전용 링크로 들어가요",
+      "153 마켓 위쪽 BOXRAW 칸에서 공식몰 전용 링크로 들어가요",
       "결제할 때 프로모션 코드 153boxing20 을 넣어 주세요",
     ],
     link: { to: "/market", label: "153 마켓 보기" },
