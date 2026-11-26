@@ -8,6 +8,7 @@ import {
   normalizeCustomers,
   normalizeMembers,
   phoneText,
+  shortProduct,
   statusPill,
   todoRows,
   visitText,
@@ -40,9 +41,19 @@ describe("153OS CRM — 서버 답 읽기", () => {
     expect(c?.last4).toBe("1234");
     expect(c?.sameName).toBe(1);
     expect(c?.visits).toEqual(["2026-11-01", "2026-11-03"]);
-    const d = normalizeCard({ id: "y", phone: "010-9876-5432" });
+    const d = normalizeCard({ id: "y", phone: "010-9876-5432", route: "NONE", purpose: "none", coach: "-", status_text: "유효" });
     expect(d?.last4).toBe("5432");
+    expect([d?.route, d?.purpose, d?.coach, d?.statusText]).toEqual([null, null, null, "유효"]);
     expect(normalizeCard({ error: "member_not_found" })).toBeNull();
+  });
+
+  it("상품 이름 — 앞의 153복싱짐 · 겹친 빈칸을 뺀다", () => {
+    expect(shortProduct("153복싱짐 주3회 기간권 3개월")).toBe("주3회 기간권 3개월");
+    expect(shortProduct(" 153  복싱짐 프리미엄  1년 무제한 회원권 ")).toBe("프리미엄 1년 무제한 회원권");
+    expect(shortProduct("퍼스널 트레이닝 20회권")).toBe("퍼스널 트레이닝 20회권");
+    expect(shortProduct("153복싱짐")).toBe("153복싱짐");
+    expect(shortProduct(null)).toBeNull();
+    expect(normalizeMembers({ rows: [{ id: "a", product: "153복싱짐 1개월 주3회 기간권 " }] }).rows[0].product).toBe("1개월 주3회 기간권");
   });
 
   it("고객 — 번호 남김 = 톡톡 번호 + 문의 기록", () => {

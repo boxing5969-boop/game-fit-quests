@@ -66,8 +66,17 @@ begin
       from pick p
       left join vis v on (p.mid <> '' and v.mid = p.mid) or (p.mid = '' and v.phone = p.normalized_phone)
      group by p.id
+  ), ls as (
+    -- 브로제이 명부에 상품 이름이 비어 있어서(11/27 선릉 유효 142명 모두) 같은 이름의 마지막 수강권 결제 상품을 쓴다
+    select distinct on (p.id) p.id, s.product
+      from pick p
+      join public.sales_entries s
+        on s.branch_id = v_bid and s.category = '수강권' and s.amount > 0 and s.sale_date >= p_day - 730
+       and regexp_replace(coalesce(s.member_name, ''), '\s', '', 'g') = regexp_replace(coalesce(p.member_name, ''), '\s', '', 'g')
+     order by p.id, s.sale_date desc
   ), r as (
     select p.*, pv.v7, pv.v30, pv.since_join,
+           coalesce(nullif(trim(p.product_name), ''), ls.product) as product_disp,
            greatest(pv.last_att, p.latest_visit_date) as last_visit,
            coalesce(p.since_snap >= 30, false) as dormant,
            (p.end_date - p_day) as days_left,
@@ -76,7 +85,7 @@ begin
                 when p.is_active then 'active'
                 when p.is_unknown then 'unknown'
                 else 'ended' end as st
-      from pick p join pv on pv.id = p.id
+      from pick p join pv on pv.id = p.id left join ls on ls.id = p.id
   ), t as (
     select r.*,
            array_remove(array[
@@ -96,7 +105,7 @@ begin
            'id', t.id,
            'name', t.member_name,
            'last4', right(coalesce(t.normalized_phone, ''), 4),
-           'product', t.product_name,
+           'product', t.product_disp,
            'start', t.start_date,
            'end', t.end_date,
            'days_left', t.days_left,
@@ -154,6 +163,7 @@ declare
   v_pay jsonb;
   v_follow jsonb;
   v_active boolean;
+  v_product text;
 begin
   select b.id into v_bid from public.branches b
    where b.name = p_branch_name and b.deleted_at is null order by b.created_at limit 1;
@@ -170,6 +180,12 @@ begin
    where s.branch_id = v_bid and regexp_replace(coalesce(s.member_name, ''), '\s', '', 'g') = v_norm;
   v_active := case when m.end_date is not null then m.end_date >= p_day and not (coalesce(m.status, '') ~ '(만료|탈퇴|환불|종료)')
                    else coalesce(m.status, '') ~ '(유효|활성|이용)' end;
+  -- 상품 이름이 명부에 없으면 같은 이름의 마지막 수강권 결제 상품
+  v_product := coalesce(nullif(trim(m.product_name), ''),
+                        (select s.product from public.sales_entries s
+                          where s.branch_id = v_bid and s.category = '수강권' and s.amount > 0 and s.sale_date >= p_day - 730
+                            and regexp_replace(coalesce(s.member_name, ''), '\s', '', 'g') = v_norm
+                          order by s.sale_date desc limit 1));
 
   select coalesce(jsonb_agg(d order by d), '[]'::jsonb) into v_visits
     from (select distinct a.attend_date as d
@@ -196,7 +212,7 @@ begin
     'id', m.id,
     'name', m.member_name,
     'phone', m.normalized_phone,
-    'product', m.product_name,
+    'product', v_product,
     'membership_type', m.membership_type,
     'start', m.start_date,
     'end', m.end_date,

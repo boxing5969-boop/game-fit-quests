@@ -144,10 +144,24 @@ const numOrNull = (v: unknown): number | null => {
   const n = num(v, NaN);
   return Number.isFinite(n) ? n : null;
 };
+/** 브로제이가 빈칸에 넣어 두는 글자(NONE · null · - …)는 없는 것으로 */
+const PLACEHOLDER = /^(none|null|undefined|nan|-+|없음|미입력)$/i;
+const txt = (v: unknown): string | null => {
+  const s = str(v);
+  return s && !PLACEHOLDER.test(s) ? s : null;
+};
 const day = (v: unknown): string | null => {
   const s = str(v);
   return s && /^\d{4}-\d{2}-\d{2}/.test(s) ? s.slice(0, 10) : null;
 };
+
+/** 상품 이름 — 빈칸을 하나로 · 앞의 「153복싱짐」은 뺀다(153복싱짐 주3회 기간권 3개월 → 주3회 기간권 3개월) */
+export function shortProduct(p: unknown): string | null {
+  const s = str(p);
+  if (!s) return null;
+  const t = s.replace(/\s+/g, " ").trim().replace(/^153\s*복싱짐\s*/, "").trim();
+  return t || s;
+}
 
 const STATUSES: readonly CrmStatus[] = ["active", "soon", "hold", "ended", "unknown"];
 const TAGS: readonly CrmTodoTag[] = ["exp3", "exp14", "ended7", "ended14", "ended30", "novisit7", "idle30", "starter"];
@@ -165,7 +179,7 @@ export function normalizeMembers(raw: unknown): CrmMembers {
       id,
       name: str(r.name) ?? "이름 없음",
       last4: str(r.last4),
-      product: str(r.product),
+      product: shortProduct(r.product),
       start: day(r.start),
       end: day(r.end),
       daysLeft: numOrNull(r.days_left),
@@ -174,7 +188,7 @@ export function normalizeMembers(raw: unknown): CrmMembers {
       lastVisit: day(r.last_visit),
       v7: num(r.v7),
       v30: num(r.v30),
-      coach: str(r.coach),
+      coach: txt(r.coach),
       todo: arr(r.todo).filter((t): t is CrmTodoTag => typeof t === "string" && TAGS.includes(t as CrmTodoTag)),
     });
   }
@@ -212,28 +226,28 @@ export function normalizeCard(raw: unknown): CrmCard | null {
     name: str(o.name) ?? "이름 없음",
     phone: str(o.phone),
     last4: str(o.last4) ?? (str(o.phone) ? String(o.phone).replace(/\D/g, "").slice(-4) : null),
-    product: str(o.product),
+    product: shortProduct(o.product),
     membershipType: str(o.membership_type),
     start: day(o.start),
     end: day(o.end),
     daysLeft: numOrNull(o.days_left),
     active: o.active === true,
-    statusText: str(o.status_text),
+    statusText: txt(o.status_text),
     hold: { status: str(hold.status), start: day(hold.start), end: day(hold.end) },
     sessions: { total: numOrNull(s.total), used: numOrNull(s.used), remaining: numOrNull(s.remaining) },
     pt: { active: pt.active === true, ticket: str(pt.ticket), remaining: numOrNull(pt.remaining), end: day(pt.end) },
-    coach: str(o.coach),
+    coach: txt(o.coach),
     joined: day(o.joined),
     lastBought: day(o.last_bought),
-    route: str(o.route),
-    purpose: str(o.purpose),
+    route: txt(o.route),
+    purpose: txt(o.purpose),
     lastVisit: day(o.last_visit),
     visits: arr(o.visits).map(day).filter((d): d is string => !!d).sort(),
     payments: arr(o.payments)
       .map((x) => {
         const p = obj(x);
         const d = day(p.day);
-        return d ? { day: d, product: str(p.product), category: str(p.category), amount: num(p.amount) } : null;
+        return d ? { day: d, product: shortProduct(p.product), category: str(p.category), amount: num(p.amount) } : null;
       })
       .filter((p): p is CrmPayment => !!p),
     sameName: Math.max(1, num(o.same_name, 1)),
