@@ -18,6 +18,18 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261126-coach-daily",
+    date: "2026-11-26",
+    title: "코치 매일 리포트 · 12/1부터 아침 6시 40분",
+    lines: [
+      "근무하는 날 아침에 어제 지점 출석과 내 근무 시간 출석이 알림으로 와요",
+      "지도자 홈 맨 위 「오늘 미션」 3개 · 단추를 누르면 완료로 바뀌어요",
+      "4주 시범 동안 보상 없이 숫자만 봐요 · 내 레벨은 나에게만 보여요",
+    ],
+    audience: "staff",
+    branches: SEOLLEUNG,
+  },
+  {
     id: "20261126-leader-home",
     date: "2026-11-26",
     title: "지도자 홈 — 홈 맨 위에 오늘 챙길 회원",

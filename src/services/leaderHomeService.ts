@@ -4,7 +4,7 @@
  *   코치용 사진 = 비공개 저장소 coach-photos/<회원>/face.jpg (그 지점 지도진 · 본사만 — 1시간짜리 서명 주소로 본다)
  *   재등록률이 없거나 오래됐으면 leader-kpi 를 한 번 불러 다시 계산한다(서버가 30분 안 계산은 건너뜀).
  *   함수가 아직 없거나(적용 전 · 옛 DB 미리보기) 막히면 꺼진 것으로 본다 — 홈은 지금 그대로.
- *   캐시 키는 "153leader" 로 시작. 글 · 계산은 src/lib/leaderHome.ts.
+ *   캐시 키는 "153leader" 로 시작(기록을 남기면 코치 매일 미션 "daily" 도 새로 받는다). 글 · 계산은 src/lib/leaderHome.ts.
  */
 import { useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -78,7 +78,10 @@ export function useLeaderContact() {
       if (error) throw new Error(translateError(error, "기록을 남기지 못했어요"));
       return data as { ok: boolean; id: string };
     },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: [...LEADER_KEY, "home"] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...LEADER_KEY, "home"] });
+      void qc.invalidateQueries({ queryKey: [...LEADER_KEY, "daily"] });
+    },
   });
 }
 
@@ -90,7 +93,10 @@ export function useLeaderUndo() {
       const { error } = await rpc("leader_contact_undo", { p_id: id });
       if (error) throw new Error(translateError(error, "되돌리지 못했어요"));
     },
-    onSuccess: () => void qc.invalidateQueries({ queryKey: [...LEADER_KEY, "home"] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...LEADER_KEY, "home"] });
+      void qc.invalidateQueries({ queryKey: [...LEADER_KEY, "daily"] });
+    },
   });
 }
 

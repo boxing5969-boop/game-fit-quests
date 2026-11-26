@@ -5,16 +5,19 @@
  *   관장 = 이번 주 코치별 기록 · D-3 안인데 아무도 안 만난 회원 / 관리자 = 지점 고르기 · 얼굴 보이는 회원 비율.
  *   켠 지점 지도진 · 본사에게만 — 회원 · '회원으로 보기' · 꺼진 지점 · 함수가 없을 때는 아무것도 그리지 않는다.
  *   글 · 순서 = lib/leaderHome.ts · 데이터 = services/leaderHomeService.ts · 미리보기 예시 = 홈 주소 ?demo=leader (지도진만)
+ *   맨 위 칸 = 코치 매일 리포트 · 오늘 미션(CoachDailyCard · 2026-11-26 · 12/1부터 코치님 화면 · 그 전에는 관리자 미리보기)
  */
 import { useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Camera, Check, ChevronRight, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
+import CoachDailyCard from "@/components/leader/CoachDailyCard";
 import LeaderPhotoSheet, { type LeaderPhotoTarget } from "@/components/leader/LeaderPhotoSheet";
 import OpsDayNoteSheet from "@/components/ops/OpsDayNoteSheet";
 import { useAuth } from "@/contexts/AuthContext";
 import { openMemberCard } from "@/lib/appEvents";
+import { COACH_DAILY_DEMO, missionName, type CoachMission, type MissionAction } from "@/lib/coachDaily";
 import {
   LEADER_DEMO,
   ROLE_LABEL,
@@ -42,6 +45,7 @@ import {
 import { kstHm } from "@/lib/promise153";
 import { isStaffProfile } from "@/lib/staffDisplay";
 import { cn } from "@/lib/utils";
+import { useCoachDaily } from "@/services/coachDailyService";
 import {
   useCoachPhotoUrls,
   useLeaderContact,
@@ -171,11 +175,13 @@ export interface LeaderHomeViewProps {
   onPhoto?: (row: LeaderRow) => void;
   onNote?: (row: StarterRow) => void;
   onBranch?: (branch: string) => void;
+  /** 머리 아래 맨 위 칸 — 코치 매일 리포트 · 오늘 미션 */
+  top?: ReactNode;
   className?: string;
 }
 
 /** 그리기만 — 화면 확인 · 시험용 (데이터는 아래 LeaderHome) */
-export const LeaderHomeView = ({ data, photoUrls = {}, busyId = null, onContact, onUndo, onPhoto, onNote, onBranch, className }: LeaderHomeViewProps) => {
+export const LeaderHomeView = ({ data, photoUrls = {}, busyId = null, onContact, onUndo, onPhoto, onNote, onBranch, top, className }: LeaderHomeViewProps) => {
   const [tab, setTab] = useState<"expiring" | "winback">("expiring");
   const [allExp, setAllExp] = useState(false);
   const [allSt, setAllSt] = useState(false);
@@ -230,6 +236,7 @@ export const LeaderHomeView = ({ data, photoUrls = {}, busyId = null, onContact,
         <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" aria-hidden />
         지금 체육관 {data.counts.here}명 · 우선 회원 {priorityHere}명
       </p>
+      {top && <div className="mt-3">{top}</div>}
 
       {/* 숫자 하나 — 신규 재등록률 */}
       <div className="mt-3 rounded-xl bg-secondary/70 p-3.5">
@@ -449,10 +456,13 @@ const LeaderHome = ({ className }: { className?: string }) => {
   const q = useLeaderHome(branch, maybeStaff && !demo);
   useLeaderKpiRefresh(demo ? undefined : q.data);
   const data = demo ? LEADER_DEMO : q.data;
-  const paths = useMemo(
-    () => (data ? [...data.expiring, ...data.winback, ...data.starters].map((r) => r.photoPath).filter((p): p is string => !!p) : []),
-    [data],
-  );
+  const dq = useCoachDaily(q.data?.branch ?? null, maybeStaff && !demo && !!q.data?.on);
+  const daily = demo ? COACH_DAILY_DEMO : dq.data;
+  const paths = useMemo(() => {
+    const rows = data ? [...data.expiring, ...data.winback, ...data.starters].map((r) => r.photoPath) : [];
+    const ms = daily?.on ? [...daily.missions, ...(daily.team ?? []).flatMap((t) => t.missions)].map((m) => m.photoPath) : [];
+    return [...rows, ...ms].filter((p): p is string => !!p);
+  }, [data, daily]);
   const urls = useCoachPhotoUrls(demo ? [] : paths);
   const contact = useLeaderContact();
   const undo = useLeaderUndo();
@@ -469,6 +479,19 @@ const LeaderHome = ({ className }: { className?: string }) => {
     try {
       await contact.mutateAsync({ member: row.userId, kind, topic, rx });
       toast.success(`${row.name}님 · ${TOAST[kind]} 남겼어요`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+  const onMission = async (m: CoachMission, a: MissionAction) => {
+    if (demo) {
+      toast("예시 화면이에요");
+      return;
+    }
+    if (!m.member) return;
+    try {
+      await contact.mutateAsync({ member: m.member, kind: a.kind, topic: a.topic });
+      toast.success(`${missionName(m)}님 · ${a.label} 남겼어요 · 미션 완료`);
     } catch (e) {
       toast.error((e as Error).message);
     }
@@ -495,6 +518,7 @@ const LeaderHome = ({ className }: { className?: string }) => {
         onPhoto={demo ? undefined : (r) => setPhotoFor({ userId: r.userId, name: r.name, photoPath: r.photoPath })}
         onNote={demo ? undefined : (r) => setNoteFor(r)}
         onBranch={(b) => setBranch(b)}
+        top={daily?.on ? <CoachDailyCard data={daily} photoUrls={urls.data} busyMember={busyId} onAction={onMission} /> : undefined}
         className={className}
       />
       {!demo && (
