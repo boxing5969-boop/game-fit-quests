@@ -2,14 +2,17 @@
  * 👔 관장님 숫자 — 지도자 홈 머리 바로 아래 칸 (2026-11-26 대표님 「추천대로」 · 선릉역점만 · docs/features/69)
  *   네 칸(재등록률 · 출석률 · 유효 회원 · 이번 달 매출) — 칸을 누르면 계산 방법 · 오늘 할 일 세 줄 · 브로제이 기준 시각.
  *   관장 · 지점장 · 본사만(LeaderHome 이 그때만 붙인다 · 매출 칸은 서버가 권한대로 뺀다). 글 · 칸 = lib/ownerKpi.ts
+ *   맨 아래 「오삼코치에게 묻기」 질문 단추 세 개(관장 모드를 켠 지점만 · 2026-11-27 관장님 앱 ③) — 누르면 오삼코치가 열리며 바로 묻는다(lib/ownerAsk).
  */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowDownRight, ArrowRight, ArrowUpRight, ChevronRight, Info } from "lucide-react";
+import { ArrowDownRight, ArrowRight, ArrowUpRight, Bot, ChevronRight, Info } from "lucide-react";
 
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useBackClose } from "@/hooks/useBackClose";
 import { ownerStamp, ownerTileHelp, ownerTiles, ownerTodos, type OwnerHomeData, type OwnerTileKey } from "@/lib/ownerKpi";
+import { askOsami, ownerAskChips } from "@/lib/ownerAsk";
+import { useOwnerAiScope } from "@/services/ownerAiScope";
 import { cn } from "@/lib/utils";
 
 const TONE = {
@@ -38,6 +41,9 @@ const OwnerKpiCard = ({ data, expiring, onJumpExpiring, crmOn, className }: Owne
   const todos = ownerTodos(data, expiring, { crm: crmOn });
   const stamp = ownerStamp(data);
   const h = help ? ownerTileHelp(help, data) : null;
+  // 오삼코치 관장 모드를 켠 지점이면 질문 단추 세 개
+  const aiOn = useOwnerAiScope(true).data?.on === true;
+  const asks = ownerAskChips(data);
 
   return (
     <div className={cn("rounded-xl border border-border bg-background p-3.5", className)} aria-label="관장님 숫자">
@@ -110,6 +116,27 @@ const OwnerKpiCard = ({ data, expiring, onJumpExpiring, crmOn, className }: Owne
           })}
         </ul>
       </div>
+
+      {aiOn && (
+        <div className="mt-3 border-t border-border pt-3">
+          <p className="flex items-center gap-1 text-label font-bold text-foreground">
+            <Bot className="h-4 w-4 text-muted-foreground" aria-hidden />
+            오삼코치에게 묻기
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {asks.map((q) => (
+              <button
+                key={q}
+                type="button"
+                onClick={() => askOsami(q, { owner: true })}
+                className="rounded-full border border-border bg-secondary/60 px-3 py-1.5 text-label font-bold text-foreground active:scale-95"
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Drawer open={!!help} onOpenChange={(v) => !v && setHelp(null)}>
         <DrawerContent className="max-h-[85dvh]">
