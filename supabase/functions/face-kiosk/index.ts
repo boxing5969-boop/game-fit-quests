@@ -8,6 +8,9 @@
 //   · v7(2026-11-25 대표님 「올리자」) — [출석]/[퇴장] 버튼판:
 //     state    — 오늘 출석했나 · 입장 시각 · 끝 기록(키오스크가 [출석] / [출석][퇴장] 중 무엇을 보일지 정한다)
 //     checkout — [퇴장] = DB kiosk_finish_workout(누른 시각으로 운동 시간 · XP 차액 정산). 안 누르고 가면 기본 운동 시간(66분).
+//   · v8(2026-11-27 대표님 「그렇게하자」) — checkin 뒤 자동 승급 검사(auto_advance_from_attendance · QR 출석 · 브로제이 동기화와 같은 길).
+//     그전엔 키오스크 출석에 승급 검사가 없어 키오스크로만 오는 회원은 레벨이 안 올랐다.
+//     지도진(profiles.is_staff — QR 출석과 같은 기준)과 코치 · 지점장 · 관리자 역할은 뺀다(출근 도장 ≠ 승급). 역할을 못 읽으면 검사도 건너뛴다.
 //
 // 액션: lookup(전화→회원), enroll(임베딩 등록+동의), list(매칭용 임베딩) — 2026-08-03 FC-2 부터 등록 · 명단 · 판정은 153OS 가 한다(옛 길, 호환으로 남김)
 //       checkin(출석), state(오늘 상태), checkout(퇴장)
@@ -154,7 +157,7 @@ Deno.serve(async (req) => {
         return json({ ok: true, already: true, method: existing[0].method });
       }
       const [{ data: prof }, { data: prog }, { data: ds }] = await Promise.all([
-        db.from("profiles").select("name, nickname").eq("user_id", userId).maybeSingle(),
+        db.from("profiles").select("name, nickname, is_staff").eq("user_id", userId).maybeSingle(),
         db.from("member_progress").select("current_rank, current_level").eq("user_id", userId).maybeSingle(),
         db.from("branch_display_settings").select("display_name_mode").eq("branch_name", branchName).maybeSingle(),
       ]);
@@ -169,6 +172,14 @@ Deno.serve(async (req) => {
         level_snapshot: prog?.current_level || 1,
       });
       if (error) return json({ error: "출석 기록 실패" }, 500);
+      // 자동 승급 검사 (v8) — 실패는 삼킨다: 출석이 우선이고 다음 출석 때 같은 검사가 다시 돈다
+      try {
+        if (prof?.is_staff !== true) {
+          const { data: roles, error: roleErr } = await db.from("user_roles").select("role").eq("user_id", userId)
+            .in("role", ["super_admin", "admin", "branch_manager", "coach"]).limit(1);
+          if (!roleErr && (roles?.length ?? 0) === 0) await db.rpc("auto_advance_from_attendance", { _user_id: userId });
+        }
+      } catch (_e) { /* 무시 */ }
       return json({ ok: true, already: false });
     }
 
