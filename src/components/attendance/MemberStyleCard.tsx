@@ -4,7 +4,8 @@
  *   처음 = 초대(5분 · 챔피언 머니 3,000) → 36문항 한 장에 하나(고르면 다음) → 결과(16유형 · 다섯 가지 성격 막대 · 코치님께 전해지는 지도법).
  *   답 원문은 나만 · 지도 카드는 우리 지점 코치님 · 대표님이 봐요. 문항 · 채점은 supabase/functions/_shared/memberStyle.ts 한 곳.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ChevronLeft, Lock, ShieldCheck, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { DmSheet } from "@/components/dm/DmParts";
@@ -197,11 +198,25 @@ const MemberStyleCard = () => {
   const clear = useClearMemberStyle();
   const [open, setOpen] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [params, setParams] = useSearchParams();
+  const handled = useRef(false);
+
+  // TV 2번 「체육관 공지사항」 QR(?style=1 · 2026-11-26) — 이 카드로 내려오고, 아직 검사 전이면 검사 창을 연다 (한 번만 · 주소에서 지운다)
+  useEffect(() => {
+    if (handled.current || !data?.available || !data.on || params.get("style") !== "1") return;
+    handled.current = true;
+    window.setTimeout(() => document.getElementById("member-style")?.scrollIntoView({ behavior: "smooth", block: "start" }), 300);
+    if (!data.profile?.answers) setOpen(true);
+    const next = new URLSearchParams(params);
+    next.delete("style");
+    setParams(next, { replace: true });
+  }, [data, params, setParams]);
+
   if (!data?.available || !data.on) return null;
   const p = data.profile;
 
   return (
-    <section className="rounded-2xl border bg-card p-5">
+    <section id="member-style" className="scroll-mt-20 rounded-2xl border bg-card p-5">
       <h2 className="text-heading font-bold text-foreground">나의 153 성향</h2>
       {!p?.answers ? (
         <>

@@ -9,6 +9,8 @@
  * 숫자는 board_app_pulse(TV 열쇠 · 지난 28일 합계) — 함수가 없거나 못 읽으면 숫자 없이 같은 장면(글은 src/lib/appValueReel.ts).
  * 글자는 28px 이상. 칸 높이에 맞춰 네 단계 중 넘치지 않는 가장 큰 것 — 왼쪽 글(FIT_LEFT)과 오른쪽 그림 · QR(FIT_RIGHT)을 따로 잰다.
  *   칸 높이가 바뀌면(153 RECORD 띠가 생기고 사라질 때 · 글꼴이 늦게 올 때) 0단계부터 다시 잰다.
+ * 2026-11-26 「체육관 공지사항」 탭: 공지가 있는 지점은 Tv2Tabs 가 이 장면과 공지를 1분씩 번갈아 — 그때는 tabs 로 시계 · 두 분에 한 장면 ·
+ *   머리 두 탭 표시를 받는다(없으면 예전 그대로).
  */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -30,6 +32,7 @@ import {
   type ValueScene,
 } from "@/lib/appValueReel";
 import { AppValueVisual, type FitLevel } from "@/components/liveBoard/AppValueVisuals";
+import Tv2TabPills from "@/components/liveBoard/Tv2TabPills";
 import { cn } from "@/lib/utils";
 
 /** 왼쪽 글 크기 네 단계 — 칸에 넘치지 않는 가장 큰 단계를 쓴다(모두 28px 이상) */
@@ -142,11 +145,14 @@ const SceneView = ({
   startedAt,
   index,
   total,
+  tabbed = false,
 }: {
   scene: ValueScene;
   startedAt: number;
   index: number;
   total: number;
+  /** 「체육관 공지사항」 탭과 번갈아 도는 지점 — 머리 왼쪽을 두 탭 표시로 */
+  tabbed?: boolean;
 }) => {
   const [offset] = useState(() => Math.min(SCENE_MS, Math.max(0, Date.now() - startedAt)));
   const bodyRef = useRef<HTMLDivElement | null>(null);
@@ -212,12 +218,16 @@ const SceneView = ({
       <Segments index={index} total={total} offset={offset} />
 
       <header className="mt-2.5 flex items-center justify-between gap-6">
-        <div className="flex shrink-0 items-center gap-3">
-          <span className="text-[28px] font-black leading-none text-primary">마이복서153</span>
-          <span className="rounded-full bg-white/10 px-4 py-1 text-[28px] font-black leading-none text-white">
-            {scene.tag}
-          </span>
-        </div>
+        {tabbed ? (
+          <Tv2TabPills active="value" tag={scene.tag} />
+        ) : (
+          <div className="flex shrink-0 items-center gap-3">
+            <span className="text-[28px] font-black leading-none text-primary">마이복서153</span>
+            <span className="rounded-full bg-white/10 px-4 py-1 text-[28px] font-black leading-none text-white">
+              {scene.tag}
+            </span>
+          </div>
+        )}
         <span className="min-w-0 truncate text-[28px] font-bold leading-none text-gray-400">{REEL_SIGN}</span>
       </header>
 
@@ -305,9 +315,14 @@ interface Props {
   branchName: string;
   /** 수상자 축하가 읽은 마일리지 규칙 — board_app_pulse 가 없을 때 예비 */
   awardsRules?: MileageRules | null;
+  /**
+   * 「체육관 공지사항」 탭과 번갈아 돌 때(Tv2Tabs · 2026-11-26) — 바깥이 주는 시계(now) · 몇 분에 한 장면씩(pace) · 머리에 두 탭 표시.
+   * 없으면 예전 그대로(자기 시계 · 1분마다 · 머리 「마이복서153」).
+   */
+  tabs?: { now: number; pace: number };
 }
 
-const AppValueReel = ({ branchName, awardsRules = null }: Props) => {
+const AppValueReel = ({ branchName, awardsRules = null, tabs }: Props) => {
   const { data: pulse, isPending } = useQuery({
     queryKey: ["153tv", "app-pulse", branchName],
     queryFn: () => fetchAppPulse(branchName),
@@ -317,9 +332,11 @@ const AppValueReel = ({ branchName, awardsRules = null }: Props) => {
     enabled: !!branchName,
   });
 
-  // 1분이 바뀌는 순간마다 다시 그린다(시계 기준)
-  const [now, setNow] = useState(() => Date.now());
+  // 1분이 바뀌는 순간마다 다시 그린다(시계 기준) — 탭 보드가 시계를 주면(tabs) 자기 시계는 쉰다
+  const driven = !!tabs;
+  const [ownNow, setNow] = useState(() => Date.now());
   useEffect(() => {
+    if (driven) return;
     let t = 0;
     const schedule = () => {
       const wait = SCENE_MS - (Date.now() % SCENE_MS) + 40;
@@ -330,7 +347,8 @@ const AppValueReel = ({ branchName, awardsRules = null }: Props) => {
     };
     schedule();
     return () => window.clearTimeout(t);
-  }, []);
+  }, [driven]);
+  const now = tabs?.now ?? ownNow;
 
   const today = kstToday(now);
   const scenes = useMemo(
@@ -342,11 +360,18 @@ const AppValueReel = ({ branchName, awardsRules = null }: Props) => {
   if (isPending && !!branchName) return null;
   if (!scenes.length) return null;
 
-  const index = sceneIndexAt(now, scenes.length);
+  const index = sceneIndexAt(now, scenes.length, tabs?.pace ?? 1);
   const scene = scenes[index];
   const startedAt = now - (now % SCENE_MS);
   return (
-    <SceneView key={`${scene.id}:${startedAt}`} scene={scene} startedAt={startedAt} index={index} total={scenes.length} />
+    <SceneView
+      key={`${scene.id}:${startedAt}`}
+      scene={scene}
+      startedAt={startedAt}
+      index={index}
+      total={scenes.length}
+      tabbed={driven}
+    />
   );
 };
 

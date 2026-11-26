@@ -449,9 +449,9 @@ export function buildReel({ branch, pulse, awardsRules, today }: ReelInput): Val
   return scenes;
 }
 
-/** 지금 보여 줄 장면 번호 — 1분마다(시계 기준) */
-export const sceneIndexAt = (nowMs: number, total: number): number =>
-  total > 0 ? Math.floor(Math.max(0, nowMs) / SCENE_MS) % total : 0;
+/** 지금 보여 줄 장면 번호 — 1분마다(시계 기준). pace = 몇 분에 한 장면씩 넘길지(「체육관 공지사항」 탭과 번갈아 돌면 2 — lib/gymNotices.ts) */
+export const sceneIndexAt = (nowMs: number, total: number, pace = 1): number =>
+  total > 0 ? Math.floor(Math.floor(Math.max(0, nowMs) / SCENE_MS) / Math.max(1, Math.round(pace))) % total : 0;
 
 /** 지금 장면이 시작한 지 몇 ms */
 export const sceneOffsetAt = (nowMs: number): number => Math.max(0, nowMs) % SCENE_MS;
