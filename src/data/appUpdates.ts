@@ -18,6 +18,16 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261126-received153-cheer",
+    date: "2026-11-26",
+    title: "받은 153 — 돌려주기가 더 정확해졌어요",
+    lines: [
+      "받은 뒤에 돌려준 153만 「돌려줬어요」로 보여요",
+      "최근 카드에 이미 153을 보낸 동료에게는 응원을 보낼 수 있어요",
+    ],
+    link: { to: "/myboxer/community?received=1", label: "받은 153 보기" },
+  },
+  {
     id: "20261126-pt-name-label",
     date: "2026-11-26",
     title: "근무 — PT 회원 이름을 이름표로",

@@ -185,8 +185,10 @@ export interface Received153Sender {
   count: number;
   lastAt: string;
   returnTarget: { type: ReactTarget; id: string; at: string } | null;
-  /** 돌려줄 카드에 내가 이미 153 을 눌렀나 */
+  /** 그 동료가 마지막으로 153 을 보낸 뒤에 내가 돌려줬나 (2026-11-26 — 예전엔 그 카드에 「언제든」 눌렀으면 참) */
   returned: boolean;
+  /** 돌려줄 카드에 내 153 이 이미 있나(받기 전에 준 것 포함) — 같은 카드엔 또 못 줘서 화면은 「응원 보내기」. 옛 서버면 없음 */
+  cardHas153?: boolean;
 }
 
 export interface Received153 {

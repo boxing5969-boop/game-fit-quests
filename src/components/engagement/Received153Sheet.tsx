@@ -3,6 +3,9 @@
  *   커뮤니티 머리의 '받은 153' · 153 알림(/myboxer/community?received=1)에서 열린다.
  *   돌려주기 = 그 동료의 가장 최근 카드(한 줄 14일 · 출석 3일 · 승급 7일)에 153 — 서버가 골라 준다(get_my_received_153).
  *   돌려줄 카드가 없는 동료(코치님 등)는 '응원 보내기'로 대신한다.
+ *   2026-11-26 대표님 「돌려줬어요를 눌러도 반응없어」: 「돌려줬어요」는 그 동료가 마지막으로 보낸 뒤에 돌려줬을 때만(서버 returned).
+ *   그 동료의 최근 카드에 내 153 이 이미 있으면(받기 전에 준 것) 같은 카드엔 또 못 주니 '응원 보내기'(cardHas153).
+ *   「돌려줬어요」를 누르면 이미 돌려줬다고 알려 준다(예전엔 눌러도 아무 일 없음).
  */
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -140,6 +143,8 @@ const Received153Sheet = ({ open, onClose, onCheer }: Props) => {
               <ul className="space-y-2">
                 {senders.map((s) => {
                   const done = s.returned || doneIds.has(s.userId);
+                  // 그 동료의 최근 카드에 내 153 이 이미 있다(받기 전에 준 것) — 같은 카드엔 또 못 주니 응원으로
+                  const taken = !done && !!s.cardHas153;
                   const busy = giveBack.isPending && giveBack.variables?.userId === s.userId;
                   return (
                     <li key={s.userId} className="flex items-center gap-3 rounded-2xl border border-border bg-background/40 px-3 py-2.5">
@@ -173,11 +178,12 @@ const Received153Sheet = ({ open, onClose, onCheer }: Props) => {
                           153 <span className="number-font font-bold text-foreground">×{s.count}</span> · {when(s.lastAt)}
                         </p>
                       </div>
-                      {s.returnTarget ? (
+                      {s.returnTarget && !taken ? (
                         <button
                           type="button"
-                          disabled={done || busy}
-                          onClick={() => giveBack.mutate(s)}
+                          disabled={busy}
+                          aria-disabled={done}
+                          onClick={() => (done ? toast(`${s.nickname}님께 이미 153을 돌려줬어요`) : giveBack.mutate(s))}
                           className={cn(
                             "inline-flex min-h-[44px] shrink-0 items-center gap-1 rounded-pill px-3.5 text-label font-black transition-transform active:scale-95 disabled:active:scale-100",
                             done
