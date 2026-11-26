@@ -307,7 +307,7 @@ begin
       from public.leader_contacts l
       left join public.profiles sp on sp.user_id = l.staff_user_id
      where l.branch_name = v_branch and l.removed_at is null and l.created_at >= now() - interval '21 days'
-     order by l.member_user_id, l.created_at desc
+     order by l.member_user_id, l.created_at desc, l.id desc
   ), b as (
     select m.user_id, m.name, m.nickname, m.avatar_url, m.membership_end,
            st.first_day, st.last_day, coalesce(st.total, 0) as total, coalesce(st.v14, 0) as v14,
@@ -500,13 +500,14 @@ begin
      and l.removed_at is null and l.created_at > now() - interval '10 minutes'
    order by l.created_at desc
    limit 1;
+  -- 시각은 clock_timestamp() — 한 거래 안에서 여러 번 눌러도(시험 · 묶음) 마지막 기록이 맨 위에 오게
   if v_id is not null then
     update public.leader_contacts
-       set topic = p_topic, rx = v_rx, note = coalesce(v_note, note), created_at = now()
+       set topic = p_topic, rx = v_rx, note = coalesce(v_note, note), created_at = clock_timestamp()
      where id = v_id;
   else
-    insert into public.leader_contacts (branch_name, member_user_id, staff_user_id, kind, topic, rx, note)
-    values (v_branch, p_member, v_me, p_kind, p_topic, v_rx, v_note)
+    insert into public.leader_contacts (branch_name, member_user_id, staff_user_id, kind, topic, rx, note, created_at)
+    values (v_branch, p_member, v_me, p_kind, p_topic, v_rx, v_note, clock_timestamp())
     returning id into v_id;
   end if;
   return jsonb_build_object('ok', true, 'id', v_id);
