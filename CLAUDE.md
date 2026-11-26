@@ -188,6 +188,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - [67 라이브보드 TV 2번 「체육관 공지사항」 탭 — 마이복서153 ↔ 공지 1분씩](docs/features/67-라이브보드-TV-2번-체육관-공지사항.md) — `src/data/gymNotices.ts`
 - [68 코치 매일 리포트 · 오늘 미션 — 06:40 알림 · 내 시간 숫자 · 미션 3개 (12/1부터 · 그 전 관리자 미리보기)](docs/features/68-코치-매일-리포트.md) — `src/lib/coachDaily.ts`
 - [69 관장님 앱 — 관장님 홈 숫자 네 칸(재등록률 · 출석률 · 유효 회원 · 매출) · 153OS CRM · AI 관장 모드 · 결정 8가지](docs/features/69-관장님-앱.md) — `src/lib/ownerKpi.ts`
+- [70 레벨업 안내 — 새 튜토리얼 5장 · 트레이닝 1일차 · 2일차 · 계정에 한 번 · 옛 오삼 5단계 · 7일 캠프 끔](docs/features/70-레벨업-안내.md) — `src/lib/levelGuide.ts`
 
 ### Supabase 연결
 

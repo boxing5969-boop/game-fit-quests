@@ -204,7 +204,7 @@ describe("레벨업까지 카드 — 기본 모양(훈련 탭 · 심사 탭 · �
     expect(state.titleEnabled.every((on) => on === false)).toBe(true);
     // 홈 레벨 퀘스트(도장 · 응원 · 보상)는 홈에만 — 오늘 출석 · 마일리지 설정도 읽지 않는다
     expect(screen.queryByText("반복은 천재를 만든다")).toBeNull();
-    expect(screen.queryByRole("list", { name: /수업 도장/ })).toBeNull();
+    expect(screen.queryByRole("list", { name: /트레이닝 일차/ })).toBeNull();
     expect(state.rpcs).not.toContain("get_my_workout_today");
     expect(state.tables).not.toContain("app_settings");
   });
@@ -228,12 +228,12 @@ describe("홈 첫 화면 「다음 레벨까지」 — 레벨 퀘스트(리그 �
     expect(within(card).getByText(heroText("2번 더 오면 레벨 5"))).toBeInTheDocument();
     // 막대 · 숫자 줄 대신 수업 도장 — 화이트 레벨 4 = 10 · 11 · 12일차 (153 수업 매뉴얼과 같은 셈) · 마지막 칸 = 레벨업 도장
     expect(within(card).queryByText("출석 1/3회")).toBeNull();
-    const rail = within(card).getByRole("list", { name: "레벨 5까지 수업 도장" });
+    const rail = within(card).getByRole("list", { name: "레벨 5까지 트레이닝 일차" });
     expect(within(rail).getAllByRole("listitem").map((li) => li.getAttribute("aria-label"))).toEqual([
       "지금 레벨 4",
       "10일차 수업 · 완료",
       "11일차 수업 · 다음 수업",
-      "12일차 수업 · 남은 수업 · 레벨업 도장",
+      "12일차 수업 · 남은 수업 · 레벨업하는 날",
       "목표 레벨 5",
     ]);
     expect(within(rail).getByText("다음 수업")).toBeInTheDocument();
@@ -243,7 +243,7 @@ describe("홈 첫 화면 「다음 레벨까지」 — 레벨 퀘스트(리그 �
     expect(within(card).getByLabelText("레벨 5 달성 보상 — XP +50 · 챔피언 머니 +500")).toBeInTheDocument();
     // 오늘의 퀘스트 — 오면 바로 받는 것 (실제로 받는 값만)
     const quest = within(card).getByRole("group", { name: "오늘의 퀘스트 — 오면 받아요" });
-    expect(within(quest).getByLabelText("도장 +1")).toBeInTheDocument();
+    expect(within(quest).getByLabelText("트레이닝 +1일")).toBeInTheDocument();
     expect(within(quest).getByLabelText("챔피언 머니 +100")).toBeInTheDocument();
     expect(within(card).getByText("레벨 4 미션")).toBeInTheDocument();
     expect(within(card).getByRole("button", { name: "사이드 방향전환 스텝 영상 보기" })).toBeInTheDocument();
@@ -290,7 +290,7 @@ describe("홈 첫 화면 「다음 레벨까지」 — 레벨 퀘스트(리그 �
     renderCard({ bar: false, missions: true, levelGoal: { title: "스트레이트 회전 입문", goal: "스트레이트의 회전력과 체중 이동을 배운다" } });
     expect(await screen.findByText(heroText("3번 더 오면 레벨 14"))).toBeInTheDocument();
     // 블루 = 한 레벨 5칸 · 레벨 13 = 41~45일차 · 보너스(0.25)는 다음 칸에
-    const rail = screen.getByRole("list", { name: "레벨 14까지 수업 도장" });
+    const rail = screen.getByRole("list", { name: "레벨 14까지 트레이닝 일차" });
     const days = within(rail).getAllByRole("listitem").map((li) => li.getAttribute("aria-label"));
     expect(days).toEqual([
       "지금 레벨 13",
@@ -298,7 +298,7 @@ describe("홈 첫 화면 「다음 레벨까지」 — 레벨 퀘스트(리그 �
       "42일차 수업 · 완료",
       "43일차 수업 · 다음 수업 · 운동 보너스로 25% 찼어요",
       "44일차 수업 · 남은 수업",
-      "45일차 수업 · 남은 수업 · 레벨업 도장",
+      "45일차 수업 · 남은 수업 · 레벨업하는 날",
       "목표 레벨 14",
     ]);
     expect(screen.getByText("레벨 13 미션")).toBeInTheDocument();
@@ -314,7 +314,7 @@ describe("홈 첫 화면 「다음 레벨까지」 — 레벨 퀘스트(리그 �
     // 코치 승인 리그 — 챔피언 머니 +1,000
     expect(screen.getByLabelText("레벨 23 달성 보상 — XP +50 · 챔피언 머니 +1,000")).toBeInTheDocument();
     // 심사 리그 — 마지막 칸은 「마지막 도장」
-    expect(screen.getByRole("list", { name: "레벨 23까지 수업 도장" }).querySelector('[aria-label$="마지막 도장"]')).not.toBeNull();
+    expect(screen.getByRole("list", { name: "레벨 23까지 트레이닝 일차" }).querySelector('[aria-label$="심사 전 마지막 날"]')).not.toBeNull();
     unmount();
 
     state.reviewStatus = "revision_requested";
@@ -374,12 +374,12 @@ describe("홈 「다음 레벨까지」 — 레벨 10 타이틀매치", () => {
     const road = within(card).getByRole("list", { name: "리그 길" });
     expect(within(road).getAllByRole("listitem")).toHaveLength(10);
     expect(within(road).getByLabelText("레벨 10 타이틀매치 · 지금")).toBeInTheDocument();
-    expect(within(card).queryByRole("list", { name: /수업 도장/ })).toBeNull();
+    expect(within(card).queryByRole("list", { name: /트레이닝 일차/ })).toBeNull();
     expect(within(card).getByText("아홉 레벨을 모두 지나왔어요")).toBeInTheDocument();
     expect(within(card).getByLabelText("타이틀매치 통과 보상 — 승급 블루 리그")).toBeInTheDocument();
     // 타이틀매치 날에도 오늘의 퀘스트는 있다 — 도장 칸 없이 (출석이 레벨을 올리지 않는다)
     const quest = within(card).getByRole("group", { name: "오늘의 퀘스트 — 오면 받아요" });
-    expect(within(quest).queryByLabelText("도장 +1")).toBeNull();
+    expect(within(quest).queryByLabelText("트레이닝 +1일")).toBeNull();
     expect(within(quest).getByLabelText("챔피언 머니 +100")).toBeInTheDocument();
     expect(within(card).getByText("타이틀미션")).toBeInTheDocument();
     expect(within(card).getByText("완벽한 자세로 3번 연속 성공")).toBeInTheDocument();
@@ -459,16 +459,16 @@ describe("홈 레벨 퀘스트 — 오늘 온 날 · 레벨업한 날 · 레벨 
     renderCard({ bar: false, missions: true });
     // 남은 출석 1번 — 「1번만 … !」 (목표 기울기)
     expect(await screen.findByText(heroText("1번만 더 오면 레벨 5!"))).toBeInTheDocument();
-    const rail = await screen.findByRole("list", { name: "레벨 5까지 수업 도장" });
+    const rail = await screen.findByRole("list", { name: "레벨 5까지 트레이닝 일차" });
     await waitFor(() => expect(within(rail).getByText("오늘")).toBeInTheDocument());
     expect(within(rail).getByLabelText("11일차 수업 · 오늘 완료")).toBeInTheDocument();
-    expect(within(rail).getByLabelText("12일차 수업 · 다음 수업 · 운동 보너스로 25% 찼어요 · 레벨업 도장")).toBeInTheDocument();
+    expect(within(rail).getByLabelText("12일차 수업 · 다음 수업 · 운동 보너스로 25% 찼어요 · 레벨업하는 날")).toBeInTheDocument();
     // 마지막 칸 = 금색 「레벨업」 · 오늘 온 날은 「다음 수업」 이름표 없이
     expect(within(rail).getByText("레벨업")).toBeInTheDocument();
     expect(within(rail).queryByText("다음 수업")).toBeNull();
     // 오늘의 퀘스트 완료 — 받았어요 (도장 +1 · 챔피언 머니 +100)
     const quest = screen.getByRole("group", { name: "오늘의 퀘스트 완료! — 받았어요" });
-    expect(within(quest).getByLabelText("도장 +1")).toBeInTheDocument();
+    expect(within(quest).getByLabelText("트레이닝 +1일")).toBeInTheDocument();
     expect(within(quest).getByLabelText("챔피언 머니 +100")).toBeInTheDocument();
     const { CHEER_LINES } = await import("@/lib/levelQuest");
     expect(CHEER_LINES.today.some((line) => screen.queryByText(line))).toBe(true);
@@ -482,12 +482,12 @@ describe("홈 레벨 퀘스트 — 오늘 온 날 · 레벨업한 날 · 레벨 
     state.cycle = cycleOf({ sessions: 0, days: 0, progressFloor: 0, progress: 0, since: new Date(Date.now() - 60_000).toISOString() });
     const { unmount } = renderCard({ bar: false, missions: true });
     expect(await screen.findByText(heroText("레벨 5 달성!🎉"))).toBeInTheDocument();
-    const rail = screen.getByRole("list", { name: "레벨 6까지 수업 도장" });
+    const rail = screen.getByRole("list", { name: "레벨 6까지 트레이닝 일차" });
     expect(within(rail).getAllByRole("listitem").map((li) => li.getAttribute("aria-label"))).toEqual([
       "지금 레벨 5",
       "13일차 수업 · 다음 수업",
       "14일차 수업 · 남은 수업",
-      "15일차 수업 · 남은 수업 · 레벨업 도장",
+      "15일차 수업 · 남은 수업 · 레벨업하는 날",
       "목표 레벨 6",
     ]);
     // 보상 상자 = 오늘 받은 레벨 5 보상 · 오늘의 퀘스트 = 레벨업!
@@ -531,6 +531,6 @@ describe("홈 레벨 퀘스트 — 오늘 온 날 · 레벨업한 날 · 레벨 
     expect(await screen.findByText("다음 출석 때 레벨 5!")).toBeInTheDocument();
     const quest = screen.getByRole("group", { name: "오늘의 퀘스트 — 오면 받아요" });
     expect(within(quest).getByLabelText("레벨업 레벨업!")).toBeInTheDocument();
-    expect(within(quest).queryByLabelText("도장 +1")).toBeNull();
+    expect(within(quest).queryByLabelText("트레이닝 +1일")).toBeNull();
   });
 });

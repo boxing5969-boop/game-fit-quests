@@ -20,14 +20,8 @@ import { isManagerRole } from "@/lib/rankLabels";
 import { isSignageRoute } from "@/lib/displayMode";
 import { GUARDIAN_JOIN_PATH, isGuardianOnlyProfile, readGuardianToken } from "@/lib/guardian";
 import { guardianDemo } from "@/services/guardianService";
-import TutorialFloatingMascot from "@/components/tutorial/TutorialFloatingMascot";
-import TutorialActionSpotlight from "@/components/tutorial/TutorialActionSpotlight";
-import OsamiWelcomeModal from "@/components/tutorial/OsamiWelcomeModal";
 import WelcomeLetter from "@/components/WelcomeLetter";
-import { useTutorialAutoDetect } from "@/hooks/useTutorialAutoDetect";
-import TutorialCampProvider from "@/features/tutorial-camp/TutorialCampProvider";
-import TutorialDevPanel from "@/features/tutorial-camp/TutorialDevPanel";
-import TutorialCustomizer from "@/features/tutorial-camp/TutorialCustomizer";
+import LevelGuideHost from "@/components/levelGuide/LevelGuideHost";
 import PostActionReflectionSheet from "@/components/home/PostActionReflectionSheet";
 import CredentialChangePrompt from "@/components/CredentialChangePrompt";
 import GlobalMemberCard from "@/components/license/GlobalMemberCard";
@@ -37,7 +31,6 @@ import LinkAccountPrompt from "@/components/LinkAccountPrompt";
 import AppLaunchSplash from "@/components/splash/AppLaunchSplash";
 import RouteLoader from "@/components/splash/RouteLoader";
 import { useAppLaunchSplash } from "@/hooks/useAppLaunchSplash";
-import { useTutorialGlobalOverridesBoot } from "@/hooks/useTutorialGlobalOverrides";
 import ExitConfirm from "@/components/ExitConfirm";
 import PushBridge from "@/components/notifications/PushBridge";
 import { ViewAsMemberBar } from "@/components/admin/ViewAsMember";
@@ -300,9 +293,7 @@ const AppRoutes = () => {
   const guardianScreen = pathname.startsWith("/guardian") || isGuardianOnlyProfile(profile);
   const memberChrome = !signage && !guardianScreen;
 
-  // 65-A: 앱 부팅 시 1회 — 관리자가 publish 한 글로벌 튜토리얼 오버라이드 로드.
-  // 실패해도 조용히 — base + 본인 local 만으로 동작.
-  useTutorialGlobalOverridesBoot();
+  // (2026-11-27) 옛 7일 캠프 글로벌 튜토리얼 오버라이드 부팅은 뺐다 — 레벨업 안내(LevelGuideHost)로 바뀌어 쓰는 곳이 없다.
 
   // Splash gate.
   //   • 쿨드 스타트 시 1회만 재생 (sessionStorage 키 'rankingup_splash_seen_v1').
@@ -483,20 +474,12 @@ const AppRoutes = () => {
           <ChatAssistant />
         </Suspense>
       )}
-      {/* 마이복서153 — 오삼 마스코트 튜토리얼 (행동기반 미션 5개). */}
-      {user && splashDone && memberChrome && <TutorialFloatingMascotWithDetect />}
-      {/* 5개 미션 spotlight 가이드 — navTarget 페이지에서 어떤 element 누를지 안내 */}
-      {user && splashDone && memberChrome && <TutorialActionSpotlight />}
-      {/* 첫 로그인 환영 모달 — 신규 회원 1회 노출, 오삼이 코치 인사 + 앱 핵심 안내 */}
-      {user && splashDone && memberChrome && <OsamiWelcomeModal />}
-      {/* 감동편지 — 웰컴 1통 + 리그 승급(블루/레드/블랙) 3통, localStorage 1회 노출 */}
+      {/* 🥊 레벨업 안내 — 새 튜토리얼 5장 (2026-11-27 대표님 「7일 캠프는 이제 빼자 … 어떻게 레벨이 올라가는지 왜 하는지 알려주는
+          듀토리얼으로」). 옛 오삼 마스코트 5단계 · 환영 모달 · 7일 캠프 · 캠프 편집 도구 자리 (파일은 남겨 둠).
+          회원에게 계정당 한 번 · 다시 보기는 설정 · 내정보 · 홈 레벨 카드 ? · ?guide=level */}
+      {user && splashDone && memberChrome && <LevelGuideHost />}
+      {/* 감동편지 — 웰컴 1통 + 리그 승급(블루/레드/블랙) 3통, localStorage 1회 노출. 레벨업 안내를 띄운 접속에는 다음 접속에 */}
       {user && splashDone && memberChrome && <WelcomeLetter />}
-      {/* 7일 스타터 캠프 overlay — localStorage 기반, isActive 시에만 렌더 */}
-      {user && splashDone && memberChrome && <TutorialCampProvider />}
-      {/* 개발자 preview 패널 — localhost / ?tutorialDev=1 / dev 토글 ON 일 때만 노출 */}
-      {user && splashDone && memberChrome && <TutorialDevPanel />}
-      {/* 64-V: 관리자 floating 커스텀 도구 — 화면 위 element picker + 토글 */}
-      {user && splashDone && memberChrome && <TutorialCustomizer />}
       {/* 활동 후 30초 마무리 sheet — 글로벌 trigger 이벤트 listen, 하루 1회 큰 sheet */}
       {user && splashDone && memberChrome && <PostActionReflectionSheet />}
       {/* 최초 로그인 아이디·비번 변경 권장(스킵 가능) — 일괄등록 회원 must_change_credentials */}
@@ -515,12 +498,6 @@ const AppRoutes = () => {
       <ExitConfirm open={exitAsk} onClose={() => setExitAsk(false)} />
     </>
   );
-};
-
-/** 자동완료감지 훅 + floating 마스코트 함께 마운트 (router 컨텍스트 안). */
-const TutorialFloatingMascotWithDetect = () => {
-  useTutorialAutoDetect();
-  return <TutorialFloatingMascot />;
 };
 
 /**

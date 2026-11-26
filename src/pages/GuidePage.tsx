@@ -327,10 +327,10 @@ const LevelUpTab = () => {
           </div>
           <p className="text-label leading-relaxed text-muted-foreground">
             {mine.autoAdvance
-              ? `이 리그는 출석 ${mine.visitsPerLevel}회를 채우면 자동으로 다음 레벨로 갑니다. 단, 레벨 ${mine.lastLevel}은 심사를 거칩니다.`
-              : `이 리그는 출석을 채워도 자동으로 오르지 않습니다. ${mine.visitsPerLevel}회를 채우면 심사가 열리고, ${WHO[mine.levelAuthority]}이 보고 승급합니다.`}
+              ? `이 리그는 트레이닝 ${mine.visitsPerLevel}일을 채우면 자동으로 다음 레벨로 갑니다. 단, 레벨 ${mine.lastLevel}은 심사를 거칩니다.`
+              : `이 리그는 트레이닝 날을 채워도 자동으로 오르지 않습니다. ${mine.visitsPerLevel}일을 채우면 심사가 열리고, ${WHO[mine.levelAuthority]}이 보고 승급합니다.`}
             {(mine.minDaysPerLevel ?? 0) > 0 &&
-              ` 그리고 레벨마다 최소 ${mine.minDaysPerLevel}일을 머물러야 합니다 — 출석을 몰아쳐도 건너뛸 수 없습니다.`}
+              ` 그리고 레벨마다 최소 ${mine.minDaysPerLevel}일을 머물러야 합니다. 트레이닝을 몰아서 해도 건너뛸 수 없습니다.`}
           </p>
           {(cycle.fastTrackGates ?? 0) > 0 && (
             <p className="mt-2 rounded-lg border border-reward/30 bg-reward/5 px-2.5 py-2 text-micro font-semibold leading-relaxed text-reward-foreground">

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useTutorialState } from "@/hooks/useTutorialState";
+import { openLevelGuide } from "@/lib/levelGuide";
 import RankBadge from "@/components/RankBadge";
 import MembershipCard from "@/components/MembershipCard";
 import AvatarUpload from "@/components/AvatarUpload";
@@ -52,8 +52,6 @@ const MyPage = () => {
   const { data: myBadges } = useMyBadges();
   const { data: walletData } = useWallet();
   const { data: myCharacter } = useMemberCharacterAssignment();
-  const { isCompleted: tutorialDone, isSkipped: tutorialSkipped, restart: restartTutorial } =
-    useTutorialState();
   const [showPwChange, setShowPwChange] = useState(false);
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
@@ -104,40 +102,12 @@ const MyPage = () => {
   }, [searchParams, setSearchParams]);
   const [birthLoading, setBirthLoading] = useState(false);
   const [birthError, setBirthError] = useState("");
-  const [tutorialRestartBusy, setTutorialRestartBusy] = useState(false);
   const [showGrowthTools, setShowGrowthTools] = useState(false);
   const [showPayHistory, setShowPayHistory] = useState(false); // 결제 · 마일리지 내역 (2026-10-27)
   const [showAllXp, setShowAllXp] = useState(false);
   const [showLocked, setShowLocked] = useState(false);
   const [showAllMedals, setShowAllMedals] = useState(false);
 
-  /**
-   * 입단식 다시 보기 — 이미 완료/스킵한 유저만 노출되는 재시작 진입점.
-   *
-   * 경로
-   *   MyPage 액션 리스트 → restart_tutorial RPC → /home 이동 →
-   *   글로벌 InductionCeremonyOverlay 가 자동 재진입.
-   *
-   * 중복 지급 방지 (서버측)
-   *   • profiles.tutorial_reward_claimed 은 restart_tutorial 이 리셋하지 않음
-   *   • tutorial_step_claims 도 보존 → 단계별 보상 0젬 재지급
-   *   • complete_tutorial_once 는 reward_claimed=true 시 already_granted 반환
-   */
-  const handleRestartTutorial = async () => {
-    if (tutorialRestartBusy) return;
-    setTutorialRestartBusy(true);
-    try {
-      const ok = await restartTutorial();
-      if (!ok) {
-        toast.error("다시 시작에 실패했습니다. 잠시 후 다시 시도해주세요.");
-        return;
-      }
-      toast.success("튜토리얼을 다시 시작합니다 🥊");
-      navigate("/home");
-    } finally {
-      setTutorialRestartBusy(false);
-    }
-  };
 
   if (!profile || !progress) return null;
 
@@ -600,28 +570,25 @@ const MyPage = () => {
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </button>
-            <button onClick={() => navigate("/rewards")} className={`flex w-full items-center justify-between px-4 py-4 active:bg-secondary/50 ${(tutorialDone || tutorialSkipped) ? "border-b border-border" : ""}`}>
+            <button onClick={() => navigate("/rewards")} className="flex w-full items-center justify-between border-b border-border px-4 py-4 active:bg-secondary/50">
               <div className="flex items-center gap-3">
                 <span className="text-muted-foreground">🎁</span>
                 <span className="text-body text-foreground">보상</span>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </button>
-            {(tutorialDone || tutorialSkipped) && (
-              <button
-                onClick={handleRestartTutorial}
-                disabled={tutorialRestartBusy}
-                className="flex w-full items-center justify-between px-4 py-4 active:bg-secondary/50 disabled:opacity-60"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-muted-foreground">🥊</span>
-                  <span className="text-body text-foreground">
-                    {tutorialRestartBusy ? "준비 중…" : "튜토리얼 다시 시작"}
-                  </span>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </button>
-            )}
+            {/* 레벨업 안내(새 튜토리얼 5장) 다시 보기 — 2026-11-27 옛 '튜토리얼 다시 시작'(오삼 5단계) 자리 */}
+            <button
+              type="button"
+              onClick={() => openLevelGuide("mypage")}
+              className="flex w-full items-center justify-between px-4 py-4 active:bg-secondary/50"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-muted-foreground">🥊</span>
+                <span className="text-body text-foreground">레벨업 안내 다시 보기</span>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </button>
           </div>
         </section>
       </div>
