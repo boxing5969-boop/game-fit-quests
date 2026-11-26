@@ -4,9 +4,10 @@ import { SYSTEM_PROMPT_153 } from "../_shared/systemPrompt153.ts";
 import { KNOWLEDGE_153 } from "../_shared/knowledge153.ts";
 import { KNOWLEDGE_BOXING_153 } from "../_shared/knowledgeBoxing153.ts";
 import { analyzeMealImage } from "../_shared/mealVision.ts";
-import { buildClaudeBody, CLAUDE_CHAT_MODEL, CLAUDE_COACH_MODEL, claudeMessage, claudeStream, claudeToOpenAiSse, hasClaude, keepAlive, logAiUsage, messageText, usageOf, type SystemPart } from "../_shared/claude.ts";
+import { buildClaudeBody, CLAUDE_API_URL, CLAUDE_CHAT_MODEL, CLAUDE_COACH_MODEL, claudeHeaders, claudeMessage, claudeStream, claudeToOpenAiSse, hasClaude, keepAlive, logAiUsage, messageText, usageOf, type SystemPart } from "../_shared/claude.ts";
 import { buildFeedbackSystem, buildFeedbackUser, checkFeedback, cleanMarks, FEEDBACK_SCHEMA, parseFeedbackJson, retryNote, stdAllowText, type FeedbackStd } from "../_shared/coachFeedback.ts";
-import { KO_STYLE } from "../_shared/koStyle.ts";
+import { cleanKo, KO_STYLE, koTells } from "../_shared/koStyle.ts";
+import { OWNER_FAIL_TEXT, OWNER_PROMPT, ownerRoundBody, ownerScopeLine, parseOwnerScope, runOwnerTurns, SSE_DONE, sseReset, sseStatus, sseText, sumUsage, maskNames, runOwnerTool, toolsOnlyPlan, unmatchedNumbers, type Msg as OwnerMsg, type OwnerScope } from "../_shared/ownerAi.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -24,6 +25,9 @@ const corsHeaders = {
 //
 // 0순위 Claude (2026-10-15 대표님: 월 200달러 API 크레딧) — ANTHROPIC_API_KEY 가 있으면 Claude Sonnet 5.5 로 먼저 답한다.
 //   실패(키·한도·장애)하면 아래 Groq 체인이 예비로 받는다. 스트림 형식 변환·비용 기록은 _shared/claude.ts.
+//
+// 관장 모드 (2026-11-27 대표님 「다음가지」 · 관장님 앱 ③) — 관장 · 지점장 · 본사이고 켠 지점이면(owner_ai_scope)
+//   같은 오삼코치가 153OS 숫자 도구 6개(_shared/ownerAi.ts)로 답한다. 지점마다 하루 50번. 회원 · 코치님은 지금 그대로.
 //
 // AI Provider 체인 — 위에서 아래로. 각 provider 는 KEY 시크릿이 있어야 활성화(없으면 조용히 스킵).
 // 모두 OpenAI 호환 SSE 포맷이라 클라이언트 스트리밍 파서를 바꿀 필요 없음.
@@ -185,6 +189,8 @@ const MAX_TOKENS = 1100; // 한국어 약 1,000~1,500자 — 결론·원리·단
 const LEAN_MAX_TOKENS = 700;
 // Claude 는 groq 분당 토큰 한도가 없어 넉넉히 둔다. 새 토크나이저가 한국어를 약 30% 더 잘게 센다.
 const CLAUDE_MAX_TOKENS = 2000;
+// 관장 모드 — 도구 사이 생각(between_tools)도 이 안에서 쓴다
+const OWNER_MAX_TOKENS = 4000;
 
 // ────────────────────────────────────────────────────────────────
 // 최고 성능 시스템 프롬프트 — 오삼 코치 (2026-10-03)
@@ -701,6 +707,274 @@ function sanitizeMessages(raw: unknown): ChatMsg[] {
   return out;
 }
 
+// ────────────────────────────────────────────────────────────────
+// 관장 모드 (2026-11-27 대표님 「다음가지」 · 관장님 앱 ③ · docs/features/69 · _shared/ownerAi.ts)
+//   앱이 body.owner = true 를 보내면(관장 · 지점장 · 본사로 보이는 분만) 부른 사람 토큰으로 owner_ai_scope 를 묻는다.
+//   켜진 지점이면 오삼코치 지시문 뒤에 관장 모드 지시문을 붙이고 153OS 숫자 도구 6개를 준다. 꺼져 있거나 실패하면 지금 오삼코치 그대로.
+//   지점은 서버가 정한 지점뿐이다(도구에 지점을 넘기는 칸이 없다). 숫자 질문은 지점마다 하루 50번(owner_ai_take).
+// ────────────────────────────────────────────────────────────────
+const OS_URL = Deno.env.get("OS_SUPABASE_URL") || "https://tbxdrfowanyksgdicryl.supabase.co";
+
+async function fetchOwnerScope(authHeader: string, branch: string | null): Promise<OwnerScope | null> {
+  try {
+    const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      auth: { persistSession: false },
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data, error } = await sb.rpc("owner_ai_scope", { p_branch: branch });
+    if (error) {
+      console.warn("[chat-assistant] owner_ai_scope", error.code ?? error.message);
+      return null;
+    }
+    return parseOwnerScope(data);
+  } catch (e) {
+    console.warn("[chat-assistant] owner_ai_scope 실패:", e instanceof Error ? e.message : e);
+    return null;
+  }
+}
+
+const claudeFetch = (b: Record<string, unknown>) =>
+  fetch(CLAUDE_API_URL, { method: "POST", headers: claudeHeaders(), body: JSON.stringify(b) });
+
+function ownerClients(): { app: any; os: any } | null {
+  const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const osKey = Deno.env.get("OS_SERVICE_KEY");
+  if (!service || !osKey) return null;
+  return {
+    app: createClient(Deno.env.get("SUPABASE_URL")!, service, { auth: { persistSession: false } }),
+    os: createClient(OS_URL, osKey, { auth: { persistSession: false } }),
+  };
+}
+
+/**
+ * 관장 모드 답 — 첫 바퀴를 먼저 받아 보고(실패면 null → 지금 오삼코치로) 성공이면 스트림 응답을 돌려준다.
+ *   화면에는 OpenAI 모양 글 조각 + 진행 글(status) + 앞말 지우기(reset) — 옛 화면은 choices 없는 줄을 그냥 넘긴다.
+ */
+async function startOwnerMode(o: {
+  scope: OwnerScope;
+  sys: SystemPart[];
+  conv: ChatMsg[];
+  userId: string | null;
+  meta: Record<string, unknown>;
+}): Promise<Response | null> {
+  const cl = ownerClients();
+  if (!cl) {
+    console.warn("[chat-assistant] 관장 모드 — 서버 키(OS_SERVICE_KEY) 없음 → 보통 오삼코치로");
+    return null;
+  }
+  const now = Date.now();
+  const tools = o.scope.left > 0;
+  const base = buildClaudeBody({
+    model: CLAUDE_CHAT_MODEL,
+    system: [...o.sys, ownerScopeLine(o.scope, now, { tools })],
+    messages: o.conv,
+    maxTokens: OWNER_MAX_TOKENS,
+    stream: true,
+  });
+  const msgs = (base.messages ?? []) as OwnerMsg[];
+  if (msgs.length === 0) return null;
+  let first: Response;
+  try {
+    first = await claudeFetch(ownerRoundBody(base, msgs, tools, false));
+  } catch (e) {
+    console.warn("[chat-assistant] 관장 모드 첫 호출 실패 → 보통 오삼코치로:", e instanceof Error ? e.message : e);
+    return null;
+  }
+  if (!first.ok || !first.body) {
+    const t = await first.text().catch(() => "");
+    console.warn(`[chat-assistant] 관장 모드 ${first.status} → 보통 오삼코치로`, t.slice(0, 300));
+    return null;
+  }
+
+  const enc = new TextEncoder();
+  let cancelled = false;
+  const stream = new ReadableStream<Uint8Array>({
+    start(ctrl) {
+      const send = (s: string) => {
+        if (cancelled) return;
+        try {
+          ctrl.enqueue(enc.encode(s));
+        } catch {
+          cancelled = true;
+        }
+      };
+      const done = () => {
+        send(SSE_DONE);
+        try {
+          ctrl.close();
+        } catch {
+          /* 이미 닫힘 */
+        }
+      };
+      const work = (async () => {
+        const r = await runOwnerTurns({
+          base,
+          messages: msgs,
+          ctx: { scope: o.scope, app: cl.app, os: cl.os, now },
+          tools,
+          first,
+          fetchRound: claudeFetch,
+          take: async () => {
+            const { data, error } = await cl.app.rpc("owner_ai_take", { p_branch: o.scope.branch });
+            if (error) console.warn("[chat-assistant] owner_ai_take", error.code ?? error.message);
+            return { ok: !error && data?.ok === true };
+          },
+          onText: (t) => send(sseText(t)),
+          onStatus: (t) => send(sseStatus(t)),
+          onReset: () => send(sseReset()),
+          clean: cleanKo,
+          isCancelled: () => cancelled,
+        });
+        if (!r.text) send(sseText(OWNER_FAIL_TEXT));
+        done();
+        console.log(
+          `[chat-assistant] owner ${o.scope.branch} rounds=${r.rounds} tools=${r.calls.map((c) => c.name).join(",") || "-"} quota=${r.quota} stop=${r.stop}${r.error ? ` error=${r.error.slice(0, 120)}` : ""}`,
+        );
+        await logAiUsage(cl.app, {
+          feature: "owner_chat",
+          model: CLAUDE_CHAT_MODEL,
+          userId: o.userId,
+          usage: sumUsage(r.usages),
+          meta: {
+            ...o.meta,
+            branch: o.scope.branch,
+            role: o.scope.role,
+            rounds: r.rounds,
+            tools: r.calls.map((c) => c.name),
+            quota: r.quota,
+            stop: r.stop,
+            error: r.error ? r.error.slice(0, 200) : null,
+          },
+        });
+      })().catch((e) => {
+        console.error("[chat-assistant] 관장 모드 스트림 실패:", e instanceof Error ? e.message : e);
+        send(sseText(OWNER_FAIL_TEXT));
+        done();
+      });
+      keepAlive(work);
+    },
+    cancel() {
+      cancelled = true;
+    },
+  });
+  return new Response(stream, {
+    headers: {
+      ...corsHeaders,
+      "X-AI-Provider": "anthropic",
+      "X-AI-Model": CLAUDE_CHAT_MODEL,
+      "X-AI-Mode": "owner",
+      "Content-Type": "text/event-stream",
+    },
+  });
+}
+
+/**
+ * 관장 모드 시험 입구 — 대표님 계정으로 들어가지 않고 30문항 평가를 돌린다(2026-11-27 · 시험 질문 30개의 숫자가 153OS 와 같은지).
+ *   x-auto-key = internal_sync_config.auto_sync_key(서버끼리만 아는 값) 일 때만. 한도는 세지 않는다(take 는 늘 ok). 비용은 owner_eval 로 기록.
+ *   body: { action: "owner-eval", questions: string[](6개까지), role?: "admin"|"manager", sales?: boolean, quota_over?: boolean, take_fail?: boolean, full?: boolean }
+ *   답마다 unmatched = 답에 나온 숫자 중 도구 결과 · 지시문 · 질문에 없는 것(0 이면 통과 · 반올림은 사람이 본다). full 이면 도구 결과도 함께.
+ *   tools_only: true 면 Claude 없이 도구 6개를 실제 자료로 한 번씩(이름은 첫 글자만) — 크레딧이 없을 때도 숫자 길을 확인한다.
+ */
+async function handleOwnerEval(body: any, key: string): Promise<Response> {
+  const json = (b: unknown, status = 200) =>
+    new Response(JSON.stringify(b), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  const cl = ownerClients();
+  if (!cl || !hasClaude()) return json({ ok: false, code: "NOT_CONFIGURED" }, 500);
+  const { data: cfg } = await cl.app.from("internal_sync_config").select("value").eq("key", "auto_sync_key").maybeSingle();
+  const expected = String(cfg?.value ?? "");
+  if (!expected || !key || key !== expected) return json({ ok: false, code: "FORBIDDEN" }, 403);
+  if (body?.tools_only === true) {
+    const toolScope: OwnerScope = {
+      role: body?.role === "manager" ? "manager" : "admin",
+      branch: typeof body?.branch === "string" && body.branch.trim() ? body.branch.trim() : "153복싱짐 선릉역점",
+      salesVisible: body?.sales !== false,
+      daily: 50,
+      used: 0,
+      left: 50,
+    };
+    const ctx = { scope: toolScope, app: cl.app, os: cl.os, now: Date.now() };
+    const tools = await Promise.all(
+      toolsOnlyPlan(String(body?.name ?? "").slice(0, 20)).map(async ([name, input]) => {
+        const t0 = Date.now();
+        try {
+          return { name, input, output: maskNames(await runOwnerTool(ctx, name, input)), ms: Date.now() - t0 };
+        } catch (e) {
+          return { name, input, error: e instanceof Error ? e.message.slice(0, 200) : "failed", ms: Date.now() - t0 };
+        }
+      }),
+    );
+    return json({ ok: true, scope: toolScope, tools });
+  }
+  const questions: string[] = (Array.isArray(body?.questions) ? body.questions : [])
+    .map((q: unknown) => String(q ?? "").trim().slice(0, 300))
+    .filter(Boolean)
+    .slice(0, 6);
+  if (questions.length === 0) return json({ ok: false, code: "NO_QUESTIONS" }, 400);
+  const scope: OwnerScope = {
+    role: body?.role === "manager" ? "manager" : "admin",
+    branch: typeof body?.branch === "string" && body.branch.trim() ? body.branch.trim() : "153복싱짐 선릉역점",
+    salesVisible: body?.sales !== false,
+    daily: 50,
+    used: 0,
+    left: body?.quota_over === true ? 0 : 50,
+  };
+  const results = await Promise.all(
+    questions.map(async (q) => {
+      const t0 = Date.now();
+      const tools = scope.left > 0;
+      const scopeLine = ownerScopeLine(scope, t0, { tools });
+      const base = buildClaudeBody({
+        model: CLAUDE_CHAT_MODEL,
+        system: [SYSTEM_PROMPT, { text: OWNER_PROMPT, cache: true }, scopeLine],
+        messages: [{ role: "user", content: q }],
+        maxTokens: OWNER_MAX_TOKENS,
+        stream: true,
+      });
+      const msgs = (base.messages ?? []) as OwnerMsg[];
+      try {
+        const first = await claudeFetch(ownerRoundBody(base, msgs, tools, false));
+        const statuses: string[] = [];
+        let resets = 0;
+        const r = await runOwnerTurns({
+          base,
+          messages: msgs,
+          ctx: { scope, app: cl.app, os: cl.os, now: t0 },
+          tools,
+          first,
+          fetchRound: claudeFetch,
+          take: async () => ({ ok: body?.take_fail !== true }),
+          onText: () => {},
+          onStatus: (s) => statuses.push(s),
+          onReset: () => {
+            resets++;
+          },
+          clean: cleanKo,
+        });
+        const usage = sumUsage(r.usages);
+        keepAlive(logAiUsage(cl.app, { feature: "owner_eval", model: CLAUDE_CHAT_MODEL, usage, meta: { rounds: r.rounds, tools: r.calls.map((c) => c.name) } }));
+        return {
+          q,
+          answer: r.text,
+          tells: koTells(r.text),
+          unmatched: unmatchedNumbers(r.text, r.calls.map((c) => c.output), [OWNER_PROMPT, q, scopeLine].join("\n")),
+          calls: r.calls.map((c) => ({ name: c.name, input: c.input, ms: c.ms, ...(body?.full === true ? { output: c.output } : {}) })),
+          rounds: r.rounds,
+          quota: r.quota,
+          statuses,
+          resets,
+          stop: r.stop,
+          error: r.error,
+          usage,
+          ms: Date.now() - t0,
+        };
+      } catch (e) {
+        return { q, answer: "", error: e instanceof Error ? e.message.slice(0, 200) : "failed", ms: Date.now() - t0 };
+      }
+    }),
+  );
+  return json({ ok: true, scope, results });
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
@@ -719,6 +993,11 @@ serve(async (req) => {
     // 153 코치 수업 관찰 다듬기 — 같은 함수 안의 다른 입구 (2026-11-05)
     if (body?.action === "coach-observe-polish") {
       return await handleCoachObservePolish(body, req.headers.get("authorization"));
+    }
+
+    // 관장 모드 평가 — 서버끼리만(x-auto-key) (2026-11-27)
+    if (body?.action === "owner-eval") {
+      return await handleOwnerEval(body, req.headers.get("x-auto-key") ?? "");
     }
 
     // AI 채팅은 로그인한 회원만 (식단 사진 분석과 같은 기준). 앱은 로그인 전에는 앱 안내만 보여 준다.
@@ -749,6 +1028,11 @@ serve(async (req) => {
     let dietContext = "";
     let requestUserId: string | null = null; // 비용 기록(ai_usage_log)용
     const authHeader = req.headers.get("authorization");
+    // 관장 모드 범위 — 앱이 owner 를 보냈을 때만 묻는다(회원 · 코치님 질문은 서버에 한 번 더 묻지 않는다). 회원 정보 읽기와 함께 시작.
+    const ownerScopeP: Promise<OwnerScope | null> =
+      body?.owner === true && authHeader && hasClaude()
+        ? fetchOwnerScope(authHeader, typeof body?.owner_branch === "string" ? body.owner_branch.slice(0, 60) : null)
+        : Promise.resolve(null);
     if (authHeader) {
       try {
         const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -961,6 +1245,27 @@ serve(async (req) => {
       attempts.push({ label: "lean", messages: [...baseSystem.filter((m) => !m.content.startsWith("[앱 기능 지도]")), ...memberDiet, ...lastOnly], maxTokens: LEAN_MAX_TOKENS });
     }
     const promptChars = attempts[0].messages.reduce((s, m) => s + m.content.length, 0);
+
+    // ── 관장 모드: 관장 · 지점장 · 본사이고 켠 지점이면 153OS 숫자 도구를 주고 답한다 (2026-11-27) ──────────
+    //   회원 개인 기록 · 다이어트 기록 · 범위 밖 안내는 넣지 않는다(질문한 사람의 지점 숫자를 묻는 자리). 실패하면 아래 보통 오삼코치로.
+    //   캐시: 도구 목록이 맨 앞이라 보통 오삼코치와 캐시를 나누지 않는다 → 관장 모드 지시문 · 기능 지도 · 지식 문서 끝에만 표시.
+    const ownerScope = await ownerScopeP;
+    if (ownerScope) {
+      const ownerResp = await startOwnerMode({
+        scope: ownerScope,
+        sys: [
+          SYSTEM_PROMPT,
+          { text: OWNER_PROMPT, cache: true },
+          { text: indexMessage, cache: true },
+          ...knowledgeSystem.map((m, i) => ({ text: m.content, cache: i === knowledgeSystem.length - 1 })),
+          hintMessage,
+        ],
+        conv: trimmedHistory,
+        userId: requestUserId,
+        meta: { diet: isDietTopic, boxing: isBoxingTopic, hints: hints.length, index: includeIndex },
+      });
+      if (ownerResp) return ownerResp;
+    }
 
     // ── 0순위: Claude (ANTHROPIC_API_KEY 가 있을 때만) ───────────────────────────
     // groq 의 8K TPM 제약이 없으므로 'full' 단계(시스템 전부 + 최근 대화)를 그대로 보낸다.
