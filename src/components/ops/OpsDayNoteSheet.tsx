@@ -23,9 +23,11 @@ export interface OpsDayNoteSheetProps {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   target: OpsDayNoteTarget | null;
+  /** 남긴 뒤 한 번 (지도자 홈 — 「처방함 · 한마디」 기록) */
+  onSaved?: () => void;
 }
 
-const OpsDayNoteSheet = ({ open, onOpenChange, target }: OpsDayNoteSheetProps) => {
+const OpsDayNoteSheet = ({ open, onOpenChange, target, onSaved }: OpsDayNoteSheetProps) => {
   const mine = target?.notes.find((n) => n.mine) ?? null;
   const others = target?.notes.filter((n) => !n.mine) ?? [];
   const [body, setBody] = useState("");
@@ -56,6 +58,7 @@ const OpsDayNoteSheet = ({ open, onOpenChange, target }: OpsDayNoteSheetProps) =
     try {
       await save.mutateAsync({ member: target.userId, body });
       toast.success(mine ? "한마디를 고쳤어요" : `${target.name}님 오늘 칸에 남겼어요`);
+      onSaved?.();
       onOpenChange(false);
     } catch (err) {
       setError((err as Error).message);
