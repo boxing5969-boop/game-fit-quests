@@ -192,6 +192,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - [69 관장님 앱 — 관장님 홈 숫자 네 칸(재등록률 · 출석률 · 유효 회원 · 매출) · 153OS CRM 탭(할 일 · 회원 · 고객 · 회원 카드 · Edge os-crm) · AI 관장 모드 · 결정 8가지](docs/features/69-관장님-앱.md) — `src/lib/ownerKpi.ts` · `src/lib/crm153.ts`
 - [70 레벨업 안내 — 새 튜토리얼 5장 · 트레이닝 1일차 · 2일차 · 계정에 한 번 · 옛 오삼 5단계 · 7일 캠프 끔](docs/features/70-레벨업-안내.md) — `src/lib/levelGuide.ts`
 - [72 닉네임(앱 카드 · 체육관 TV 이름) 바꾸기 — 내정보 이름 ✏️ · 계정 · 정보 줄 · /mypage?nick=1 · 서버 규칙(12자 · 욕설 · 운영진처럼 보이는 말)](docs/features/72-닉네임-바꾸기.md) — `src/lib/nicknameRules.ts`
+- [73 사업자 가계부 — 사업자마다 통장 · 카드 내역 · 비용(지출 − 돌려받음) · 급여는 일한 달 · 자동 분류 · 통장 엑셀 올리기(같은 거래 한 번) · 순이익 연결(운영본부 비용을 가계부가 채움) · 대표님 · 회계매니저만](docs/features/73-사업자-가계부.md) — `src/lib/bizLedger.ts` · `src/components/ops/biz/`
 
 ### Supabase 연결
 

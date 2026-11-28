@@ -25,6 +25,7 @@ import { useStrategyBadge } from "@/services/strategyService";
 import { useOfficeMe } from "@/services/officeService";
 import { useMarketOn } from "@/services/marketOn";
 import { useCrmOn } from "@/services/crmOn";
+import { useBizOn } from "@/services/bizOn";
 import { isManagerRole } from "@/lib/rankLabels";
 import {
   MAX_FOLDER_ITEMS,
@@ -184,6 +185,8 @@ const HomeMenuGrid = ({ variant = "card", onNavigate }: Props) => {
   const market = useMarketOn();
   // 153OS CRM 칸 — 관장(지점장) · 본사이고 CRM 켠 지점일 때만 (서버 crm_scope · 2026-11-27, 앱 권한이 지점장 이상인 분만 묻는다)
   const crm = useCrmOn(role === "branch_manager" || role === "super_admin" || role === "admin");
+  // 사업자 가계부 칸 — 대표님 · 회계매니저일 때만 (서버 biz_home · 2026-11-28). 지점장 이상 · 본사로 보이는 분만 묻는다
+  const money = useBizOn(role === "branch_manager" || role === "super_admin" || role === "admin" || dm?.kind === "hq");
 
   const viewer: MenuViewer = useMemo(
     () => ({
@@ -195,8 +198,9 @@ const HomeMenuGrid = ({ variant = "card", onNavigate }: Props) => {
       admin: role === "admin" || role === "super_admin",
       market,
       crm,
+      money,
     }),
-    [diet, staff, office, dmOff, role, market, crm],
+    [diet, staff, office, dmOff, role, market, crm, money],
   );
 
   const { layout, save } = useMenuLayout();

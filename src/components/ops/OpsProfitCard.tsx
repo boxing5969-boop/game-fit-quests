@@ -2,8 +2,9 @@
  * 153운영본부 「매출」 · 순이익 카드 (2026-11-04 대표님 "153가계부랑 연동해서 … 순이익도 계산하자" → 「매출 − 사업 비용」)
  *   순이익 = 이 달 매출(ops-sales) − 이 달 사업 비용(153가계부 CSV 에서 올린 합계 · 통장 내역서로 정리한 합계, ops_costs).
  *   비용을 아직 안 올린 달은 '가계부 CSV 올리기'만.
+ *   2026-11-28 사업자 가계부에 순이익 연결을 켠 지점(onLedger)은 비용을 가계부가 채운다 → 단추가 '가계부 보기'(CSV 올리기는 서버가 막음).
  */
-import { FileUp } from "lucide-react";
+import { BookOpen, FileUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { fmtMan } from "@/lib/opsSales";
@@ -24,6 +25,7 @@ const OpsProfitCard = ({
   sales,
   costs,
   onImport,
+  onLedger,
 }: {
   /** YYYY-MM */
   month: string;
@@ -32,8 +34,27 @@ const OpsProfitCard = ({
   sales: number;
   costs: SavedCosts | undefined;
   onImport: () => void;
+  /** 사업자 가계부가 이 지점 비용을 채울 때 — 가계부 열기 */
+  onLedger?: (() => void) | null;
 }) => {
   const meta = costs?.months.find((m) => m.month === month);
+
+  if (!meta && onLedger) {
+    return (
+      <section className={card}>
+        <h2 className="text-heading font-black text-foreground">{monthNum}월 순이익</h2>
+        <p className="mt-1 text-body text-foreground">사업자 가계부에 이 달 비용이 들어오면 순이익을 계산해요.</p>
+        <button
+          type="button"
+          onClick={onLedger}
+          className="mt-4 flex h-12 w-full items-center justify-center gap-1.5 rounded-xl bg-foreground text-body font-black text-background active:scale-[0.99]"
+        >
+          <BookOpen className="h-5 w-5" />
+          사업자 가계부 열기
+        </button>
+      </section>
+    );
+  }
 
   if (!meta) {
     return (
@@ -98,10 +119,10 @@ const OpsProfitCard = ({
         <p className="min-w-0 truncate text-label text-muted-foreground">{costSourceLine(meta, savedText(meta.saved_at))}</p>
         <button
           type="button"
-          onClick={onImport}
+          onClick={onLedger ?? onImport}
           className="shrink-0 rounded-full bg-secondary px-3 py-1.5 text-label font-bold text-foreground active:scale-95"
         >
-          다시 올리기
+          {onLedger ? "가계부 보기" : "다시 올리기"}
         </button>
       </div>
     </section>

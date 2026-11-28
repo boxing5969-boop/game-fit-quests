@@ -20,9 +20,10 @@ import { FEATURES } from "@/lib/appSearch";
  * diet: 다이어트 프로그램 회원 · staff: 코치님·지점장·운영진 · office: 사무실이 켜진 지점 지도진 ·
  * dm: 메시지를 쓸 수 있는 계정 · manager: 앱 권한 코치·지점장·관리자(관리자 화면 /manager 에 들어가는 분) ·
  * admin: 관리자 · 전체관리자 · market: 우리 지점 153 마켓이 켜져 있다(서버 market_home) ·
- * crm: 관장 · 지점장 · 본사이고 CRM 켠 지점(서버 crm_scope — 2026-11-27)
+ * crm: 관장 · 지점장 · 본사이고 CRM 켠 지점(서버 crm_scope — 2026-11-27) ·
+ * money: 돈을 보는 분 — 대표님 · 회계매니저(서버 biz_home — 2026-11-28 사업자 가계부)
  */
-export type MenuRequire = "diet" | "staff" | "office" | "dm" | "manager" | "admin" | "market" | "crm";
+export type MenuRequire = "diet" | "staff" | "office" | "dm" | "manager" | "admin" | "market" | "crm" | "money";
 
 export interface MenuViewer {
   diet: boolean;
@@ -35,6 +36,8 @@ export interface MenuViewer {
   market?: boolean;
   /** 153OS CRM 을 볼 수 있다 — 안 넘기면 꺼진 것으로 */
   crm?: boolean;
+  /** 사업자 가계부를 쓸 수 있다(대표님 · 회계매니저) — 안 넘기면 꺼진 것으로 */
+  money?: boolean;
 }
 
 export const canSee = (req: MenuRequire | undefined, v: MenuViewer): boolean => !req || v[req] === true;
@@ -196,6 +199,14 @@ export const SHORTCUT_EXTRAS: readonly MenuCatalogItem[] = [
     "153운영본부 — 할 일 · 회원 · 고객 · 회원 카드",
     ["crm", "153os", "회원 관리", "고객 관리", "회원 카드", "기간 임박", "안 온 회원", "톡톡 손님"],
     "crm",
+  ),
+  x(
+    "/office?tab=sales&view=ledger",
+    "사업자 가계부",
+    "ledger",
+    "153운영본부 — 사업자마다 통장 · 카드 내역 · 비용",
+    ["사업자 가계부", "가계부", "장부", "비용", "지출", "통장", "순이익", "인건비", "세금"],
+    "money",
   ),
   x("/admin", "전체 관리", "gear", "본사 대시보드", ["본사", "전체 관리", "대시보드", "슈퍼 관리자"], "admin"),
 ];

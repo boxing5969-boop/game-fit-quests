@@ -256,8 +256,8 @@ export const defaultMonths = (months: CostMonth[], thisMonth: string, n = 12): s
 export interface SavedCostMonth {
   month: string;
   total: number;
-  /** 어디서 왔나 — 가계부 CSV(기본) · 통장 내역서(클로드가 정리, 2026-11-04) */
-  source?: "gagyebu_csv" | "bank_statement";
+  /** 어디서 왔나 — 가계부 CSV(기본) · 통장 내역서(클로드가 정리, 2026-11-04) · 사업자 가계부(2026-11-28) */
+  source?: "gagyebu_csv" | "bank_statement" | "ledger";
   stores: string[];
   no_store: boolean;
   /** 가계부 = 뺀 항목 키(loan …) · 통장 내역서 = 뺀 묶음 이름(큰 것부터) */
@@ -271,6 +271,7 @@ export const costSourceLine = (
   meta: Pick<SavedCostMonth, "source" | "stores" | "no_store" | "excluded">,
   savedDay: string,
 ): string => {
+  if (meta.source === "ledger") return `사업자 가계부 · ${savedDay} 반영`;
   if (meta.source === "bank_statement") {
     const ex = meta.excluded.filter((x) => x.trim() !== "");
     const tail = ex.length === 0 ? "" : ex.length === 1 ? ` · ${ex[0]} 뺌` : ` · ${ex[0]} 등 ${ex.length}가지 뺌`;

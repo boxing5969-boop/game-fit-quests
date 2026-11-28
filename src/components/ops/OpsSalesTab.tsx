@@ -6,8 +6,11 @@
  *   ② 최근 6개월 — 달마다 일반 수강권 · PT · 그 밖 막대(누르면 그 달로)
  *   ③ 매출 내역 — 전체 · 일반 수강권 · PT · 그 밖 · 환불 거르기, 날짜별
  *   자료: 브로제이(선릉) · 다짐(칠금) 매출 + 브로제이에 없는 앱 결제 — Edge Function ops-sales.
+ *   위쪽 두 칸(2026-11-28): 「매출 · 순이익」 | 「사업자 가계부」(?view=ledger — biz/BizLedgerPanel · 문서 73).
+ *   순이익 연결을 켠 지점은 순이익 카드의 비용을 사업자 가계부가 채우고, 카드 단추가 '가계부 보기'가 된다.
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useSearchParams } from "react-router-dom";
 import { FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 
@@ -28,6 +31,7 @@ import {
 import type { SavedCosts } from "@/lib/opsCosts";
 import { useOpsSales } from "@/services/opsSalesService";
 import { useOpsCosts } from "@/services/opsCostService";
+import { useBizAccess } from "@/services/bizOn";
 import { readOpsBranch, saveOpsBranch, shortBranch } from "@/services/opsService";
 import OpsCostImportSheet from "./OpsCostImportSheet";
 import OpsProfitCard from "./OpsProfitCard";
@@ -35,6 +39,8 @@ import { MonthSwitcher, OpsChip, fmtDay, kstToday, monthOf, shiftMonth } from ".
 
 const card = "rounded-2xl border border-border bg-card p-5";
 const PAGE = 40;
+// 사업자 가계부는 누를 때만 받는다
+const BizLedgerPanel = lazy(() => import("./biz/BizLedgerPanel"));
 
 const OpsSalesTab = ({ branches }: { branches: string[] }) => {
   const today = kstToday();
@@ -51,6 +57,30 @@ const OpsSalesTab = ({ branches }: { branches: string[] }) => {
   };
   const [month, setMonth] = useState(() => monthOf(today)); // YYYY-MM-01
   const ym = month.slice(0, 7);
+  // 「사업자 가계부」 칸 — 대표님 · 회계매니저(서버 biz_home). 순이익에 이어진 지점 → 사업자
+  const [params, setParams] = useSearchParams();
+  const bizQ = useBizAccess(true);
+  const bizOn = bizQ.data?.on === true;
+  const ledgerView = params.get("view") === "ledger" && (bizOn || bizQ.isLoading);
+  const setView = (v: "sales" | "ledger", open?: { book: string; m: string }) =>
+    setParams(
+      (p) => {
+        if (v === "ledger") {
+          p.set("view", "ledger");
+          if (open) {
+            p.set("book", open.book);
+            p.set("m", open.m);
+          }
+        } else {
+          p.delete("view");
+          p.delete("book");
+          p.delete("m");
+        }
+        return p;
+      },
+      { replace: true },
+    );
+  const linkedBook = branch ? bizQ.data?.linked[branch] : undefined;
   const q = useOpsSales(branch, ym);
   // 순이익 — 가계부에서 올린 사업 비용(최근 6개월, 흐름과 같은 기간)
   const costsQ = useOpsCosts(branch, shiftMonth(month, -5).slice(0, 7), ym);
@@ -99,8 +129,24 @@ const OpsSalesTab = ({ branches }: { branches: string[] }) => {
   };
   const ready = xlsReady?.key === xlsKey;
 
+  if (ledgerView) {
+    return (
+      <div className="space-y-4">
+        <ViewSwitch ledger onPick={setView} />
+        {bizQ.isLoading ? (
+          <div className="h-56 animate-pulse rounded-2xl bg-card" aria-hidden />
+        ) : (
+          <Suspense fallback={<div className="h-56 animate-pulse rounded-2xl bg-card" aria-hidden />}>
+            <BizLedgerPanel />
+          </Suspense>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
+      {bizOn && <ViewSwitch ledger={false} onPick={setView} />}
       <div className="flex flex-wrap items-center justify-between gap-2">
         {branches.length > 1 ? (
           <div className="flex gap-1.5 overflow-x-auto pb-0.5">
@@ -164,6 +210,7 @@ const OpsSalesTab = ({ branches }: { branches: string[] }) => {
           more={() => setLimit((n) => n + PAGE)}
           costs={costsQ.data}
           onImport={() => setImportOpen(true)}
+          onLedger={linkedBook ? () => setView("ledger", { book: linkedBook, m: ym }) : null}
         />
       )}
       {branch && (
@@ -189,6 +236,7 @@ const Report = ({
   more,
   costs,
   onImport,
+  onLedger,
 }: {
   data: NonNullable<ReturnType<typeof useOpsSales>["data"]>;
   monthNum: number;
@@ -199,6 +247,8 @@ const Report = ({
   more: () => void;
   costs: SavedCosts | undefined;
   onImport: () => void;
+  /** 순이익에 이어진 사업자 가계부 열기 (이어진 지점만) */
+  onLedger: (() => void) | null;
 }) => {
   const costOf = new Map((costs?.months ?? []).map((m) => [m.month, m.total]));
   const s = data.summary;
@@ -266,7 +316,7 @@ const Report = ({
       </section>
 
       {/* ② 순이익 — 매출 − 가계부에서 올린 사업 비용 */}
-      <OpsProfitCard month={data.month} monthNum={monthNum} sales={s.total} costs={costs} onImport={onImport} />
+      <OpsProfitCard month={data.month} monthNum={monthNum} sales={s.total} costs={costs} onImport={onImport} onLedger={onLedger} />
 
       {/* ② 최근 6개월 */}
       {data.trend.length > 1 && (
@@ -400,6 +450,33 @@ const GroupTile = ({ tone, label, g, pct }: { tone: "membership" | "pt"; label: 
     </p>
     {g.refunds > 0 && <p className="text-label tabular-nums text-destructive">환불 {fmtMan(Math.abs(g.refund))}</p>}
   </div>
+);
+
+/** 위쪽 두 칸 — 매출 · 순이익 | 사업자 가계부 */
+const ViewSwitch = ({ ledger, onPick }: { ledger: boolean; onPick: (v: "sales" | "ledger") => void }) => (
+  <div role="tablist" aria-label="매출 · 사업자 가계부" className="grid grid-cols-2 gap-1 rounded-2xl bg-secondary p-1">
+    <SwitchButton on={!ledger} onClick={() => onPick("sales")}>
+      매출 · 순이익
+    </SwitchButton>
+    <SwitchButton on={ledger} onClick={() => onPick("ledger")}>
+      사업자 가계부
+    </SwitchButton>
+  </div>
+);
+
+const SwitchButton = ({ on, onClick, children }: { on: boolean; onClick: () => void; children: ReactNode }) => (
+  <button
+    type="button"
+    role="tab"
+    aria-selected={on}
+    onClick={() => !on && onClick()}
+    className={cn(
+      "h-10 rounded-xl text-label font-black transition-colors active:scale-[0.98]",
+      on ? "bg-card text-foreground shadow-elev-1" : "text-muted-foreground",
+    )}
+  >
+    {children}
+  </button>
 );
 
 const Legend = ({ cls, label }: { cls: string; label: string }) => (

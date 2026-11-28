@@ -19,8 +19,9 @@ export interface AppMenuItem {
   /** 이 조건이 켜진 사람에게만 보인다 — diet: 다이어트 프로그램 회원 · staff: 코치님·지점장·운영진 ·
    *  office: 지점 회의실이 켜진 지점의 지도진 · 대표님 (서버 office_me) ·
    *  market: 우리 지점 153 마켓이 켜져 있다 (서버 market_home — 2026-11-17) ·
-   *  crm: 관장 · 지점장 · 본사이고 CRM 켠 지점 (서버 crm_scope — 2026-11-27) */
-  requires?: "diet" | "staff" | "office" | "market" | "crm";
+   *  crm: 관장 · 지점장 · 본사이고 CRM 켠 지점 (서버 crm_scope — 2026-11-27) ·
+   *  money: 돈을 보는 분 — 대표님 · 회계매니저 (서버 biz_home — 2026-11-28 사업자 가계부) */
+  requires?: "diet" | "staff" | "office" | "market" | "crm" | "money";
 }
 
 /**
@@ -49,6 +50,9 @@ export const APP_MENU: readonly AppMenuEntry[] = [
   // 153OS CRM — 153운영본부 「CRM」 탭 바로가기(할 일 · 회원 · 고객 · 회원 카드, 읽기만). 관장 · 지점장 · 본사만
   //   2026-11-27 대표님 「다음가자」(관장님 앱 ② · 결정 4 「운영본부 새 탭 + 메뉴 바로가기」 · 선릉역점부터)
   { path: "/office?tab=crm", label: "153OS CRM", glyph: "idcard", requires: "crm" },
+  // 사업자 가계부 — 153운영본부 「매출」 › 사업자 가계부 바로가기(사업자마다 통장 · 카드 내역 · 비용 · 순이익 연결). 대표님 · 회계매니저만
+  //   2026-11-28 대표님 「전체 메뉴에 사업자 별로 153복싱짐 칠금점 153복싱짐 선릉역점 등등 사업자 가계부 내역을 만들고 따로 관리할수있는 도록 메뉴 만들어줘」
+  { path: "/office?tab=sales&view=ledger", label: "사업자 가계부", glyph: "ledger", requires: "money" },
   // 로드맵 — 랭크업(/rank-up): 40단계 길 · 리그별 레벨업 기준 · 타이틀매치 · 단증 도전.
   //   2026-10-10 하단 '랭크업' 탭을 뺀 뒤 MY복서 라이센스 카드 승급 막대로만 들어갈 수 있었다.
   //   2026-10-30 대표님 "로드맵 메뉴가 안 보여" → 회원 메뉴 2번째 칸(코치진은 153운영본부 다음).
@@ -139,6 +143,7 @@ export const buildAppMenu = (opts: {
   office?: boolean;
   market?: boolean;
   crm?: boolean;
+  money?: boolean;
   hide?: (path: string) => boolean;
 }): AppMenuEntry[] => {
   const visible = (m: AppMenuItem) =>
@@ -147,6 +152,7 @@ export const buildAppMenu = (opts: {
     (m.requires !== "office" || opts.office === true) &&
     (m.requires !== "market" || opts.market === true) &&
     (m.requires !== "crm" || opts.crm === true) &&
+    (m.requires !== "money" || opts.money === true) &&
     !opts.hide?.(m.path);
   const out: AppMenuEntry[] = [];
   for (const e of APP_MENU) {
@@ -162,5 +168,5 @@ export const buildAppMenu = (opts: {
 };
 
 /** 펼친 목록 — 묶음 안의 메뉴까지 한 줄로 (검색·테스트용) */
-export const flatAppMenu = (opts: { diet: boolean; staff?: boolean; office?: boolean; market?: boolean; crm?: boolean }): AppMenuItem[] =>
+export const flatAppMenu = (opts: { diet: boolean; staff?: boolean; office?: boolean; market?: boolean; crm?: boolean; money?: boolean }): AppMenuItem[] =>
   buildAppMenu(opts).flatMap((e) => (isMenuFolder(e) ? [...e.items] : [e]));

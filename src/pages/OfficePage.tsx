@@ -24,6 +24,7 @@
  *
  *   「매출」 탭 (2026-11-03 대표님 "153운영본부에 매출 자세히 · 일단 일반 수강권 매출과 PT 매출을 분리해서"):
  *   · ?tab=sales — OpsSalesTab: 이 달 매출 · 일반 수강권 / PT 두 칸 · 최근 6개월 · 내역. 돈을 보는 분(대표님 · 회계매니저 — ops_sales_scope)만
+ *     &view=ledger — 사업자 가계부(2026-11-28 · 전체 메뉴 「사업자 가계부」 · 문서 73)
  *
  *   「일정」 탭 (2026-11-02 대표님 "직원 회의 관리 탭에 팀원들 스스로 스케줄 관리 … 내가 팀원들의 스케줄을 한눈에"):
  *   · ?tab=plan — OpsPlanTab: 코치님은 내 일정 넣기 · 고치기, 대표님 · 지점장은 팀 일정(달력 · 주간 일정판) + 내 일정
@@ -174,6 +175,9 @@ const OfficePage = () => {
         p.delete("ch");
         p.delete("crm");
         p.delete("g");
+        p.delete("view");
+        p.delete("book");
+        p.delete("m");
         return p;
       },
       { replace: true },
@@ -231,7 +235,9 @@ const OfficePage = () => {
                 : tab === "plan"
                   ? "팀 일정 · 내 일정"
                   : tab === "sales"
-                    ? "일반 수강권 · PT 매출"
+                    ? params.get("view") === "ledger"
+                      ? "사업자 가계부 · 통장 · 비용"
+                      : "일반 수강권 · PT 매출"
                     : tab === "crm"
                       ? "153OS CRM · 할 일 · 회원 · 고객"
                       : tab === "manual"
