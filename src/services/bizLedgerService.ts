@@ -3,7 +3,7 @@
  *   biz_home(달) — 사업자 카드 · 더할 수 있나 · 이을 수 있는 지점 / biz_month(사업자, 달) — 줄 · 12개월 · 근무자
  *   biz_book_save · biz_book_archive · biz_entry_save · biz_entry_delete · biz_import(3,000줄씩) · biz_rules · biz_rule_save · biz_rule_delete
  *   보는 분: 대표님 · 회계매니저(서버가 확인). 순이익 연결을 켠 사업자는 줄이 바뀔 때마다 서버가 운영본부 비용을 다시 맞춘다
- *   → 저장하면 운영본부 순이익(ops costs)도 새로 불러온다.
+ *   → 저장하면 운영본부 순이익(ops costs)도 새로 불러온다. 153OS 월별 손익은 biz-os-sync 를 바로 한 번 부른다(20261128123208_biz_os_sync.sql).
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -151,11 +151,25 @@ export const useBizRules = (book: string | null, enabled = true) =>
   });
 
 /** 저장한 뒤 — 가계부 · 운영본부 순이익을 새로 */
+/**
+ * 153OS 월별 손익도 바로 맞추기 — 서버가 대기열(biz_os_queue)에 넣어 둔 달을 Edge Function biz-os-sync 가 153OS 에 쓴다.
+ * 여러 번 고치면 1.5초 모아서 한 번. 실패해도 화면은 그대로(크론이 10분마다 다시 한다).
+ */
+let osSyncTimer: ReturnType<typeof setTimeout> | null = null;
+const kickOsSync = () => {
+  if (osSyncTimer) clearTimeout(osSyncTimer);
+  osSyncTimer = setTimeout(() => {
+    osSyncTimer = null;
+    void supabase.functions.invoke("biz-os-sync", { body: { source: "ledger" } }).catch(() => undefined);
+  }, 1500);
+};
+
 const useRefresh = () => {
   const qc = useQueryClient();
   return () => {
     void qc.invalidateQueries({ queryKey: BIZ_KEY });
     void qc.invalidateQueries({ queryKey: OPS_COSTS_KEY });
+    kickOsSync();
   };
 };
 

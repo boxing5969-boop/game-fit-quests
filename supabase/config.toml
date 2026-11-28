@@ -89,3 +89,7 @@ verify_jwt = false
 
 [functions.card-video-intake]
 verify_jwt = false
+
+# 사업자 가계부 → 153OS 월별 손익 자동 맞춤 — 크론(10분마다 x-auto-key, 대기열에 일이 있을 때만) 또는 가계부를 쓰는 분 로그인(함수 안에서 확인) (2026-11-28)
+[functions.biz-os-sync]
+verify_jwt = false
