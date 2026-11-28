@@ -18,6 +18,17 @@ const PLAN = { to: "/office?tab=plan", label: "일정 탭 열기" } as const;
 
 export const APP_UPDATES: readonly AppUpdate[] = [
   {
+    id: "20261128-nickname",
+    date: "2026-11-28",
+    title: "내정보에서 닉네임 바꾸기",
+    lines: [
+      "앱 카드와 체육관 TV에 보이는 이름을 바꿀 수 있어요",
+      "내정보 맨 위 이름을 누르거나 계정 · 정보에서",
+      "실명은 그대로예요. TV에는 다음 출석부터 새 이름이 나와요",
+    ],
+    link: { to: "/mypage?nick=1", label: "닉네임 바꾸기" },
+  },
+  {
     id: "20261127-level-guide",
     date: "2026-11-27",
     title: "레벨업 안내 · 레벨이 오르는 방법을 한눈에",

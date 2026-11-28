@@ -191,6 +191,7 @@ Claude(0순위)는 프롬프트 캐시 때문에 바뀌지 않는 글을 앞에:
 - [68 코치 매일 리포트 · 오늘 미션 — 06:40 알림 · 내 시간 숫자 · 미션 3개 (12/1부터 · 그 전 관리자 미리보기)](docs/features/68-코치-매일-리포트.md) — `src/lib/coachDaily.ts`
 - [69 관장님 앱 — 관장님 홈 숫자 네 칸(재등록률 · 출석률 · 유효 회원 · 매출) · 153OS CRM 탭(할 일 · 회원 · 고객 · 회원 카드 · Edge os-crm) · AI 관장 모드 · 결정 8가지](docs/features/69-관장님-앱.md) — `src/lib/ownerKpi.ts` · `src/lib/crm153.ts`
 - [70 레벨업 안내 — 새 튜토리얼 5장 · 트레이닝 1일차 · 2일차 · 계정에 한 번 · 옛 오삼 5단계 · 7일 캠프 끔](docs/features/70-레벨업-안내.md) — `src/lib/levelGuide.ts`
+- [72 닉네임(앱 카드 · 체육관 TV 이름) 바꾸기 — 내정보 이름 ✏️ · 계정 · 정보 줄 · /mypage?nick=1 · 서버 규칙(12자 · 욕설 · 운영진처럼 보이는 말)](docs/features/72-닉네임-바꾸기.md) — `src/lib/nicknameRules.ts`
 
 ### Supabase 연결
 

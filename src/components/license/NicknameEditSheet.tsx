@@ -2,7 +2,10 @@
  * 닉네임 바꾸기 시트 (2026-09-29 대표님: "카드를 클릭하면 닉네임을 변경하는 기능").
  *
  * MY복서의 내 라이센스 카드를 누르면 열린다(추천 복서 목록의 '내 닉네임 정하기' 띠도 여기로).
- * 저장은 설정 화면과 같은 길 — profiles 본인 행의 nickname 만 바꾼다(RLS 본인 행, 서버 가드가 12자 제한).
+ * 2026-11-28 대표님 「내정보에서 이름 바꿀수있도록 … 앱카드나 사이니지에 올라가는 아이디 이름」 —
+ * 내정보 맨 위 이름(✏️) · 계정 · 정보 「닉네임 바꾸기」 줄도 여기로 연다. 닉네임 = 앱 카드 · 체육관 TV 이름.
+ * 저장은 설정 화면과 같은 길 — profiles 본인 행의 nickname 만 바꾼다(RLS 본인 행).
+ * 규칙(12자 · 욕설 · 운영진처럼 보이는 말)은 lib/nicknameRules 로 저장 전에 바로 알려 주고, 서버 가드가 한 번 더 막는다.
  * 0행 갱신도 에러 없이 끝나는 RLS 무음 실패를 막으려고 바뀐 행을 돌려받아 확인한다.
  * 닉네임을 안 정해도 하트는 받는다(2026-09-30) — 실명과 같으면 다른 회원에게 실명이 보인다는 것만 알려 준다.
  */
@@ -17,10 +20,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { KING_153_KEY, MEMBER_LICENSE_KEY, NICKNAME_LIKE_KEY } from "@/hooks/use153King";
 import { Input } from "@/components/ui/input";
+import { NICKNAME_MAX as MAX, nicknameLen as charLen, nicknameProblem } from "@/lib/nicknameRules";
+import { isStaffProfile } from "@/lib/staffDisplay";
 
-const MAX = 12;
-/** 글자 수 — 이모지·한글 조합을 한 글자로 센다 (서버 char_length 와 같은 기준) */
-const charLen = (s: string) => Array.from(s).length;
 /** 닉네임이 보이는 화면들 — 바꾸면 다시 읽는다 */
 const NAME_QUERY_ROOTS = new Set([
   "division-ranking",
@@ -42,6 +44,8 @@ const NicknameEditSheet = ({ open, onClose }: Props) => {
   const qc = useQueryClient();
   const [value, setValue] = useState("");
   const [saving, setSaving] = useState(false);
+  // 서버가 막은 이유(화면 검사와 어긋날 때) — 입력을 고치면 지운다
+  const [serverError, setServerError] = useState("");
   useModalDismiss(open, onClose);
 
   const current = (profile?.nickname ?? "").trim();
@@ -50,7 +54,10 @@ const NicknameEditSheet = ({ open, onClose }: Props) => {
   const startValue = current && current !== realName ? current : "";
 
   useEffect(() => {
-    if (open) setValue(startValue);
+    if (open) {
+      setValue(startValue);
+      setServerError("");
+    }
     // 열릴 때 한 번만 채운다 — 입력 중에 프로필이 다시 읽혀도 덮어쓰지 않게
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -58,9 +65,12 @@ const NicknameEditSheet = ({ open, onClose }: Props) => {
   const next = value.trim();
   const len = charLen(next);
   const tooLong = len > MAX;
+  // 12자 · 욕설 · 운영진처럼 보이는 말 — 서버(nickname_problem)와 같은 검사
+  const problem = nicknameProblem(next, { isStaff: isStaffProfile(profile) });
   const unchanged = next === current;
   const sameAsName = !!realName && next === realName;
-  const canSave = !!user && len > 0 && !tooLong && !unchanged && !saving;
+  const canSave = !!user && len > 0 && !problem && !unchanged && !saving;
+  const errorText = problem || serverError;
 
   const save = async () => {
     if (!canSave || !user) return;
@@ -80,12 +90,14 @@ const NicknameEditSheet = ({ open, onClose }: Props) => {
         qc.invalidateQueries({ queryKey: MEMBER_LICENSE_KEY }),
         qc.invalidateQueries({ predicate: (q) => NAME_QUERY_ROOTS.has(String(q.queryKey[0])) }),
       ]);
-      toast.success(`닉네임을 ‘${next}’(으)로 바꿨어요`);
+      // TV 환영 화면 · 오늘 방문 명단은 출석할 때 찍은 이름을 쓴다 — 새 이름은 다음 출석부터
+      toast.success("닉네임을 바꿨어요. TV에는 다음 출석부터 나와요");
       onClose();
     } catch (e) {
-      // 서버 가드 메시지(예: 12자 제한)는 한글이라 그대로 보여 준다
+      // 서버 가드 메시지(12자 · 쓸 수 없는 낱말 등)는 한글이라 입력칸 아래에 그대로 보여 준다
       const msg = (e as { message?: string } | null)?.message;
-      toast.error(msg && /[가-힣]/.test(msg) ? msg : "닉네임을 바꾸지 못했어요");
+      if (msg && /[가-힣]/.test(msg)) setServerError(msg);
+      else toast.error("닉네임을 바꾸지 못했어요");
     } finally {
       setSaving(false);
     }
@@ -119,7 +131,7 @@ const NicknameEditSheet = ({ open, onClose }: Props) => {
                 </span>
                 <div className="min-w-0">
                   <h2 className="text-body font-bold text-foreground">닉네임 바꾸기</h2>
-                  <p className="mt-0.5 text-label text-muted-foreground">라이센스·랭킹·추천 복서에 보이는 이름이에요</p>
+                  <p className="mt-0.5 text-label text-muted-foreground">앱 카드 · 체육관 TV에 보이는 이름</p>
                 </div>
               </div>
               <button
@@ -143,11 +155,15 @@ const NicknameEditSheet = ({ open, onClose }: Props) => {
                 <Input
                   autoFocus
                   value={value}
-                  onChange={(e) => setValue(e.target.value)}
+                  onChange={(e) => {
+                    setValue(e.target.value);
+                    if (serverError) setServerError("");
+                  }}
                   placeholder={current && current !== realName ? current : "예) 잽마스터"}
                   maxLength={24}
                   enterKeyHint="done"
-                  aria-invalid={tooLong}
+                  aria-invalid={!!errorText}
+                  aria-describedby="nickname-edit-hint"
                   className="h-12 rounded-xl pr-14 text-body font-semibold"
                 />
                 <span
@@ -158,12 +174,18 @@ const NicknameEditSheet = ({ open, onClose }: Props) => {
                   {len}/{MAX}
                 </span>
               </div>
-              <p className={`mt-2 min-h-[18px] text-label leading-snug ${tooLong || sameAsName ? "text-destructive" : "text-muted-foreground"}`}>
+              <p
+                id="nickname-edit-hint"
+                role={errorText ? "alert" : undefined}
+                className={`mt-2 min-h-[18px] text-label leading-snug ${errorText || sameAsName ? "text-destructive" : "text-muted-foreground"}`}
+              >
                 {tooLong
                   ? `${MAX}자까지 정할 수 있어요`
-                  : sameAsName
-                    ? "실명과 같아요 — 다른 회원에게 실명이 그대로 보여요"
-                    : "다른 회원이 보는 이름이라 실명 대신 닉네임을 추천해요"}
+                  : errorText
+                    ? errorText
+                    : sameAsName
+                      ? "실명과 같아요. 다른 회원에게 실명이 그대로 보여요"
+                      : "실명은 그대로 두고 카드 · TV 이름만 바뀌어요"}
               </p>
               <button
                 type="submit"

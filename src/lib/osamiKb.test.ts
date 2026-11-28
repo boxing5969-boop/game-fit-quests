@@ -91,6 +91,9 @@ const DIRECT: [string, string][] = [
   ["라이브보드에 내 사진 나와요?", "acct-photo"],
   ["닉네임 변경 어떻게 해요", "acct-nickname"],
   ["닉네임 바꾸는법", "acct-nickname"],
+  // 내정보에서 카드 · TV 이름 바꾸기 (2026-11-28)
+  ["TV에 나오는 이름 바꾸고 싶어요", "acct-nickname"],
+  ["카드에 보이는 이름 바꾸기", "acct-nickname"],
   ["비밀번호 잊어버렸어요", "acct-reset-pw"],
   ["비번 찾기", "acct-reset-pw"],
   ["아이디 찾기", "acct-find-id"],

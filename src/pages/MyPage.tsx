@@ -12,6 +12,8 @@ import AttendanceRecordCard from "@/components/profile/AttendanceRecordCard";
 import RenewalStoryCard from "@/components/attendance/RenewalStoryCard";
 import MileageCard from "@/components/home/MileageCard";
 import MyPayHistorySheet from "@/components/membership/MyPayHistorySheet";
+import NicknameEditSheet from "@/components/license/NicknameEditSheet";
+import { hasOwnNickname, shownName, withRo } from "@/lib/nicknameRules";
 import { setCommunityAutoPost } from "@/services/communityFeedService";
 import { setCheerNotify } from "@/services/cheerService";
 import { useMyReceivedCheers } from "@/hooks/useSecondCheer";
@@ -20,7 +22,7 @@ import { Switch } from "@/components/ui/switch";
 import XPBar from "@/components/XPBar";
 import CharacterSprite from "@/components/CharacterSprite";
 import { useMemberCharacterAssignment } from "@/hooks/useCharacterData";
-import { ArrowLeft, MapPin, Calendar, ChevronRight, KeyRound, Award, Palette, Banknote, Sparkles, Clock, Receipt } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, ChevronRight, KeyRound, Award, Palette, Banknote, Sparkles, Clock, Receipt, PenLine } from "lucide-react";
 import { isManagerRole } from "@/lib/rankLabels";
 import { isStaffProfile, staffChampionLine, staffDisplayName } from "@/lib/staffDisplay";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -104,6 +106,16 @@ const MyPage = () => {
   const [birthError, setBirthError] = useState("");
   const [showGrowthTools, setShowGrowthTools] = useState(false);
   const [showPayHistory, setShowPayHistory] = useState(false); // 결제 · 마일리지 내역 (2026-10-27)
+  // 닉네임(앱 카드 · 체육관 TV 이름) 바꾸기 — 맨 위 이름 ✏️ · 계정 · 정보 줄 (2026-11-28 대표님)
+  const [nickEditOpen, setNickEditOpen] = useState(false);
+  // 앱 업데이트 · 검색 · 오삼코치 링크 — /mypage?nick=1 이면 그 창을 바로 열고 주소에서 지운다
+  useEffect(() => {
+    if (searchParams.get("nick") !== "1") return;
+    setNickEditOpen(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete("nick");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
   const [showAllXp, setShowAllXp] = useState(false);
   const [showLocked, setShowLocked] = useState(false);
   const [showAllMedals, setShowAllMedals] = useState(false);
@@ -117,6 +129,9 @@ const MyPage = () => {
   const isMaster40 = progress.current_rank === "black" && progress.current_level === 10 && progress.bosses_cleared >= 4;
   // 지도진(profiles.is_staff)은 리그·레벨 배지 대신 직함 칩 (2026-09-22)
   const isStaff = isStaffProfile(profile);
+  // 카드 · TV에 지금 보이는 이름(닉네임 → 실명) · 실명과 다른 닉네임을 직접 정했는지
+  const myShownName = shownName(profile);
+  const ownNick = hasOwnNickname(profile);
   const levelUpLogs = (xpLogs || []).filter(l => l.reason.includes("클리어") || l.reason.includes("타이틀매치"));
 
   // (수강권 계산·표시는 MembershipCard 컴포넌트로 이동)
@@ -189,8 +204,22 @@ const MyPage = () => {
               <div className="min-w-0 flex-1 pt-1">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <h2 className="truncate text-heading text-foreground">{isStaff ? staffDisplayName(profile) : (profile.nickname || profile.name)}</h2>
-                    {!isStaff && <p className="truncate text-body text-muted-foreground">{profile.name}</p>}
+                    {isStaff ? (
+                      <h2 className="truncate text-heading text-foreground">{staffDisplayName(profile)}</h2>
+                    ) : (
+                      // 이름을 누르면 닉네임(앱 카드 · 체육관 TV 이름) 바꾸기 (2026-11-28 대표님)
+                      <h2 className="text-heading text-foreground">
+                        <button
+                          type="button"
+                          onClick={() => setNickEditOpen(true)}
+                          aria-label={`${myShownName} · 닉네임 바꾸기`}
+                          className="-my-2.5 flex max-w-full items-center gap-1.5 py-2.5 text-left active:opacity-60"
+                        >
+                          <span className="min-w-0 truncate">{myShownName}</span>
+                          <PenLine className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                        </button>
+                      </h2>
+                    )}
                   </div>
                   {/* 보유 젬 (기존 중복 버튼에서 프로필로 통합) */}
                   <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-reward/20 px-2.5 py-1">
@@ -202,6 +231,13 @@ const MyPage = () => {
                     </span>
                   </div>
                 </div>
+                {/* 직접 정한 닉네임이면 실명 한 줄 · 아직 실명 그대로면 이 이름이 어디에 보이는지.
+                    젬 칸 아래까지 넓게 쓰도록 이름 줄 밖에 둔다(390px 에서 안 잘리게 · 2026-11-28) */}
+                {!isStaff && (ownNick ? (
+                  <p className="truncate text-body text-muted-foreground">{profile.name}</p>
+                ) : (
+                  <p className="truncate text-label text-muted-foreground">카드 · TV에 보이는 이름</p>
+                ))}
                 <div className="mt-1.5 flex items-center gap-2">
                   {isStaff ? (
                     // 대표님 지시(2026-09-23): 코치님은 모두 챔피언 · Lv.77 — 화면 전용 표기
@@ -399,6 +435,25 @@ const MyPage = () => {
         <section className="animate-slide-up space-y-3">
           <SectionHeader>계정 · 정보</SectionHeader>
 
+          {/* 닉네임 = 앱 카드 · 체육관 TV 이름 — 맨 위 이름 ✏️ 와 같은 창 (2026-11-28 대표님 「내정보에서 이름 바꿀수있도록」).
+              지도진은 카드 · TV에 실명 + 직함으로 서서 줄을 두지 않는다 */}
+          {!isStaff && (
+            <button
+              type="button"
+              onClick={() => setNickEditOpen(true)}
+              className="flex w-full items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-4 text-left shadow-elev-1 active:bg-secondary/50"
+            >
+              <div className="flex min-w-0 items-center gap-3">
+                <PenLine className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <div className="flex min-w-0 flex-col items-start">
+                  <span className="text-body text-foreground">닉네임 바꾸기</span>
+                  <span className="max-w-full truncate text-label text-muted-foreground">카드 · TV에 {withRo(myShownName)} 보여요</span>
+                </div>
+              </div>
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+            </button>
+          )}
+
           {/* 라이센스 카드 표시 — 설정이라 계정 · 정보로 옮겼다 (2026-10-28 리디자인) */}
           <DisplayModeToggle />
           {/* 글씨 크기 — 작게 · 보통 · 크게 (2026-10-28 UX 보고서 결정 4번) */}
@@ -593,6 +648,7 @@ const MyPage = () => {
         </section>
       </div>
       <ReceivedCheersSheet open={showCheers} onClose={() => setShowCheers(false)} />
+      <NicknameEditSheet open={nickEditOpen} onClose={() => setNickEditOpen(false)} />
     </div>
   );
 };
