@@ -29,7 +29,7 @@ const BoxrawCard = ({ className }: { className?: string }) => {
       await navigator.clipboard.writeText(BOXRAW_CODE);
       setCopied(true);
       setFallback(false);
-      toast.success("프로모션 코드를 복사했어요");
+      toast.success("할인 코드를 복사했어요");
       window.setTimeout(() => setCopied(false), 2_000);
     } catch {
       // 복사가 막힌 기기 — 코드를 길게 눌러 고를 수 있게 글자를 골라 두기만
@@ -49,7 +49,7 @@ const BoxrawCard = ({ className }: { className?: string }) => {
         <p className="mt-3 text-body font-black leading-snug text-foreground">{BOXRAW_COPY.title}</p>
         <p className="mt-0.5 text-label leading-snug text-muted-foreground [text-wrap-style:balance]">{BOXRAW_COPY.line}</p>
 
-        {/* 프로모션 코드 */}
+        {/* 할인 코드(공식몰 프로모션 코드) */}
         <div className="mt-3 rounded-xl border border-dashed border-foreground/25 bg-secondary/60 px-3.5 py-3">
           <div className="flex items-center gap-3">
             <div className="min-w-0 flex-1">
@@ -59,7 +59,7 @@ const BoxrawCard = ({ className }: { className?: string }) => {
             <button
               type="button"
               onClick={copy}
-              aria-label={`프로모션 코드 ${BOXRAW_CODE} 복사`}
+              aria-label={`할인 코드 ${BOXRAW_CODE} 복사`}
               className="flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-foreground px-4 text-label font-bold text-background active:scale-95"
             >
               {copied ? <Check className="h-4 w-4" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />}

@@ -40,7 +40,7 @@ export const GYM_NOTICES: readonly GymNotice[] = [
     hook: ["BOXRAW 공식", "앰버서더 체육관"],
     answer: "복싱계 명품 브랜드와 MOU를 맺었어요",
     proofs: ["영국 BOXRAW 대표님과 직접 미팅", "300만 원 상당 장비 · 샌드백 전면 교체", "코치님 트레이닝복도 BOXRAW 지원"],
-    ease: `공식몰 결제 때 코드 ${BOXRAW_CODE} 넣어요`,
+    ease: `결제할 때 코드 ${BOXRAW_CODE} 으로 할인받아요`,
     visual: { kind: "brand", logo: "/market/boxraw/logo.svg", logoAlt: "BOXRAW", badge: "공식 앰버서더 체육관", sub: "153복싱짐 선릉역점" },
     qr: { path: BOXRAW_LINK, caption: ["BOXRAW", "공식몰 가기"] },
   },

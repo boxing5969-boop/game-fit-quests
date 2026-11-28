@@ -72,13 +72,17 @@ export const BOXRAW_CATEGORIES: readonly { label: string; path: string }[] = [
   { label: "여성 의류", path: "/catalog/clothing-for-women" },
 ];
 
-/** 회원에게 보이는 글 — 한글 AI 티 지우기(im-not-ai) 거침 · 대표님 말 밖의 사실은 쓰지 않는다 */
+/**
+ * 회원에게 보이는 글 — 한글 AI 티 지우기(im-not-ai) 거침 · 대표님 말 밖의 사실은 쓰지 않는다
+ *   코드 칸(2026-11-28 대표님 「프로모션코드를 입력하세요가 아니라 프로모션코드로 할인 받으라고 표현해줘」):
+ *   「넣어 주세요」(할 일) 대신 「할인받으세요」(받는 혜택)로 · 라벨도 「할인 코드」 · 전용 링크로 들어가라는 말은 남긴다(추적 값).
+ */
 export const BOXRAW_COPY = {
   badge: "공식 앰버서더 체육관",
   title: "복싱계의 명품 브랜드 BOXRAW",
   line: "153복싱짐 선릉역점이 BOXRAW 공식 앰버서더 체육관이 됐어요",
-  codeLabel: "프로모션 코드",
-  codeHow: "아래 링크로 공식몰에 들어가 결제할 때 넣어 주세요",
+  codeLabel: "153 회원 할인 코드",
+  codeHow: "아래 링크로 들어가 결제할 때 이 코드로 할인받으세요",
   shop: "BOXRAW 공식몰 바로 가기",
   note: "체육관 샌드백도 모두 BOXRAW로 바꿨어요 · 가격과 재고는 공식몰에서 확인해요",
 } as const;

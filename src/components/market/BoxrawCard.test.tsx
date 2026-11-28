@@ -114,14 +114,14 @@ describe("마켓 BOXRAW 칸 화면", () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
     const first = render(<BoxrawCard />);
-    fireEvent.click(screen.getByRole("button", { name: `프로모션 코드 ${BOXRAW_CODE} 복사` }));
+    fireEvent.click(screen.getByRole("button", { name: `할인 코드 ${BOXRAW_CODE} 복사` }));
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(BOXRAW_CODE));
     expect(await screen.findByText("복사됐어요")).toBeInTheDocument();
     first.unmount();
 
     Object.defineProperty(navigator, "clipboard", { value: { writeText: vi.fn().mockRejectedValue(new Error("no")) }, configurable: true });
     render(<BoxrawCard />);
-    fireEvent.click(screen.getByRole("button", { name: `프로모션 코드 ${BOXRAW_CODE} 복사` }));
+    fireEvent.click(screen.getByRole("button", { name: `할인 코드 ${BOXRAW_CODE} 복사` }));
     expect(await screen.findByText(/길게 눌러 복사해 주세요/)).toBeInTheDocument();
   });
 });
